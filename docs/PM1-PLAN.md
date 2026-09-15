@@ -123,4 +123,8 @@ MET 2件はconditionが未指定のため確認事項付き。
    NOT_APPLICABLEを返して「Evidenceがない」と区別する。
 3. critical functional domainのreviewed Evidence入力経路（InterPro/Pfam境界の取り込みを含む）。
    domain境界だけではPM1は成立しないため、criticalityの判断と出典が別途必要。
+   VCEP仕様は「残基の列挙」と「範囲」を併用し、適用範囲が版で変わる。RUNX1の2019年版
+   （Luo et al., PMC6849945）は13 hotspot残基をPM1、105-204をPM1_supportingとし、RHD全体
+   （77-204）ではない。版ごとに `source_version` 付きの別レコードとして持たないと結論が
+   変わりうる。
 4. `condition` の入力経路。PM1のcondition_assessmentをMATCHEDにできるようにする。
