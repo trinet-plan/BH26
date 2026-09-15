@@ -85,11 +85,14 @@
   BS1（疾患別閾値が疾患なしに定義できないため必須）とPVS1（未変更）のみ。
 - 実デモではPP2・BP1の18件がcondition待ちからgene_disease Evidence待ちへ移動。
 
+- PM1 hotspot密度のisoform numbering取り違えを解消。窓に入った候補を1件ずつefetchし、
+  対象protein_id上のClinVar表記から残基を確定してから数える。対象蛋白に表記がない候補と
+  確定位置が窓外の候補は数えずにunplaced_excluded / outside_window_excludedへ記録する。
+  RUNX1 K110Eでは16件中、自身1件とA134の別isoform表記3件が除かれ12件になる。
+  デモ10領域の件数は変化しない（対象遺伝子ではisoform表記の混入がなかった）。
+
 ## 未完了（次工程）
 
-0. PM1 hotspot密度のisoform numbering取り違え（ClinVar esummaryの`protein_change`が
-   transcript非依存のため、別isoform表記の位置で窓に入る）。判定は変わらないが件数は近似。
-   詳細と対応方針は docs/PM1-PLAN.md を参照。
 1. PM1のgene/disease-specific対応（強度可変、PM1不使用geneのNOT_APPLICABLE表明）と、
    critical functional domainのreviewed Evidence入力経路。conditionとBS1疾患閾値の入力経路。
 2. BP7のRefSeq exon境界position adapterと校正済み保存性policy、PVS1 NMD等の計算の自動化拡張。

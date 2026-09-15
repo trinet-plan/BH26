@@ -91,13 +91,18 @@ hotspot proxyであり、ACMG/ClinGenの普遍基準ではない。ClinGen VCEP�
 - 数えたVCVのaccession・protein_change・分類・conditionを保存し、後のrelease で再検証できる
 - conflicting分類はどちらにも数えず、監査用に残す
 - 単一残基置換（例 R248W）以外は位置づけ不能として除外する
+- esummaryの位置は事前フィルタに過ぎない。窓に入った候補は1件ずつefetchし、対象
+  `protein_id` 上のClinVar表記（例 `NP_001745.2:p.Ala134Val`）から残基を確定してから数える。
+  対象蛋白の表記がない候補は `unplaced_on_protein`、確定位置が窓外なら
+  `outside_window_on_protein` として数えずに残す
 - 検索が打ち切られた場合（`count > retmax`）はdensity Evidenceを出さず、
   `quality_status="INCOMPLETE_SEARCH"` の `region_search` だけを残す
 - 送信するのは遺伝子記号のみ。応答は内容ハッシュ付きキャッシュに固定し `--offline` で再生する
 
-既知の制約として、ClinVar esummaryの `protein_change` は遺伝子レベルの表記であり、
-こちらの `protein_id`/transcriptに紐づかない。遺伝子一致は確認しているが、別isoform由来の
-座標が混じる可能性は残るため、`protein_change_source` に出典を明示している。
+ClinVar esummaryの `protein_change` は遺伝子レベルの表記で `protein_id`/transcriptに
+紐づかないため、単独では別isoformの座標が混じる。上の確定手順でこれを除去している。
+RUNX1 K110E（105-115）の実測では、報告16件のうち自身1件とA134の別isoform表記3件
+（`A107T, A134T` 等）が除かれ、確定値は12件になる。
 
 ## 実行
 
@@ -117,19 +122,11 @@ NOT_EVALUATED 26件（報告密度不足10件、非missenseでregion Evidenceな
 - policy未設定・policy不一致・counts欠落・counts矛盾の分岐
 - 自動Evidenceがcritical domainを主張できないこと
 - 評価対象の変異自身を数えないこと、同じ座位の別ALTは数えること
+- 別isoformの表記で窓に入った候補を数えないこと、対象蛋白に表記がない候補を数えないこと
 - 別疾患のregion評価を流用しないこと
 - 固定キャッシュによる全28件のオフライン再現と、VA-Spec Evidence Lineの検証
 
-## 未完了（要対応）
-
-0. **hotspot密度のisoform numbering取り違え。** ClinVar esummaryの `protein_change` は全
-   transcript分の表記を並べるだけで、どれが対象の `protein_id` の座標か判別できない。
-   RUNX1はisoform間で27残基ずれるため（K110 ⇔ K83、A134 ⇔ A107）、canonicalでは窓の外にある
-   変異が別isoform表記の位置で窓に入り、数えられてしまう。K110E（105-115）の実測では15件中
-   3件がこの取り違えで、判定（MET）は変わらないが `pathogenic_count` は近似値である。
-   対応には窓内候補ごとのefetchで `protein_id` 一致を確認する必要があり、PS1 comparatorと
-   同じ方式になる。件数が多いため窓内候補だけに絞る実装が要る。
-   それまでは `protein_change_source` に出典を明示し、数値を確定値として扱わない。
+## 未完了（Phase 4）
 
 1. gene/disease-specific対応。強度可変（特定residueはPM1、周辺domainはPM1_supporting）は
    region Evidenceに `strength` を持たせればVA-Spec出力まで通る。

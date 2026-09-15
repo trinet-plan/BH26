@@ -10,6 +10,7 @@ from acmg.providers.http import canonical_json
 
 VCV = re.compile(r"^VCV(\d{9})(?:\.(\d+))?$")
 PROTEIN_CHANGE = re.compile(r"^([A-Z])(\d+)([A-Z])$")
+PROTEIN_HGVS = re.compile(r"^p\.([A-Z][a-z]{2})(\d+)([A-Z][a-z]{2})$")
 
 
 def local_name(tag):
@@ -255,6 +256,7 @@ class ClinVarComparatorProvider:
             "returned_count": found["count"], "search_scope": "residue",
             "complete": found["complete"],
             "protein_change_source": "ClinVar esummary gene-level protein_change",
+            "position_confirmation": f'ClinVar VCV protein expression on {annotation["protein_id"]}',
         }
         if not found["complete"]:
             search["quality_status"] = "INCOMPLETE_SEARCH"
@@ -519,6 +521,9 @@ class ClinVarHotspotProvider:
             "max_benign": self.policy["max_benign"],
             "pathogenic_count": len(pathogenic), "benign_count": len(benign),
             "self_excluded": sum(item["bucket"] == "query_variant" for item in counted),
+            "unplaced_excluded": sum(item["bucket"] == "unplaced_on_protein" for item in counted),
+            "outside_window_excluded": sum(item["bucket"] == "outside_window_on_protein"
+                                           for item in counted),
             "counted_variants": counted,
             "counted_conditions": sorted({condition for item in pathogenic
                                           for condition in item["conditions"]}),
@@ -553,23 +558,57 @@ class ClinVarHotspotProvider:
             bucket = "benign"
         else:
             return None
-        positions = [position for position in
-                     protein_change_positions(document.get("protein_change"))
-                     if start <= position <= end]
-        if not positions:
+        reported = protein_change_positions(document.get("protein_change"))
+        if not any(start <= position <= end for position in reported):
             return None
+        # The summary lists every transcript's numbering, and isoforms of the same gene can
+        # differ by tens of residues, so the window hit is only a candidate until the change
+        # is read off this protein reference.
+        confirmed = self._protein_positions(uid, annotation["protein_id"])
+        in_window = [position for position in confirmed if start <= position <= end]
         # The variant under evaluation must not support its own hotspot density.
         if self._is_query_variant(document, query_variant):
             bucket = "query_variant"
+        elif not confirmed:
+            bucket = "unplaced_on_protein"
+        elif not in_window:
+            bucket = "outside_window_on_protein"
         trait = classification.get("trait_set") or document.get("trait_set") or []
         return {
             "variation_id": uid, "accession": document.get("accession"),
             "protein_change": document.get("protein_change"),
-            "protein_positions": positions, "classification": classification.get("description"),
+            "reported_positions": reported, "protein_positions": in_window or confirmed,
+            "position_source": f'ClinVar VCV protein expression on {annotation["protein_id"]}',
+            "classification": classification.get("description"),
             "review_status": classification.get("review_status"), "bucket": bucket,
             "conditions": sorted({value.get("trait_name") for value in trait
                                   if isinstance(value, dict) and value.get("trait_name")}),
         }
+
+    def _protein_positions(self, variation_id, protein_id):
+        """Residues of single-substitution changes ClinVar reports on this protein."""
+        query = urlencode({"db": "clinvar", "id": variation_id, "rettype": "vcv",
+                           "is_variationid": "true"})
+        response = self.client.fetch(
+            f"https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?{query}",
+            response_format="text", dataset_version=self.release,
+        )
+        try:
+            root = ElementTree.fromstring(response["body"])
+        except ElementTree.ParseError as exc:
+            raise ValueError("Invalid ClinVar hotspot candidate XML") from exc
+        prefix = protein_id + ":"
+        positions = set()
+        for node in root.iter():
+            if local_name(node.tag) != "Expression":
+                continue
+            value = node_text(node)
+            if not value or not value.startswith(prefix):
+                continue
+            match = PROTEIN_HGVS.fullmatch(value[len(prefix):])
+            if match:
+                positions.add(int(match.group(2)))
+        return sorted(positions)
 
     @staticmethod
     def _is_query_variant(document, query_variant):

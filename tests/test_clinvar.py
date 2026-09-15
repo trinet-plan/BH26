@@ -157,6 +157,29 @@ BENIGN_SUMMARY = {"accession": "VCV000000009", "gene_sort": "TEST", "protein_cha
                   "germline_classification": {"description": "Likely benign", "trait_set": []}}
 
 
+# What ClinVar reports on the target protein NP_1.1, which is what the counts must use.
+PROTEIN_EXPRESSIONS = {
+    "1": "NP_1.1:p.Arg248Trp", "2": "NP_1.1:p.Arg248Gln", "3": "NP_1.1:p.Gly245Ser",
+    "6": "NP_1.1:p.Arg249Lys", "9": "NP_1.1:p.Ser246Asn", "10": "NP_1.1:p.Arg248His",
+    # An alternate isoform puts this one in the window; on NP_1.1 it is outside.
+    "11": "NP_1.1:p.Ala275Thr",
+}
+
+ALTERNATE_ISOFORM_SUMMARY = {
+    "accession": "VCV000000011", "gene_sort": "TEST", "protein_change": "A248T, A275T",
+    "germline_classification": {"description": "Pathogenic", "trait_set": []}}
+
+
+def candidate_xml(uid):
+    expression = PROTEIN_EXPRESSIONS.get(uid)
+    protein = (f"<HGVS><ProteinExpression><Expression>{expression}</Expression>"
+               "</ProteinExpression></HGVS>") if expression else ""
+    return ("<ClinVarResult-Set><VariationArchive "
+            f'Accession="VCV{int(uid):09d}" Version="1" VariationID="{uid}">'
+            f"<ClassifiedRecord><SimpleAllele><HGVSlist>{protein}</HGVSlist>"
+            "</SimpleAllele></ClassifiedRecord></VariationArchive></ClinVarResult-Set>")
+
+
 class HotspotClient:
     def __init__(self, uids=None, summaries=None, count=None):
         self.uids = uids or sorted(SUMMARIES)
@@ -170,6 +193,9 @@ class HotspotClient:
             return {"body": {"esearchresult": {"count": str(self.count), "retmax": "500",
                                                "idlist": list(self.uids)}},
                     "retrieved_at": "2026-09-15T00:00:00Z"}
+        if "efetch.fcgi" in url:
+            uid = url.split("&id=", 1)[1].split("&", 1)[0]
+            return {"body": candidate_xml(uid), "retrieved_at": "2026-09-15T00:00:02Z"}
         return {"body": {"result": {"uids": list(self.uids), **self.summaries}},
                 "retrieved_at": "2026-09-15T00:00:01Z"}
 
@@ -227,6 +253,28 @@ class ClinVarHotspotTests(unittest.TestCase):
         _, region = self.search(client)
         self.assertEqual(region["benign_count"], 1)
         self.assertEqual(region["pathogenic_count"], 3)
+
+    def test_alternate_isoform_numbering_is_not_counted(self):
+        """A window hit through another isoform's numbering must not become a count."""
+        summaries = {**SUMMARIES, "11": ALTERNATE_ISOFORM_SUMMARY}
+        client = HotspotClient(uids=sorted(summaries, key=int), summaries=summaries)
+        _, region = self.search(client)
+        self.assertEqual(region["pathogenic_count"], 3)
+        self.assertEqual(region["outside_window_excluded"], 1)
+        excluded = next(item for item in region["counted_variants"]
+                        if item["variation_id"] == "11")
+        self.assertEqual(excluded["bucket"], "outside_window_on_protein")
+        self.assertEqual(excluded["reported_positions"], [248, 275])
+        self.assertEqual(excluded["protein_positions"], [275])
+
+    def test_candidate_without_this_protein_is_not_counted(self):
+        summaries = {**SUMMARIES, "12": {
+            "accession": "VCV000000012", "gene_sort": "TEST", "protein_change": "R248L",
+            "germline_classification": {"description": "Pathogenic", "trait_set": []}}}
+        client = HotspotClient(uids=sorted(summaries, key=int), summaries=summaries)
+        _, region = self.search(client)
+        self.assertEqual(region["pathogenic_count"], 3)
+        self.assertEqual(region["unplaced_excluded"], 1)
 
     def test_region_evidence_is_automated_and_policy_versioned(self):
         _, region = self.search()
