@@ -149,7 +149,11 @@ ACMG cross-field検査で書込み前に検証します。構造正規化に使�
 Evidenceには混ぜず、疾患・遺伝形式・疾患別頻度閾値・BA1例外リストだけを受け付けます。
 BA1例外リストは `complete` が真のときだけ判定に使い、未転記（偽）の間は「リストに無い」と
 主張せず未評価のままにします。同梱の `config/curated-context.json` には
-ClinGen SVI（Ghosh et al. 2018）の9変異を収録済みです。各変異はClinGen Allele RegistryのCAIDを
+ClinGen SVI（Ghosh et al. 2018）の9変異を収録済みです。**このリストは論文Table 1からの
+手入力**であり（機械可読形式での公開もAPIも存在しないため）、第三者による再確認は
+受けていません。`entry_method: manual_transcription` と転記の経緯をリストに記録し、
+run-manifestの `curated_context` にも毎回出力します。臨床利用の前には原典の表と
+照合してください。各変異はClinGen Allele RegistryのCAIDを
 経由してGRCh38 alleleへ解決し、解決方法・遺伝子・転写産物HGVS・登録IDを各entryに記録しています
 （ACAD9の重複のみ、registryのgenomic intervalからアンカー付き左寄せ表現を導出）。読み込んだ文脈の版と件数はrun-manifestに記録します。
 

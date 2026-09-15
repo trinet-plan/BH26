@@ -7,6 +7,17 @@
     "source_version": "2018",
     "reviewed_at": "2026-09-15",
     "complete": true,
+    "entry_method": "manual_transcription",
+    "transcription": {
+      "method": "manual_transcription",
+      "transcribed_from": "Table 1 of the source publication (PMC6188666), read by hand; the list is not published in any machine-readable form and no API serves it",
+      "transcribed_by": "Claude Opus 5 assisting the BH26 project, 2026-09-15",
+      "transcribed_at": "2026-09-15",
+      "machine_steps": "Only the GRCh38 coordinates were machine-resolved: each hand-entered CAID was looked up in the ClinGen Allele Registry (reg.genome.network)",
+      "verification": "Gene symbol and transcript HGVS returned by the registry were compared against the hand-entered row for the eight substitutions. The ACAD9 duplication was checked against the Ensembl GRCh38 reference sequence at 3:128879640-128879660 before anchoring and left-aligning it",
+      "not_verified_by_a_second_reader": true,
+      "re_verify_when": "The source table, its transcript versions, or the registry mapping changes. Re-read the published table before trusting this list in clinical use"
+    },
     "note": "Nine variants from Table 1 of the source publication, each resolved to a GRCh38 allele through its ClinGen Allele Registry CAID. Transcript HGVS was cross-checked against the registry for the eight substitutions; the ACAD9 duplication was anchored and left-aligned from the registry's genomic interval.",
     "variants": [
       {
@@ -18,7 +29,8 @@
         "classification": "Uncertain significance",
         "resolved_by": "ClinGen Allele Registry duplication interval NC_000003.12:g.128879648_128879651dup, anchored and left-aligned against the Ensembl GRCh38 reference base at 3:128879647",
         "registry_hgvs_g": "NC_000003.12:g.128879648_128879651dup",
-        "note": "Published as c.-44_-41dupTAAG; the registry records the same allele as c.-44_-41dup"
+        "note": "Published as c.-44_-41dupTAAG; the registry records the same allele as c.-44_-41dup",
+        "entered_by": "manual_transcription"
       },
       {
         "variant_key": "GRCh38:13:20189473:C:T",
@@ -30,7 +42,8 @@
         "resolved_by": "ClinGen Allele Registry (reg.genome.network) GRCh38 genomic allele",
         "registry_hgvs_g": "NC_000013.11:g.20189473C>T",
         "protein_change": "p.Val37Ile",
-        "transcript_hgvs_confirmed": true
+        "transcript_hgvs_confirmed": true,
+        "entered_by": "manual_transcription"
       },
       {
         "variant_key": "GRCh38:6:26090951:C:G",
@@ -42,7 +55,8 @@
         "resolved_by": "ClinGen Allele Registry (reg.genome.network) GRCh38 genomic allele",
         "registry_hgvs_g": "NC_000006.12:g.26090951C>G",
         "protein_change": "p.His63Asp",
-        "transcript_hgvs_confirmed": true
+        "transcript_hgvs_confirmed": true,
+        "entered_by": "manual_transcription"
       },
       {
         "variant_key": "GRCh38:6:26092913:G:A",
@@ -54,7 +68,8 @@
         "resolved_by": "ClinGen Allele Registry (reg.genome.network) GRCh38 genomic allele",
         "registry_hgvs_g": "NC_000006.12:g.26092913G>A",
         "protein_change": "p.Cys282Tyr",
-        "transcript_hgvs_confirmed": true
+        "transcript_hgvs_confirmed": true,
+        "entered_by": "manual_transcription"
       },
       {
         "variant_key": "GRCh38:16:3249586:G:A",
@@ -66,7 +81,8 @@
         "resolved_by": "ClinGen Allele Registry (reg.genome.network) GRCh38 genomic allele",
         "registry_hgvs_g": "NC_000016.10:g.3249586G>A",
         "protein_change": "p.Pro369Ser",
-        "transcript_hgvs_confirmed": true
+        "transcript_hgvs_confirmed": true,
+        "entered_by": "manual_transcription"
       },
       {
         "variant_key": "GRCh38:16:3249468:C:T",
@@ -78,7 +94,8 @@
         "resolved_by": "ClinGen Allele Registry (reg.genome.network) GRCh38 genomic allele",
         "registry_hgvs_g": "NC_000016.10:g.3249468C>T",
         "protein_change": "p.Arg408Gln",
-        "transcript_hgvs_confirmed": true
+        "transcript_hgvs_confirmed": true,
+        "entered_by": "manual_transcription"
       },
       {
         "variant_key": "GRCh38:13:72835359:G:A",
@@ -90,7 +107,8 @@
         "resolved_by": "ClinGen Allele Registry (reg.genome.network) GRCh38 genomic allele",
         "registry_hgvs_g": "NC_000013.11:g.72835359G>A",
         "protein_change": "p.Arg405Gln",
-        "transcript_hgvs_confirmed": true
+        "transcript_hgvs_confirmed": true,
+        "entered_by": "manual_transcription"
       },
       {
         "variant_key": "GRCh38:12:120737875:C:T",
@@ -102,7 +120,8 @@
         "resolved_by": "ClinGen Allele Registry (reg.genome.network) GRCh38 genomic allele",
         "registry_hgvs_g": "NC_000012.12:g.120737875C>T",
         "protein_change": "p.Arg171Trp",
-        "transcript_hgvs_confirmed": true
+        "transcript_hgvs_confirmed": true,
+        "entered_by": "manual_transcription"
       },
       {
         "variant_key": "GRCh38:3:15645186:G:C",
@@ -114,10 +133,10 @@
         "resolved_by": "ClinGen Allele Registry (reg.genome.network) GRCh38 genomic allele",
         "registry_hgvs_g": "NC_000003.12:g.15645186G>C",
         "protein_change": "p.Asp444His",
-        "transcript_hgvs_confirmed": true
+        "transcript_hgvs_confirmed": true,
+        "entered_by": "manual_transcription"
       }
-    ],
-    "retrieved_at": "2026-09-15T12:35:48.964516+00:00"
+    ]
   },
   "records": {}
 }

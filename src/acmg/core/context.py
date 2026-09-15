@@ -36,6 +36,10 @@ def load_context(document):
         _require(isinstance(exceptions, dict), "ba1_exceptions must be an object")
         _require(all(exceptions.get(field) for field in ("source", "source_version", "reviewed_at")),
                  "ba1_exceptions requires source, source_version and reviewed_at")
+        # Where the list came from matters as much as its content: a hand-transcribed table
+        # carries a different risk than a retrieved file, so every run records which it was.
+        _require(exceptions.get("entry_method") in {"manual_transcription", "retrieved"},
+                 "ba1_exceptions must state entry_method (manual_transcription or retrieved)")
         _require(isinstance(exceptions.get("complete"), bool),
                  "ba1_exceptions must state whether the list is complete")
         listed = exceptions.get("variants", [])
@@ -81,5 +85,7 @@ def context_summary(context):
         summary["ba1_exceptions"] = {
             "source": exceptions["source"], "source_version": exceptions["source_version"],
             "complete": exceptions["complete"], "variants": len(exceptions.get("variants", [])),
+            "entry_method": exceptions["entry_method"],
+            "transcription": exceptions.get("transcription"),
         }
     return summary

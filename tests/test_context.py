@@ -8,7 +8,8 @@ KEY = "GRCh38:1:2:C:T"
 ENTRY = {"variant_key": KEY, "gene": "TEST", "hgvs_c": "c.1A>T", "caid": "CA000000",
          "resolved_by": "ClinGen Allele Registry"}
 EXCEPTIONS = {"source": "ClinGen SVI BA1 exception list", "source_version": "2018",
-              "reviewed_at": "2026-09-15", "complete": True, "variants": [ENTRY]}
+              "reviewed_at": "2026-09-15", "complete": True,
+              "entry_method": "manual_transcription", "variants": [ENTRY]}
 
 
 def document(**overrides):
@@ -59,6 +60,13 @@ class CuratedContextTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "variant_key"):
             load_context(document(ba1_exceptions={**EXCEPTIONS, "variants": [{"gene": "TEST"}]}))
 
+    def test_how_the_list_was_entered_must_be_stated(self):
+        exceptions = {key: value for key, value in EXCEPTIONS.items() if key != "entry_method"}
+        with self.assertRaisesRegex(ValueError, "entry_method"):
+            load_context(document(ba1_exceptions=exceptions))
+        with self.assertRaisesRegex(ValueError, "entry_method"):
+            load_context(document(ba1_exceptions={**EXCEPTIONS, "entry_method": "guessed"}))
+
     def test_completeness_must_be_stated(self):
         exceptions = {key: value for key, value in EXCEPTIONS.items() if key != "complete"}
         with self.assertRaisesRegex(ValueError, "complete"):
@@ -87,6 +95,8 @@ class CuratedContextTests(unittest.TestCase):
         self.assertEqual(summary["records"], 1)
         self.assertEqual(summary["ba1_exceptions"]["variants"], 1)
         self.assertTrue(summary["ba1_exceptions"]["complete"])
+        # Every run records that the committed list was typed in by hand.
+        self.assertEqual(summary["ba1_exceptions"]["entry_method"], "manual_transcription")
         self.assertIsNone(context_summary(None))
 
 
