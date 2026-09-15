@@ -11,7 +11,10 @@ def evaluate_mechanism(code, input_data, services, config):
     if "missense_variant" not in annotation["consequences"]:
         return result(code, input_data, Status.NOT_APPLICABLE, "Requires a missense variant",
                       evidence=[annotation])
-    early, mechanism = curated_context(code, "gene_disease", input_data, services, annotation)
+    # The mechanism statement is about the gene, so a condition-agnostic assessment is
+    # usable and the disease relevance is reported instead of being required up front.
+    early, mechanism = curated_context(code, "gene_disease", input_data, services, annotation,
+                                       disease_required=False)
     if early:
         return early
     evidence = [annotation, mechanism]
@@ -30,6 +33,12 @@ def evaluate_mechanism(code, input_data, services, config):
         met = mechanism["missense_mechanism_established"] and mechanism["low_benign_missense_variation"]
     else:
         met = mechanism["predominantly_truncating"] and not mechanism["missense_mechanism_established"]
+    condition = input_data.get("condition")
+    matched = bool(condition) and mechanism.get("condition") == condition
+    review = [] if matched or not met else [
+        "Confirm the gene-disease mechanism for the disease context before final classification"]
     return result(code, input_data, Status.MET if met else Status.NOT_MET,
                   "Reviewed disease mechanism and variant spectrum evaluated",
-                  strength="supporting" if met else None, evidence=evidence)
+                  strength="supporting" if met else None, evidence=evidence, review=review,
+                  provenance={"assessment_scope": "gene_level",
+                              "condition_assessment": "MATCHED" if matched else "NOT_EVALUATED"})

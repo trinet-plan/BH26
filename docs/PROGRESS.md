@@ -78,6 +78,13 @@
   NOT_APPLICABLE 10件。PS1は上記変更によりMANUAL_REVIEW 3件がNOT_MET 2件＋splice 1件へ移動。
   VA-Spec Evidence Lineは79件。
 
+- PP2・BP1もconditionを任意化。gene_disease Evidenceを疾患非依存でも受け付け、
+  assessment_scope=gene_levelとcondition_assessmentを分離記録する。MET時に疾患未確認なら
+  確認事項を併記。conditionを与えた場合に別疾患のEvidenceを流用しない点は従来どおり。
+  これでPS1・PM5・PM1・PP2・BP1・BP7がcondition任意。conditionを要求するのは
+  BS1（疾患別閾値が疾患なしに定義できないため必須）とPVS1（未変更）のみ。
+- 実デモではPP2・BP1の18件がcondition待ちからgene_disease Evidence待ちへ移動。
+
 ## 未完了（次工程）
 
 0. PM1 hotspot密度のisoform numbering取り違え（ClinVar esummaryの`protein_change`が

@@ -37,6 +37,33 @@ class CuratedCriteriaTests(unittest.TestCase):
         item["condition"] = "test:other-disease"
         self.assertEqual(self.run_rule("PP2", item).status, Status.NOT_EVALUATED)
 
+    def test_mechanism_is_evaluated_without_condition(self):
+        input_data = {key: value for key, value in self.input.items() if key != "condition"}
+        annotation = {key: value for key, value in self.annotation.items() if key != "condition"}
+        item = {key: value for key, value in
+                self.item("gene_disease", gene="TEST", missense_mechanism_established=True,
+                          spectrum_review_complete=True, low_benign_missense_variation=True,
+                          predominantly_truncating=False).items() if key != "condition"}
+        services = make_services([annotation, item])
+        value = evaluate_record(input_data, services, {}, ["PP2"])[0]
+        self.assertEqual(value.status, Status.MET)
+        self.assertEqual(value.provenance["assessment_scope"], "gene_level")
+        self.assertEqual(value.provenance["condition_assessment"], "NOT_EVALUATED")
+        self.assertTrue(value.review_points)
+        # BP1 reads the same record in the opposite direction and stays unmet here.
+        bp1 = evaluate_record(input_data, services, {}, ["BP1"])[0]
+        self.assertEqual(bp1.status, Status.NOT_MET)
+        self.assertEqual(bp1.review_points, [])
+
+    def test_matched_condition_needs_no_review(self):
+        item = self.item("gene_disease", gene="TEST", missense_mechanism_established=True,
+                         spectrum_review_complete=True, low_benign_missense_variation=True,
+                         predominantly_truncating=False)
+        value = self.run_rule("PP2", item)
+        self.assertEqual(value.status, Status.MET)
+        self.assertEqual(value.provenance["condition_assessment"], "MATCHED")
+        self.assertEqual(value.review_points, [])
+
     def test_bp1_requires_reviewed_spectrum(self):
         item = self.item("gene_disease", gene="TEST", missense_mechanism_established=False,
                          spectrum_review_complete=True, predominantly_truncating=True)
