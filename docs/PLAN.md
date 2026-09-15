@@ -46,7 +46,7 @@ VA-SPEC-PythonでACMG EvidenceLineを検証する。MET/NOT_METのみ標準出�
 
 1. 入力監査・同定、元データ保全と全件追跡。
 2. 共通モデル、ローカルEvidence、PM2からVA-Spec出力への縦断経路。
-3. 実データProvider、キャッシュ、BA1/BS1、オフライン再現。
+3. 実データProvider、キャッシュ、BA1/BS1、オフライン再現（gnomAD/ClinVarまで完了）。
 4. 予測/領域、比較/機序、暫定PVS1、非推奨コード、競合表示。
 5. 全症例デモ、README、依存ロック、pytest/Ruff、Windows/Linux CI。
 
@@ -58,5 +58,5 @@ ground truthとの相違はルール版・強度・対象外基準・不足Evide
 ## 権限とGit
 
 現在のworkspace権限で進める。追加承認を要する操作は基本的に避ける。
-区切りごとに検証しローカルコミットする。外部pushはしない。
+区切りごとに検証しローカルコミットする。remote設定後は区切りごとにpushする。
 権限/依存/通信で未検証の部分は完了扱いにしない。

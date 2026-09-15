@@ -10,7 +10,7 @@ def evaluate(input_data, services, config):
     _, observations, rejected, failures, provenance = context
     high = [item for item in observations if number(item["AF"]) > number("0.05")]
     if not high:
-        status = Status.NOT_EVALUATED if rejected or failures else Status.NOT_MET
+        status = Status.NOT_EVALUATED if failures else Status.NOT_MET
         return result("BA1", input_data, status, "No reliable AF above 5%",
                       evidence=observations, provenance=provenance)
     exception = input_data.get("ba1_exception_assessment", {})

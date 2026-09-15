@@ -42,6 +42,14 @@ class PopulationTests(unittest.TestCase):
         value = pm2.evaluate(self.input, self.services([self.observation()], []), self.config)
         self.assertEqual(value.status, Status.NOT_EVALUATED)
 
+    def test_excluded_small_subgroup_does_not_invalidate_usable_population(self):
+        usable = self.observation()
+        too_small = self.observation(an=100, population="SMALL")
+        self.assertEqual(pm2.evaluate(self.input, self.services([usable, too_small]),
+                                     self.config).status, Status.MET)
+        self.assertEqual(ba1.evaluate(self.input, self.services([usable, too_small]),
+                                     self.config).status, Status.NOT_MET)
+
     def test_low_an_and_unknown_callability(self):
         for item in (self.observation(an=100), self.observation(callable=False),
                      self.observation(AF="NaN"), self.observation(AF=0.3)):

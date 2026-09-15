@@ -9,9 +9,11 @@ from pathlib import Path
 from acmg.core.input import audit_demo
 from acmg.core.identity import evaluation_inputs, reconcile
 from acmg.core.reference import FastaReference
-from acmg.core.models import CRITERIA
+from acmg.core.models import CRITERIA, Variant
 from acmg.output import run_internal
+from acmg.providers.clinvar import VCV, ClinVarProvider
 from acmg.providers.ensembl import EnsemblIdentityProvider
+from acmg.providers.gnomad import GnomadProvider
 from acmg.providers.http import CachedHttpClient
 
 
@@ -33,6 +35,11 @@ def main(argv=None):
     online.add_argument("--cache-dir", type=Path, required=True)
     online.add_argument("--output-dir", type=Path, required=True)
     online.add_argument("--ensembl-release")
+    online.add_argument("--evidence-cache-dir", type=Path)
+    online.add_argument("--with-gnomad", action="store_true")
+    online.add_argument("--gnomad-release", default="4.1.1")
+    online.add_argument("--with-clinvar", action="store_true")
+    online.add_argument("--clinvar-release", default=datetime.now(timezone.utc).date().isoformat())
     online.add_argument("--offline", action="store_true")
     evaluate = sub.add_parser("evaluate", help="Evaluate independently sourced evidence for prepared variants")
     evaluate.add_argument("--input", type=Path, required=True)
@@ -79,6 +86,67 @@ def main(argv=None):
                         record["issues"].append(f"IDENTITY_PROVIDER_ERROR: {exc}")
                         mapped[record["record_id"]] = []
                 records = [reconcile(r, mapped[r["record_id"]], provider.reference) for r in records]
+                evidence = list(annotations)
+                external_client = CachedHttpClient(
+                    args.evidence_cache_dir or args.cache_dir, offline=args.offline
+                )
+                external_manifest = []
+                variants = {
+                    row["resolution"]["variant"]["assembly"] + ":" +
+                    row["resolution"]["variant"]["chrom"] + ":" +
+                    str(row["resolution"]["variant"]["pos"]) + ":" +
+                    row["resolution"]["variant"]["ref"] + ":" +
+                    row["resolution"]["variant"]["alt"]: Variant(**row["resolution"]["variant"])
+                    for row in records if row["resolution"]
+                }
+                if args.with_gnomad:
+                    gnomad = GnomadProvider(external_client, release=args.gnomad_release)
+                    try:
+                        batches = gnomad.get_frequencies(variants.values())
+                    except ValueError as exc:
+                        for row in records:
+                            if row["resolution"]:
+                                row["issues"].append(f"GNOMAD_PROVIDER_ERROR: {exc}")
+                        batches = {}
+                    observations = [item for batch in batches.values() if batch for item in batch]
+                    evidence.extend(observations)
+                    external_manifest.append({
+                        "provider": gnomad.name, "provider_version": gnomad.release,
+                        "queried_variants": len(variants), "observed_variants": sum(
+                            batch is not None for batch in batches.values()),
+                        "evidence": len(observations),
+                    })
+                if args.with_clinvar:
+                    clinvar = ClinVarProvider(external_client, args.clinvar_release)
+                    seen = set()
+                    clinvar_results = {}
+                    clinvar_count = 0
+                    for row in records:
+                        accession = row["identity"].get("CLNVARIATIONID")
+                        if not accession or not VCV.fullmatch(accession) or not row["resolution"]:
+                            continue
+                        variant = Variant(**row["resolution"]["variant"])
+                        lookup = (accession, variant.key)
+                        if lookup not in seen:
+                            seen.add(lookup)
+                            try:
+                                clinvar_results[lookup] = clinvar.get_record(accession, variant)
+                                clinvar_count += 1
+                            except ValueError as exc:
+                                clinvar_results[lookup] = exc
+                        result = clinvar_results[lookup]
+                        if isinstance(result, tuple):
+                            item, identity = result
+                            evidence.append(item)
+                            row["resolution"]["evidence"].append(identity)
+                        else:
+                            row["issues"].append(f"CLINVAR_PROVIDER_ERROR: {result}")
+                    external_manifest.append({
+                        "provider": clinvar.name, "provider_version": clinvar.release,
+                        "queried_accessions": len(seen), "matched_records": clinvar_count,
+                        "evidence": clinvar_count,
+                        "classification_use": "NOT_PP5_BP6",
+                    })
             args.output_dir.mkdir(parents=True, exist_ok=False)
             output = args.output_dir / "audit.json"
             output.write_text(json.dumps({"schema_version": "1.0", "records": records},
@@ -95,22 +163,29 @@ def main(argv=None):
                                  record["resolution"]["variant"]["ref"] + ":" +
                                  record["resolution"]["variant"]["alt"]
                                  for record in records if record["resolution"]}
-                annotations = [item for item in annotations if item["variant_key"] in resolved_keys]
-                annotations = list({item["evidence_id"]: item for item in annotations}.values())
+                evidence = [item for item in evidence if item["variant_key"] in resolved_keys]
+                evidence = list({item["evidence_id"]: item for item in evidence}.values())
+                annotation_count = sum(item.get("category") == "annotation" for item in evidence)
                 (args.output_dir / "evidence.json").write_text(
-                    json.dumps({"schema_version": "1.0", "evidence": annotations},
+                    json.dumps({"schema_version": "1.0", "evidence": evidence},
                                ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
                 manifest = {
                     "schema_version": "1.0", "provider": provider.name,
                     "provider_version": provider.release,
                     "retrieved_at": datetime.now(timezone.utc).isoformat(),
                     "offline": args.offline,
-                    "network_used": client.network_used,
+                    "network_used": client.network_used or external_client.network_used,
                     "cache_entries": client.used,
                     "cache_set_sha256": hashlib.sha256(
                         json.dumps(client.used, sort_keys=True).encode()).hexdigest(),
                     "records": len(records), "resolved": len(resolved),
-                    "annotation_evidence": len(annotations),
+                    "annotation_evidence": annotation_count,
+                    "external_providers": external_manifest,
+                    "external_network_used": external_client.network_used,
+                    "external_cache_entries": external_client.used,
+                    "external_cache_set_sha256": hashlib.sha256(
+                        json.dumps(external_client.used, sort_keys=True).encode()).hexdigest(),
+                    "total_evidence": len(evidence),
                 }
                 (args.output_dir / "identity-manifest.json").write_text(
                     json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

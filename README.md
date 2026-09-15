@@ -10,11 +10,12 @@ demo-dataの4症例を対象とする、Evidence単位のACMG基準評価ツー�
 - REF検証、indel左寄せ、同定Evidenceの照合、補正/保留の記録。
 - 全16コードの独立評価モジュール、一括評価、競合候補の表示。
 - Ensembl HGVS/GRCh38参照検証の内容ハッシュ付きキャッシュとオフライン再生。
+- gnomAD 4.1.1集団頻度とClinVar VCVの内容ハッシュ付きキャッシュ、オフライン再生。
 - 準備済みJSONとローカルEvidenceによる内部評価JSON・TSV・manifest出力。
 - GA4GH VA-Spec Pythonモデルで検証したEvidence Line JSON出力。
 
 実デモ全件の同定とEnsembl転写産物注釈の取得は完了しています。
-集団頻度・キュレーション・校正済み予測Evidenceの取得は未完了です。
+疾患別閾値・キュレーション・校正済み予測Evidenceの取得は未完了です。
 監査結果のPENDINGを、変異の同定完了や基準の不成立と解釈しないでください。
 
 ## 開発環境
@@ -64,6 +65,19 @@ $env:PYTHONPATH = 'src'
 使用してください。初回成功後は同じ引数に `--offline --ensembl-release <release>` を加えると、
 保存済み応答だけで再生できます。
 
+gnomADとClinVarも含める場合は次のように実行します。送信するのは正規化済みGRCh38座位と、
+VCFに記載されたVCV accessionだけです。
+
+```powershell
+$env:PYTHONPATH = 'src'
+.venv/Scripts/python.exe -m acmg prepare-demo-online --input-dir demo-data --cache-dir tests/fixtures/ensembl-cache --evidence-cache-dir tests/fixtures/external-cache --output-dir work/demo-external --ensembl-release 116 --with-gnomad --gnomad-release 4.1.1 --with-clinvar --clinvar-release 2026-09-15 --offline
+.venv/Scripts/python.exe -m acmg evaluate --input work/demo-external/variants.json --evidence work/demo-external/evidence.json --config config/demo-rules.json --criteria all --offline --output-dir work/demo-evaluated
+```
+
+固定キャッシュではgnomAD 17座位中15座位に観測があり、2座位は未登録です。未登録をAF=0とは
+扱いません。ClinVarは13 VCVを取得し、GRCh38座標一致を確認します。ClinVarの集約分類は同定・
+比較候補の監査情報に限定し、PP5/BP6の判定には使用しません。
+
 準備後の `variants.json` には同定済み入力のみが入り、保留レコードは `audit.json` に残ります。
 `evidence.json` にはラベルから分離したEnsembl注釈が入ります。現在の固定キャッシュでは全28件が
 解決し、24件は元座標を確認、4件はHGVS/GRCh38に基づいて補正されます。
@@ -79,12 +93,11 @@ $env:PYTHONPATH = 'src'
 VA-Specを意図的に省略する場合だけ `--internal-only` を指定します。
 出力には検証に使った `ga4gh.va-spec` バージョンとモデルschema IDを記録します。
 上のfixtureの閾値は合成テスト用であり、実変異評価向けの推奨設定ではありません。
-実デモでは未取得・未校正Evidenceを推測で補わないため、現段階でMET/NOT_METのEvidence Lineは
-生成されません。各基準のNOT_EVALUATED、NOT_APPLICABLE、MANUAL_REVIEW、DEPRECATEDは
+`config/demo-rules.json` のminimum ANはプロジェクト用QC設定であり、疾患別に校正された臨床閾値
+ではありません。各基準のNOT_EVALUATED、NOT_APPLICABLE、MANUAL_REVIEW、DEPRECATEDも
 `results.json` と `summary.tsv` に記録されます。
 
 ## Gitとデータ
 
-外部pushはしません。工程単位のローカルコミットを試行していますが、現権限では
-`.git/index.lock` の作成が拒否されるため、まだ初回コミット以降の変更は未コミットです。
-依存・出力・キャッシュはGit対象外とし、demo-data原本を保全します。
+工程単位でローカルコミットします。remoteが設定されている場合は区切りのよい時点でpushします。
+依存・実行出力はGit対象外とし、再現テスト用キャッシュはGit管理、demo-data原本は保全します。

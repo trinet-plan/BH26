@@ -21,7 +21,7 @@ def evaluate(input_data, services, config):
         return early
     _, observations, rejected, failures, provenance = context
     above = any(number(item["AF"]) > threshold for item in observations)
-    status = Status.MET if above else Status.NOT_EVALUATED if rejected or failures else Status.NOT_MET
+    status = Status.MET if above else Status.NOT_EVALUATED if failures else Status.NOT_MET
     return result("BS1", input_data, status, "Observed AF compared with curated disease threshold",
                   strength="strong" if above else None, evidence=observations + [assessment],
                   provenance=provenance)

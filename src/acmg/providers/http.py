@@ -33,11 +33,15 @@ class CachedHttpClient:
         self.used = {}
         self.network_used = False
 
-    def fetch(self, url, *, data=None, response_format="json", dataset_version=None):
+    def fetch(self, url, *, data=None, response_format="json", dataset_version=None,
+              allow_application_errors=False):
         if not url.startswith("https://") or response_format not in {"json", "text"}:
             raise ValueError("HTTPS and JSON/text response formats are required")
         request_key = {"url": url, "data": data, "format": response_format,
                        "dataset_version": dataset_version}
+        # Preserve existing cache identities for ordinary requests.
+        if allow_application_errors:
+            request_key["allow_application_errors"] = True
         key = hashlib.sha256(canonical_json(request_key).encode()).hexdigest()
         path = self.cache_dir / f"{key}.json"
         if path.exists():
@@ -60,7 +64,8 @@ class CachedHttpClient:
                     raw = response.read().decode("utf-8")
                 self.network_used = True
                 body = json.loads(raw) if response_format == "json" else raw
-                if isinstance(body, dict) and (body.get("errors") or body.get("error")):
+                if (not allow_application_errors and isinstance(body, dict)
+                        and (body.get("errors") or body.get("error"))):
                     raise FetchError("REMOTE_APPLICATION_ERROR")
                 break
             except HTTPError as exc:

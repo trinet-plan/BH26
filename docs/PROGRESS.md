@@ -28,16 +28,21 @@
   NOT_EVALUATED 268、DEPRECATED 56。独立Evidence不足のためMET/NOT_METは推測していない。
 - VA-Spec文書はモデル検証済み。実デモのEvidence LineはMET/NOT_METがないため0件。
   合成fixtureではMET/NOT_METのEvidence Line生成とオフライン同一性を検証。
-- pytest 61テスト成功、Ruff成功。固定キャッシュによる全28件E2Eを含む。
+- gnomAD 4.1.1 adapterを実装。17固有座位を1バッチで取得し、15座位・293観測を固定。
+  未登録2座位はNO_OBSERVATIONとして扱い、AF=0へ変換しない。
+- ClinVar E-utilities adapterを実装。13 VCVを取得し、全件で正規化済みGRCh38座標と一致。
+  現行VCV版と入力版を併記し、集約分類はPP5/BP6に使用しない。
+- gnomAD Evidenceを使うデモ評価はPM2がNOT_MET 26件/NOT_EVALUATED 2件、BA1が
+  NOT_MET 15件/NOT_EVALUATED 13件。VA-Spec Evidence Lineは41件を生成・検証。
+- pytest 69テスト成功、Ruff成功。3 Provider固定キャッシュによる全28件E2Eを含む。
 - work/synthetic-run-1/2で内部CLI実行成功、入力エラー0。結果は合成variantでありdemo同定結果ではない。
 
 ## 未完了（次工程）
 
-1. gnomAD/ClinVar adapter、同定からEvidence取得へのオンライン接続。
-2. BP7の予測/保存性・PVS1 NMD等の計算の自動化拡張。現在はreviewed assessmentを入力する経路。
-3. evaluateへのVCF直接入力・オンライン取得、症例文脈補足、準備済み入力の厳密なschema検証。
-4. run-manifestに全Provider・実装ルールのハッシュを統合、ground truth比較レポート。
-5. Windows/Linux CI。
+1. BP7の予測/保存性・PVS1 NMD等の計算の自動化拡張。現在はreviewed assessmentを入力する経路。
+2. evaluateへのVCF直接入力・オンライン取得、症例文脈補足、準備済み入力の厳密なschema検証。
+3. run-manifestに全Provider・実装ルールのハッシュを統合、ground truth比較レポート。
+4. Windows/Linux CI。
 
 ## 確認済み環境制約
 

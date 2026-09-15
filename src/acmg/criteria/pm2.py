@@ -17,7 +17,7 @@ def evaluate(input_data, services, config):
     if maximum > threshold:
         return result("PM2", input_data, Status.NOT_MET, "Observed AF exceeds configured rarity cutoff",
                       evidence=observations, provenance=provenance)
-    if rejected or failures:
+    if failures:
         return result("PM2", input_data, Status.NOT_EVALUATED, "Population search incomplete",
                       evidence=observations, missing=["complete_population_evidence"],
                       provenance=provenance)

@@ -1,0 +1,19 @@
+{
+  "population_providers": ["gnomAD"],
+  "PM2": {
+    "minimum_an": 2000,
+    "max_af": 0,
+    "policy_source": "BH26 demo population evidence QC policy",
+    "policy_version": "2026-09-15"
+  },
+  "BA1": {
+    "minimum_an": 2000,
+    "policy_source": "BH26 demo population evidence QC policy",
+    "policy_version": "2026-09-15"
+  },
+  "BS1": {
+    "minimum_an": 2000,
+    "policy_source": "BH26 demo population evidence QC policy",
+    "policy_version": "2026-09-15"
+  }
+}
