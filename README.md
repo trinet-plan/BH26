@@ -12,7 +12,7 @@ demo-dataの4症例を対象とする、Evidence単位のACMG基準評価ツー�
 - Ensembl HGVS/GRCh38参照検証の内容ハッシュ付きキャッシュとオフライン再生。
 - gnomAD 4.1.1集団頻度とClinVar VCVの内容ハッシュ付きキャッシュ、オフライン再生。
 - 準備済みJSONとローカルEvidenceによる内部評価JSON・TSV・manifest出力。
-- GA4GH VA-Spec Pythonモデルで検証したEvidence Line JSON出力。
+- GA4GH VA-Spec 1.0.1 ACMG Evidence Line互換JSONと、監査用envelope出力。
 
 実デモ全件の同定とEnsembl転写産物注釈の取得は完了しています。
 疾患別閾値・キュレーション・校正済み予測Evidenceの取得は未完了です。
@@ -90,8 +90,13 @@ $env:PYTHONPATH = 'src'
 
 出力先は新しいディレクトリを指定してください。既存実行結果は上書きしません。
 16コードを評価し、results.json・summary.tsv・evidence-lines.json・run-manifest.jsonを生成します。
+`evidence-lines.json` は監査情報を含む独自envelopeです。各VA-Specオブジェクトは
+`va-spec-1.0.1/*.json` に1 Evidence Line/1ファイルで出力します。
 VA-Specを意図的に省略する場合だけ `--internal-only` を指定します。
-出力には検証に使った `ga4gh.va-spec` バージョンとモデルschema IDを記録します。
+manifestにはVA-Spec 1.0.1のcanonical schema IDを記録し、固定した自己完結型の制限schemaと
+ACMG cross-field検査で書込み前に検証します。構造正規化に使った`ga4gh.va-spec`版も記録します。
+1.0.1のmachine-readable schemaに従い、not-met方向は`neutral`、`methodType`はACMG criterion、
+`MappableConcept`にはGKS-Core 1.0.0に存在しない`type`を出力しません。
 上のfixtureの閾値は合成テスト用であり、実変異評価向けの推奨設定ではありません。
 `config/demo-rules.json` のminimum ANはプロジェクト用QC設定であり、疾患別に校正された臨床閾値
 ではありません。各基準のNOT_EVALUATED、NOT_APPLICABLE、MANUAL_REVIEW、DEPRECATEDも

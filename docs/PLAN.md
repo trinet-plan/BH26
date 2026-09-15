@@ -39,7 +39,8 @@ PVS1は候補と推奨強度まででMANUAL_REVIEW、PP5/BP6はDEPRECATED。
 Python 3.12、srcレイアウト。各基準はevaluate(input_data, services, config)を実装する。
 CLI: prepare-demo（監査・同定）、evaluate（JSON/VCF、選択基準、offline）。
 成果物: audit.json、variants.json、同定履歴、results.json、evidence-lines.json、summary.tsv、run-manifest.json。
-VA-SPEC-PythonでACMG EvidenceLineを検証する。MET/NOT_METのみ標準出力へ変換する。
+VA-Spec 1.0.1 schemaに合わせてACMG EvidenceLineを検証する。MET/NOT_METのみ標準出力へ変換する。
+独自envelopeと、1 Evidence Line/1 JSONのschema準拠成果物を分離する。
 未同定variantからEvidenceLineを作らない。暫定・非推奨・未評価は内部出力へ保持する。
 
 ## 工程と検証

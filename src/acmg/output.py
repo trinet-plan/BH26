@@ -4,6 +4,7 @@ import csv
 import hashlib
 import json
 import platform
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -85,10 +86,20 @@ def run_internal(input_path, evidence_path, config_path, output_dir, criteria=CR
                                  value["status"], value["strength"] or "", value["summary"],
                                  ";".join(value["conflict_flags"])])
     va_path = None
+    va_instances = []
     if va_spec:
         va_path = output_dir / "evidence-lines.json"
         va_path.write_text(json.dumps(va_document, ensure_ascii=False, indent=2,
                                       allow_nan=False) + "\n", encoding="utf-8")
+        va_dir = output_dir / "va-spec-1.0.1"
+        va_dir.mkdir()
+        for record in va_document["records"]:
+            safe_id = re.sub(r"[^A-Za-z0-9_.-]", "_", record["record_id"])
+            for wrapped in record["evidence_lines"]:
+                path = va_dir / f"{safe_id}--{wrapped['criterion']}.json"
+                path.write_text(json.dumps(wrapped["evidence_line"], ensure_ascii=False,
+                                           indent=2, allow_nan=False) + "\n", encoding="utf-8")
+                va_instances.append({"path": str(path), "sha256": sha256_file(path)})
     paths = {"input": input_path, "evidence": evidence_path, "config": config_path}
     manifest = {
         "schema_version": "1.0", "tool_version": __version__, "python_version": platform.python_version(),
@@ -101,7 +112,9 @@ def run_internal(input_path, evidence_path, config_path, output_dir, criteria=CR
     }
     if va_path:
         manifest["va_spec"] = {
-            **va_document["validated_by"], "path": str(va_path), "sha256": sha256_file(va_path)
+            **va_document["validated_by"], "envelope_path": str(va_path),
+            "envelope_sha256": sha256_file(va_path), "instance_count": len(va_instances),
+            "instances": va_instances,
         }
     (output_dir / "run-manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return payload

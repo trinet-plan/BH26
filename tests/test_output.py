@@ -57,7 +57,10 @@ class OutputTests(unittest.TestCase):
                          (two / "evidence-lines.json").read_bytes())
         manifest = load_object(one / "run-manifest.json")
         self.assertEqual(manifest["va_spec_export"], "VALIDATED")
-        self.assertEqual(manifest["va_spec"]["package_version"], "0.5.0a4")
+        self.assertEqual(manifest["va_spec"]["schema_version"], "1.0.1")
+        self.assertGreater(manifest["va_spec"]["instance_count"], 0)
+        self.assertEqual(len(list((one / "va-spec-1.0.1").glob("*.json"))),
+                         manifest["va_spec"]["instance_count"])
 
     def test_va_spec_failure_leaves_no_partial_run(self):
         output = self.output_dir()

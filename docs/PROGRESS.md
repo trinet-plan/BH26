@@ -23,10 +23,11 @@
   オンライン実行と同一SHA-256になることを確認。
 - Ensembl由来の17注釈Evidenceをground truthラベルから分離してevidence.jsonへ出力。
 - evaluate: 準備済みJSONから16コードのresults.json、summary.tsv、run-manifest.jsonと
-  VA-Spec Evidence Lineを出力。ga4gh.va-spec 0.5.0a4のモデルで書込み前に検証。
+  VA-Spec Evidence Lineを出力。VA-Spec 1.0.1/GKS-Core 1.0.0に合わせ、not-met=`neutral`、
+  methodType=criterion、MappableConceptのtypeなしで書込み前に検証。
 - 実デモ28件×16基準=448結果を生成。NOT_APPLICABLE 113、MANUAL_REVIEW 11、
   NOT_EVALUATED 268、DEPRECATED 56。独立Evidence不足のためMET/NOT_METは推測していない。
-- VA-Spec文書はモデル検証済み。実デモのEvidence LineはMET/NOT_METがないため0件。
+- Ensembl注釈のみの実デモ評価ではMET/NOT_METがないためEvidence Lineは0件。
   合成fixtureではMET/NOT_METのEvidence Line生成とオフライン同一性を検証。
 - gnomAD 4.1.1 adapterを実装。17固有座位を1バッチで取得し、15座位・293観測を固定。
   未登録2座位はNO_OBSERVATIONとして扱い、AF=0へ変換しない。
@@ -34,7 +35,8 @@
   現行VCV版と入力版を併記し、集約分類はPP5/BP6に使用しない。
 - gnomAD Evidenceを使うデモ評価はPM2がNOT_MET 26件/NOT_EVALUATED 2件、BA1が
   NOT_MET 15件/NOT_EVALUATED 13件。VA-Spec Evidence Lineは41件を生成・検証。
-- pytest 69テスト成功、Ruff成功。3 Provider固定キャッシュによる全28件E2Eを含む。
+- 監査用の独自envelopeとは別に、`va-spec-1.0.1`へ1 Evidence Line/1 JSONを出力。
+- pytest 71テスト成功、Ruff成功。3 Provider固定キャッシュによる全28件E2Eを含む。
 - work/synthetic-run-1/2で内部CLI実行成功、入力エラー0。結果は合成variantでありdemo同定結果ではない。
 
 ## 未完了（次工程）

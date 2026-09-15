@@ -1,9 +1,8 @@
 import unittest
-
-from ga4gh.va_spec.acmg_2015 import VariantPathogenicityEvidenceLine
+from copy import deepcopy
 
 from acmg.core.models import CriterionResult, Status
-from acmg.va_spec.mapper import export_document, to_evidence_line
+from acmg.va_spec.mapper import SCHEMA_ID, export_document, to_evidence_line, validate_1_0_1
 
 
 VARIANT = {"assembly": "GRCh38", "chrom": "1", "pos": 2, "ref": "C", "alt": "T"}
@@ -15,9 +14,12 @@ class VaSpecTests(unittest.TestCase):
         result = CriterionResult("PM2", Status.MET, VARIANT, "rare", "supporting", "supports",
                                  "PM2_supporting", evidence=EVIDENCE)
         line = to_evidence_line(result)
-        validated = VariantPathogenicityEvidenceLine.model_validate(line)
-        self.assertEqual(validated.directionOfEvidenceProvided, "supports")
-        self.assertEqual(validated.evidenceOutcome.primaryCoding.code.root, "PM2_supporting")
+        validate_1_0_1(line, "PM2")
+        self.assertEqual(line["directionOfEvidenceProvided"], "supports")
+        self.assertEqual(line["specifiedBy"]["methodType"], "PM2")
+        self.assertEqual(line["evidenceOutcome"]["primaryCoding"]["code"], "PM2_supporting")
+        self.assertNotIn("type", line["evidenceOutcome"])
+        self.assertNotIn("type", line["strengthOfEvidenceProvided"])
 
     def test_not_met_maps_to_machine_readable_neutral(self):
         result = CriterionResult("PM2", Status.NOT_MET, VARIANT, "not rare", None, "none",
@@ -25,7 +27,7 @@ class VaSpecTests(unittest.TestCase):
         line = to_evidence_line(result)
         self.assertEqual(line["directionOfEvidenceProvided"], "neutral")
         self.assertNotIn("strengthOfEvidenceProvided", line)
-        VariantPathogenicityEvidenceLine.model_validate(line)
+        validate_1_0_1(line, "PM2")
 
     def test_workflow_statuses_are_not_exported(self):
         for code, status in (("PVS1", Status.MANUAL_REVIEW), ("PP5", Status.DEPRECATED),
@@ -46,7 +48,25 @@ class VaSpecTests(unittest.TestCase):
                                      "disputes" if code.startswith("B") else "supports", outcome,
                                      evidence=EVIDENCE)
             with self.subTest(code=code):
-                VariantPathogenicityEvidenceLine.model_validate(to_evidence_line(result))
+                validate_1_0_1(to_evidence_line(result), code)
+
+    def test_document_records_pinned_official_schema(self):
+        document = export_document([])
+        self.assertEqual(document["validated_by"]["schema_version"], "1.0.1")
+        self.assertEqual(document["validated_by"]["schema_id"], SCHEMA_ID)
+
+    def test_1_0_1_contract_rejects_newer_gks_discriminator_and_mismatched_method(self):
+        result = CriterionResult("PM2", Status.NOT_MET, VARIANT, "not rare", None, "none",
+                                 "PM2_not_met", evidence=EVIDENCE)
+        line = to_evidence_line(result)
+        invalid = deepcopy(line)
+        invalid["evidenceOutcome"]["type"] = "MappableConcept"
+        with self.assertRaisesRegex(ValueError, "schema validation failed"):
+            validate_1_0_1(invalid, "PM2")
+        invalid = deepcopy(line)
+        invalid["specifiedBy"]["methodType"] = "BA1"
+        with self.assertRaisesRegex(ValueError, "criterion mapping mismatch"):
+            validate_1_0_1(invalid, "PM2")
 
     def test_referenced_evidence_id_conflict_is_rejected(self):
         first = CriterionResult("PM2", Status.NOT_MET, VARIANT, "a", None, "none", "PM2_not_met",
