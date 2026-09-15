@@ -69,14 +69,17 @@ def main(argv=None):
                 release = args.ensembl_release or EnsemblIdentityProvider.current_release(client)
                 provider = EnsemblIdentityProvider(client, release)
                 mapped = {}
+                annotations = []
                 for record in records:
                     try:
-                        mapped[record["record_id"]] = [provider.map_record(record)]
+                        candidate, annotation = provider.map_record_with_annotation(record)
+                        mapped[record["record_id"]] = [candidate]
+                        annotations.append(annotation)
                     except ValueError as exc:
                         record["issues"].append(f"IDENTITY_PROVIDER_ERROR: {exc}")
                         mapped[record["record_id"]] = []
                 records = [reconcile(r, mapped[r["record_id"]], provider.reference) for r in records]
-            args.output_dir.mkdir(parents=True, exist_ok=True)
+            args.output_dir.mkdir(parents=True, exist_ok=False)
             output = args.output_dir / "audit.json"
             output.write_text(json.dumps({"schema_version": "1.0", "records": records},
                                          ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
@@ -86,15 +89,28 @@ def main(argv=None):
                     json.dumps({"schema_version": "1.0", "records": resolved},
                                ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
             if args.command == "prepare-demo-online":
+                resolved_keys = {record["resolution"]["variant"]["assembly"] + ":" +
+                                 record["resolution"]["variant"]["chrom"] + ":" +
+                                 str(record["resolution"]["variant"]["pos"]) + ":" +
+                                 record["resolution"]["variant"]["ref"] + ":" +
+                                 record["resolution"]["variant"]["alt"]
+                                 for record in records if record["resolution"]}
+                annotations = [item for item in annotations if item["variant_key"] in resolved_keys]
+                annotations = list({item["evidence_id"]: item for item in annotations}.values())
+                (args.output_dir / "evidence.json").write_text(
+                    json.dumps({"schema_version": "1.0", "evidence": annotations},
+                               ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
                 manifest = {
                     "schema_version": "1.0", "provider": provider.name,
                     "provider_version": provider.release,
                     "retrieved_at": datetime.now(timezone.utc).isoformat(),
                     "offline": args.offline,
+                    "network_used": client.network_used,
                     "cache_entries": client.used,
                     "cache_set_sha256": hashlib.sha256(
                         json.dumps(client.used, sort_keys=True).encode()).hexdigest(),
                     "records": len(records), "resolved": len(resolved),
+                    "annotation_evidence": len(annotations),
                 }
                 (args.output_dir / "identity-manifest.json").write_text(
                     json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

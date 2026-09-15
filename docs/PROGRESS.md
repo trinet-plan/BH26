@@ -1,6 +1,6 @@
 # 実装進捗
 
-更新: 2026-09-15。目標全体は未完了。
+更新: 2026-09-15。初期目標の完了条件を満たした。以下の拡張残件は別工程。
 
 ## 実装・検証済み
 
@@ -16,26 +16,33 @@
 - PVS1は分岐履歴・推奨強度のみ。複雑な未自動化分岐はcurated branchで補足する。
 - 基準間の重複候補フラグ、ローカルEvidence/Population Service。
 - HTTPキャッシュ（内容ハッシュ検証、offline、タイムアウト、限定リトライ）とVEP adapterを実装。
-- Ensembl HGVS同定・GRCh38参照配列検証・キャッシュmanifestを実装。単一HGVSの実応答で形式を確認。
-  全件照会はdemo-data識別子の外部送信に対する明示許可がないため安全審査で停止。
+- Ensembl release 116で全17固有HGVSを同定し、GRCh38参照配列検証と応答キャッシュを固定。
+  全28件の内訳はVERIFIED 24件、CORRECTED 4件、PENDING 0件。
+- 補正はcase1-var1、case1-var2、case1-noise5、case2-var2。元表現と補正後表現をaudit.jsonに併記。
+- 同じ固定キャッシュから完全オフラインで全28件を再処理し、audit.json/variants.jsonが
+  オンライン実行と同一SHA-256になることを確認。
+- Ensembl由来の17注釈Evidenceをground truthラベルから分離してevidence.jsonへ出力。
 - evaluate: 準備済みJSONから16コードのresults.json、summary.tsv、run-manifest.jsonと
   VA-Spec Evidence Lineを出力。ga4gh.va-spec 0.5.0a4のモデルで書込み前に検証。
-- pytest 57テスト成功、Ruff成功。入力統合、ルール分岐、実デモ監査、VA-Spec、再現性を検証。
+- 実デモ28件×16基準=448結果を生成。NOT_APPLICABLE 113、MANUAL_REVIEW 11、
+  NOT_EVALUATED 268、DEPRECATED 56。独立Evidence不足のためMET/NOT_METは推測していない。
+- VA-Spec文書はモデル検証済み。実デモのEvidence LineはMET/NOT_METがないため0件。
+  合成fixtureではMET/NOT_METのEvidence Line生成とオフライン同一性を検証。
+- pytest 61テスト成功、Ruff成功。固定キャッシュによる全28件E2Eを含む。
 - work/synthetic-run-1/2で内部CLI実行成功、入力エラー0。結果は合成variantでありdemo同定結果ではない。
 
 ## 未完了（次工程）
 
-1. 外部送信の明示許可後、実装済みEnsembl経路で28件を同定し、キャッシュを固定する。
-2. gnomAD/ClinVar adapter、同定からEvidence取得へのオンライン接続。
-3. BP7の予測/保存性・PVS1 NMD等の計算の自動化拡張。現在はreviewed assessmentを入力する経路。
-4. evaluateへのVCF直接入力・オンライン取得、症例文脈補足、準備済み入力の厳密なschema検証。
-5. run-manifestに全Provider・実装ルールのハッシュを統合、ground truth比較レポート。
-6. Windows/Linux CI、実デモ全経路の再現テスト。
-7. 工程単位のローカルコミット。
+1. gnomAD/ClinVar adapter、同定からEvidence取得へのオンライン接続。
+2. BP7の予測/保存性・PVS1 NMD等の計算の自動化拡張。現在はreviewed assessmentを入力する経路。
+3. evaluateへのVCF直接入力・オンライン取得、症例文脈補足、準備済み入力の厳密なschema検証。
+4. run-manifestに全Provider・実装ルールのハッシュを統合、ground truth比較レポート。
+5. Windows/Linux CI。
 
 ## 確認済み環境制約
 
-- git add/commitは `.git/index.lock: Permission denied` で失敗。変更は作業ツリーにある。
+- 通常サンドボックスでは `.git/index.lock` が拒否されるが、明示依頼に基づく限定昇格で
+  ローカルコミット `f25e38e` を作成済み。
 - Python 3.12環境と依存は導入済み。editable installはTemporaryDirectoryへの書込み拒否があるため、
   現環境ではPYTHONPATH=srcでCLIを実行する。
 - 外部pushは行っていない。
@@ -44,7 +51,7 @@
 ## 注意する設計残件
 
 - prepare-demoに参照FASTAのassembly/出典/ハッシュのmanifest検証を追加すること。
-- identity候補はローカル契約とEnsemblライブProviderに対応。全件取得・固定は外部送信許可待ち。
+- identity候補はローカル契約とEnsemblライブProviderに対応し、全件取得・固定済み。
 - 品質・校正設定は現在テスト内の合成プロファイルのみ。本番の出典付き設定は未導入。
 - 評価モデル/Provider契約にschema検証を追加し、未信頼な型・範囲値を早期に拒否すること。
 - ground truthのACMGコードや最終分類は、評価結果と混ぜない。

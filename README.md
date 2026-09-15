@@ -13,7 +13,8 @@ demo-dataの4症例を対象とする、Evidence単位のACMG基準評価ツー�
 - 準備済みJSONとローカルEvidenceによる内部評価JSON・TSV・manifest出力。
 - GA4GH VA-Spec Pythonモデルで検証したEvidence Line JSON出力。
 
-実デモ全件のオンライン同定と外部Evidence取得はまだ未完了です。
+実デモ全件の同定とEnsembl転写産物注釈の取得は完了しています。
+集団頻度・キュレーション・校正済み予測Evidenceの取得は未完了です。
 監査結果のPENDINGを、変異の同定完了や基準の不成立と解釈しないでください。
 
 ## 開発環境
@@ -58,11 +59,14 @@ $env:PYTHONPATH = 'src'
 .venv/Scripts/python.exe -m acmg prepare-demo-online --input-dir demo-data --cache-dir tests/fixtures/ensembl-cache --output-dir work/demo-live
 ```
 
-このコマンドはTRANSCRIPT/HGVSCをEnsemblへ送信します。臨床データの取り扱い方針を確認してから
+このコマンドはTRANSCRIPT/HGVSCとindel正規化に必要なゲノム座標をEnsemblへ送信します。
+臨床データの取り扱い方針を確認してから
 使用してください。初回成功後は同じ引数に `--offline --ensembl-release <release>` を加えると、
 保存済み応答だけで再生できます。
 
 準備後の `variants.json` には同定済み入力のみが入り、保留レコードは `audit.json` に残ります。
+`evidence.json` にはラベルから分離したEnsembl注釈が入ります。現在の固定キャッシュでは全28件が
+解決し、24件は元座標を確認、4件はHGVS/GRCh38に基づいて補正されます。
 
 ## 評価の動作確認（合成データ）
 
@@ -75,6 +79,9 @@ $env:PYTHONPATH = 'src'
 VA-Specを意図的に省略する場合だけ `--internal-only` を指定します。
 出力には検証に使った `ga4gh.va-spec` バージョンとモデルschema IDを記録します。
 上のfixtureの閾値は合成テスト用であり、実変異評価向けの推奨設定ではありません。
+実デモでは未取得・未校正Evidenceを推測で補わないため、現段階でMET/NOT_METのEvidence Lineは
+生成されません。各基準のNOT_EVALUATED、NOT_APPLICABLE、MANUAL_REVIEW、DEPRECATEDは
+`results.json` と `summary.tsv` に記録されます。
 
 ## Gitとデータ
 

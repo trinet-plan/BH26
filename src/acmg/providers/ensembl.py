@@ -61,6 +61,10 @@ class EnsemblIdentityProvider:
         return str(max(releases))
 
     def map_record(self, record):
+        candidate, _ = self.map_record_with_annotation(record)
+        return candidate
+
+    def map_record_with_annotation(self, record):
         transcript = record["identity"].get("TRANSCRIPT")
         hgvsc = record["identity"].get("HGVSC")
         if not transcript or not hgvsc:
@@ -101,11 +105,28 @@ class EnsemblIdentityProvider:
         else:
             variant = Variant("GRCh38", chrom, start, ref, alt)
         variant = normalize(variant, self.reference)
-        return {
+        response_sha256 = hashlib.sha256(canonical_json(rows).encode()).hexdigest()
+        candidate = {
             "variant": variant.to_dict(),
             "source": self.name,
             "source_version": self.release,
             "retrieved_at": response["retrieved_at"],
-            "response_sha256": hashlib.sha256(canonical_json(rows).encode()).hexdigest(),
+            "response_sha256": response_sha256,
             "matched_identifiers": {"TRANSCRIPT": transcript, "HGVSC": hgvsc},
         }
+        gene = record["identity"].get("GENE")
+        consequences = sorted({term for consequence in row.get("transcript_consequences", [])
+                               if consequence.get("gene_symbol") == gene
+                               for term in consequence.get("consequence_terms", [])})
+        annotation = {
+            "category": "annotation", "variant_key": variant.key,
+            "evidence_id": f"urn:sha256:{response_sha256}:annotation:{transcript}",
+            "source": self.name, "source_version": self.release,
+            "retrieved_at": response["retrieved_at"], "quality_status": "PASS",
+            "transcript": transcript, "gene": gene, "hgvsc": expected,
+            "consequences": consequences,
+            "high_confidence_null_or_splice": bool(
+                set(consequences) & {"stop_gained", "frameshift_variant", "splice_donor_variant",
+                                     "splice_acceptor_variant", "start_lost"}),
+        }
+        return candidate, annotation

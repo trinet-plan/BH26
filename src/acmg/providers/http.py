@@ -31,6 +31,7 @@ class CachedHttpClient:
         self.opener = opener
         self.sleeper = sleeper
         self.used = {}
+        self.network_used = False
 
     def fetch(self, url, *, data=None, response_format="json", dataset_version=None):
         if not url.startswith("https://") or response_format not in {"json", "text"}:
@@ -57,6 +58,7 @@ class CachedHttpClient:
             try:
                 with self.opener(request, timeout=self.timeout) as response:
                     raw = response.read().decode("utf-8")
+                self.network_used = True
                 body = json.loads(raw) if response_format == "json" else raw
                 if isinstance(body, dict) and (body.get("errors") or body.get("error")):
                     raise FetchError("REMOTE_APPLICATION_ERROR")
