@@ -5,6 +5,7 @@ from acmg.core.models import Variant, Status
 from acmg.criteria import ba1, bs1, pm2
 from acmg.providers.local import LocalPopulationProvider
 from acmg.services.population import PopulationService
+from acmg.va_spec.mapper import to_evidence_line, validate_1_0_1
 
 
 class PopulationTests(unittest.TestCase):
@@ -77,8 +78,24 @@ class PopulationTests(unittest.TestCase):
                                "condition": "test:disease", "inheritance": "autosomal_dominant",
                                "max_credible_af": 0.001, "source": "test", "source_version": "1",
                                "reviewed_at": "2026-09-14"}})
-        self.assertEqual(bs1.evaluate(self.input, self.services([self.observation(100)]),
-                                     self.config).status, Status.MET)
+        value = bs1.evaluate(self.input, self.services([self.observation(100)]), self.config)
+        self.assertEqual(value.status, Status.MET)
+        self.assertEqual(value.provenance["disease_frequency_threshold"]["max_credible_af"], 0.001)
+
+    def test_bs1_threshold_is_policy_not_an_evidence_item(self):
+        """Every exported evidence item needs an IRI; the threshold has none, so it stays out."""
+        self.input.update({"condition": "test:disease", "inheritance": "autosomal_dominant",
+                           "disease_frequency_threshold": {
+                               "condition": "test:disease", "inheritance": "autosomal_dominant",
+                               "max_credible_af": 0.001, "source": "test", "source_version": "1",
+                               "reviewed_at": "2026-09-14"}})
+        value = bs1.evaluate(self.input, self.services([self.observation(100)]), self.config)
+        self.assertTrue(value.evidence)
+        self.assertTrue(all(item.get("evidence_id") for item in value.evidence))
+        line = to_evidence_line(value)
+        validate_1_0_1(line, "BS1")
+        self.assertEqual(line["evidenceOutcome"]["primaryCoding"]["code"], "BS1")
+        self.assertEqual(line["directionOfEvidenceProvided"], "disputes")
 
 
 if __name__ == "__main__":

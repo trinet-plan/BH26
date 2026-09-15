@@ -22,6 +22,8 @@ def evaluate(input_data, services, config):
     _, observations, rejected, failures, provenance = context
     above = any(number(item["AF"]) > threshold for item in observations)
     status = Status.MET if above else Status.NOT_EVALUATED if failures else Status.NOT_MET
+    # The threshold is the policy the observations are judged against, not an evidence item:
+    # it carries no retrievable identifier and must not appear in hasEvidenceItems.
     return result("BS1", input_data, status, "Observed AF compared with curated disease threshold",
-                  strength="strong" if above else None, evidence=observations + [assessment],
-                  provenance=provenance)
+                  strength="strong" if above else None, evidence=observations,
+                  provenance={**provenance, "disease_frequency_threshold": assessment})
