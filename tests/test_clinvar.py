@@ -1,7 +1,9 @@
 import unittest
 
 from acmg.core.models import Variant
-from acmg.providers.clinvar import ClinVarComparatorProvider, ClinVarProvider
+from acmg.providers.clinvar import (
+    ClinVarComparatorProvider, ClinVarHotspotProvider, ClinVarProvider,
+)
 
 
 XML = """<ClinVarResult-Set>
@@ -119,6 +121,117 @@ class ClinVarProviderTests(unittest.TestCase):
         self.assertEqual(len(matches), 1)
         self.assertEqual(matches[0]["comparator_protein_interval"]["ref_aa"], "GR")
         self.assertFalse(matches[0]["splice_effect_checked"])
+
+
+HOTSPOT_POLICY = {"window_aa": 5, "min_pathogenic": 3, "max_benign": 0,
+                  "method": "clinvar_local_density", "policy_source": "test policy",
+                  "policy_version": "PM1-hotspot-test"}
+
+SUMMARIES = {
+    "1": {"accession": "VCV000000001", "gene_sort": "TEST", "protein_change": "R248W",
+          "germline_classification": {"description": "Pathogenic",
+                                      "review_status": "criteria provided, multiple submitters",
+                                      "trait_set": [{"trait_name": "Test disease"}]}},
+    "2": {"accession": "VCV000000002", "gene_sort": "TEST", "protein_change": "R248Q",
+          "germline_classification": {"description": "Likely pathogenic", "trait_set": []}},
+    "3": {"accession": "VCV000000003", "gene_sort": "TEST", "protein_change": "G245S",
+          "germline_classification": {"description": "Pathogenic", "trait_set": []}},
+    # Outside the +/-5 window.
+    "4": {"accession": "VCV000000004", "gene_sort": "TEST", "protein_change": "P300L",
+          "germline_classification": {"description": "Pathogenic", "trait_set": []}},
+    # Counted neither way.
+    "5": {"accession": "VCV000000005", "gene_sort": "TEST", "protein_change": "R249T",
+          "germline_classification": {"description": "Uncertain significance", "trait_set": []}},
+    "6": {"accession": "VCV000000006", "gene_sort": "TEST", "protein_change": "R249K",
+          "germline_classification": {"description": "Conflicting classifications of pathogenicity",
+                                      "trait_set": []}},
+    # Not positionable.
+    "7": {"accession": "VCV000000007", "gene_sort": "TEST", "protein_change": "R248fs",
+          "germline_classification": {"description": "Pathogenic", "trait_set": []}},
+    # Another gene sharing the locus.
+    "8": {"accession": "VCV000000008", "gene_sort": "OTHER", "protein_change": "R248W",
+          "germline_classification": {"description": "Pathogenic", "trait_set": []}},
+}
+
+BENIGN_SUMMARY = {"accession": "VCV000000009", "gene_sort": "TEST", "protein_change": "S246N",
+                  "germline_classification": {"description": "Likely benign", "trait_set": []}}
+
+
+class HotspotClient:
+    def __init__(self, uids=None, summaries=None, count=None):
+        self.uids = uids or sorted(SUMMARIES)
+        self.summaries = summaries or SUMMARIES
+        self.count = len(self.uids) if count is None else count
+        self.urls = []
+
+    def fetch(self, url, **kwargs):
+        self.urls.append(url)
+        if "esearch.fcgi" in url:
+            return {"body": {"esearchresult": {"count": str(self.count), "retmax": "500",
+                                               "idlist": list(self.uids)}},
+                    "retrieved_at": "2026-09-15T00:00:00Z"}
+        return {"body": {"result": {"uids": list(self.uids), **self.summaries}},
+                "retrieved_at": "2026-09-15T00:00:01Z"}
+
+
+class ClinVarHotspotTests(unittest.TestCase):
+    annotation = {"transcript": "NM_1.2", "gene": "TEST", "protein_id": "NP_1.1",
+                  "protein_start": 248, "protein_end": 248, "ref_aa": "R", "alt_aa": "H"}
+
+    def search(self, client=None, policy=None):
+        variant = Variant("GRCh38", "1", 100, "G", "A")
+        provider = ClinVarHotspotProvider(client or HotspotClient(), "2026-09-15",
+                                          policy or HOTSPOT_POLICY)
+        return provider.search_hotspot(self.annotation, variant)
+
+    def test_counts_only_positioned_in_window_missense_of_the_same_gene(self):
+        search, region = self.search()
+        self.assertTrue(search["complete"])
+        self.assertEqual(region["region_type"], "mutational_hotspot")
+        self.assertEqual(region["start"], 243)
+        self.assertEqual(region["end"], 253)
+        self.assertEqual(region["pathogenic_count"], 3)
+        self.assertEqual(region["benign_count"], 0)
+        self.assertEqual([item["variation_id"] for item in region["counted_variants"]
+                          if item["bucket"] == "pathogenic"], ["1", "2", "3"])
+        # Conflicting records are neither pathogenic nor benign, but stay visible for audit.
+        self.assertEqual([item["variation_id"] for item in region["counted_variants"]
+                          if item["bucket"] == "conflicting"], ["6"])
+        self.assertIn("Test disease", region["counted_conditions"])
+
+    def test_benign_variation_in_window_is_counted(self):
+        summaries = {**SUMMARIES, "9": BENIGN_SUMMARY}
+        client = HotspotClient(uids=sorted(summaries), summaries=summaries)
+        _, region = self.search(client)
+        self.assertEqual(region["benign_count"], 1)
+        self.assertEqual(region["pathogenic_count"], 3)
+
+    def test_region_evidence_is_automated_and_policy_versioned(self):
+        _, region = self.search()
+        self.assertEqual(region["assessment_method"], "automated")
+        self.assertNotIn("curator", region)
+        self.assertEqual(region["policy_version"], "PM1-hotspot-test")
+        self.assertEqual(region["method"], "clinvar_local_density")
+        self.assertIn("NOT_CRITICAL_DOMAIN", region["use_restriction"])
+
+    def test_truncated_search_emits_no_density_evidence(self):
+        client = HotspotClient(count=900)
+        search, region = self.search(client)
+        self.assertFalse(search["complete"])
+        self.assertIsNone(region)
+        self.assertEqual(search["quality_status"], "INCOMPLETE_SEARCH")
+
+    def test_incomplete_policy_is_rejected(self):
+        policy = {key: value for key, value in HOTSPOT_POLICY.items() if key != "policy_version"}
+        with self.assertRaisesRegex(ValueError, "policy_version"):
+            self.search(policy=policy)
+
+    def test_missing_protein_annotation_is_rejected(self):
+        variant = Variant("GRCh38", "1", 100, "G", "A")
+        provider = ClinVarHotspotProvider(HotspotClient(), "2026-09-15", HOTSPOT_POLICY)
+        annotation = {key: value for key, value in self.annotation.items() if key != "protein_id"}
+        with self.assertRaises(ValueError):
+            provider.search_hotspot(annotation, variant)
 
 
 if __name__ == "__main__":

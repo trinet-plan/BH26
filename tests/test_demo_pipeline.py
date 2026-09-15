@@ -22,7 +22,9 @@ class DemoPipelineTests(unittest.TestCase):
             "--evidence-cache-dir", str(ROOT / "tests" / "fixtures" / "external-cache"),
             "--output-dir", str(prepared), "--ensembl-release", "116",
             "--with-gnomad", "--gnomad-release", "4.1.1",
-            "--with-clinvar", "--clinvar-release", "2026-09-15", "--offline",
+            "--with-clinvar", "--clinvar-release", "2026-09-15",
+            "--with-pm1-hotspot", "--rules", str(ROOT / "config" / "demo-rules.json"),
+            "--offline",
         ])
         self.assertEqual(code, 0)
         audit = json.loads((prepared / "audit.json").read_text(encoding="utf-8"))
@@ -52,6 +54,27 @@ class DemoPipelineTests(unittest.TestCase):
         pm2 = [result for record in results["records"] for result in record["results"]
                if result["criterion"] == "PM2"]
         self.assertTrue(any(result["status"] == "NOT_MET" for result in pm2))
+
+        # ClinVar missense density around each residue, under the committed PM1 policy.
+        hotspot = manifest["external_providers"][2]
+        self.assertEqual(hotspot["policy_version"], "PM1-hotspot-v1")
+        self.assertEqual(hotspot["region_evidence"], 10)
+        self.assertEqual(hotspot["errors"], [])
+        pm1 = [result for record in results["records"] for result in record["results"]
+               if result["criterion"] == "PM1"]
+        statuses = {status: sum(result["status"] == status for result in pm1)
+                    for status in ("MET", "NOT_MET", "NOT_EVALUATED")}
+        self.assertEqual(statuses, {"MET": 2, "NOT_MET": 6, "NOT_EVALUATED": 20})
+        met = [result for result in pm1 if result["status"] == "MET"]
+        for result in met:
+            self.assertEqual(result["evidence_outcome"], "PM1")
+            self.assertEqual(result["provenance"]["pm1_route"], "mutational_hotspot")
+            self.assertEqual(result["provenance"]["assessment_method"], "automated")
+            self.assertEqual(result["provenance"]["benign_count"], 0)
+            self.assertGreaterEqual(result["provenance"]["pathogenic_count"], 3)
+            # Disease relevance is unresolved without a condition, so it stays a review point.
+            self.assertEqual(result["provenance"]["condition_assessment"], "NOT_EVALUATED")
+            self.assertTrue(result["review_points"])
 
         # Exercise a real case2 record and the committed gnomAD response with an explicit,
         # test-only rarity threshold. This is a regression test, not a clinical policy.

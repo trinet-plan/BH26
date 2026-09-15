@@ -1,6 +1,7 @@
 # 実装進捗
 
 更新: 2026-09-15。初期目標の完了条件を満たした。以下の拡張残件は別工程。
+実デモ28件×16基準の内訳は工程ごとに変わる。最新値は末尾のPM1節を参照。
 
 ## 実装・検証済み
 
@@ -53,11 +54,25 @@
 - pytest 79テスト成功、Ruff成功。3 Provider固定キャッシュによる全28件E2Eを含む。
 - work/synthetic-run-1/2で内部CLI実行成功、入力エラー0。結果は合成variantでありdemo同定結果ではない。
 
+- PM1をACMG定義どおり2ルート（mutational hotspot / critical functional domain）で評価。
+  共通条件はbenign_depletionのみ。critical domainにpathogenic enrichmentを要求しない。
+  conditionなしでもprotein-levelで判定し、condition_assessmentを分離して記録。
+  自動Evidenceはhotspotルート限定で、critical domainは人手のreviewed Evidenceのみ受け付ける。
+- ClinVar missense density Provider（esearch+esummary、遺伝子単位検索、残基±N aa）を実装。
+  閾値はconfigのversion付きpolicy（PM1-hotspot-v1: ±5 aa, P/LP>=3, B/LB=0）から取得し、
+  コードに数値を持たない。数えたVCVとconditionを保存し、conflictingはどちらにも数えない。
+  検索が打ち切られた場合はdensity Evidenceを出さない。P/LP報告不足はNOT_METではなく未評価。
+- 実デモ28件でPM1はMET 2件、NOT_MET 6件、NOT_EVALUATED 20件。VA-Spec Evidence Lineは65件。
+  MET 2件はconditionが未指定のためcondition_assessment=NOT_EVALUATEDと確認事項を併記。
+- pytest 98テスト成功、Ruff成功。固定キャッシュによるPM1 hotspotのオフライン再現を含む。
+
 ## 未完了（次工程）
 
-1. BP7のRefSeq exon境界position adapterと校正済み保存性policy、PVS1 NMD等の計算の自動化拡張。
+1. PM1のgene/disease-specific対応（強度可変、PM1不使用geneのNOT_APPLICABLE表明）と、
+   critical functional domainのreviewed Evidence入力経路。conditionとBS1疾患閾値の入力経路。
+2. BP7のRefSeq exon境界position adapterと校正済み保存性policy、PVS1 NMD等の計算の自動化拡張。
    現在はSpliceAI/保存性raw Evidenceとreviewed assessment入力経路まで。
-2. evaluateへのVCF直接入力・オンライン取得、症例文脈補足、準備済み入力の厳密なschema検証。
+3. evaluateへのVCF直接入力・オンライン取得、症例文脈補足、準備済み入力の厳密なschema検証。
 3. run-manifestに全Provider・実装ルールのハッシュを統合、ground truth比較レポート。
 4. Windows/Linux CI。
 

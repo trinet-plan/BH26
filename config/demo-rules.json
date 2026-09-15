@@ -1,5 +1,7 @@
 {
-  "population_providers": ["gnomAD"],
+  "population_providers": [
+    "gnomAD"
+  ],
   "PM2": {
     "minimum_an": 2000,
     "max_af": 0,
@@ -15,5 +17,15 @@
     "minimum_an": 2000,
     "policy_source": "BH26 demo population evidence QC policy",
     "policy_version": "2026-09-15"
+  },
+  "PM1": {
+    "hotspot": {
+      "window_aa": 5,
+      "min_pathogenic": 3,
+      "max_benign": 0,
+      "method": "clinvar_local_density",
+      "policy_source": "BH26 demo PM1 hotspot proxy policy (fastVEP-style ClinVar missense density); not a ClinGen VCEP specification",
+      "policy_version": "PM1-hotspot-v1"
+    }
   }
 }

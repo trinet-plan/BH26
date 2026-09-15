@@ -14,6 +14,7 @@ demo-dataの4症例を対象とする、Evidence単位のACMG基準評価ツー�
 - Ensembl HGVS/GRCh38参照検証の内容ハッシュ付きキャッシュとオフライン再生。
 - version付きRefSeqに一致するVEP蛋白注釈と、AlphaMissense・SpliceAI・保存性raw Evidence。
 - ClinVar exact protein comparator検索と、疾患評価を分離したPS1 protein-level判定。
+- PM1のhotspot/critical domain 2ルート評価と、ClinVar missense densityによるhotspot proxy。
 - gnomAD 4.1.1集団頻度とClinVar VCVの内容ハッシュ付きキャッシュ、オフライン再生。
 - 準備済みJSONとローカルEvidenceによる内部評価JSON・TSV・manifest出力。
 - GA4GH VA-Spec 1.0.1 ACMG Evidence Line互換JSONと、監査用envelope出力。
@@ -69,14 +70,21 @@ $env:PYTHONPATH = 'src'
 使用してください。初回成功後は同じ引数に `--offline --ensembl-release <release>` を加えると、
 保存済み応答だけで再生できます。
 
-gnomADとClinVarも含める場合は次のように実行します。送信するのは正規化済みGRCh38座位と、
-VCFに記載されたVCV accessionだけです。
+gnomADとClinVarも含める場合は次のように実行します。送信するのは正規化済みGRCh38座位、
+VCFに記載されたVCV accession、およびPM1 hotspot検索時の遺伝子記号だけです。
 
 ```powershell
 $env:PYTHONPATH = 'src'
-.venv/Scripts/python.exe -m acmg prepare-demo-online --input-dir demo-data --cache-dir tests/fixtures/ensembl-cache --evidence-cache-dir tests/fixtures/external-cache --output-dir work/demo-external --ensembl-release 116 --with-gnomad --gnomad-release 4.1.1 --with-clinvar --clinvar-release 2026-09-15 --offline
+.venv/Scripts/python.exe -m acmg prepare-demo-online --input-dir demo-data --cache-dir tests/fixtures/ensembl-cache --evidence-cache-dir tests/fixtures/external-cache --output-dir work/demo-external --ensembl-release 116 --with-gnomad --gnomad-release 4.1.1 --with-clinvar --clinvar-release 2026-09-15 --with-pm1-hotspot --rules config/demo-rules.json --offline
 .venv/Scripts/python.exe -m acmg evaluate --input work/demo-external/variants.json --evidence work/demo-external/evidence.json --config config/demo-rules.json --criteria all --offline --output-dir work/demo-evaluated
 ```
+
+`--with-pm1-hotspot` は各missense変異の残基±N aaにあるClinVar missense変異を数え、PM1の
+hotspot Evidenceを生成します。閾値は `config/demo-rules.json` の `PM1.hotspot` にversion付きで
+置き、コードには持ちません。これはhotspotの近似指標であり、critical functional domainの
+根拠には使いません（domainルートは人手のreviewed Evidenceのみ）。固定キャッシュでは10件の
+hotspot Evidenceが生成され、PM1はMET 2件・NOT_MET 6件・NOT_EVALUATED 20件です。P/LPの報告が
+閾値未満の場合はNOT_METにせず、報告不足として未評価に区別します。
 
 固定キャッシュではgnomAD 17座位中15座位に観測があり、2座位は未登録です。未登録をAF=0とは
 扱いません。ClinVarは13 VCVを取得し、GRCh38座標一致を確認します。ClinVarの集約分類は同定・

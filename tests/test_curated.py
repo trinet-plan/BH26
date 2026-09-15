@@ -81,6 +81,22 @@ class CuratedCriteriaTests(unittest.TestCase):
         self.assertEqual(value.status, Status.MET)
         self.assertEqual(value.provenance["pm1_route"], "critical_functional_domain")
 
+    def test_automated_evidence_cannot_claim_critical_domain(self):
+        item = self.region(region_type="critical_functional_domain", assessment_method="automated",
+                           method="clinvar_local_density", policy_version="PM1-hotspot-test",
+                           critical_functional_region=True, benign_depletion=True)
+        value = self.run_pm1(item)
+        self.assertEqual(value.status, Status.NOT_EVALUATED)
+        self.assertIn("curated_criticality", value.missing_inputs)
+
+    def test_hotspot_route_accepts_automated_policy_evidence(self):
+        item = self.hotspot(assessment_method="automated", pathogenic_count=3, benign_count=0)
+        del item["curator"]
+        del item["reviewed_at"]
+        value = self.run_pm1(item, self.HOTSPOT_POLICY)
+        self.assertEqual(value.status, Status.MET)
+        self.assertEqual(value.provenance["assessment_method"], "automated")
+
     def test_hotspot_route_uses_configured_thresholds(self):
         item = self.hotspot(pathogenic_count=3, benign_count=0)
         value = self.run_pm1(item, self.HOTSPOT_POLICY)

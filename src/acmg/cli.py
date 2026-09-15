@@ -11,7 +11,9 @@ from acmg.core.identity import evaluation_inputs, reconcile
 from acmg.core.reference import FastaReference
 from acmg.core.models import CRITERIA, Variant
 from acmg.output import run_internal
-from acmg.providers.clinvar import VCV, ClinVarComparatorProvider, ClinVarProvider
+from acmg.providers.clinvar import (
+    VCV, ClinVarComparatorProvider, ClinVarHotspotProvider, ClinVarProvider,
+)
 from acmg.providers.ensembl import EnsemblIdentityProvider
 from acmg.providers.gnomad import GnomadProvider
 from acmg.providers.http import CachedHttpClient
@@ -39,6 +41,10 @@ def main(argv=None):
     online.add_argument("--with-gnomad", action="store_true")
     online.add_argument("--gnomad-release", default="4.1.1")
     online.add_argument("--with-clinvar", action="store_true")
+    online.add_argument("--with-pm1-hotspot", action="store_true",
+                        help="Count ClinVar missense density around each residue as PM1 hotspot proxy")
+    online.add_argument("--rules", type=Path,
+                        help="Rules JSON supplying PM1.hotspot thresholds for --with-pm1-hotspot")
     online.add_argument("--clinvar-release", default=datetime.now(timezone.utc).date().isoformat())
     online.add_argument("--offline", action="store_true")
     evaluate = sub.add_parser("evaluate", help="Evaluate independently sourced evidence for prepared variants")
@@ -183,6 +189,40 @@ def main(argv=None):
                     clinvar_manifest["ps1_comparator_evidence"] = comparator_evidence
                     clinvar_manifest["ps1_comparator_errors"] = comparator_errors
                     external_manifest.append(clinvar_manifest)
+                if args.with_pm1_hotspot:
+                    if not args.rules:
+                        raise ValueError("--with-pm1-hotspot requires --rules with PM1.hotspot")
+                    policy = json.loads(args.rules.read_text(encoding="utf-8"))                         .get("PM1", {}).get("hotspot", {})
+                    hotspot = ClinVarHotspotProvider(external_client, args.clinvar_release, policy)
+                    hotspot_regions = 0
+                    hotspot_errors = []
+                    for annotation in {
+                        (item["variant_key"], item["transcript"]): item
+                        for item in annotations
+                        if "missense_variant" in item["consequences"] and item.get("protein_start")
+                    }.values():
+                        try:
+                            search, region = hotspot.search_hotspot(
+                                annotation, variants[annotation["variant_key"]]
+                            )
+                        except ValueError as exc:
+                            hotspot_errors.append({"variant_key": annotation["variant_key"],
+                                                   "error": str(exc)})
+                            continue
+                        evidence.append(search)
+                        if region is not None:
+                            evidence.append(region)
+                            hotspot_regions += 1
+                    external_manifest.append({
+                        "provider": hotspot.name, "provider_version": args.clinvar_release,
+                        "policy_version": policy.get("policy_version"),
+                        "policy_source": policy.get("policy_source"),
+                        "window_aa": policy.get("window_aa"),
+                        "min_pathogenic": policy.get("min_pathogenic"),
+                        "max_benign": policy.get("max_benign"),
+                        "region_evidence": hotspot_regions, "errors": hotspot_errors,
+                        "use_restriction": "PM1_HOTSPOT_ROUTE_ONLY",
+                    })
             args.output_dir.mkdir(parents=True, exist_ok=False)
             output = args.output_dir / "audit.json"
             output.write_text(json.dumps({"schema_version": "1.0", "records": records},

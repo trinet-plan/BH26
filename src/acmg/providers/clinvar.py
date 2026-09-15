@@ -9,6 +9,7 @@ from acmg.core.models import Variant
 from acmg.providers.http import canonical_json
 
 VCV = re.compile(r"^VCV(\d{9})(?:\.(\d+))?$")
+PROTEIN_CHANGE = re.compile(r"^([A-Z])(\d+)([A-Z])$")
 
 
 def local_name(tag):
@@ -312,3 +313,174 @@ class ClinVarComparatorProvider:
                 if value:
                     values.add(value)
         return sorted(values)
+
+
+class ClinVarHotspotProvider:
+    """Local missense density around a residue, used only as a hotspot proxy.
+
+    ClinVar density says where pathogenic variants have been *reported*, which tracks how
+    often a gene is tested as much as biology. It can therefore support the PM1 hotspot
+    route, but never the critical-domain route, and the counted accessions are kept so the
+    density can be re-checked against a later ClinVar release.
+    """
+
+    name = "ClinVar protein hotspot density"
+    method = "clinvar_local_density"
+    summary_batch = 200
+    search_retmax = 5000
+    PATHOGENIC = ("pathogenic", "likely pathogenic")
+    BENIGN = ("benign", "likely benign")
+
+    def __init__(self, client, release, policy):
+        if not release:
+            raise ValueError("ClinVar release date/version must be recorded")
+        missing = [field for field in ("window_aa", "min_pathogenic", "max_benign",
+                                       "method", "policy_source", "policy_version")
+                   if policy.get(field) is None or policy[field] == ""]
+        if missing:
+            raise ValueError("PM1 hotspot policy is incomplete: " + ",".join(missing))
+        if policy["method"] != self.method:
+            raise ValueError(f"PM1 hotspot policy method must be {self.method}")
+        if type(policy["window_aa"]) is not int or policy["window_aa"] < 0:
+            raise ValueError("PM1 hotspot window must be a non-negative integer")
+        self.client = client
+        self.release = release
+        self.policy = policy
+
+    def search_hotspot(self, annotation, query_variant):
+        required = ("transcript", "gene", "protein_id", "protein_start")
+        if not all(annotation.get(key) for key in required):
+            raise ValueError("PM1 hotspot search requires complete transcript/protein annotation")
+        window = self.policy["window_aa"]
+        first = annotation["protein_start"]
+        last = annotation.get("protein_end") or first
+        start, end = max(1, first - window), last + window
+        term = f'{annotation["gene"]}[gene] AND "missense variant"[molecular consequence]'
+        query = urlencode({"db": "clinvar", "term": term, "retmode": "json",
+                           "retmax": self.search_retmax})
+        response = self.client.fetch(
+            f"https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?{query}",
+            dataset_version=self.release,
+        )
+        body = response["body"]
+        found = body.get("esearchresult") if isinstance(body, dict) else None
+        ids = found.get("idlist") if isinstance(found, dict) else None
+        try:
+            count = int(found["count"])
+            retmax = int(found["retmax"])
+        except (KeyError, TypeError, ValueError) as exc:
+            raise ValueError("Unexpected ClinVar hotspot search response") from exc
+        if not isinstance(ids, list) or any(not str(value).isdigit() for value in ids):
+            raise ValueError("Unexpected ClinVar hotspot ID list")
+        complete = count <= retmax and len(ids) == count
+        digest = hashlib.sha256(canonical_json(body).encode()).hexdigest()
+        search = {
+            "category": "region_search", "variant_key": query_variant.key,
+            "evidence_id": f'urn:sha256:{digest}:clinvar-pm1-search:{annotation["transcript"]}',
+            "source": self.name, "source_version": self.release,
+            "retrieved_at": response["retrieved_at"], "quality_status": "PASS",
+            "transcript": annotation["transcript"], "protein_id": annotation["protein_id"],
+            "gene": annotation["gene"], "query": term, "returned_count": count,
+            "protein_interval": {"start": start, "end": end},
+            "window_aa": window, "method": self.method,
+            "policy_version": self.policy["policy_version"], "complete": complete,
+        }
+        if not complete:
+            # A truncated gene search cannot bound the counts, so emit no density evidence.
+            search["quality_status"] = "INCOMPLETE_SEARCH"
+            return search, None
+        counted, retrieved_at = self._counts([str(value) for value in ids], annotation,
+                                             start, end, response["retrieved_at"])
+        pathogenic = [item for item in counted if item["bucket"] == "pathogenic"]
+        benign = [item for item in counted if item["bucket"] == "benign"]
+        search["counted_variants"] = counted
+        region = {
+            "category": "region", "variant_key": query_variant.key,
+            "evidence_id": (f'urn:sha256:{digest}:clinvar-pm1-hotspot:'
+                            f'{annotation["protein_id"]}:{start}-{end}'),
+            "source": self.name, "source_version": f"{self.release}:{self.policy['policy_version']}",
+            "retrieved_at": retrieved_at, "quality_status": "PASS",
+            "transcript": annotation["transcript"], "protein_id": annotation["protein_id"],
+            "gene": annotation["gene"], "start": start, "end": end,
+            "region_type": "mutational_hotspot",
+            # Derived from reported density; a human curator never reviewed this region.
+            "assessment_method": "automated",
+            "method": self.method, "policy_version": self.policy["policy_version"],
+            "policy_source": self.policy["policy_source"], "window_aa": window,
+            "min_pathogenic": self.policy["min_pathogenic"],
+            "max_benign": self.policy["max_benign"],
+            "pathogenic_count": len(pathogenic), "benign_count": len(benign),
+            "counted_variants": counted,
+            "counted_conditions": sorted({condition for item in pathogenic
+                                          for condition in item["conditions"]}),
+            "consequence_scope": "missense variant",
+            "protein_change_source": "ClinVar esummary gene-level protein_change",
+            "use_restriction": "HOTSPOT_PROXY_ONLY_NOT_CRITICAL_DOMAIN",
+        }
+        return search, region
+
+    def _counts(self, ids, annotation, start, end, retrieved_at):
+        counted = []
+        for offset in range(0, len(ids), self.summary_batch):
+            batch = ids[offset:offset + self.summary_batch]
+            query = urlencode({"db": "clinvar", "id": ",".join(batch), "retmode": "json"})
+            response = self.client.fetch(
+                f"https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?{query}",
+                dataset_version=self.release,
+            )
+            retrieved_at = max(retrieved_at, response["retrieved_at"])
+            body = response["body"]
+            documents = body.get("result") if isinstance(body, dict) else None
+            if not isinstance(documents, dict):
+                raise ValueError("Unexpected ClinVar hotspot summary response")
+            for uid in batch:
+                document = documents.get(uid)
+                if not isinstance(document, dict):
+                    raise ValueError(f"Missing ClinVar summary for {uid}")
+                item = self._summary(uid, document, annotation, start, end)
+                if item is not None:
+                    counted.append(item)
+        return counted, retrieved_at
+
+    def _summary(self, uid, document, annotation, start, end):
+        gene = document.get("gene_sort") or ""
+        genes = {value.get("symbol") for value in document.get("genes", [])
+                 if isinstance(value, dict)}
+        if gene != annotation["gene"] and annotation["gene"] not in genes:
+            return None
+        classification = document.get("germline_classification") \
+            or document.get("clinical_significance") or {}
+        description = (classification.get("description") or "").strip().lower()
+        if "conflicting" in description:
+            bucket = "conflicting"
+        elif description in self.PATHOGENIC:
+            bucket = "pathogenic"
+        elif description in self.BENIGN:
+            bucket = "benign"
+        else:
+            return None
+        positions = [position for position in self._positions(document.get("protein_change"))
+                     if start <= position <= end]
+        if not positions:
+            return None
+        trait = classification.get("trait_set") or document.get("trait_set") or []
+        return {
+            "variation_id": uid, "accession": document.get("accession"),
+            "protein_change": document.get("protein_change"),
+            "protein_positions": positions, "classification": classification.get("description"),
+            "review_status": classification.get("review_status"), "bucket": bucket,
+            "conditions": sorted({value.get("trait_name") for value in trait
+                                  if isinstance(value, dict) and value.get("trait_name")}),
+        }
+
+    @staticmethod
+    def _positions(protein_change):
+        """Only plain single-residue substitutions such as R248W are positioned."""
+        if not isinstance(protein_change, str):
+            return []
+        positions = []
+        for token in protein_change.split(","):
+            match = PROTEIN_CHANGE.fullmatch(token.strip())
+            if match:
+                positions.append(int(match.group(2)))
+        return sorted(set(positions))

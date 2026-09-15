@@ -65,13 +65,20 @@ def annotation_context(code, input_data, services):
     return None, annotation
 
 
+def reviewed_or_automated(record):
+    """Human curation, or an automated assessment that names its versioned policy."""
+    if record.get("assessment_method") == "automated":
+        return bool(record.get("method") and record.get("policy_version"))
+    return bool(record.get("curator") and record.get("reviewed_at"))
+
+
 def curated_context(code, category, input_data, services, annotation, *, disease_required=True):
     """One reviewed assessment in the exact disease/transcript context, never a DB label."""
     if disease_required and not input_data.get("condition"):
         return result(code, input_data, Status.NOT_EVALUATED, "Disease context required",
                       evidence=[annotation], missing=["condition"]), None
     records = get_evidence(category, input_data, services)
-    records = [r for r in records if r.get("curator") and r.get("reviewed_at")
+    records = [r for r in records if reviewed_or_automated(r)
                and r.get("transcript") == annotation["transcript"]
                and (not disease_required or r.get("condition") == input_data["condition"])]
     if not records:

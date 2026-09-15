@@ -89,7 +89,8 @@ def evaluate_pm1(input_data, region, evidence, config):
     condition = input_data.get("condition")
     matched = bool(condition) and region.get("condition") == condition
     provenance = {"assessment_scope": "protein_level",
-                  "condition_assessment": "MATCHED" if matched else "NOT_EVALUATED", **extra}
+                  "condition_assessment": "MATCHED" if matched else "NOT_EVALUATED",
+                  "assessment_method": region.get("assessment_method", "curated"), **extra}
     review = [] if matched or not met else [
         "Confirm region criticality for the disease context before final classification"]
     return result("PM1", input_data, Status.MET if met else Status.NOT_MET,
@@ -100,6 +101,10 @@ def evaluate_pm1(input_data, region, evidence, config):
 
 def pm1_critical_domain(input_data, region, evidence):
     """Criticality must be established independently, never inferred from variant density."""
+    if region.get("assessment_method") == "automated":
+        return False, result("PM1", input_data, Status.NOT_EVALUATED,
+                             "Automated evidence cannot establish functional criticality",
+                             evidence=evidence, missing=["curated_criticality"]), None
     fields = ("critical_functional_region", "benign_depletion")
     early = require_boolean_fields("PM1", input_data, evidence, region, fields)
     if early:
