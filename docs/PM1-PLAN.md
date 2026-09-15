@@ -69,22 +69,6 @@ PS1と同じく、判定と疾患関連性を分離して記録する。
 `condition` を指定した場合、別疾患のregion評価は `EvidenceService` の段階で除外され、
 流用されない。
 
-## 強度
-
-ClinGen VCEPはPM1をgene固有に減弱・増強する。RUNX1仕様は名前付きhotspot残基以外のRHD内残基へ
-PM1_supportingを適用する。したがって適用強度は基準側ではなく、領域を定義した側が宣言する。
-
-- critical-domainルート: region Evidenceの `strength`
-- hotspotルート: `PM1.hotspot.strength`（policy側の宣言）
-- 未指定なら `moderate`（ACMG既定）
-
-許容値は `supporting` / `moderate` / `strong`。それ以外が宣言された場合は既定へ丸めず
-NOT_EVALUATED（`missing: strength`）とする。適用強度と宣言元は `applied_strength` /
-`strength_source` としてprovenanceに残す。MET以外は強度を持たない。
-
-`evidence_outcome` は既定強度なら `PM1`、それ以外は `PM1_supporting` のようにsuffixが付き、
-VA-Spec Evidence Lineの `strengthOfEvidenceProvided` にもそのまま反映される。
-
 ## 閾値policy
 
 閾値はコードに持たず、rules JSONの `PM1.hotspot` にversion付きで置く。
@@ -129,16 +113,14 @@ MET 2件はconditionが未指定のため確認事項付き。
 - policy未設定・policy不一致・counts欠落・counts矛盾の分岐
 - 自動Evidenceがcritical domainを主張できないこと
 - 別疾患のregion評価を流用しないこと
-- 宣言された強度がevidence_outcomeとVA-Spec出力まで届くこと、未知の強度を既定へ丸めないこと
 - 固定キャッシュによる全28件のオフライン再現と、VA-Spec Evidence Lineの検証
 
 ## 未完了（Phase 4）
 
-1. PM1を使用しない遺伝子の表明。policyに除外遺伝子を置き、NOT_EVALUATEDではなく
+1. gene/disease-specific対応。強度可変（特定residueはPM1、周辺domainはPM1_supporting）は
+   region Evidenceに `strength` を持たせればVA-Spec出力まで通る。
+2. PM1を使用しない遺伝子の表明。policyに除外遺伝子を置き、NOT_EVALUATEDではなく
    NOT_APPLICABLEを返して「Evidenceがない」と区別する。
-2. critical functional domainのreviewed Evidence入力経路（InterPro/Pfam境界の取り込みを含む）。
+3. critical functional domainのreviewed Evidence入力経路（InterPro/Pfam境界の取り込みを含む）。
    domain境界だけではPM1は成立しないため、criticalityの判断と出典が別途必要。
-   VCEP仕様は「残基の列挙」と「範囲」を併用し、適用範囲が版で変わる。RUNX1の2019年版は
-   13 hotspot残基をPM1、105-204をPM1_supportingとし、RHD全体（77-204）ではない。
-   版ごとに別レコードとして `source_version` 付きで持たないと結論が変わりうる。
-3. `condition` の入力経路。PM1のcondition_assessmentをMATCHEDにできるようにする。
+4. `condition` の入力経路。PM1のcondition_assessmentをMATCHEDにできるようにする。
