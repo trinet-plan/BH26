@@ -390,7 +390,7 @@ class ClinVarHotspotProvider:
             search["quality_status"] = "INCOMPLETE_SEARCH"
             return search, None
         counted, retrieved_at = self._counts([str(value) for value in ids], annotation,
-                                             start, end, response["retrieved_at"])
+                                             start, end, response["retrieved_at"], query_variant)
         pathogenic = [item for item in counted if item["bucket"] == "pathogenic"]
         benign = [item for item in counted if item["bucket"] == "benign"]
         search["counted_variants"] = counted
@@ -410,6 +410,7 @@ class ClinVarHotspotProvider:
             "min_pathogenic": self.policy["min_pathogenic"],
             "max_benign": self.policy["max_benign"],
             "pathogenic_count": len(pathogenic), "benign_count": len(benign),
+            "self_excluded": sum(item["bucket"] == "query_variant" for item in counted),
             "counted_variants": counted,
             "counted_conditions": sorted({condition for item in pathogenic
                                           for condition in item["conditions"]}),
@@ -419,7 +420,7 @@ class ClinVarHotspotProvider:
         }
         return search, region
 
-    def _counts(self, ids, annotation, start, end, retrieved_at):
+    def _counts(self, ids, annotation, start, end, retrieved_at, query_variant):
         counted = []
         for offset in range(0, len(ids), self.summary_batch):
             batch = ids[offset:offset + self.summary_batch]
@@ -437,12 +438,12 @@ class ClinVarHotspotProvider:
                 document = documents.get(uid)
                 if not isinstance(document, dict):
                     raise ValueError(f"Missing ClinVar summary for {uid}")
-                item = self._summary(uid, document, annotation, start, end)
+                item = self._summary(uid, document, annotation, start, end, query_variant)
                 if item is not None:
                     counted.append(item)
         return counted, retrieved_at
 
-    def _summary(self, uid, document, annotation, start, end):
+    def _summary(self, uid, document, annotation, start, end, query_variant):
         gene = document.get("gene_sort") or ""
         genes = {value.get("symbol") for value in document.get("genes", [])
                  if isinstance(value, dict)}
@@ -463,6 +464,9 @@ class ClinVarHotspotProvider:
                      if start <= position <= end]
         if not positions:
             return None
+        # The variant under evaluation must not support its own hotspot density.
+        if self._is_query_variant(document, query_variant):
+            bucket = "query_variant"
         trait = classification.get("trait_set") or document.get("trait_set") or []
         return {
             "variation_id": uid, "accession": document.get("accession"),
@@ -472,6 +476,32 @@ class ClinVarHotspotProvider:
             "conditions": sorted({value.get("trait_name") for value in trait
                                   if isinstance(value, dict) and value.get("trait_name")}),
         }
+
+    @staticmethod
+    def _is_query_variant(document, query_variant):
+        """Allele-level identity only; a different ALT at the same position is real evidence."""
+        for entry in document.get("variation_set", []):
+            if not isinstance(entry, dict):
+                continue
+            spdi = entry.get("canonical_spdi")
+            if isinstance(spdi, str):
+                parts = spdi.rsplit(":", 3)
+                if len(parts) == 4 and parts[2] == query_variant.ref and parts[3] == query_variant.alt:
+                    try:
+                        interbase = int(parts[1])
+                    except ValueError:
+                        interbase = None
+                    if interbase is not None and interbase + 1 == query_variant.pos:
+                        return True
+            for location in entry.get("variation_loc", []):
+                if not isinstance(location, dict) or location.get("assembly_name") != "GRCh38":
+                    continue
+                if (location.get("chr") == query_variant.chrom
+                        and location.get("start") == str(query_variant.pos)
+                        and location.get("ref") == query_variant.ref
+                        and location.get("alt") == query_variant.alt):
+                    return True
+        return False
 
     @staticmethod
     def _positions(protein_change):

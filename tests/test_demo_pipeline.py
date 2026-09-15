@@ -64,7 +64,9 @@ class DemoPipelineTests(unittest.TestCase):
                if result["criterion"] == "PM1"]
         statuses = {status: sum(result["status"] == status for result in pm1)
                     for status in ("MET", "NOT_MET", "NOT_EVALUATED")}
-        self.assertEqual(statuses, {"MET": 2, "NOT_MET": 6, "NOT_EVALUATED": 20})
+        # Every demo variant that ClinVar classifies is excluded from its own density, so no
+        # record is NOT_MET on the strength of its own submitted classification.
+        self.assertEqual(statuses, {"MET": 2, "NOT_MET": 0, "NOT_EVALUATED": 26})
         met = [result for result in pm1 if result["status"] == "MET"]
         for result in met:
             self.assertEqual(result["evidence_outcome"], "PM1")

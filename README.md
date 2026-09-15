@@ -84,7 +84,8 @@ $env:PYTHONPATH = 'src'
 hotspot Evidenceを生成します。閾値は `config/demo-rules.json` の `PM1.hotspot` にversion付きで
 置き、コードには持ちません。これはhotspotの近似指標であり、critical functional domainの
 根拠には使いません（domainルートは人手のreviewed Evidenceのみ）。固定キャッシュでは10件の
-hotspot Evidenceが生成され、PM1はMET 2件・NOT_MET 6件・NOT_EVALUATED 20件です。P/LPの報告が
+hotspot Evidenceが生成され、PM1はMET 2件・NOT_MET 0件・NOT_EVALUATED 26件です。
+評価対象の変異自身は密度に数えません。P/LPの報告が
 閾値未満の場合はNOT_METにせず、報告不足として未評価に区別します。
 
 固定キャッシュではgnomAD 17座位中15座位に観測があり、2座位は未登録です。未登録をAF=0とは

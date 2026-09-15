@@ -84,6 +84,10 @@ hotspot proxyであり、ACMG/ClinGenの普遍基準ではない。ClinGen VCEP�
 `ClinVarHotspotProvider`（`src/acmg/providers/clinvar.py`）。遺伝子単位のesearch
 （missense限定）とesummaryのバッチ取得で、残基±N aaに入る変異をP/LPとB/LBに数える。
 
+- 評価対象の変異自身は数えない。自分の病原性報告を自分のhotspot根拠にするのは循環であり、
+  自分のbenign報告でNOT_METにするのはClinVarの分類をその変異の判定に使うことになる
+  （PP5/BP6を使わない方針と同じ理由）。除外はallele一致で判定し、同じ座位の別ALTは数える。
+  除外件数は `self_excluded` に残す
 - 数えたVCVのaccession・protein_change・分類・conditionを保存し、後のrelease で再検証できる
 - conflicting分類はどちらにも数えず、監査用に残す
 - 単一残基置換（例 R248W）以外は位置づけ不能として除外する
@@ -102,9 +106,9 @@ $env:PYTHONPATH = 'src'
 .venv/Scripts/python.exe -m acmg prepare-demo-online --input-dir demo-data --cache-dir tests/fixtures/ensembl-cache --evidence-cache-dir tests/fixtures/external-cache --output-dir work/pm1 --ensembl-release 116 --with-gnomad --with-clinvar --clinvar-release 2026-09-15 --with-pm1-hotspot --rules config/demo-rules.json --offline
 ```
 
-固定キャッシュでは10件のhotspot Evidenceが生成され、PM1はMET 2件、NOT_MET 6件、
-NOT_EVALUATED 20件（報告密度不足10件、非missenseでregion Evidenceなし10件）。
-MET 2件はconditionが未指定のため確認事項付き。
+固定キャッシュでは10件のhotspot Evidenceが生成され、PM1はMET 2件、NOT_MET 0件、
+NOT_EVALUATED 26件（報告密度不足10件、非missenseでregion Evidenceなし10件、
+自身の除外により密度不足となったもの6件）。MET 2件はconditionが未指定のため確認事項付き。
 
 ## 検証
 
@@ -112,6 +116,7 @@ MET 2件はconditionが未指定のため確認事項付き。
 - benign報告ありのNOT_METと、報告不足のNOT_EVALUATEDを取り違えないこと
 - policy未設定・policy不一致・counts欠落・counts矛盾の分岐
 - 自動Evidenceがcritical domainを主張できないこと
+- 評価対象の変異自身を数えないこと、同じ座位の別ALTは数えること
 - 別疾患のregion評価を流用しないこと
 - 固定キャッシュによる全28件のオフライン再現と、VA-Spec Evidence Lineの検証
 

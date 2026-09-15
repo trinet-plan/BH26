@@ -199,6 +199,28 @@ class ClinVarHotspotTests(unittest.TestCase):
                           if item["bucket"] == "conflicting"], ["6"])
         self.assertIn("Test disease", region["counted_conditions"])
 
+    def test_query_variant_does_not_support_its_own_density(self):
+        summaries = {**SUMMARIES, "10": {
+            "accession": "VCV000000010", "gene_sort": "TEST", "protein_change": "R248H",
+            "variation_set": [{"canonical_spdi": "NC_000001.11:99:G:A"}],
+            "germline_classification": {"description": "Pathogenic", "trait_set": []}}}
+        client = HotspotClient(uids=sorted(summaries, key=int), summaries=summaries)
+        _, region = self.search(client)
+        self.assertEqual(region["self_excluded"], 1)
+        self.assertEqual(region["pathogenic_count"], 3)
+        self.assertEqual([item["bucket"] for item in region["counted_variants"]
+                          if item["variation_id"] == "10"], ["query_variant"])
+
+    def test_other_alleles_at_the_same_position_still_count(self):
+        summaries = {**SUMMARIES, "10": {
+            "accession": "VCV000000010", "gene_sort": "TEST", "protein_change": "R248P",
+            "variation_set": [{"canonical_spdi": "NC_000001.11:99:G:C"}],
+            "germline_classification": {"description": "Pathogenic", "trait_set": []}}}
+        client = HotspotClient(uids=sorted(summaries, key=int), summaries=summaries)
+        _, region = self.search(client)
+        self.assertEqual(region["self_excluded"], 0)
+        self.assertEqual(region["pathogenic_count"], 4)
+
     def test_benign_variation_in_window_is_counted(self):
         summaries = {**SUMMARIES, "9": BENIGN_SUMMARY}
         client = HotspotClient(uids=sorted(summaries), summaries=summaries)
