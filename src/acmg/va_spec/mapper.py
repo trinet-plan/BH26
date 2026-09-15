@@ -3,6 +3,7 @@
 import hashlib
 import json
 import re
+from decimal import Decimal, InvalidOperation
 from functools import lru_cache
 from importlib.metadata import version
 from importlib.resources import files
@@ -51,8 +52,11 @@ STRENGTHS = {
 }
 
 
-def concept(code):
-    return {"primaryCoding": {"system": SYSTEM, "code": code}}
+def concept(code, name=None):
+    value = {"primaryCoding": {"system": SYSTEM, "code": code}}
+    if name:
+        value["name"] = name
+    return value
 
 
 def evidence_reference(item):
@@ -60,6 +64,69 @@ def evidence_reference(item):
     if not isinstance(identifier, str) or ":" not in identifier:
         raise ValueError("Every exported evidence item requires an IRI evidence_id")
     return identifier
+
+
+def stable_urn(kind, value):
+    digest = hashlib.sha256(value.encode()).hexdigest()
+    return f"urn:bh26:{kind}:{digest}"
+
+
+def population_study_result(item, variant):
+    """Represent a normalized population observation like the official gnomAD example."""
+    try:
+        ac = int(item["AC"])
+        an = int(item["AN"])
+        af = float(Decimal(str(item["AF"])))
+    except (KeyError, TypeError, ValueError, InvalidOperation) as exc:
+        raise ValueError("Population Evidence cannot form a VA-Spec StudyResult") from exc
+    if ac < 0 or an <= 0 or not 0 <= af <= 1:
+        raise ValueError("Invalid population values for VA-Spec StudyResult")
+    source = item.get("source")
+    source_version = item.get("source_version")
+    population = item.get("population")
+    if not all(isinstance(value, str) and value for value in
+               (source, source_version, population)):
+        raise ValueError("Population Evidence provenance is incomplete")
+    variant_key = f"{variant['assembly']}:{variant['chrom']}:{variant['pos']}:{variant['ref']}:{variant['alt']}"
+    dataset_iri = ("https://gnomad.broadinstitute.org/"
+                   f"?dataset=gnomad_r4&version={source_version}")
+    return {
+        "id": evidence_reference(item),
+        "type": "CohortAlleleFrequencyStudyResult",
+        "name": f"{source} {population} allele frequency for {variant_key}",
+        "focusAllele": stable_urn("variant", variant_key),
+        "focusAlleleFrequency": af,
+        "focusAlleleCount": ac,
+        "locusAlleleCount": an,
+        "sourceDataSet": {
+            "id": dataset_iri, "type": "DataSet",
+            "name": f"{source} v{source_version}", "version": source_version,
+        },
+        "cohort": {
+            "id": stable_urn("cohort", f"{source}:{source_version}:{population}"),
+            "type": "StudyGroup", "name": population,
+        },
+        "specifiedBy": {
+            "type": "Method", "name": "gnomAD browser allele frequency calculation",
+            "reportedIn": {
+                "type": "Document", "name": "gnomAD browser help",
+                "urls": ["https://gnomad.broadinstitute.org/help"],
+            },
+        },
+        "qualityMeasures": {
+            "qualityStatus": item.get("quality_status"),
+            "callable": item.get("callable"),
+            "filters": item.get("filters", []),
+            "variantFlags": item.get("variant_flags", []),
+            "retrievedAt": item.get("retrieved_at"),
+        },
+    }
+
+
+def va_evidence_item(item, variant):
+    if isinstance(item, dict) and item.get("category") == "population":
+        return population_study_result(item, variant)
+    return evidence_reference(item)
 
 
 @lru_cache(maxsize=1)
@@ -110,6 +177,10 @@ def to_evidence_line(result):
     method_type = METHOD_TYPES[result.criterion]
     payload = {
         "type": "EvidenceLine",
+        "id": stable_urn(
+            "evidence-line",
+            f"{result.criterion}:{result.evidence_outcome}:{json.dumps(result.variant, sort_keys=True)}",
+        ),
         "name": f"{result.criterion} assessment for {result.variant['assembly']}:{result.variant['chrom']}:{result.variant['pos']}:{result.variant['ref']}:{result.variant['alt']}",
         "description": result.summary,
         "specifiedBy": {
@@ -125,7 +196,11 @@ def to_evidence_line(result):
             },
         },
         "directionOfEvidenceProvided": direction,
-        "evidenceOutcome": concept(result.evidence_outcome),
+        "evidenceOutcome": concept(
+            result.evidence_outcome,
+            f"ACMG 2015 {result.criterion} criterion " +
+            ("met" if status == Status.MET else "not met"),
+        ),
     }
     if status == Status.MET:
         if result.strength not in STRENGTHS:
@@ -139,6 +214,9 @@ def to_evidence_line(result):
     model = VariantPathogenicityEvidenceLine.model_validate(payload)
     line = model.model_dump(mode="json", exclude_none=True)
     line["specifiedBy"]["methodType"] = result.criterion
+    if result.evidence:
+        line["hasEvidenceItems"] = [va_evidence_item(item, result.variant)
+                                    for item in result.evidence]
     # GKS-Core 1.0.0 (referenced by VA-Spec 1.0.1) predates the required
     # MappableConcept type discriminator added in newer GKS-Core snapshots.
     line["evidenceOutcome"].pop("type", None)

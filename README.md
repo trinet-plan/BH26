@@ -2,7 +2,8 @@
 
 demo-dataの4症例を対象とする、Evidence単位のACMG基準評価ツール。実装途中です。
 正式な対象範囲と完了条件は [計画](docs/PLAN.md)、現状と残作業は
-[進捗](docs/PROGRESS.md) を参照してください。
+[進捗](docs/PROGRESS.md)、JSONのフィールド対応と制約は
+[VA-Spec 1.0.1 JSON出力仕様](docs/VA-SPEC-OUTPUT.md) を参照してください。
 
 ## 現在動く機能
 
@@ -92,6 +93,8 @@ $env:PYTHONPATH = 'src'
 16コードを評価し、results.json・summary.tsv・evidence-lines.json・run-manifest.jsonを生成します。
 `evidence-lines.json` は監査情報を含む独自envelopeです。各VA-Specオブジェクトは
 `va-spec-1.0.1/*.json` に1 Evidence Line/1ファイルで出力します。
+gnomAD集団頻度は公式例に合わせ、各Evidence Lineの `hasEvidenceItems` に
+`CohortAlleleFrequencyStudyResult` としてDataSet・StudyGroup・Methodを含めて埋め込みます。
 VA-Specを意図的に省略する場合だけ `--internal-only` を指定します。
 manifestにはVA-Spec 1.0.1のcanonical schema IDを記録し、固定した自己完結型の制限schemaと
 ACMG cross-field検査で書込み前に検証します。構造正規化に使った`ga4gh.va-spec`版も記録します。

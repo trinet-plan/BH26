@@ -41,6 +41,8 @@ CLI: prepare-demo（監査・同定）、evaluate（JSON/VCF、選択基準、of
 成果物: audit.json、variants.json、同定履歴、results.json、evidence-lines.json、summary.tsv、run-manifest.json。
 VA-Spec 1.0.1 schemaに合わせてACMG EvidenceLineを検証する。MET/NOT_METのみ標準出力へ変換する。
 独自envelopeと、1 Evidence Line/1 JSONのschema準拠成果物を分離する。
+公式例に合わせ、構造化できる集団頻度EvidenceはCohortAlleleFrequencyStudyResultとして
+EvidenceLineへ埋め込み、DataSet・StudyGroup・Method・Documentの由来を保持する。
 未同定variantからEvidenceLineを作らない。暫定・非推奨・未評価は内部出力へ保持する。
 
 ## 工程と検証
