@@ -55,6 +55,36 @@ class CuratedCriteriaTests(unittest.TestCase):
         item["benign_depletion"] = False
         self.assertEqual(self.run_rule("PM1", item).status, Status.NOT_MET)
 
+    def test_pm1_protein_level_without_condition(self):
+        input_data = {key: value for key, value in self.input.items() if key != "condition"}
+        annotation = {key: value for key, value in self.annotation.items() if key != "condition"}
+        item = {key: value for key, value in
+                self.region(critical_region=True, pathogenic_enrichment=True, benign_depletion=True).items()
+                if key != "condition"}
+        value = evaluate_record(input_data, make_services([annotation, item]), {}, ["PM1"])[0]
+        self.assertEqual(value.status, Status.MET)
+        self.assertEqual(value.provenance["assessment_scope"], "protein_level")
+        self.assertEqual(value.provenance["condition_assessment"], "NOT_EVALUATED")
+        self.assertTrue(value.review_points)
+        item["benign_depletion"] = False
+        value = evaluate_record(input_data, make_services([annotation, item]), {}, ["PM1"])[0]
+        self.assertEqual(value.status, Status.NOT_MET)
+        self.assertEqual(value.review_points, [])
+
+    def test_pm1_records_matched_condition(self):
+        item = self.region(critical_region=True, pathogenic_enrichment=True, benign_depletion=True)
+        value = self.run_rule("PM1", item)
+        self.assertEqual(value.status, Status.MET)
+        self.assertEqual(value.provenance["condition_assessment"], "MATCHED")
+        self.assertEqual(value.review_points, [])
+
+    def test_pm1_does_not_borrow_other_disease_assessment(self):
+        item = self.region(critical_region=True, pathogenic_enrichment=True, benign_depletion=True,
+                           condition="test:other-disease")
+        value = self.run_rule("PM1", item)
+        self.assertEqual(value.status, Status.NOT_EVALUATED)
+        self.assertIn("region", value.missing_inputs)
+
     def test_length_repeat_and_missing_function(self):
         self.annotation.update(consequences=["inframe_deletion"], protein_length_change=-1)
         item = self.region(nonfunctional_repeat=False, repetitive=False, functional_importance=True,

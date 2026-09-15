@@ -18,8 +18,10 @@ def evaluate_region(code, input_data, services, config):
     if code == "BP3" and not indel:
         return result(code, input_data, Status.NOT_APPLICABLE, "Requires in-frame indel",
                       evidence=[annotation])
+    # PM1 is a protein-level statement about the region itself, so a condition-agnostic
+    # reviewed assessment is usable; the disease relevance is reported separately.
     early, region = curated_context(code, "region", input_data, services, annotation,
-                                    disease_required=code == "PM1")
+                                    disease_required=False)
     if early:
         return early
     evidence = [annotation, region]
@@ -61,6 +63,16 @@ def evaluate_region(code, input_data, services, config):
         else:
             met = region["repetitive"] and not region["functional_importance"]
     strength = "supporting" if code == "BP3" else "moderate"
+    extra = {}
+    review = []
+    if code == "PM1":
+        condition = input_data.get("condition")
+        matched = bool(condition) and region.get("condition") == condition
+        extra = {"assessment_scope": "protein_level",
+                 "condition_assessment": "MATCHED" if matched else "NOT_EVALUATED"}
+        if met and not matched:
+            review = ["Confirm region criticality for the disease context before final classification"]
     return result(code, input_data, Status.MET if met else Status.NOT_MET,
                   "Altered protein interval and reviewed region evidence evaluated",
-                  strength=strength if met else None, evidence=evidence)
+                  strength=strength if met else None, evidence=evidence,
+                  review=review, provenance=extra)
