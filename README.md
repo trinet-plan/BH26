@@ -13,6 +13,7 @@ demo-dataの4症例を対象とする、Evidence単位のACMG基準評価ツー�
 - 全16コードの独立評価モジュール、一括評価、競合候補の表示。
 - Ensembl HGVS/GRCh38参照検証の内容ハッシュ付きキャッシュとオフライン再生。
 - version付きRefSeqに一致するVEP蛋白注釈と、AlphaMissense・SpliceAI・保存性raw Evidence。
+- ClinVar exact protein comparator検索と、疾患評価を分離したPS1 protein-level判定。
 - gnomAD 4.1.1集団頻度とClinVar VCVの内容ハッシュ付きキャッシュ、オフライン再生。
 - 準備済みJSONとローカルEvidenceによる内部評価JSON・TSV・manifest出力。
 - GA4GH VA-Spec 1.0.1 ACMG Evidence Line互換JSONと、監査用envelope出力。

@@ -52,3 +52,20 @@ BP7はさらに、synonymous/noncoding variantが標準splice region外である
 VEPの今回の応答だけではRefSeq exon境界とconservation methodを十分に特定できないため、
 自動的な `synonymous_assessment` 生成は行わない。現在取得するSpliceAI・保存性値は、後続の
 校正済みBP7 adapterへ渡すraw Evidenceである。
+
+## PS1 ClinVar comparator
+
+PS1は疾患入力を必須とせず、次のprotein-level Evidenceを自動評価する。
+
+1. version付きRefSeq protein HGVSをClinVar ESearchのexact phraseで検索する。
+2. VCVのcoding/protein HGVS、GRCh38 variant、集約GermlineClassificationとreview statusを取得する。
+3. comparatorのcoding HGVSをEnsembl VEPで再注釈する。
+4. 元変異とは異なるnucleotide variantで、同一protein上の変更残基が1個かつ同じ置換か確認する。
+5. ClinVar集約分類がPathogenicで、criteria provided/expert panel/practice guideline、かつ
+   conflictingでなく、両変異のSpliceAIが0.1以下ならPS1をMETとする。
+
+疾患未指定時のMETは `assessment_scope=protein_level`,
+`condition_assessment=NOT_EVALUATED` とし、疾患整合性とClinVar分類の循環参照確認を
+`review_points` に残す。疾患が入力され不一致ならMANUAL_REVIEWとする。検索が完全で適格な
+別variantがなければNOT_MET、検索・mapping・splice確認が不完全ならNOT_EVALUATEDまたは
+MANUAL_REVIEWとし、陰性へ変換しない。

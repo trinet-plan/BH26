@@ -26,6 +26,9 @@
   missense/synonymousのアミノ酸、導出可能な蛋白長差を保存。別isoformのconsequence混入を禁止。
 - VEPからAlphaMissense 10件、SpliceAI 15件、保存性17件をraw computational Evidenceとして保存。
   RESTでmodel/data版を確定できないものはcalibration_eligible=falseとし、PP3/BP4へ不使用。
+- ClinVar exact HGVSp検索によるPS1 comparator adapterを実装。疾患未指定でもprotein-levelを
+  評価し、condition assessmentを分離。10固有missense検索は全件完了し、適格Pathogenic comparator
+  は0件。MYBPC3 p.Ser236Glyには別MNVのBenign/Likely benign候補1件があり要確認として保存。
 - evaluate: 準備済みJSONから16コードのresults.json、summary.tsv、run-manifest.jsonと
   VA-Spec Evidence Lineを出力。VA-Spec 1.0.1/GKS-Core 1.0.0に合わせ、not-met=`neutral`、
   methodType=criterion、MappableConceptのtypeなしで書込み前に検証。
@@ -47,7 +50,7 @@
 - case2-var1と固定gnomAD 4.1.1キャッシュを使う回帰テストを追加。テスト限定の
   max AF=0.000014ではPM2 METとなり、VA-Specのsupports/supporting出力まで検証。
   gnomAD未登録のcase2-var2はcallability/AN不明のためAF=0にせずNOT_EVALUATEDを維持。
-- pytest 76テスト成功、Ruff成功。3 Provider固定キャッシュによる全28件E2Eを含む。
+- pytest 79テスト成功、Ruff成功。3 Provider固定キャッシュによる全28件E2Eを含む。
 - work/synthetic-run-1/2で内部CLI実行成功、入力エラー0。結果は合成variantでありdemo同定結果ではない。
 
 ## 未完了（次工程）

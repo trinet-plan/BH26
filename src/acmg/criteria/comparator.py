@@ -14,9 +14,11 @@ def evaluate_comparator(code, input_data, services, config):
                       "Splice-equivalence requires review" if splice else "Requires missense substitution",
                       evidence=[annotation], review=["Assess splice-effect equivalence"] if splice else [])
     fields = ("protein_id", "protein_start", "ref_aa", "alt_aa")
-    if not all(annotation.get(field) for field in fields) or not input_data.get("condition"):
+    disease_required = code == "PM5"
+    if not all(annotation.get(field) for field in fields) or (
+            disease_required and not input_data.get("condition")):
         missing = [field for field in fields if not annotation.get(field)]
-        if not input_data.get("condition"):
+        if disease_required and not input_data.get("condition"):
             missing.append("condition")
         return result(code, input_data, Status.NOT_EVALUATED, "Protein/disease context missing",
                       evidence=[annotation], missing=missing)
@@ -37,30 +39,70 @@ def evaluate_comparator(code, input_data, services, config):
             continue
         if other == Variant(**input_data["variant"]):
             continue
-        if candidate.get("condition") != input_data["condition"]:
-            continue
         if candidate.get("transcript") != annotation["transcript"]:
             continue
         if candidate.get("classification") != "Pathogenic":
             continue
-        if not all(candidate.get(field) is True for field in
-                   ("pathogenic_evidence_reviewed", "independent_evidence", "mechanism_matches", "splice_effect_checked")):
-            continue
-        if candidate.get("different_splice_mechanism") is not False:
-            continue
-        if not all(candidate.get(field) for field in ("curator", "reviewed_at", "primary_evidence")):
+        automated = (
+            code == "PS1"
+            and candidate.get("exact_protein_match") is True
+            and candidate.get("different_nucleotide_variant") is True
+            and candidate.get("review_status_eligible") is True
+            and candidate.get("splice_effect_checked") is True
+            and candidate.get("splice_conflict") is False
+        )
+        reviewed = (
+            candidate.get("condition") == input_data.get("condition")
+            and all(candidate.get(field) is True for field in
+                    ("pathogenic_evidence_reviewed", "independent_evidence",
+                     "mechanism_matches", "splice_effect_checked"))
+            and candidate.get("different_splice_mechanism") is False
+            and all(candidate.get(field) for field in
+                    ("curator", "reviewed_at", "primary_evidence"))
+        )
+        if not (automated or reviewed):
             continue
         qualified.append(candidate)
     if qualified:
-        return result(code, input_data, Status.MET, "Reviewed independent pathogenic comparator at same residue",
-                      strength="strong" if code == "PS1" else "moderate", evidence=[annotation, *qualified])
+        condition = input_data.get("condition")
+        if condition:
+            disease_matches = [condition in candidate.get("conditions", [])
+                               or candidate.get("condition") == condition for candidate in qualified]
+            condition_status = "MATCHED" if any(disease_matches) else "MISMATCHED"
+            if not any(disease_matches):
+                return result(
+                    code, input_data, Status.MANUAL_REVIEW,
+                    "Protein-level comparator found but disease context differs",
+                    evidence=[annotation, *qualified],
+                    review=["Review comparator disease relevance"],
+                    provenance={"assessment_scope": "protein_level",
+                                "condition_assessment": condition_status},
+                )
+        else:
+            condition_status = "NOT_EVALUATED"
+        review = [] if condition_status == "MATCHED" else [
+            "Confirm disease relevance before final classification",
+            "Review comparator classification for circular PS1 use",
+        ]
+        return result(
+            code, input_data, Status.MET,
+            "Pathogenic ClinVar comparator produces the same amino acid substitution",
+            strength="strong" if code == "PS1" else "moderate",
+            evidence=[annotation, *qualified], review=review,
+            provenance={"assessment_scope": "protein_level",
+                        "condition_assessment": condition_status},
+        )
     if matching:
         return result(code, input_data, Status.MANUAL_REVIEW, "Comparator evidence requires confirmation",
                       evidence=[annotation, *matching], review=["Verify comparator pathogenicity, independence and splice mechanism"])
     searches = get_evidence("comparator_search", input_data, services)
-    complete = any(search.get("complete") is True and search.get("protein_id") == annotation["protein_id"]
-                   and search.get("protein_start") == annotation["protein_start"]
-                   and search.get("condition") == input_data["condition"] for search in searches)
+    complete = any(
+        search.get("complete") is True
+        and search.get("protein_id") == annotation["protein_id"]
+        and search.get("protein_start") == annotation["protein_start"]
+        and (code == "PS1" or search.get("condition") == input_data.get("condition"))
+        for search in searches
+    )
     return result(code, input_data, Status.NOT_MET if complete else Status.NOT_EVALUATED,
                   "No eligible comparator found" if complete else "Comparator search incomplete",
                   evidence=[annotation, *searches], missing=[] if complete else ["complete_comparator_search"])

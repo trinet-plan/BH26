@@ -11,7 +11,7 @@ from acmg.core.identity import evaluation_inputs, reconcile
 from acmg.core.reference import FastaReference
 from acmg.core.models import CRITERIA, Variant
 from acmg.output import run_internal
-from acmg.providers.clinvar import VCV, ClinVarProvider
+from acmg.providers.clinvar import VCV, ClinVarComparatorProvider, ClinVarProvider
 from acmg.providers.ensembl import EnsemblIdentityProvider
 from acmg.providers.gnomad import GnomadProvider
 from acmg.providers.http import CachedHttpClient
@@ -143,12 +143,46 @@ def main(argv=None):
                             row["resolution"]["evidence"].append(identity)
                         else:
                             row["issues"].append(f"CLINVAR_PROVIDER_ERROR: {result}")
-                    external_manifest.append({
+                    clinvar_manifest = {
                         "provider": clinvar.name, "provider_version": clinvar.release,
                         "queried_accessions": len(seen), "matched_records": clinvar_count,
                         "evidence": clinvar_count,
                         "classification_use": "NOT_PP5_BP6",
-                    })
+                    }
+                    comparator = ClinVarComparatorProvider(
+                        external_client, args.clinvar_release, provider
+                    )
+                    unique_annotations = {
+                        (item["variant_key"], item["transcript"]): item
+                        for item in annotations if "missense_variant" in item["consequences"]
+                    }
+                    comparator_searches = 0
+                    comparator_evidence = 0
+                    comparator_errors = []
+                    for annotation in unique_annotations.values():
+                        variant = variants[annotation["variant_key"]]
+                        splice_score = next((
+                            item.get("score") for item in predictions
+                            if item.get("variant_key") == variant.key
+                            and item.get("transcript") == annotation["transcript"]
+                            and item.get("predictor") == "SpliceAI"
+                        ), None)
+                        try:
+                            search, matches = comparator.search_ps1(
+                                annotation, variant, splice_score
+                            )
+                            evidence.append(search)
+                            evidence.extend(matches)
+                            comparator_searches += 1
+                            comparator_evidence += len(matches)
+                        except ValueError as exc:
+                            comparator_errors.append({
+                                "variant_key": variant.key, "error": str(exc),
+                            })
+                    clinvar_manifest["ps1_comparator_searches"] = comparator_searches
+                    clinvar_manifest["ps1_comparator_evidence"] = comparator_evidence
+                    clinvar_manifest["ps1_comparator_errors"] = comparator_errors
+                    external_manifest.append(clinvar_manifest)
             args.output_dir.mkdir(parents=True, exist_ok=False)
             output = args.output_dir / "audit.json"
             output.write_text(json.dumps({"schema_version": "1.0", "records": records},

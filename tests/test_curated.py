@@ -89,11 +89,25 @@ class CuratedCriteriaTests(unittest.TestCase):
         item["comparator_variant"] = self.variant.to_dict()
         self.assertNotEqual(self.run_rule("PS1", item).status, Status.MET)
 
-    def test_comparator_reports_only_fields_actually_missing(self):
+    def test_ps1_does_not_require_condition(self):
         input_data = {key: value for key, value in self.input.items() if key != "condition"}
         annotation = {key: value for key, value in self.annotation.items() if key != "condition"}
         value = evaluate_record(input_data, make_services([annotation]), {}, ["PS1"])[0]
-        self.assertEqual(value.missing_inputs, ["condition"])
+        self.assertEqual(value.missing_inputs, ["complete_comparator_search"])
+
+    def test_automated_ps1_protein_match_can_be_met_without_condition(self):
+        input_data = {key: value for key, value in self.input.items() if key != "condition"}
+        annotation = {key: value for key, value in self.annotation.items() if key != "condition"}
+        comparator = {key: value for key, value in self.comparator().items()
+                      if key != "condition"}
+        comparator.update(exact_protein_match=True, different_nucleotide_variant=True,
+                          review_status_eligible=True, splice_effect_checked=True,
+                          splice_conflict=False, conditions=["MONDO:0000001"])
+        value = evaluate_record(input_data, make_services([annotation, comparator]), {}, ["PS1"])[0]
+        self.assertEqual(value.status, Status.MET)
+        self.assertEqual(value.provenance["assessment_scope"], "protein_level")
+        self.assertEqual(value.provenance["condition_assessment"], "NOT_EVALUATED")
+        self.assertTrue(value.review_points)
 
     def test_search_absence_requires_completeness(self):
         search = self.item("comparator_search", protein_id="NP_TEST.1", protein_start=10, complete=True)
