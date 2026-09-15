@@ -136,6 +136,47 @@ class CuratedCriteriaTests(unittest.TestCase):
         self.assertEqual(value.status, Status.MANUAL_REVIEW)
         self.assertTrue(value.review_points)
 
+    def test_pm1_strength_is_declared_by_the_region_evidence(self):
+        """VCEPs modulate PM1 per gene, so supporting strength must survive to the outcome."""
+        item = self.region(region_type="critical_functional_domain", critical_functional_region=True,
+                           benign_depletion=True, strength="supporting")
+        value = self.run_pm1(item)
+        self.assertEqual(value.status, Status.MET)
+        self.assertEqual(value.strength, "supporting")
+        self.assertEqual(value.evidence_outcome, "PM1_supporting")
+        self.assertEqual(value.provenance["strength_source"], "region_evidence")
+
+    def test_pm1_defaults_to_moderate(self):
+        item = self.region(region_type="critical_functional_domain", critical_functional_region=True,
+                           benign_depletion=True)
+        value = self.run_pm1(item)
+        self.assertEqual(value.evidence_outcome, "PM1")
+        self.assertEqual(value.provenance["applied_strength"], "moderate")
+        self.assertEqual(value.provenance["strength_source"], "criterion_default")
+
+    def test_unknown_pm1_strength_is_not_applied(self):
+        item = self.region(region_type="critical_functional_domain", critical_functional_region=True,
+                           benign_depletion=True, strength="very_strong")
+        value = self.run_pm1(item)
+        self.assertEqual(value.status, Status.NOT_EVALUATED)
+        self.assertIn("strength", value.missing_inputs)
+
+    def test_hotspot_strength_comes_from_the_policy(self):
+        policy = {"PM1": {"hotspot": {**self.HOTSPOT_POLICY["PM1"]["hotspot"],
+                                      "strength": "strong"}}}
+        item = self.hotspot(pathogenic_count=3, benign_count=0)
+        value = self.run_pm1(item, policy)
+        self.assertEqual(value.evidence_outcome, "PM1_strong")
+        self.assertEqual(value.provenance["strength_source"], "hotspot_policy")
+
+    def test_not_met_carries_no_strength(self):
+        item = self.region(region_type="critical_functional_domain", critical_functional_region=True,
+                           benign_depletion=False, strength="supporting")
+        value = self.run_pm1(item)
+        self.assertEqual(value.status, Status.NOT_MET)
+        self.assertIsNone(value.strength)
+        self.assertEqual(value.evidence_outcome, "PM1_not_met")
+
     def test_pm1_protein_level_without_condition(self):
         input_data = {key: value for key, value in self.input.items() if key != "condition"}
         annotation = {key: value for key, value in self.annotation.items() if key != "condition"}

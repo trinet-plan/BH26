@@ -11,6 +11,10 @@ from acmg.criteria.common import (
 # density, a critical domain from independently established function; requiring both would
 # demand the same evidence twice and reject established active sites with few reports.
 PM1_ROUTES = ("mutational_hotspot", "critical_functional_domain")
+# ClinGen VCEPs modulate PM1 per gene: RUNX1, for example, applies it at supporting strength
+# outside its named hotspot residues. The applied strength therefore belongs to the region
+# evidence (or the hotspot policy), not to the criterion.
+PM1_STRENGTHS = ("supporting", "moderate", "strong")
 HOTSPOT_POLICY_FIELDS = ("window_aa", "min_pathogenic", "max_benign", "method",
                          "policy_source", "policy_version")
 
@@ -86,17 +90,36 @@ def evaluate_pm1(input_data, region, evidence, config):
         met, early, extra = pm1_critical_domain(input_data, region, evidence)
     if early:
         return early
+    strength, strength_source = pm1_strength(region, config, route)
+    if strength is None:
+        return result("PM1", input_data, Status.NOT_EVALUATED,
+                      "Declared PM1 strength is not an ACMG modulation",
+                      evidence=evidence, missing=["strength"])
     condition = input_data.get("condition")
     matched = bool(condition) and region.get("condition") == condition
     provenance = {"assessment_scope": "protein_level",
                   "condition_assessment": "MATCHED" if matched else "NOT_EVALUATED",
-                  "assessment_method": region.get("assessment_method", "curated"), **extra}
+                  "assessment_method": region.get("assessment_method", "curated"),
+                  "applied_strength": strength, "strength_source": strength_source, **extra}
     review = [] if matched or not met else [
         "Confirm region criticality for the disease context before final classification"]
     return result("PM1", input_data, Status.MET if met else Status.NOT_MET,
                   f"Reviewed {route} evidence covering the altered protein interval",
-                  strength="moderate" if met else None, evidence=evidence,
+                  strength=strength if met else None, evidence=evidence,
                   review=review, provenance=provenance)
+
+
+def pm1_strength(region, config, route):
+    """Gene-specific strength, declared where the region itself is defined."""
+    if route == "mutational_hotspot":
+        declared = config.get("PM1", {}).get("hotspot", {}).get("strength")
+        source = "hotspot_policy"
+    else:
+        declared = region.get("strength")
+        source = "region_evidence"
+    if declared is None:
+        return "moderate", "criterion_default"
+    return (declared if declared in PM1_STRENGTHS else None), source
 
 
 def pm1_critical_domain(input_data, region, evidence):
