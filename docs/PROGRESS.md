@@ -138,6 +138,15 @@
   NOT_EVALUATED 101、NOT_APPLICABLE 147、MANUAL_REVIEW 4、DEPRECATED 56。
   VA-Spec Evidence Lineは140件。pytest 139テスト成功、Ruff成功。
 
+- ClinGen Evidence RepositoryのAPI（erepo）から専門家パネル判定556件を走査し、consequence別に
+  適用ゲートを確認するfixtureを追加。PVS1（splice acceptor / frameshift）、PM4とBP3
+  （in-frame deletion）、BP7（synonymous）の5変異をCAID・適用コード・最終分類つきで取り込み、
+  各基準が対象consequenceで開き、それ以外では閉じることをテストで固定した。
+  キュレーション済みEvidenceは与えていないため、開いたゲートはNOT_EVALUATEDで止まる。
+- BP3はerepoの53遺伝子556件で適用例が0件だった。VCEPが実運用でほとんど使っていないため、
+  実データでの成立例は得られていない。ゲートはin-frame deletionのfixtureで確認している。
+- pytest 146テスト成功、Ruff成功。
+
 ## 未完了（次工程）
 
 1. BA1例外リストは手入力のため、原典Table 1との第三者照合が未実施。

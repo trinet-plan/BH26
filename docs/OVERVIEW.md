@@ -53,6 +53,9 @@ demo-dataの4症例28 ALTレコードを原本非改変で監査し、VERIFIED 2
 ### 構造的に対象外を確定できる（4基準、147件）
 
 PM4（28）・BP3（28）・PVS1（25）・BP7（21）。転写産物注釈から確定し、再評価を要しない。
+demo-dataにin-frame indelとstop lossが無いためPM4とBP3のゲートは実データで開かない。
+ClinGen Evidence Repository由来の5変異（`tests/fixtures/clingen-gate-*.json`）で、
+PVS1・PM4・BP3・BP7が対象consequenceで開き、それ以外では閉じることを確認している。
 
 ### Evidence待ち（4基準、101件）
 
