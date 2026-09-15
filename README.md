@@ -14,6 +14,7 @@ hotspot policyは [PM1設計](docs/PM1-PLAN.md) を参照してください。
 - 全16コードの独立評価モジュール、一括評価、競合候補の表示。
 - Ensembl HGVS/GRCh38参照検証の内容ハッシュ付きキャッシュとオフライン再生。
 - version付きRefSeqに一致するVEP蛋白注釈と、AlphaMissense・SpliceAI・保存性raw Evidence。
+- ClinGen SVI BA1例外リスト9変異による、AF>5%変異のBA1確定。
 - ClinVar exact protein comparator検索と、疾患評価を分離したPS1 protein-level判定。
 - 同一残基を対象とするPM5 residue検索と、疾患評価を分離したPM5 protein-level判定。
 - PM1のhotspot/critical domain 2ルート評価と、ClinVar missense densityによるhotspot proxy。
@@ -147,7 +148,10 @@ ACMG cross-field検査で書込み前に検証します。構造正規化に使�
 キュレーション済みの臨床文脈は `--context config/curated-context.json` で渡します。取得した
 Evidenceには混ぜず、疾患・遺伝形式・疾患別頻度閾値・BA1例外リストだけを受け付けます。
 BA1例外リストは `complete` が真のときだけ判定に使い、未転記（偽）の間は「リストに無い」と
-主張せず未評価のままにします。読み込んだ文脈の版と件数はrun-manifestに記録します。
+主張せず未評価のままにします。同梱の `config/curated-context.json` には
+ClinGen SVI（Ghosh et al. 2018）の9変異を収録済みです。各変異はClinGen Allele RegistryのCAIDを
+経由してGRCh38 alleleへ解決し、解決方法・遺伝子・転写産物HGVS・登録IDを各entryに記録しています
+（ACAD9の重複のみ、registryのgenomic intervalからアンカー付き左寄せ表現を導出）。読み込んだ文脈の版と件数はrun-manifestに記録します。
 
 `condition`（疾患）は任意入力です。PS1・PM5・PM1・PP2・BP1・PVS1は蛋白/遺伝子レベルで判定し、
 疾患関連性は判定に混ぜず `condition_assessment`（MATCHED / NOT_EVALUATED）として分離記録し、

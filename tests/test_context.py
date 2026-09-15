@@ -5,8 +5,10 @@ from acmg.core.context import apply_context, context_summary, load_context
 
 VARIANT = {"assembly": "GRCh38", "chrom": "1", "pos": 2, "ref": "C", "alt": "T"}
 KEY = "GRCh38:1:2:C:T"
+ENTRY = {"variant_key": KEY, "gene": "TEST", "hgvs_c": "c.1A>T", "caid": "CA000000",
+         "resolved_by": "ClinGen Allele Registry"}
 EXCEPTIONS = {"source": "ClinGen SVI BA1 exception list", "source_version": "2018",
-              "reviewed_at": "2026-09-15", "complete": True, "variants": [KEY]}
+              "reviewed_at": "2026-09-15", "complete": True, "variants": [ENTRY]}
 
 
 def document(**overrides):
@@ -48,6 +50,14 @@ class CuratedContextTests(unittest.TestCase):
         assessment = apply_context(self.record(), context)["ba1_exception_assessment"]
         self.assertFalse(assessment["is_exception"])
         self.assertEqual(assessment["list_size"], 0)
+
+    def test_each_entry_records_how_it_was_resolved(self):
+        """A wrong key would silently exempt the wrong variant, so the mapping is recorded."""
+        entry = {key: value for key, value in ENTRY.items() if key != "resolved_by"}
+        with self.assertRaisesRegex(ValueError, "resolved_by"):
+            load_context(document(ba1_exceptions={**EXCEPTIONS, "variants": [entry]}))
+        with self.assertRaisesRegex(ValueError, "variant_key"):
+            load_context(document(ba1_exceptions={**EXCEPTIONS, "variants": [{"gene": "TEST"}]}))
 
     def test_completeness_must_be_stated(self):
         exceptions = {key: value for key, value in EXCEPTIONS.items() if key != "complete"}

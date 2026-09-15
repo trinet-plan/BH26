@@ -126,16 +126,23 @@
   provenanceに記録する。BA1が例外評価を受け取るとVA-Spec出力がIRI要件で失敗する不具合を修正。
 - pytest 138テスト成功、Ruff成功。
 
+- ClinGen SVI BA1例外リスト（Ghosh et al. 2018 Table 1の9変異）を転記し、complete=trueで同梱。
+  各変異はCAID経由でClinGen Allele RegistryのGRCh38 alleleへ解決し、遺伝子一致と転写産物HGVS
+  一致を確認。ACAD9 c.-44_-41dupのみregistryのgenomic interval
+  （NC_000003.12:g.128879648_128879651dup）からアンカー付き左寄せVCF表現を導出した。
+  entryごとにcaid・hgvs_c・resolved_byを必須とし、誤った座標で別変異を免除しないようにする。
+- 実デモではAF>5%の11件がBA1 MET（stand_alone）に確定。全体はMET 32、NOT_MET 108、
+  NOT_EVALUATED 101、NOT_APPLICABLE 147、MANUAL_REVIEW 4、DEPRECATED 56。
+  VA-Spec Evidence Lineは140件。pytest 139テスト成功、Ruff成功。
+
 ## 未完了（次工程）
 
-1. ClinGen SVI BA1例外リスト（Ghosh et al. 2018の9変異）は機械可読形式で公開されていない。
-   転記とGRCh38座標の解決が必要。それまでcomplete=falseのまま。
-2. SpliceAIは版がVEP経由の宣言に依存する。版を確定できる配布元からの取得が望ましい。
-3. PM1のgene/disease-specific対応（強度可変、PM1不使用geneのNOT_APPLICABLE表明）と、
+1. SpliceAIは版がVEP経由の宣言に依存する。版を確定できる配布元からの取得が望ましい。
+2. PM1のgene/disease-specific対応（強度可変、PM1不使用geneのNOT_APPLICABLE表明）と、
    critical functional domainのreviewed Evidence入力経路。conditionとBS1疾患閾値の入力経路。
-4. BP7のRefSeq exon境界position adapterと校正済み保存性policy、PVS1 NMD等の計算の自動化拡張。
+3. BP7のRefSeq exon境界position adapterと校正済み保存性policy、PVS1 NMD等の計算の自動化拡張。
    現在はSpliceAI/保存性raw Evidenceとreviewed assessment入力経路まで。
-5. evaluateへのVCF直接入力・オンライン取得、症例文脈補足、準備済み入力の厳密なschema検証。
+4. evaluateへのVCF直接入力・オンライン取得、症例文脈補足、準備済み入力の厳密なschema検証。
 3. run-manifestに全Provider・実装ルールのハッシュを統合、ground truth比較レポート。
 4. Windows/Linux CI。
 

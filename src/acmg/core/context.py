@@ -39,8 +39,16 @@ def load_context(document):
         _require(isinstance(exceptions.get("complete"), bool),
                  "ba1_exceptions must state whether the list is complete")
         listed = exceptions.get("variants", [])
-        _require(isinstance(listed, list) and all(isinstance(item, str) for item in listed),
-                 "ba1_exceptions variants must be a list of variant keys")
+        _require(isinstance(listed, list), "ba1_exceptions variants must be a list")
+        for item in listed:
+            _require(isinstance(item, dict), "Each BA1 exception must be an object")
+            key = item.get("variant_key")
+            _require(isinstance(key, str) and len(key.split(":")) == 5,
+                     f"BA1 exception requires a variant_key: {item}")
+            # The published list is a table of transcript HGVS, so record how each entry was
+            # resolved to a GRCh38 allele; a wrong key would silently exempt the wrong variant.
+            _require(all(item.get(field) for field in ("gene", "hgvs_c", "caid", "resolved_by")),
+                     f"BA1 exception {key} requires gene, hgvs_c, caid and resolved_by")
     return {"context_version": version, "records": parsed, "ba1_exceptions": exceptions,
             "source": document.get("source")}
 
@@ -57,7 +65,7 @@ def apply_context(record, context):
         updated["ba1_exception_assessment"] = {
             "source": exceptions["source"], "source_version": exceptions["source_version"],
             "reviewed_at": exceptions["reviewed_at"],
-            "is_exception": key in exceptions.get("variants", []),
+            "is_exception": key in {item["variant_key"] for item in exceptions.get("variants", [])},
             "list_size": len(exceptions.get("variants", [])),
         }
     return updated

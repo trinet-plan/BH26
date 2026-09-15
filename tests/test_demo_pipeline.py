@@ -47,6 +47,7 @@ class DemoPipelineTests(unittest.TestCase):
             "evaluate", "--input", str(prepared / "variants.json"),
             "--evidence", str(prepared / "evidence.json"), "--offline",
             "--config", str(ROOT / "config" / "demo-rules.json"),
+            "--context", str(ROOT / "config" / "curated-context.json"),
             "--output-dir", str(evaluated),
         ])
         self.assertEqual(code, 0)
@@ -87,6 +88,17 @@ class DemoPipelineTests(unittest.TestCase):
         assertions = {item["asserted_version"] for result in met
                       for item in result["provenance"].get("version_assertions", [])}
         self.assertEqual(len(assertions), 1)
+
+        # The committed BA1 exception list resolves the high-frequency records either way.
+        ba1 = [result for record in results["records"] for result in record["results"]
+               if result["criterion"] == "BA1"]
+        self.assertEqual(sum(result["status"] == "MET" for result in ba1), 11)
+        for result in ba1:
+            if result["status"] == "MET":
+                assessment = result["provenance"]["ba1_exception_assessment"]
+                self.assertFalse(assessment["is_exception"])
+                self.assertEqual(assessment["list_size"], 9)
+                self.assertEqual(result["evidence_outcome"], "BA1")
 
         # ClinVar missense density around each residue, under the committed PM1 policy.
         hotspot = providers["ClinVar protein hotspot density"]
