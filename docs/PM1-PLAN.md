@@ -120,7 +120,16 @@ NOT_EVALUATED 26件（報告密度不足10件、非missenseでregion Evidenceな
 - 別疾患のregion評価を流用しないこと
 - 固定キャッシュによる全28件のオフライン再現と、VA-Spec Evidence Lineの検証
 
-## 未完了（Phase 4）
+## 未完了（要対応）
+
+0. **hotspot密度のisoform numbering取り違え。** ClinVar esummaryの `protein_change` は全
+   transcript分の表記を並べるだけで、どれが対象の `protein_id` の座標か判別できない。
+   RUNX1はisoform間で27残基ずれるため（K110 ⇔ K83、A134 ⇔ A107）、canonicalでは窓の外にある
+   変異が別isoform表記の位置で窓に入り、数えられてしまう。K110E（105-115）の実測では15件中
+   3件がこの取り違えで、判定（MET）は変わらないが `pathogenic_count` は近似値である。
+   対応には窓内候補ごとのefetchで `protein_id` 一致を確認する必要があり、PS1 comparatorと
+   同じ方式になる。件数が多いため窓内候補だけに絞る実装が要る。
+   それまでは `protein_change_source` に出典を明示し、数値を確定値として扱わない。
 
 1. gene/disease-specific対応。強度可変（特定residueはPM1、周辺domainはPM1_supporting）は
    region Evidenceに `strength` を持たせればVA-Spec出力まで通る。
