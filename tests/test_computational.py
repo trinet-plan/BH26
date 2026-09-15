@@ -66,3 +66,116 @@ class ComputationalTests(unittest.TestCase):
             result = self.run_rule(module)
             self.assertEqual(result.status, Status.DEPRECATED)
             self.assertIsNone(result.evidence_outcome)
+
+
+class SplicingCalibrationTests(unittest.TestCase):
+    """Protein and splicing predictions are one line of evidence, not two that add up."""
+
+    def setUp(self):
+        self.variant = Variant("GRCh38", "1", 2, "C", "T")
+        self.input = {"variant": self.variant.to_dict(), "transcript": "NM_TEST.1"}
+        common = {"variant_key": self.variant.key, "transcript": "NM_TEST.1",
+                  "source": "synthetic", "source_version": "1", "retrieved_at": "2026-09-15",
+                  "quality_status": "PASS"}
+        self.annotation = {**common, "evidence_id": "test:annotation", "category": "annotation",
+                           "consequences": ["missense_variant"]}
+        self.protein = {**common, "evidence_id": "test:protein", "category": "computational",
+                        "predictor": "REVEL", "predictor_version": "dbNSFP-4.8a",
+                        "mechanism": "protein", "score": 0.1}
+        self.splicing = {**common, "evidence_id": "test:splicing", "category": "computational",
+                         "source": "Ensembl VEP SpliceAI", "predictor": "SpliceAI",
+                         "predictor_version": "unreported-Ensembl-116", "mechanism": "splicing",
+                         "score": 0.0, "calibration_eligible": False}
+        self.assertion = {
+            "source": "Ensembl VEP SpliceAI", "unreported_version": "unreported-Ensembl-116",
+            "asserted_version": "SpliceAI served by Ensembl VEP release 116",
+            "asserted_by": "test", "justification": "test"}
+        self.config = {"computational": {
+            "selected_calibrations": ["protein", "splicing"],
+            "calibrations": {
+                "protein": {"predictor": "REVEL", "predictor_version": "dbNSFP-4.8a",
+                            "source": "synthetic", "version": "1", "mechanism": "protein",
+                            "consequences": ["missense_variant"], "score_min": 0, "score_max": 1,
+                            "bands": {"PP3": [{"min": 0.644, "max": 1, "strength": "supporting"}],
+                                      "BP4": [{"min": 0, "max": 0.29, "strength": "supporting"}]}},
+                "splicing": {"predictor": "SpliceAI", "predictor_version": "SpliceAI-1.3",
+                             "source": "synthetic", "version": "1", "mechanism": "splicing",
+                             "consequences": ["missense_variant", "synonymous_variant"],
+                             "score_min": 0, "score_max": 1,
+                             "version_assertion": self.assertion,
+                             "bands": {"PP3": [{"min": 0.2, "max": 1, "strength": "supporting"}],
+                                       "BP4": [{"min": 0, "max": 0.1, "strength": "supporting"}]}}}}}
+
+    def run_rule(self, module, *extra):
+        services = SimpleNamespace(evidence=EvidenceService(
+            [self.annotation, self.protein, self.splicing, *extra]))
+        return module.evaluate(self.input, services, self.config)
+
+    def test_both_mechanisms_are_reported(self):
+        value = self.run_rule(bp4)
+        self.assertEqual(value.status, Status.MET)
+        self.assertEqual({item["mechanism"] for item in value.provenance["applied_calibrations"]},
+                         {"protein", "splicing"})
+
+    def test_predicted_splice_impact_blocks_benign_evidence(self):
+        """A low protein score says nothing about a disrupted splice site."""
+        self.splicing["score"] = 0.9
+        value = self.run_rule(bp4)
+        self.assertEqual(value.status, Status.NOT_MET)
+        self.assertEqual(value.provenance["benign_blocked_by"][0]["predictor"], "SpliceAI")
+
+    def test_splicing_alone_can_carry_pp3(self):
+        self.splicing["score"] = 0.9
+        value = self.run_rule(pp3)
+        self.assertEqual(value.status, Status.MET)
+        self.assertEqual(value.strength, "supporting")
+        self.assertEqual(value.provenance["applied_calibrations"][1]["mechanism"], "splicing")
+
+    def test_strengths_are_not_summed_across_mechanisms(self):
+        self.protein["score"] = 0.95
+        self.splicing["score"] = 0.9
+        self.config["computational"]["calibrations"]["protein"]["bands"]["PP3"].append(
+            {"min": 0.932, "max": 1, "strength": "strong"})
+        value = self.run_rule(pp3)
+        self.assertEqual(value.strength, "strong")
+
+    def test_synonymous_variant_uses_the_splicing_calibration_only(self):
+        self.annotation["consequences"] = ["synonymous_variant"]
+        value = self.run_rule(bp4)
+        self.assertEqual(value.status, Status.MET)
+        self.assertEqual([item["predictor"] for item in value.provenance["applied_calibrations"]],
+                         ["SpliceAI"])
+        # A calibration outside its consequence scope is not a missing predictor.
+        self.assertNotIn("unavailable_predictors", value.provenance)
+
+    def test_unversioned_score_needs_a_declared_assumption(self):
+        del self.config["computational"]["calibrations"]["splicing"]["version_assertion"]
+        value = self.run_rule(bp4)
+        self.assertEqual(value.status, Status.MET)
+        # Without the assumption the splicing score is simply not used.
+        self.assertEqual([item["predictor"] for item in value.provenance["applied_calibrations"]],
+                         ["REVEL"])
+        self.assertEqual(value.provenance["unavailable_predictors"], ["SpliceAI"])
+
+    def test_the_assumption_is_recorded_with_the_result(self):
+        value = self.run_rule(bp4)
+        self.assertEqual(value.provenance["version_assertions"], [self.assertion])
+
+    def test_an_incomplete_assumption_is_refused(self):
+        self.config["computational"]["calibrations"]["splicing"]["version_assertion"] = {
+            "source": "Ensembl VEP SpliceAI", "unreported_version": "unreported-Ensembl-116"}
+        value = self.run_rule(bp4)
+        self.assertEqual([item["predictor"] for item in value.provenance["applied_calibrations"]],
+                         ["REVEL"])
+'''
+
+p = 'tests/test_computational.py'
+s = io.open(p, encoding='utf-8').read()
+tail = '''
+
+if __name__ == "__main__":
+    unittest.main()
+
+
+if __name__ == "__main__":
+    unittest.main()

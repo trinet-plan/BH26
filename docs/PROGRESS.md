@@ -105,9 +105,20 @@
   MANUAL_REVIEW 4、DEPRECATED 56。VA-Spec Evidence Lineは115件。
 - pytest 119テスト成功、Ruff成功。5 Provider固定キャッシュによる全28件E2Eを含む。
 
+- PP3/BP4を複数校正の併用に対応（`selected_calibrations`）。蛋白機序（REVEL）と
+  splicing機序（SpliceAI: Walker et al. 2023 ClinGen SVI、PP3>=0.2、BP4<=0.1）を併用する。
+  機序は加算せず、PP3はいずれか成立で最強区間を採用。BP4は適用対象の全機序が良性側を示す
+  ことを要求し、splice影響が予測される場合は成立させない（benign_blocked_byに記録）。
+- Ensembl VEPが版を公開しないSpliceAIは、校正側の`version_assertion`（出典・宣言者・理由）を
+  明示した場合に限り使用し、宣言をprovenanceの`version_assertions`に残す。宣言がなければ不使用。
+- 実デモでPP3 MET 6件、BP4 MET 12件（うち3件はsynonymousでsplicing校正のみ成立）。
+  全体はMET 21、NOT_MET 108、NOT_EVALUATED 112、NOT_APPLICABLE 147、MANUAL_REVIEW 4、
+  DEPRECATED 56。VA-Spec Evidence Lineは129件。
+- pytest 127テスト成功、Ruff成功。
+
 ## 未完了（次工程）
 
-1. PP3/BP4はREVELのみ校正済み。SpliceAI等のsplicing機序は校正policy未設定のまま。
+1. SpliceAIは版がVEP経由の宣言に依存する。版を確定できる配布元からの取得が望ましい。
 2. PM1のgene/disease-specific対応（強度可変、PM1不使用geneのNOT_APPLICABLE表明）と、
    critical functional domainのreviewed Evidence入力経路。conditionとBS1疾患閾値の入力経路。
 3. BP7のRefSeq exon境界position adapterと校正済み保存性policy、PVS1 NMD等の計算の自動化拡張。

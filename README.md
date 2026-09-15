@@ -18,6 +18,7 @@ hotspot policyは [PM1設計](docs/PM1-PLAN.md) を参照してください。
 - 同一残基を対象とするPM5 residue検索と、疾患評価を分離したPM5 protein-level判定。
 - PM1のhotspot/critical domain 2ルート評価と、ClinVar missense densityによるhotspot proxy。
 - dbNSFP releaseを固定したREVEL/AlphaMissenseと、校正区間によるPP3/BP4判定。
+- 蛋白機序と splicing機序の2校正を併用するPP3/BP4（加算せず、BP4は全機序の一致を要求）。
 - gnomAD 4.1.1集団頻度とClinVar VCVの内容ハッシュ付きキャッシュ、オフライン再生。
 - 準備済みJSONとローカルEvidenceによる内部評価JSON・TSV・manifest出力。
 - GA4GH VA-Spec 1.0.1 ACMG Evidence Line互換JSONと、監査用envelope出力。
@@ -86,10 +87,20 @@ $env:PYTHONPATH = 'src'
 正規化済みGRCh38座位だけです。metadataエンドポイントからdbNSFP版（現在4.8a）を取得して
 各スコアに記録し、版が確定した場合に限り `calibration_eligible` とします。Ensembl VEP RESTは
 REVEL/SpliceAIの由来版を公開しないため、VEP由来の予測値はPP3/BP4に使いません。
-校正区間は `config/demo-rules.json` の `computational` に出典付きで置きます
-（REVEL: Pejaver et al. 2022のClinGen SVI校正、PP3 supporting/moderate/strong、
-BP4 supporting/moderate/strong/very strong）。dbNSFPはnonsynonymous SNV用のため、
-indelには問い合わせません。
+校正区間は `config/demo-rules.json` の `computational` に出典付きで置きます。
+`selected_calibrations` に複数の校正を並べられ、蛋白機序（REVEL: Pejaver et al. 2022、
+PP3 supporting/moderate/strong、BP4 supporting/moderate/strong/very strong）と
+splicing機序（SpliceAI: Walker et al. 2023 ClinGen SVI Splicing Subgroup、
+PP3 >=0.2 supporting、BP4 <=0.1 supporting）を併用します。
+機序は加算しません。PP3はいずれかの機序が区間を満たせば成立し、最も強い区間を採ります。
+BP4は適用対象の全機序が良性側を示す必要があり、splice影響が予測される場合は成立しません
+（低い蛋白スコアはsplice部位の破壊について何も言わないため）。
+dbNSFPはnonsynonymous SNV用のため、indelには問い合わせません。
+
+Ensembl VEPはSpliceAIのモデル版を公開しないため、校正側で `version_assertion` として
+「どのreleaseが配信したスコアか」を出典・宣言者・理由つきで明示した場合に限り使用します。
+宣言は結果のprovenanceに `version_assertions` として残ります。宣言がなければそのスコアは
+判定に使いません。
 
 `--with-pm1-hotspot` は各missense変異の残基±N aaにあるClinVar missense変異を数え、PM1の
 hotspot Evidenceを生成します。閾値は `config/demo-rules.json` の `PM1.hotspot` にversion付きで

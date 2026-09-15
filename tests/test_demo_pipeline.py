@@ -67,15 +67,26 @@ class DemoPipelineTests(unittest.TestCase):
         computational = [result for record in results["records"] for result in record["results"]
                          if result["criterion"] in ("PP3", "BP4")]
         met = [result for result in computational if result["status"] == "MET"]
-        self.assertEqual(len(met), 14)
+        self.assertEqual(len(met), 18)
         strengths = {result["evidence_outcome"] for result in met}
         self.assertEqual(strengths, {"PP3", "PP3_moderate", "PP3_strong",
                                      "BP4", "BP4_moderate"})
         for result in met:
-            scores = [item for item in result["evidence"] if item.get("predictor") == "REVEL"]
-            self.assertEqual(len(scores), 1)
-            self.assertEqual(scores[0]["predictor_version"], "dbNSFP-4.8a")
-            self.assertTrue(scores[0]["calibration_eligible"])
+            mechanisms = {item["mechanism"] for item in result["provenance"]["applied_calibrations"]}
+            self.assertTrue(mechanisms <= {"protein", "splicing"})
+            for score in [item for item in result["evidence"] if item.get("predictor") == "REVEL"]:
+                self.assertEqual(score["predictor_version"], "dbNSFP-4.8a")
+                self.assertTrue(score["calibration_eligible"])
+        # Splicing alone carries BP4 for synonymous variants, where no protein score applies.
+        splicing_only = [result for result in met
+                         if [item["predictor"] for item in
+                             result["provenance"]["applied_calibrations"]] == ["SpliceAI"]]
+        self.assertTrue(splicing_only)
+        self.assertTrue(all(result["criterion"] == "BP4" for result in splicing_only))
+        # The unreported SpliceAI release travels with the result as a declared assumption.
+        assertions = {item["asserted_version"] for result in met
+                      for item in result["provenance"].get("version_assertions", [])}
+        self.assertEqual(len(assertions), 1)
 
         # ClinVar missense density around each residue, under the committed PM1 policy.
         hotspot = providers["ClinVar protein hotspot density"]
