@@ -40,6 +40,9 @@
   DataSet・StudyGroup・Method・DocumentとQC provenanceを保持。詳細仕様を文書化。
 - PM2（AC=0、AN=10000、AF=0）とBA1（AC=501、AN=10000、AF=0.0501、例外なし）の
   MET合成fixtureを追加し、supports/supportingとdisputes/standaloneのVA-Spec出力をE2E検証。
+- case2-var1と固定gnomAD 4.1.1キャッシュを使う回帰テストを追加。テスト限定の
+  max AF=0.000014ではPM2 METとなり、VA-Specのsupports/supporting出力まで検証。
+  gnomAD未登録のcase2-var2はcallability/AN不明のためAF=0にせずNOT_EVALUATEDを維持。
 - pytest 71テスト成功、Ruff成功。3 Provider固定キャッシュによる全28件E2Eを含む。
 - work/synthetic-run-1/2で内部CLI実行成功、入力エラー0。結果は合成variantでありdemo同定結果ではない。
 

@@ -15,6 +15,7 @@ class DemoPipelineTests(unittest.TestCase):
         base = ROOT / ".work" / "demo-pipeline" / uuid.uuid4().hex
         prepared = base / "prepared"
         evaluated = base / "evaluated"
+        case2_evaluated = base / "case2-pm2-evaluated"
         code = main([
             "prepare-demo-online", "--input-dir", str(ROOT / "demo-data"),
             "--cache-dir", str(ROOT / "tests" / "fixtures" / "ensembl-cache"),
@@ -50,6 +51,41 @@ class DemoPipelineTests(unittest.TestCase):
         pm2 = [result for record in results["records"] for result in record["results"]
                if result["criterion"] == "PM2"]
         self.assertTrue(any(result["status"] == "NOT_MET" for result in pm2))
+
+        # Exercise a real case2 record and the committed gnomAD response with an explicit,
+        # test-only rarity threshold. This is a regression test, not a clinical policy.
+        code = main([
+            "evaluate", "--input", str(prepared / "variants.json"),
+            "--evidence", str(prepared / "evidence.json"), "--offline",
+            "--config", str(ROOT / "tests" / "fixtures" / "case2-pm2-rules.json"),
+            "--criteria", "PM2", "--output-dir", str(case2_evaluated),
+        ])
+        self.assertEqual(code, 0)
+        case2_results = json.loads(
+            (case2_evaluated / "results.json").read_text(encoding="utf-8")
+        )
+        by_id = {record["record_id"]: record["results"][0]
+                 for record in case2_results["records"]}
+        self.assertEqual(by_id["case2:24:1"]["status"], "MET")
+        self.assertEqual(by_id["case2:24:1"]["evidence_outcome"], "PM2_supporting")
+        maximum_af = max(float(item["AF"]) for item in by_id["case2:24:1"]["evidence"])
+        self.assertLessEqual(maximum_af, 0.000014)
+
+        line = json.loads(
+            (case2_evaluated / "va-spec-1.0.1" / "case2_24_1--PM2.json")
+            .read_text(encoding="utf-8")
+        )
+        self.assertEqual(line["directionOfEvidenceProvided"], "supports")
+        self.assertEqual(line["strengthOfEvidenceProvided"]["primaryCoding"]["code"],
+                         "supporting")
+        self.assertEqual(line["evidenceOutcome"]["primaryCoding"]["code"], "PM2_supporting")
+        self.assertTrue(all(item["type"] == "CohortAlleleFrequencyStudyResult"
+                            for item in line["hasEvidenceItems"]))
+
+        # case2-var2 is not returned by gnomAD. A missing variant response has no AN or
+        # callability evidence, so it must not be silently converted to AF=0.
+        self.assertEqual(by_id["case2:25:1"]["status"], "NOT_EVALUATED")
+        self.assertIn("population", by_id["case2:25:1"]["missing_inputs"])
 
 
 if __name__ == "__main__":

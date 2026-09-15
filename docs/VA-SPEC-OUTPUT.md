@@ -157,6 +157,12 @@ fixtureは `tests/fixtures/population-met-{prepared,evidence,rules}.json` に分
 生成された個別VA-Spec JSONを再読込し、direction、strength、outcome、AF、AC、AN、
 BA1例外確認EvidenceのIRIまで確認する。
 
+加えて、demo-dataのcase2-var1と固定済みgnomAD 4.1.1応答を使う回帰テストを行う。
+観測された最大集団AFは約0.000013602であり、`case2-pm2-rules.json` のテスト限定閾値
+0.000014ではPM2 METになる。これは実データ経路の動作確認用であり、疾患別に承認された
+臨床閾値ではない。case2-var2のgnomAD未登録応答にはANとcallabilityがないため、AF=0の
+StudyResultを作らずNOT_EVALUATEDとする。
+
 公式schema IDは次である。
 
 ```text
