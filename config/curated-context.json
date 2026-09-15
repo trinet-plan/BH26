@@ -1,0 +1,14 @@
+{
+  "schema_version": "1.0",
+  "context_version": "2026-09-15",
+  "source": "BH26 project curated context. Human decisions only; retrieved evidence never goes here.",
+  "ba1_exceptions": {
+    "source": "ClinGen SVI BA1 exception list (Ghosh et al. 2018, Hum Mutat 39:1525-1530)",
+    "source_version": "2018",
+    "reviewed_at": "2026-09-15",
+    "complete": false,
+    "note": "Not transcribed yet. The published list is a table of nine variants; each needs its GRCh38 key resolved before this list can claim to be complete. While complete is false, BA1 exception status stays unresolved rather than being asserted negative.",
+    "variants": []
+  },
+  "records": {}
+}

@@ -1,5 +1,5 @@
 from acmg.core.models import Status
-from acmg.criteria.common import population_context, result
+from acmg.criteria.common import citable, population_context, result
 from acmg.services.population import number
 
 
@@ -22,8 +22,8 @@ def evaluate(input_data, services, config):
     _, observations, rejected, failures, provenance = context
     above = any(number(item["AF"]) > threshold for item in observations)
     status = Status.MET if above else Status.NOT_EVALUATED if failures else Status.NOT_MET
-    # The threshold is the policy the observations are judged against, not an evidence item:
-    # it carries no retrievable identifier and must not appear in hasEvidenceItems.
+    # The threshold is the policy the observations are judged against: always recorded, and
+    # cited as an evidence item only when it carries a retrievable identifier.
     return result("BS1", input_data, status, "Observed AF compared with curated disease threshold",
-                  strength="strong" if above else None, evidence=observations,
+                  strength="strong" if above else None, evidence=observations + citable(assessment),
                   provenance={**provenance, "disease_frequency_threshold": assessment})

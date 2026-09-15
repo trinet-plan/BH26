@@ -54,6 +54,8 @@ def main(argv=None):
     evaluate.add_argument("--input", type=Path, required=True)
     evaluate.add_argument("--evidence", type=Path)
     evaluate.add_argument("--config", type=Path)
+    evaluate.add_argument("--context", type=Path,
+                          help="Curated clinical context: condition, disease thresholds, BA1 exceptions")
     evaluate.add_argument("--criteria", default="all")
     evaluate.add_argument("--output-dir", type=Path, required=True)
     evaluate.add_argument("--offline", action="store_true")
@@ -66,7 +68,7 @@ def main(argv=None):
             if not criteria or any(code not in CRITERIA for code in criteria) or len(criteria) != len(set(criteria)):
                 raise ValueError("Unknown or duplicate criterion")
             payload = run_internal(args.input, args.evidence, args.config, args.output_dir, criteria,
-                                   va_spec=not args.internal_only)
+                                   va_spec=not args.internal_only, context_path=args.context)
             print(f"Evaluated {len(payload['records'])} records; {len(payload['input_errors'])} errors; VA-Spec {payload['va_spec_export']}")
             return 2 if payload["input_errors"] else 0
         if args.command in {"audit-demo", "prepare-demo", "prepare-demo-online"}:

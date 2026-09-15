@@ -70,6 +70,18 @@ class PopulationTests(unittest.TestCase):
         self.assertEqual(ba1.evaluate(self.input, self.services([self.observation(501)]),
                                      self.config).status, Status.NOT_MET)
 
+    def test_ba1_exception_list_is_policy_not_an_evidence_item(self):
+        self.input["ba1_exception_assessment"] = {
+            "source": "ClinGen SVI BA1 exception list", "source_version": "2018",
+            "reviewed_at": "2026-09-15", "is_exception": False}
+        value = ba1.evaluate(self.input, self.services([self.observation(501)]), self.config)
+        self.assertEqual(value.status, Status.MET)
+        self.assertTrue(all(item.get("evidence_id") for item in value.evidence))
+        self.assertFalse(value.provenance["ba1_exception_assessment"]["is_exception"])
+        line = to_evidence_line(value)
+        validate_1_0_1(line, "BA1")
+        self.assertEqual(line["directionOfEvidenceProvided"], "disputes")
+
     def test_bs1_requires_matching_disease(self):
         self.assertEqual(bs1.evaluate(self.input, self.services([self.observation(100)]),
                                      self.config).status, Status.NOT_EVALUATED)

@@ -116,14 +116,26 @@
   DEPRECATED 56。VA-Spec Evidence Lineは129件。
 - pytest 127テスト成功、Ruff成功。
 
+- `evaluate --context` を追加。キュレーション済み臨床文脈（condition、inheritance、
+  疾患別頻度閾値、BA1例外リスト）を取得Evidenceと分離して読み込む。Evidenceに使う
+  フィールドを文脈として混入させることは拒否し、キーはvariant keyに限定する。
+  読み込んだ文脈の版・件数はrun-manifestの`curated_context`に記録する。
+- BA1例外リストは`complete`が真のときだけ判定に使う。未転記の空リスト（complete=false）は
+  「リストに無い」と主張せず未評価を維持する。config/curated-context.jsonを口として同梱。
+- BA1例外評価とBS1閾値は、IRIを持つ場合のみEvidence itemとして出力し、そうでなければ
+  provenanceに記録する。BA1が例外評価を受け取るとVA-Spec出力がIRI要件で失敗する不具合を修正。
+- pytest 138テスト成功、Ruff成功。
+
 ## 未完了（次工程）
 
-1. SpliceAIは版がVEP経由の宣言に依存する。版を確定できる配布元からの取得が望ましい。
-2. PM1のgene/disease-specific対応（強度可変、PM1不使用geneのNOT_APPLICABLE表明）と、
+1. ClinGen SVI BA1例外リスト（Ghosh et al. 2018の9変異）は機械可読形式で公開されていない。
+   転記とGRCh38座標の解決が必要。それまでcomplete=falseのまま。
+2. SpliceAIは版がVEP経由の宣言に依存する。版を確定できる配布元からの取得が望ましい。
+3. PM1のgene/disease-specific対応（強度可変、PM1不使用geneのNOT_APPLICABLE表明）と、
    critical functional domainのreviewed Evidence入力経路。conditionとBS1疾患閾値の入力経路。
-3. BP7のRefSeq exon境界position adapterと校正済み保存性policy、PVS1 NMD等の計算の自動化拡張。
+4. BP7のRefSeq exon境界position adapterと校正済み保存性policy、PVS1 NMD等の計算の自動化拡張。
    現在はSpliceAI/保存性raw Evidenceとreviewed assessment入力経路まで。
-4. evaluateへのVCF直接入力・オンライン取得、症例文脈補足、準備済み入力の厳密なschema検証。
+5. evaluateへのVCF直接入力・オンライン取得、症例文脈補足、準備済み入力の厳密なschema検証。
 3. run-manifestに全Provider・実装ルールのハッシュを統合、ground truth比較レポート。
 4. Windows/Linux CI。
 

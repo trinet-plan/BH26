@@ -25,6 +25,15 @@ def result(code, input_data, status, summary, *, strength=None, evidence=None,
     )
 
 
+def citable(assessment):
+    """Curated policy is exported as an evidence item only when it has a retrievable IRI.
+
+    An assessment typed inline in the prepared input has no identifier, so it is recorded as
+    provenance instead; every exported evidence item must be resolvable.
+    """
+    return [assessment] if assessment.get("evidence_id") else []
+
+
 def population_context(code, input_data, services, config):
     rule = config.get(code, {})
     minimum_an = number(rule.get("minimum_an"))

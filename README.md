@@ -144,6 +144,11 @@ ACMG cross-field検査で書込み前に検証します。構造正規化に使�
 ではありません。各基準のNOT_EVALUATED、NOT_APPLICABLE、MANUAL_REVIEW、DEPRECATEDも
 `results.json` と `summary.tsv` に記録されます。
 
+キュレーション済みの臨床文脈は `--context config/curated-context.json` で渡します。取得した
+Evidenceには混ぜず、疾患・遺伝形式・疾患別頻度閾値・BA1例外リストだけを受け付けます。
+BA1例外リストは `complete` が真のときだけ判定に使い、未転記（偽）の間は「リストに無い」と
+主張せず未評価のままにします。読み込んだ文脈の版と件数はrun-manifestに記録します。
+
 `condition`（疾患）は任意入力です。PS1・PM5・PM1・PP2・BP1・PVS1は蛋白/遺伝子レベルで判定し、
 疾患関連性は判定に混ぜず `condition_assessment`（MATCHED / NOT_EVALUATED）として分離記録し、
 未確認のままMETになった場合は確認事項を併記します。`condition` を与えた場合、別疾患の

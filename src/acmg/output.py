@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from acmg import __version__
+from acmg.core.context import apply_context, context_summary, load_context
 from acmg.core.input import sha256_file
 from acmg.core.models import CRITERIA, Variant
 from acmg.engine import evaluate_record, make_services
@@ -32,11 +33,12 @@ def load_object(path):
 
 
 def run_internal(input_path, evidence_path, config_path, output_dir, criteria=CRITERIA,
-                 *, va_spec=False):
+                 *, va_spec=False, context_path=None):
     """Evaluate prepared JSON. No source annotations are promoted into independent evidence."""
     document = load_object(input_path)
     evidence_document = load_object(evidence_path) if evidence_path else {"evidence": []}
     config = load_object(config_path) if config_path else {}
+    context = load_context(load_object(context_path)) if context_path else None
     records = document.get("records")
     if not isinstance(records, list) or not records:
         raise ValueError("Prepared input must contain a nonempty records list")
@@ -57,7 +59,7 @@ def run_internal(input_path, evidence_path, config_path, output_dir, criteria=CR
             identity = record.get("identity_provenance")
             if not isinstance(identity, list) or not identity:
                 raise ValueError("Prepared input requires identity_provenance from verified mapping")
-            results = evaluate_record(record, services, config, criteria)
+            results = evaluate_record(apply_context(record, context), services, config, criteria)
             outputs.append({"record_id": record_id, "source": record.get("source", {}),
                             "variant": record["variant"], "identity_provenance": identity,
                             "results": [result.to_dict() for result in results]})
@@ -100,14 +102,15 @@ def run_internal(input_path, evidence_path, config_path, output_dir, criteria=CR
                 path.write_text(json.dumps(wrapped["evidence_line"], ensure_ascii=False,
                                            indent=2, allow_nan=False) + "\n", encoding="utf-8")
                 va_instances.append({"path": str(path), "sha256": sha256_file(path)})
-    paths = {"input": input_path, "evidence": evidence_path, "config": config_path}
+    paths = {"input": input_path, "evidence": evidence_path, "config": config_path,
+             "context": context_path}
     manifest = {
         "schema_version": "1.0", "tool_version": __version__, "python_version": platform.python_version(),
         "evaluated_at": datetime.now(timezone.utc).isoformat(), "network_used": False,
         "inputs": {name: {"path": str(path), "sha256": sha256_file(path)} for name, path in paths.items() if path},
         "criteria": list(criteria), "evaluated_records": len(outputs), "input_errors": len(errors),
         "va_spec_export": export_status, "final_classification": "OUT_OF_SCOPE",
-        "result_sha256": sha256_file(result_path),
+        "result_sha256": sha256_file(result_path), "curated_context": context_summary(context),
         "evidence_sha256": hashlib.sha256(json.dumps(evidence, sort_keys=True, allow_nan=False).encode()).hexdigest(),
     }
     if va_path:
