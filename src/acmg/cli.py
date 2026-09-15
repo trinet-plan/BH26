@@ -165,6 +165,8 @@ def main(argv=None):
                     comparator_searches = 0
                     comparator_evidence = 0
                     comparator_errors = []
+                    pm5_searches = 0
+                    pm5_evidence = 0
                     for annotation in unique_annotations.values():
                         variant = variants[annotation["variant_key"]]
                         splice_score = next((
@@ -183,8 +185,22 @@ def main(argv=None):
                             comparator_evidence += len(matches)
                         except ValueError as exc:
                             comparator_errors.append({
-                                "variant_key": variant.key, "error": str(exc),
+                                "variant_key": variant.key, "error": str(exc), "criterion": "PS1",
                             })
+                        try:
+                            search, matches = comparator.search_pm5(
+                                annotation, variant, splice_score
+                            )
+                            evidence.append(search)
+                            evidence.extend(matches)
+                            pm5_searches += 1
+                            pm5_evidence += len(matches)
+                        except ValueError as exc:
+                            comparator_errors.append({
+                                "variant_key": variant.key, "error": str(exc), "criterion": "PM5",
+                            })
+                    clinvar_manifest["pm5_residue_searches"] = pm5_searches
+                    clinvar_manifest["pm5_comparator_evidence"] = pm5_evidence
                     clinvar_manifest["ps1_comparator_searches"] = comparator_searches
                     clinvar_manifest["ps1_comparator_evidence"] = comparator_evidence
                     clinvar_manifest["ps1_comparator_errors"] = comparator_errors

@@ -15,6 +15,7 @@ hotspot policyは [PM1設計](docs/PM1-PLAN.md) を参照してください。
 - Ensembl HGVS/GRCh38参照検証の内容ハッシュ付きキャッシュとオフライン再生。
 - version付きRefSeqに一致するVEP蛋白注釈と、AlphaMissense・SpliceAI・保存性raw Evidence。
 - ClinVar exact protein comparator検索と、疾患評価を分離したPS1 protein-level判定。
+- 同一残基を対象とするPM5 residue検索と、疾患評価を分離したPM5 protein-level判定。
 - PM1のhotspot/critical domain 2ルート評価と、ClinVar missense densityによるhotspot proxy。
 - gnomAD 4.1.1集団頻度とClinVar VCVの内容ハッシュ付きキャッシュ、オフライン再生。
 - 準備済みJSONとローカルEvidenceによる内部評価JSON・TSV・manifest出力。
@@ -91,6 +92,10 @@ hotspot Evidenceが生成され、PM1はMET 2件・NOT_MET 0件・NOT_EVALUATED 
 固定キャッシュではgnomAD 17座位中15座位に観測があり、2座位は未登録です。未登録をAF=0とは
 扱いません。ClinVarは13 VCVを取得し、GRCh38座標一致を確認します。ClinVarの集約分類は同定・
 比較候補の監査情報に限定し、PP5/BP6の判定には使用しません。
+PS1は同一アミノ酸変化のexact検索、PM5は同一残基のresidue検索を使います。exact検索では
+「同一残基の別のアミノ酸変化が報告されていない」ことを示せないため、PM5はresidue検索の
+完了記録だけを不成立の根拠として受け付けます。residue検索の候補は1件ずつ蛋白参照と残基を
+照合してから採用します。
 
 準備後の `variants.json` には同定済み入力のみが入り、保留レコードは `audit.json` に残ります。
 `evidence.json` にはラベルから分離したEnsembl注釈が入ります。現在の固定キャッシュでは全28件が

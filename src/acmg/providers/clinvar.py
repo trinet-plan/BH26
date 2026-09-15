@@ -32,6 +32,72 @@ def node_text(node):
     return node.text.strip() if node is not None and node.text and node.text.strip() else None
 
 
+GENE_MISSENSE_RETMAX = 5000
+SUMMARY_BATCH = 200
+
+
+def gene_missense_search(client, release, gene, retmax=GENE_MISSENSE_RETMAX):
+    """One gene-wide missense search, shared by the PM1 density and PM5 residue lookups."""
+    term = f'{gene}[gene] AND "missense variant"[molecular consequence]'
+    query = urlencode({"db": "clinvar", "term": term, "retmode": "json", "retmax": retmax})
+    response = client.fetch(
+        f"https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?{query}",
+        dataset_version=release,
+    )
+    body = response["body"]
+    found = body.get("esearchresult") if isinstance(body, dict) else None
+    ids = found.get("idlist") if isinstance(found, dict) else None
+    try:
+        count = int(found["count"])
+        limit = int(found["retmax"])
+    except (KeyError, TypeError, ValueError) as exc:
+        raise ValueError("Unexpected ClinVar gene search response") from exc
+    if not isinstance(ids, list) or any(not str(value).isdigit() for value in ids):
+        raise ValueError("Unexpected ClinVar gene search ID list")
+    return {
+        "term": term, "ids": [str(value) for value in ids], "count": count,
+        "complete": count <= limit and len(ids) == count,
+        "retrieved_at": response["retrieved_at"],
+        "digest": hashlib.sha256(canonical_json(body).encode()).hexdigest(),
+    }
+
+
+def summary_documents(client, release, ids, batch=SUMMARY_BATCH):
+    documents = {}
+    retrieved_at = None
+    for offset in range(0, len(ids), batch):
+        chunk = ids[offset:offset + batch]
+        query = urlencode({"db": "clinvar", "id": ",".join(chunk), "retmode": "json"})
+        response = client.fetch(
+            f"https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?{query}",
+            dataset_version=release,
+        )
+        retrieved_at = response["retrieved_at"] if retrieved_at is None \
+            else max(retrieved_at, response["retrieved_at"])
+        body = response["body"]
+        result = body.get("result") if isinstance(body, dict) else None
+        if not isinstance(result, dict):
+            raise ValueError("Unexpected ClinVar summary response")
+        for uid in chunk:
+            document = result.get(uid)
+            if not isinstance(document, dict):
+                raise ValueError(f"Missing ClinVar summary for {uid}")
+            documents[uid] = document
+    return documents, retrieved_at
+
+
+def protein_change_positions(protein_change):
+    """Only plain single-residue substitutions such as R248W are positioned."""
+    if not isinstance(protein_change, str):
+        return []
+    positions = []
+    for token in protein_change.split(","):
+        match = PROTEIN_CHANGE.fullmatch(token.strip())
+        if match:
+            positions.append(int(match.group(2)))
+    return sorted(set(positions))
+
+
 class ClinVarProvider:
     name = "ClinVar"
 
@@ -161,7 +227,7 @@ class ClinVarComparatorProvider:
             "protein_start": annotation["protein_start"], "ref_aa": annotation["ref_aa"],
             "alt_aa": annotation["alt_aa"], "hgvsp": annotation["hgvsp"],
             "query": term, "returned_count": count, "candidate_ids": [str(value) for value in ids],
-            "complete": complete,
+            "complete": complete, "search_scope": "exact_protein_change",
         }
         comparators = []
         for variation_id in ids:
@@ -171,7 +237,46 @@ class ClinVarComparatorProvider:
                 comparators.append(candidate)
         return search_evidence, comparators
 
-    def _candidate(self, variation_id, annotation, query_variant, query_splice_score):
+    def search_pm5(self, annotation, query_variant, query_splice_score=None):
+        """Residue-scoped search: PS1's exact-change query cannot show what else is reported."""
+        required = ("transcript", "gene", "protein_id", "protein_start", "ref_aa", "alt_aa")
+        if not all(annotation.get(key) for key in required):
+            raise ValueError("PM5 search requires complete transcript/protein annotation")
+        found = gene_missense_search(self.client, self.release, annotation["gene"])
+        search = {
+            "category": "comparator_search", "variant_key": query_variant.key,
+            "evidence_id": (f'urn:sha256:{found["digest"]}:clinvar-pm5-search:'
+                            f'{annotation["protein_id"]}:{annotation["protein_start"]}'),
+            "source": self.name, "source_version": self.release,
+            "retrieved_at": found["retrieved_at"], "quality_status": "PASS",
+            "transcript": annotation["transcript"], "protein_id": annotation["protein_id"],
+            "protein_start": annotation["protein_start"], "ref_aa": annotation["ref_aa"],
+            "gene": annotation["gene"], "query": found["term"],
+            "returned_count": found["count"], "search_scope": "residue",
+            "complete": found["complete"],
+            "protein_change_source": "ClinVar esummary gene-level protein_change",
+        }
+        if not found["complete"]:
+            search["quality_status"] = "INCOMPLETE_SEARCH"
+            return search, []
+        documents, retrieved_at = summary_documents(self.client, self.release, found["ids"])
+        residue = annotation["protein_start"]
+        candidate_ids = [uid for uid, document in documents.items()
+                         if residue in protein_change_positions(document.get("protein_change"))]
+        search["retrieved_at"] = max(search["retrieved_at"], retrieved_at or search["retrieved_at"])
+        search["candidate_ids"] = candidate_ids
+        comparators = []
+        for uid in candidate_ids:
+            # The summary positions are transcript-agnostic, so each candidate is confirmed
+            # against this protein reference before it can support PM5.
+            candidate = self._candidate(uid, annotation, query_variant, query_splice_score,
+                                        scope="residue")
+            if candidate is not None:
+                comparators.append(candidate)
+        return search, comparators
+
+    def _candidate(self, variation_id, annotation, query_variant, query_splice_score,
+                   scope="exact_protein_change"):
         query = urlencode({"db": "clinvar", "id": variation_id, "rettype": "vcv",
                            "is_variationid": "true"})
         response = self.client.fetch(
@@ -188,7 +293,7 @@ class ClinVarComparatorProvider:
         archive = archives[0]
         expressions = [node_text(node) for node in archive.iter()
                        if local_name(node.tag) == "Expression"]
-        if annotation["hgvsp"] not in expressions:
+        if scope == "exact_protein_change" and annotation["hgvsp"] not in expressions:
             return None
         prefix = annotation["transcript"] + ":"
         hgvsc_values = sorted(set(value for value in expressions if value and value.startswith(prefix)))
@@ -221,9 +326,24 @@ class ClinVarComparatorProvider:
         if candidate_annotation.get("protein_id") != annotation["protein_id"]:
             return None
         changes = self._changed_residues(candidate_annotation)
-        expected_change = (annotation["protein_start"], annotation["ref_aa"], annotation["alt_aa"])
-        if changes != [expected_change] or candidate_annotation.get("hgvsp") != annotation["hgvsp"]:
-            return None
+        if scope == "exact_protein_change":
+            expected = (annotation["protein_start"], annotation["ref_aa"], annotation["alt_aa"])
+            if changes != [expected] or candidate_annotation.get("hgvsp") != annotation["hgvsp"]:
+                return None
+            comparator_alt = annotation["alt_aa"]
+            comparator_change = annotation["hgvsp"]
+        else:
+            # PM5: the same residue and reference amino acid, a different substitution.
+            if len(changes) != 1:
+                return None
+            position, reference, substitution = changes[0]
+            if (position != annotation["protein_start"] or reference != annotation["ref_aa"]
+                    or substitution == annotation["alt_aa"]):
+                return None
+            comparator_alt = substitution
+            comparator_change = candidate_annotation.get("hgvsp")
+            if not comparator_change:
+                return None
         classified = direct_child(archive, "ClassifiedRecord")
         germline = child_path(classified, "Classifications", "GermlineClassification") \
             if classified is not None else None
@@ -253,7 +373,7 @@ class ClinVarComparatorProvider:
         return {
             "category": "comparator", "variant_key": query_variant.key,
             "evidence_id": (
-                f"https://www.ncbi.nlm.nih.gov/clinvar/variation/{variation_id}/#ps1-"
+                f"https://www.ncbi.nlm.nih.gov/clinvar/variation/{variation_id}/#{scope}-"
                 f'{hashlib.sha256((query_variant.key + ":" + annotation["transcript"]).encode()).hexdigest()[:16]}'
             ),
             "source": "ClinVar", "source_version": f"{self.release}:{versioned}",
@@ -261,7 +381,8 @@ class ClinVarComparatorProvider:
             "response_sha256": digest, "accession": versioned, "variation_id": variation_id,
             "transcript": annotation["transcript"], "protein_id": annotation["protein_id"],
             "protein_start": annotation["protein_start"], "ref_aa": annotation["ref_aa"],
-            "alt_aa": annotation["alt_aa"], "protein_change": annotation["hgvsp"],
+            "alt_aa": comparator_alt, "protein_change": comparator_change,
+            "query_alt_aa": annotation["alt_aa"], "query_protein_change": annotation["hgvsp"],
             "comparator_protein_interval": {
                 "start": candidate_annotation.get("protein_start"),
                 "end": candidate_annotation.get("protein_end"),
@@ -272,7 +393,9 @@ class ClinVarComparatorProvider:
             "comparator_variant": comparator_variant.to_dict(),
             "classification": classification, "review_status": review_status,
             "review_status_eligible": review_eligible, "conditions": conditions,
-            "exact_protein_match": True, "different_nucleotide_variant": True,
+            "exact_protein_match": scope == "exact_protein_change",
+            "residue_match": scope == "residue", "search_scope": scope,
+            "different_nucleotide_variant": True,
             "query_spliceai": query_splice_score, "comparator_spliceai": candidate_splice,
             "splice_effect_checked": splice_checked, "splice_conflict": splice_conflict,
             "splice_policy": "ClinGen SVI Walker 2023; no-impact delta score <=0.1",
@@ -355,25 +478,10 @@ class ClinVarHotspotProvider:
         first = annotation["protein_start"]
         last = annotation.get("protein_end") or first
         start, end = max(1, first - window), last + window
-        term = f'{annotation["gene"]}[gene] AND "missense variant"[molecular consequence]'
-        query = urlencode({"db": "clinvar", "term": term, "retmode": "json",
-                           "retmax": self.search_retmax})
-        response = self.client.fetch(
-            f"https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?{query}",
-            dataset_version=self.release,
-        )
-        body = response["body"]
-        found = body.get("esearchresult") if isinstance(body, dict) else None
-        ids = found.get("idlist") if isinstance(found, dict) else None
-        try:
-            count = int(found["count"])
-            retmax = int(found["retmax"])
-        except (KeyError, TypeError, ValueError) as exc:
-            raise ValueError("Unexpected ClinVar hotspot search response") from exc
-        if not isinstance(ids, list) or any(not str(value).isdigit() for value in ids):
-            raise ValueError("Unexpected ClinVar hotspot ID list")
-        complete = count <= retmax and len(ids) == count
-        digest = hashlib.sha256(canonical_json(body).encode()).hexdigest()
+        found = gene_missense_search(self.client, self.release, annotation["gene"],
+                                     self.search_retmax)
+        term, count, complete = found["term"], found["count"], found["complete"]
+        digest, response = found["digest"], {"retrieved_at": found["retrieved_at"]}
         search = {
             "category": "region_search", "variant_key": query_variant.key,
             "evidence_id": f'urn:sha256:{digest}:clinvar-pm1-search:{annotation["transcript"]}',
@@ -389,8 +497,8 @@ class ClinVarHotspotProvider:
             # A truncated gene search cannot bound the counts, so emit no density evidence.
             search["quality_status"] = "INCOMPLETE_SEARCH"
             return search, None
-        counted, retrieved_at = self._counts([str(value) for value in ids], annotation,
-                                             start, end, response["retrieved_at"], query_variant)
+        counted, retrieved_at = self._counts(found["ids"], annotation, start, end,
+                                             response["retrieved_at"], query_variant)
         pathogenic = [item for item in counted if item["bucket"] == "pathogenic"]
         benign = [item for item in counted if item["bucket"] == "benign"]
         search["counted_variants"] = counted
@@ -421,27 +529,12 @@ class ClinVarHotspotProvider:
         return search, region
 
     def _counts(self, ids, annotation, start, end, retrieved_at, query_variant):
-        counted = []
-        for offset in range(0, len(ids), self.summary_batch):
-            batch = ids[offset:offset + self.summary_batch]
-            query = urlencode({"db": "clinvar", "id": ",".join(batch), "retmode": "json"})
-            response = self.client.fetch(
-                f"https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?{query}",
-                dataset_version=self.release,
-            )
-            retrieved_at = max(retrieved_at, response["retrieved_at"])
-            body = response["body"]
-            documents = body.get("result") if isinstance(body, dict) else None
-            if not isinstance(documents, dict):
-                raise ValueError("Unexpected ClinVar hotspot summary response")
-            for uid in batch:
-                document = documents.get(uid)
-                if not isinstance(document, dict):
-                    raise ValueError(f"Missing ClinVar summary for {uid}")
-                item = self._summary(uid, document, annotation, start, end, query_variant)
-                if item is not None:
-                    counted.append(item)
-        return counted, retrieved_at
+        documents, summarised_at = summary_documents(self.client, self.release, ids,
+                                                     self.summary_batch)
+        counted = [item for item in
+                   (self._summary(uid, document, annotation, start, end, query_variant)
+                    for uid, document in documents.items()) if item is not None]
+        return counted, max(retrieved_at, summarised_at or retrieved_at)
 
     def _summary(self, uid, document, annotation, start, end, query_variant):
         gene = document.get("gene_sort") or ""
@@ -460,7 +553,8 @@ class ClinVarHotspotProvider:
             bucket = "benign"
         else:
             return None
-        positions = [position for position in self._positions(document.get("protein_change"))
+        positions = [position for position in
+                     protein_change_positions(document.get("protein_change"))
                      if start <= position <= end]
         if not positions:
             return None
@@ -503,14 +597,3 @@ class ClinVarHotspotProvider:
                     return True
         return False
 
-    @staticmethod
-    def _positions(protein_change):
-        """Only plain single-residue substitutions such as R248W are positioned."""
-        if not isinstance(protein_change, str):
-            return []
-        positions = []
-        for token in protein_change.split(","):
-            match = PROTEIN_CHANGE.fullmatch(token.strip())
-            if match:
-                positions.append(int(match.group(2)))
-        return sorted(set(positions))

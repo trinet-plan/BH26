@@ -37,6 +37,10 @@ class DemoPipelineTests(unittest.TestCase):
         self.assertEqual(manifest["external_providers"][0]["queried_variants"], 17)
         self.assertEqual(manifest["external_providers"][0]["observed_variants"], 15)
         self.assertEqual(manifest["external_providers"][1]["matched_records"], 13)
+        self.assertEqual(manifest["external_providers"][1]["pm5_residue_searches"], 10)
+        self.assertEqual(manifest["external_providers"][1]["comparator_errors"]
+                         if "comparator_errors" in manifest["external_providers"][1]
+                         else manifest["external_providers"][1]["ps1_comparator_errors"], [])
 
         code = main([
             "evaluate", "--input", str(prepared / "variants.json"),
@@ -67,6 +71,17 @@ class DemoPipelineTests(unittest.TestCase):
         # Every demo variant that ClinVar classifies is excluded from its own density, so no
         # record is NOT_MET on the strength of its own submitted classification.
         self.assertEqual(statuses, {"MET": 2, "NOT_MET": 0, "NOT_EVALUATED": 26})
+        # PM5 needs a residue-scoped search; MYH7 p.Arg719 has a pathogenic ClinVar comparator.
+        pm5 = [result for record in results["records"] for result in record["results"]
+               if result["criterion"] == "PM5"]
+        pm5_statuses = {status: sum(result["status"] == status for result in pm5)
+                        for status in ("MET", "NOT_MET", "NOT_APPLICABLE")}
+        self.assertEqual(pm5_statuses, {"MET": 1, "NOT_MET": 17, "NOT_APPLICABLE": 10})
+        pm5_met = next(result for result in pm5 if result["status"] == "MET")
+        self.assertEqual(pm5_met["evidence_outcome"], "PM5")
+        self.assertEqual(pm5_met["provenance"]["assessment_scope"], "protein_level")
+        self.assertEqual(pm5_met["provenance"]["condition_assessment"], "NOT_EVALUATED")
+
         met = [result for result in pm1 if result["status"] == "MET"]
         for result in met:
             self.assertEqual(result["evidence_outcome"], "PM1")

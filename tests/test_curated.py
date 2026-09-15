@@ -222,10 +222,59 @@ class CuratedCriteriaTests(unittest.TestCase):
         self.assertTrue(value.review_points)
 
     def test_search_absence_requires_completeness(self):
-        search = self.item("comparator_search", protein_id="NP_TEST.1", protein_start=10, complete=True)
+        search = self.item("comparator_search", protein_id="NP_TEST.1", protein_start=10,
+                           complete=True, search_scope="residue")
         self.assertEqual(self.run_rule("PM5", search).status, Status.NOT_MET)
         search["complete"] = False
         self.assertEqual(self.run_rule("PM5", search).status, Status.NOT_EVALUATED)
+
+    def test_uncertain_comparator_is_not_a_review_item(self):
+        search = self.item("comparator_search", protein_id="NP_TEST.1", protein_start=10,
+                           complete=True, search_scope="residue")
+        item = self.comparator()
+        item.update(alt_aa="P", classification="Uncertain significance")
+        value = self.run_rule("PM5", search, item)
+        self.assertEqual(value.status, Status.NOT_MET)
+        self.assertEqual(value.review_points, [])
+        self.assertIn(item, value.evidence)
+        item["classification"] = "Likely pathogenic"
+        self.assertEqual(self.run_rule("PM5", search, item).status, Status.MANUAL_REVIEW)
+
+    def test_pm5_absence_needs_a_residue_scoped_search(self):
+        """An exact protein-change search says nothing about other changes at the residue."""
+        search = self.item("comparator_search", protein_id="NP_TEST.1", protein_start=10,
+                           complete=True, search_scope="exact_protein_change")
+        value = self.run_rule("PM5", search)
+        self.assertEqual(value.status, Status.NOT_EVALUATED)
+        self.assertEqual(value.missing_inputs, ["complete_comparator_search"])
+        self.assertEqual(self.run_rule("PS1", search).status, Status.NOT_MET)
+
+    def test_pm5_is_evaluated_without_condition(self):
+        input_data = {key: value for key, value in self.input.items() if key != "condition"}
+        annotation = {key: value for key, value in self.annotation.items() if key != "condition"}
+        search = {key: value for key, value in
+                  self.item("comparator_search", protein_id="NP_TEST.1", protein_start=10,
+                            complete=True, search_scope="residue").items() if key != "condition"}
+        value = evaluate_record(input_data, make_services([annotation, search]), {}, ["PM5"])[0]
+        self.assertEqual(value.status, Status.NOT_MET)
+
+    def test_automated_pm5_requires_a_confirmed_residue_match(self):
+        input_data = {key: value for key, value in self.input.items() if key != "condition"}
+        annotation = {key: value for key, value in self.annotation.items() if key != "condition"}
+        comparator = {key: value for key, value in self.comparator().items() if key != "condition"}
+        comparator.update(alt_aa="P", residue_match=True, different_nucleotide_variant=True,
+                          review_status_eligible=True, splice_effect_checked=True,
+                          splice_conflict=False, conditions=["MONDO:0000001"])
+        value = evaluate_record(input_data, make_services([annotation, comparator]), {}, ["PM5"])[0]
+        self.assertEqual(value.status, Status.MET)
+        self.assertEqual(value.strength, "moderate")
+        self.assertEqual(value.provenance["condition_assessment"], "NOT_EVALUATED")
+        # Without the provider's residue confirmation, and without a complete human review,
+        # the same record only raises a review point.
+        del comparator["residue_match"]
+        del comparator["primary_evidence"]
+        value = evaluate_record(input_data, make_services([annotation, comparator]), {}, ["PM5"])[0]
+        self.assertEqual(value.status, Status.MANUAL_REVIEW)
 
     def test_bp7_and_rna_contradiction(self):
         self.annotation["consequences"] = ["synonymous_variant"]

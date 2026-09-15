@@ -66,6 +66,18 @@
   MET 2件はconditionが未指定のためcondition_assessment=NOT_EVALUATEDと確認事項を併記。
 - pytest 98テスト成功、Ruff成功。固定キャッシュによるPM1 hotspotのオフライン再現を含む。
 
+- conditionを全体で任意入力とし、PM5もPS1・PM1と同じくprotein-levelで評価するよう変更。
+  疾患関連性はcondition_assessmentとして分離記録する。
+- PM5用のClinVar residue検索を実装。遺伝子単位のmissense検索とesummaryで同一残基の候補を
+  絞り、候補ごとにefetchとEnsembl照合で蛋白参照・残基・参照アミノ酸の一致と置換の相違を
+  確認する。exact検索は「他の置換がない」ことを示せないため、PM5はsearch_scope=residueの
+  完了記録のみを不成立の根拠にする。
+- 比較候補がVUS・良性・conflictingの場合はMANUAL_REVIEWにせず、検索済みの記録として
+  NOT_METのEvidenceに残す。人手レビューで成立しうるP/LP候補だけを確認待ちにする。
+- 実デモではPM5がMET 1件（MYH7 p.Arg719、比較候補p.Arg719Gln Pathogenic）、NOT_MET 17件、
+  NOT_APPLICABLE 10件。PS1は上記変更によりMANUAL_REVIEW 3件がNOT_MET 2件＋splice 1件へ移動。
+  VA-Spec Evidence Lineは79件。
+
 ## 未完了（次工程）
 
 0. PM1 hotspot密度のisoform numbering取り違え（ClinVar esummaryの`protein_change`が

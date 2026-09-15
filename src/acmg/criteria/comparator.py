@@ -13,15 +13,13 @@ def evaluate_comparator(code, input_data, services, config):
         return result(code, input_data, Status.MANUAL_REVIEW if code == "PS1" and splice else Status.NOT_APPLICABLE,
                       "Splice-equivalence requires review" if splice else "Requires missense substitution",
                       evidence=[annotation], review=["Assess splice-effect equivalence"] if splice else [])
+    # Both codes compare amino acid changes at one residue, so they are protein-level
+    # statements; the disease relevance is reported separately instead of being required.
     fields = ("protein_id", "protein_start", "ref_aa", "alt_aa")
-    disease_required = code == "PM5"
-    if not all(annotation.get(field) for field in fields) or (
-            disease_required and not input_data.get("condition")):
-        missing = [field for field in fields if not annotation.get(field)]
-        if disease_required and not input_data.get("condition"):
-            missing.append("condition")
-        return result(code, input_data, Status.NOT_EVALUATED, "Protein/disease context missing",
-                      evidence=[annotation], missing=missing)
+    if not all(annotation.get(field) for field in fields):
+        return result(code, input_data, Status.NOT_EVALUATED, "Protein context missing",
+                      evidence=[annotation],
+                      missing=[field for field in fields if not annotation.get(field)])
     candidates = get_evidence("comparator", input_data, services)
     matching, qualified = [], []
     for candidate in candidates:
@@ -43,9 +41,11 @@ def evaluate_comparator(code, input_data, services, config):
             continue
         if candidate.get("classification") != "Pathogenic":
             continue
+        # PS1 needs the identical protein change; PM5 needs a different change at the same
+        # residue, which the provider confirms against the same protein reference.
+        scoped = candidate.get("exact_protein_match" if code == "PS1" else "residue_match") is True
         automated = (
-            code == "PS1"
-            and candidate.get("exact_protein_match") is True
+            scoped
             and candidate.get("different_nucleotide_variant") is True
             and candidate.get("review_status_eligible") is True
             and candidate.get("splice_effect_checked") is True
@@ -92,17 +92,28 @@ def evaluate_comparator(code, input_data, services, config):
             provenance={"assessment_scope": "protein_level",
                         "condition_assessment": condition_status},
         )
-    if matching:
+    # A residue search surfaces every reported change at the residue. Only a pathogenic
+    # comparator can carry the criterion, so a VUS or benign one is recorded as evidence of
+    # what was searched, not raised as something a curator must resolve.
+    pathogenic_matches = [candidate for candidate in matching
+                          if candidate.get("classification") in ("Pathogenic", "Likely pathogenic")]
+    if pathogenic_matches:
         return result(code, input_data, Status.MANUAL_REVIEW, "Comparator evidence requires confirmation",
-                      evidence=[annotation, *matching], review=["Verify comparator pathogenicity, independence and splice mechanism"])
+                      evidence=[annotation, *pathogenic_matches],
+                      review=["Verify comparator pathogenicity, independence and splice mechanism"])
     searches = get_evidence("comparator_search", input_data, services)
+    # An exact protein-change search cannot show that no *other* change at the residue is
+    # pathogenic, so PM5 only accepts a residue-scoped search.
     complete = any(
         search.get("complete") is True
         and search.get("protein_id") == annotation["protein_id"]
         and search.get("protein_start") == annotation["protein_start"]
-        and (code == "PS1" or search.get("condition") == input_data.get("condition"))
+        and (search.get("search_scope", "exact_protein_change") == "residue"
+             or (code == "PS1" and search.get("search_scope", "exact_protein_change")
+                 == "exact_protein_change"))
         for search in searches
     )
     return result(code, input_data, Status.NOT_MET if complete else Status.NOT_EVALUATED,
                   "No eligible comparator found" if complete else "Comparator search incomplete",
-                  evidence=[annotation, *searches], missing=[] if complete else ["complete_comparator_search"])
+                  evidence=[annotation, *searches, *matching],
+                  missing=[] if complete else ["complete_comparator_search"])
