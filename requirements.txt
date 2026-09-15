@@ -1,0 +1,13 @@
+# PubMed / TogoMCP 接続クライアント + LLM(vLLM/OpenAI互換API)クライアント
+mcp>=2.0
+openai>=3.0
+
+# ClinGen ERepo等へのHTTPアクセス(acmg_pipeline/gate.py)
+requests>=2.30
+
+# GA4GH VA-Spec形式でのエビデンス出力(acmg_pipeline/export.py)
+# ga4gh.core / ga4gh.vrs は依存関係として自動的にインストールされる
+ga4gh.va_spec>=0.4
+
+# democase/annotation_alphamissense_alphagenome_v1.xlsx の読み込み
+openpyxl>=3.1

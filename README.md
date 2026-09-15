@@ -53,13 +53,11 @@ source .venv/bin/activate      # Windowsは .venv\Scripts\activate
 
 ### 3. 依存パッケージをインストール
 
-`requirements.txt` は未整備のため、コード内のimportに基づき手動でインストールしてください。
-
 ```bash
-pip install mcp openai requests ga4gh.va_spec ga4gh.core openpyxl
+pip install -r requirements.txt
 ```
 
-- `ga4gh.va_spec` / `ga4gh.core` — `acmg_pipeline/export.py` がVA-Spec形式での出力に使用
+- `ga4gh.va_spec`(`ga4gh.core`/`ga4gh.vrs`を自動導入) — `acmg_pipeline/export.py` がVA-Spec形式での出力に使用
 - `openpyxl` — `democase/annotation_alphamissense_alphagenome_v1.xlsx` を読む場合に使用
 
 ### 4. 環境変数を設定
