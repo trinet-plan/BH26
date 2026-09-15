@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0",
+  "records": [
+    {
+      "record_id": "synthetic:1",
+      "source": {"case_id": "synthetic", "variant_id": "synthetic-snv"},
+      "variant": {"assembly": "GRCh38", "chrom": "1", "pos": 2, "ref": "C", "alt": "T"},
+      "transcript": "NM_TEST.1",
+      "identity_provenance": [
+        {"source": "synthetic-test-fixture", "source_version": "1", "retrieved_at": "2026-09-15",
+         "matched_identifiers": {"TRANSCRIPT": "NM_TEST.1", "HGVSC": "c.2C>T"}}
+      ]
+    }
+  ]
+}

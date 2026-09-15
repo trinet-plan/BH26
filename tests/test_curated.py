@@ -1,0 +1,127 @@
+import copy
+import unittest
+
+from acmg.core.models import CRITERIA, Status, Variant
+from acmg.engine import evaluate_record, make_services
+
+
+class CuratedCriteriaTests(unittest.TestCase):
+    def setUp(self):
+        self.variant = Variant("GRCh38", "1", 2, "C", "T")
+        self.input = {"variant": self.variant.to_dict(), "transcript": "NM_TEST.1", "condition": "test:disease"}
+        self.base = {"variant_key": self.variant.key, "transcript": "NM_TEST.1", "condition": "test:disease",
+                     "source": "synthetic", "source_version": "1", "retrieved_at": "2026-09-15",
+                     "quality_status": "PASS", "curator": "test", "reviewed_at": "2026-09-15"}
+        self.annotation = self.item("annotation", consequences=["missense_variant"], gene="TEST",
+                                    protein_id="NP_TEST.1", protein_start=10, protein_end=10,
+                                    ref_aa="R", alt_aa="W")
+
+    def item(self, category, **values):
+        return {**self.base, "category": category, "evidence_id": f"test:{category}", **values}
+
+    def run_rule(self, code, *items):
+        return evaluate_record(self.input, make_services([self.annotation, *items]), {}, [code])[0]
+
+    def test_all_sixteen_without_evidence(self):
+        values = evaluate_record(self.input, make_services([]), {})
+        self.assertEqual([v.criterion for v in values], list(CRITERIA))
+        self.assertEqual(sum(v.status == Status.DEPRECATED for v in values), 2)
+        self.assertTrue(all(v.status in {Status.NOT_EVALUATED, Status.DEPRECATED} for v in values))
+
+    def test_mechanism_is_disease_specific(self):
+        item = self.item("gene_disease", gene="TEST", missense_mechanism_established=True,
+                         spectrum_review_complete=True, low_benign_missense_variation=True,
+                         predominantly_truncating=False)
+        self.assertEqual(self.run_rule("PP2", item).status, Status.MET)
+        self.assertEqual(self.run_rule("BP1", item).status, Status.NOT_MET)
+        item["condition"] = "test:other-disease"
+        self.assertEqual(self.run_rule("PP2", item).status, Status.NOT_EVALUATED)
+
+    def test_bp1_requires_reviewed_spectrum(self):
+        item = self.item("gene_disease", gene="TEST", missense_mechanism_established=False,
+                         spectrum_review_complete=True, predominantly_truncating=True)
+        self.assertEqual(self.run_rule("BP1", item).status, Status.MET)
+        del item["spectrum_review_complete"]
+        self.assertEqual(self.run_rule("BP1", item).status, Status.NOT_EVALUATED)
+
+    def region(self, **values):
+        return self.item("region", protein_id="NP_TEST.1", start=5, end=20, **values)
+
+    def test_domain_overlap_alone_is_insufficient(self):
+        item = self.region(critical_region=True)
+        self.assertEqual(self.run_rule("PM1", item).status, Status.NOT_EVALUATED)
+        item.update(pathogenic_enrichment=True, benign_depletion=True)
+        self.assertEqual(self.run_rule("PM1", item).status, Status.MET)
+        item["benign_depletion"] = False
+        self.assertEqual(self.run_rule("PM1", item).status, Status.NOT_MET)
+
+    def test_length_repeat_and_missing_function(self):
+        self.annotation.update(consequences=["inframe_deletion"], protein_length_change=-1)
+        item = self.region(nonfunctional_repeat=False, repetitive=False, functional_importance=True,
+                           functional_review_complete=True)
+        self.assertEqual(self.run_rule("PM4", item).status, Status.MET)
+        self.assertEqual(self.run_rule("BP3", item).status, Status.NOT_MET)
+        item.update(nonfunctional_repeat=True, repetitive=True, functional_importance=False)
+        self.assertEqual(self.run_rule("PM4", item).status, Status.NOT_MET)
+        self.assertEqual(self.run_rule("BP3", item).status, Status.MET)
+        del item["functional_importance"]
+        self.assertEqual(self.run_rule("BP3", item).status, Status.NOT_EVALUATED)
+
+    def comparator(self, **values):
+        return self.item("comparator", protein_id="NP_TEST.1", protein_start=10, ref_aa="R", alt_aa="W",
+                         comparator_variant={**self.variant.to_dict(), "pos": 3, "ref": "G", "alt": "A"},
+                         classification="Pathogenic", pathogenic_evidence_reviewed=True, independent_evidence=True,
+                         mechanism_matches=True, splice_effect_checked=True, different_splice_mechanism=False,
+                         primary_evidence=["test:primary-study"], **values)
+
+    def test_same_vs_different_amino_acid(self):
+        item = self.comparator()
+        self.assertEqual(self.run_rule("PS1", item).status, Status.MET)
+        self.assertEqual(self.run_rule("PM5", item).status, Status.NOT_EVALUATED)
+        item["alt_aa"] = "Q"
+        self.assertEqual(self.run_rule("PM5", item).status, Status.MET)
+
+    def test_comparator_label_is_not_enough(self):
+        item = self.comparator()
+        item["independent_evidence"] = False
+        self.assertEqual(self.run_rule("PS1", item).status, Status.MANUAL_REVIEW)
+        item["independent_evidence"] = True
+        item["comparator_variant"] = self.variant.to_dict()
+        self.assertNotEqual(self.run_rule("PS1", item).status, Status.MET)
+
+    def test_search_absence_requires_completeness(self):
+        search = self.item("comparator_search", protein_id="NP_TEST.1", protein_start=10, complete=True)
+        self.assertEqual(self.run_rule("PM5", search).status, Status.NOT_MET)
+        search["complete"] = False
+        self.assertEqual(self.run_rule("PM5", search).status, Status.NOT_EVALUATED)
+
+    def test_bp7_and_rna_contradiction(self):
+        self.annotation["consequences"] = ["synonymous_variant"]
+        item = self.item("synonymous_assessment", outside_splice_critical_region=True,
+                         no_predicted_splice_impact=True, not_conserved=True, contradictory_rna_evidence=False,
+                         splice_prediction_evidence="test:splice", calibration_source="test:calibration",
+                         conservation_evidence="test:conservation", position_rule_version="test:1")
+        self.assertEqual(self.run_rule("BP7", item).status, Status.MET)
+        item["contradictory_rna_evidence"] = True
+        self.assertEqual(self.run_rule("BP7", item).status, Status.MANUAL_REVIEW)
+
+    def test_pvs1_remains_provisional(self):
+        self.annotation["consequences"] = ["frameshift_variant"]
+        mechanism = self.item("gene_disease", gene="TEST", lof_mechanism_established=True)
+        lof = self.item("lof_assessment", biologically_relevant_transcript=True, exon_relevant=True,
+                        nmd_predicted=True, nmd_rule_source="test:nmd")
+        value = self.run_rule("PVS1", mechanism, lof)
+        self.assertEqual(value.status, Status.MANUAL_REVIEW)
+        self.assertIsNone(value.strength)
+        self.assertEqual(value.provenance["recommended_strength"], "very_strong")
+        lof["nmd_predicted"] = False
+        self.assertIsNone(self.run_rule("PVS1", mechanism, lof).provenance["recommended_strength"])
+        mechanism["lof_mechanism_established"] = False
+        self.assertEqual(self.run_rule("PVS1", mechanism, lof).status, Status.NOT_MET)
+
+    def test_source_labels_do_not_affect_all_results(self):
+        services = make_services([self.annotation])
+        first = [r.to_dict() for r in evaluate_record(self.input, services, {})]
+        altered = copy.deepcopy(self.input)
+        altered.update(CLNSIG="Pathogenic", ACMG_CODES="PVS1,PS1,PM2", NOTE="ground truth")
+        self.assertEqual(first, [r.to_dict() for r in evaluate_record(altered, services, {})])

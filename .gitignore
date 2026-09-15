@@ -9,6 +9,7 @@ env/
 
 # Test and tooling caches
 .pytest_cache/
+pytest-cache-files-*/
 .mypy_cache/
 .ruff_cache/
 .coverage
@@ -24,3 +25,9 @@ dist/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Local execution data and caches
+.work/
+work/
+results/
+.cache/
