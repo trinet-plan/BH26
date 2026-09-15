@@ -145,6 +145,18 @@ AFは0以上1以下、ACは0以上、ANは1以上でなければ出力を拒否�
 3. criterion、outcome、direction、strengthのACMG cross-field整合性を検証する。
 4. run manifestに公式canonical schema IDと制限schemaのSHA-256を記録する。
 
+成立時の出力は、次の専用合成fixtureでE2E検証する。
+
+| record | 入力 | 成立結果 | VA-Spec方向・強度・outcome |
+| --- | --- | --- | --- |
+| `fixture:pm2-met` | AC=0、AN=10000、AF=0 | PM2 MET | `supports` / `supporting` / `PM2_supporting` |
+| `fixture:ba1-met` | AC=501、AN=10000、AF=0.0501、BA1例外でない | BA1 MET | `disputes` / `standalone` / `BA1` |
+
+fixtureは `tests/fixtures/population-met-{prepared,evidence,rules}.json` に分離し、評価入力、
+人口頻度Evidence、ルール設定の境界も実運用と同じにする。テストでは内部statusだけでなく、
+生成された個別VA-Spec JSONを再読込し、direction、strength、outcome、AF、AC、AN、
+BA1例外確認EvidenceのIRIまで確認する。
+
 公式schema IDは次である。
 
 ```text

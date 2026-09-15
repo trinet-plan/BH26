@@ -38,6 +38,8 @@
 - 監査用の独自envelopeとは別に、`va-spec-1.0.1`へ1 Evidence Line/1 JSONを出力。
 - 公式1.0.1例に合わせ、gnomAD人口頻度をCohortAlleleFrequencyStudyResultとして埋め込み、
   DataSet・StudyGroup・Method・DocumentとQC provenanceを保持。詳細仕様を文書化。
+- PM2（AC=0、AN=10000、AF=0）とBA1（AC=501、AN=10000、AF=0.0501、例外なし）の
+  MET合成fixtureを追加し、supports/supportingとdisputes/standaloneのVA-Spec出力をE2E検証。
 - pytest 71テスト成功、Ruff成功。3 Provider固定キャッシュによる全28件E2Eを含む。
 - work/synthetic-run-1/2で内部CLI実行成功、入力エラー0。結果は合成variantでありdemo同定結果ではない。
 
