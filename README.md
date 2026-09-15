@@ -4,7 +4,8 @@ demo-dataの4症例を対象とする、Evidence単位のACMG基準評価ツー�
 正式な対象範囲と完了条件は [計画](docs/PLAN.md)、現状と残作業は
 [進捗](docs/PROGRESS.md)、JSONのフィールド対応と制約は
 [VA-Spec 1.0.1 JSON出力仕様](docs/VA-SPEC-OUTPUT.md)、蛋白注釈と予測値は
-[予測Evidence仕様](docs/PREDICTION-EVIDENCE.md) を参照してください。
+[予測Evidence仕様](docs/PREDICTION-EVIDENCE.md)、PM1の2ルート設計と
+hotspot policyは [PM1設計](docs/PM1-PLAN.md) を参照してください。
 
 ## 現在動く機能
 
