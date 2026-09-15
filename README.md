@@ -1,7 +1,8 @@
 # 2026 Biohackathon — ACMG Evidence CLI
 
 demo-dataの4症例を対象とする、Evidence単位のACMG基準評価ツール。実装途中です。
-正式な対象範囲と完了条件は [計画](docs/PLAN.md)、現状と残作業は
+全体像（データ源・16基準の状況・判定方針・残件）は [俯瞰](docs/OVERVIEW.md)、
+正式な対象範囲と完了条件は [計画](docs/PLAN.md)、工程単位の記録は
 [進捗](docs/PROGRESS.md)、JSONのフィールド対応と制約は
 [VA-Spec 1.0.1 JSON出力仕様](docs/VA-SPEC-OUTPUT.md)、蛋白注釈と予測値は
 [予測Evidence仕様](docs/PREDICTION-EVIDENCE.md)、PM1の2ルート設計と
