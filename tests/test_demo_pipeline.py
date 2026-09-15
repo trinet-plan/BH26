@@ -24,6 +24,7 @@ class DemoPipelineTests(unittest.TestCase):
             "--with-gnomad", "--gnomad-release", "4.1.1",
             "--with-clinvar", "--clinvar-release", "2026-09-15",
             "--with-pm1-hotspot", "--rules", str(ROOT / "config" / "demo-rules.json"),
+            "--with-dbnsfp",
             "--offline",
         ])
         self.assertEqual(code, 0)
@@ -33,14 +34,14 @@ class DemoPipelineTests(unittest.TestCase):
         manifest = json.loads((prepared / "identity-manifest.json").read_text(encoding="utf-8"))
         self.assertFalse(manifest["network_used"])
         self.assertEqual(manifest["annotation_evidence"], 17)
-        self.assertEqual(manifest["computational_evidence"], 42)
-        self.assertEqual(manifest["external_providers"][0]["queried_variants"], 17)
-        self.assertEqual(manifest["external_providers"][0]["observed_variants"], 15)
-        self.assertEqual(manifest["external_providers"][1]["matched_records"], 13)
-        self.assertEqual(manifest["external_providers"][1]["pm5_residue_searches"], 10)
-        self.assertEqual(manifest["external_providers"][1]["comparator_errors"]
-                         if "comparator_errors" in manifest["external_providers"][1]
-                         else manifest["external_providers"][1]["ps1_comparator_errors"], [])
+        # 42 uncalibrated VEP scores plus 22 version-pinned dbNSFP scores.
+        self.assertEqual(manifest["computational_evidence"], 64)
+        providers = {item["provider"]: item for item in manifest["external_providers"]}
+        self.assertEqual(providers["gnomAD"]["queried_variants"], 17)
+        self.assertEqual(providers["gnomAD"]["observed_variants"], 15)
+        self.assertEqual(providers["ClinVar"]["matched_records"], 13)
+        self.assertEqual(providers["ClinVar"]["pm5_residue_searches"], 10)
+        self.assertEqual(providers["ClinVar"]["ps1_comparator_errors"], [])
 
         code = main([
             "evaluate", "--input", str(prepared / "variants.json"),
@@ -59,8 +60,25 @@ class DemoPipelineTests(unittest.TestCase):
                if result["criterion"] == "PM2"]
         self.assertTrue(any(result["status"] == "NOT_MET" for result in pm2))
 
+        # Calibrated PP3/BP4 need the dbNSFP release that produced the scores.
+        dbnsfp = providers["MyVariant.info dbNSFP"]
+        self.assertEqual(dbnsfp["provider_version"], "4.8a")
+        self.assertEqual(dbnsfp["errors"], [])
+        computational = [result for record in results["records"] for result in record["results"]
+                         if result["criterion"] in ("PP3", "BP4")]
+        met = [result for result in computational if result["status"] == "MET"]
+        self.assertEqual(len(met), 14)
+        strengths = {result["evidence_outcome"] for result in met}
+        self.assertEqual(strengths, {"PP3", "PP3_moderate", "PP3_strong",
+                                     "BP4", "BP4_moderate"})
+        for result in met:
+            scores = [item for item in result["evidence"] if item.get("predictor") == "REVEL"]
+            self.assertEqual(len(scores), 1)
+            self.assertEqual(scores[0]["predictor_version"], "dbNSFP-4.8a")
+            self.assertTrue(scores[0]["calibration_eligible"])
+
         # ClinVar missense density around each residue, under the committed PM1 policy.
-        hotspot = manifest["external_providers"][2]
+        hotspot = providers["ClinVar protein hotspot density"]
         self.assertEqual(hotspot["policy_version"], "PM1-hotspot-v1")
         self.assertEqual(hotspot["region_evidence"], 10)
         self.assertEqual(hotspot["errors"], [])

@@ -27,5 +27,63 @@
       "policy_source": "BH26 demo PM1 hotspot proxy policy (fastVEP-style ClinVar missense density); not a ClinGen VCEP specification",
       "policy_version": "PM1-hotspot-v1"
     }
+  },
+  "computational": {
+    "selected_calibration": "revel-pejaver-2022",
+    "calibrations": {
+      "revel-pejaver-2022": {
+        "predictor": "REVEL",
+        "predictor_version": "dbNSFP-4.8a",
+        "source": "Pejaver et al. 2022, Am J Hum Genet 109:2163-2177 (ClinGen SVI PP3/BP4 calibration)",
+        "version": "2022",
+        "mechanism": "protein",
+        "consequences": [
+          "missense_variant"
+        ],
+        "score_min": 0,
+        "score_max": 1,
+        "bands": {
+          "PP3": [
+            {
+              "min": 0.644,
+              "max": 1.0,
+              "strength": "supporting"
+            },
+            {
+              "min": 0.773,
+              "max": 1.0,
+              "strength": "moderate"
+            },
+            {
+              "min": 0.932,
+              "max": 1.0,
+              "strength": "strong"
+            }
+          ],
+          "BP4": [
+            {
+              "min": 0.0,
+              "max": 0.29,
+              "strength": "supporting"
+            },
+            {
+              "min": 0.0,
+              "max": 0.183,
+              "strength": "moderate"
+            },
+            {
+              "min": 0.0,
+              "max": 0.016,
+              "strength": "strong"
+            },
+            {
+              "min": 0.0,
+              "max": 0.003,
+              "strength": "very_strong"
+            }
+          ]
+        }
+      }
+    }
   }
 }

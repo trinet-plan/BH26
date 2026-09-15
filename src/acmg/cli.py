@@ -14,9 +14,10 @@ from acmg.output import run_internal
 from acmg.providers.clinvar import (
     VCV, ClinVarComparatorProvider, ClinVarHotspotProvider, ClinVarProvider,
 )
+from acmg.providers.dbnsfp import DbnsfpProvider
 from acmg.providers.ensembl import EnsemblIdentityProvider
 from acmg.providers.gnomad import GnomadProvider
-from acmg.providers.http import CachedHttpClient
+from acmg.providers.http import CachedHttpClient, FetchError
 
 
 def main(argv=None):
@@ -41,6 +42,8 @@ def main(argv=None):
     online.add_argument("--with-gnomad", action="store_true")
     online.add_argument("--gnomad-release", default="4.1.1")
     online.add_argument("--with-clinvar", action="store_true")
+    online.add_argument("--with-dbnsfp", action="store_true",
+                        help="Fetch dbNSFP meta-predictor scores pinned to their dbNSFP release")
     online.add_argument("--with-pm1-hotspot", action="store_true",
                         help="Count ClinVar missense density around each residue as PM1 hotspot proxy")
     online.add_argument("--rules", type=Path,
@@ -123,6 +126,26 @@ def main(argv=None):
                         "queried_variants": len(variants), "observed_variants": sum(
                             batch is not None for batch in batches.values()),
                         "evidence": len(observations),
+                    })
+                if args.with_dbnsfp:
+                    dbnsfp = DbnsfpProvider(external_client)
+                    transcripts = {item["variant_key"]: item["transcript"] for item in annotations}
+                    scores = 0
+                    dbnsfp_errors = []
+                    for key, variant in sorted(variants.items()):
+                        try:
+                            dbnsfp_records = dbnsfp.get_predictions(variant, transcripts.get(key))
+                        except (ValueError, FetchError) as exc:
+                            dbnsfp_errors.append({"variant_key": key, "error": str(exc)})
+                            continue
+                        evidence.extend(dbnsfp_records)
+                        scores += len(dbnsfp_records)
+                    external_manifest.append({
+                        "provider": dbnsfp.name,
+                        "provider_version": (dbnsfp.metadata or {}).get("dbnsfp_version"),
+                        "queried_variants": len(variants), "evidence": scores,
+                        "errors": dbnsfp_errors,
+                        "calibration_use": "PP3_BP4_WITH_CONFIGURED_CALIBRATION",
                     })
                 if args.with_clinvar:
                     clinvar = ClinVarProvider(external_client, args.clinvar_release)

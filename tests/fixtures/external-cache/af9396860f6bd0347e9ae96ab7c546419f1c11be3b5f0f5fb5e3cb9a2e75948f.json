@@ -1,0 +1,1 @@
+{"body":{"_id":"chr1:g.201361238G>C","_version":2},"body_sha256":"75cb73dc491a61dd8567ed44bfff7d10930af2f4af7a3f938bb98ab00def52a6","request":{"data":null,"dataset_version":"4.8a","format":"json","url":"https://myvariant.info/v1/variant/chr1%3Ag.201361238G%3EC?assembly=hg38&fields=dbnsfp.revel,dbnsfp.alphamissense"},"retrieved_at":"2026-09-15T12:17:10.619395+00:00"}

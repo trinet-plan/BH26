@@ -17,6 +17,7 @@ hotspot policyは [PM1設計](docs/PM1-PLAN.md) を参照してください。
 - ClinVar exact protein comparator検索と、疾患評価を分離したPS1 protein-level判定。
 - 同一残基を対象とするPM5 residue検索と、疾患評価を分離したPM5 protein-level判定。
 - PM1のhotspot/critical domain 2ルート評価と、ClinVar missense densityによるhotspot proxy。
+- dbNSFP releaseを固定したREVEL/AlphaMissenseと、校正区間によるPP3/BP4判定。
 - gnomAD 4.1.1集団頻度とClinVar VCVの内容ハッシュ付きキャッシュ、オフライン再生。
 - 準備済みJSONとローカルEvidenceによる内部評価JSON・TSV・manifest出力。
 - GA4GH VA-Spec 1.0.1 ACMG Evidence Line互換JSONと、監査用envelope出力。
@@ -77,9 +78,18 @@ VCFに記載されたVCV accession、およびPM1 hotspot検索時の遺伝子�
 
 ```powershell
 $env:PYTHONPATH = 'src'
-.venv/Scripts/python.exe -m acmg prepare-demo-online --input-dir demo-data --cache-dir tests/fixtures/ensembl-cache --evidence-cache-dir tests/fixtures/external-cache --output-dir work/demo-external --ensembl-release 116 --with-gnomad --gnomad-release 4.1.1 --with-clinvar --clinvar-release 2026-09-15 --with-pm1-hotspot --rules config/demo-rules.json --offline
+.venv/Scripts/python.exe -m acmg prepare-demo-online --input-dir demo-data --cache-dir tests/fixtures/ensembl-cache --evidence-cache-dir tests/fixtures/external-cache --output-dir work/demo-external --ensembl-release 116 --with-gnomad --gnomad-release 4.1.1 --with-clinvar --clinvar-release 2026-09-15 --with-pm1-hotspot --rules config/demo-rules.json --with-dbnsfp --offline
 .venv/Scripts/python.exe -m acmg evaluate --input work/demo-external/variants.json --evidence work/demo-external/evidence.json --config config/demo-rules.json --criteria all --offline --output-dir work/demo-evaluated
 ```
+
+`--with-dbnsfp` はMyVariant.info経由でdbNSFPのREVEL/AlphaMissenseを取得します。送信するのは
+正規化済みGRCh38座位だけです。metadataエンドポイントからdbNSFP版（現在4.8a）を取得して
+各スコアに記録し、版が確定した場合に限り `calibration_eligible` とします。Ensembl VEP RESTは
+REVEL/SpliceAIの由来版を公開しないため、VEP由来の予測値はPP3/BP4に使いません。
+校正区間は `config/demo-rules.json` の `computational` に出典付きで置きます
+（REVEL: Pejaver et al. 2022のClinGen SVI校正、PP3 supporting/moderate/strong、
+BP4 supporting/moderate/strong/very strong）。dbNSFPはnonsynonymous SNV用のため、
+indelには問い合わせません。
 
 `--with-pm1-hotspot` は各missense変異の残基±N aaにあるClinVar missense変異を数え、PM1の
 hotspot Evidenceを生成します。閾値は `config/demo-rules.json` の `PM1.hotspot` にversion付きで

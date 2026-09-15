@@ -92,13 +92,27 @@
   RUNX1 K110Eでは16件中、自身1件とA134の別isoform表記3件が除かれ12件になる。
   デモ10領域の件数は変化しない（対象遺伝子ではisoform表記の混入がなかった）。
 
+- dbNSFP Provider（MyVariant.info経由）を実装。metadataからdbNSFP版4.8aを取得して各スコアの
+  predictor_versionに固定し、版が確定したスコアだけcalibration_eligible=trueとする。
+  REVELとAlphaMissenseのみ採用し、SIFT/PolyPhen-2は基準入力に渡さない。
+  dbNSFPはnonsynonymous SNV対象のためindelには問い合わせず、404は「値なし」として扱う。
+- PP3/BP4の校正区間をconfigへ追加（REVEL: Pejaver et al. 2022のClinGen SVI校正。
+  PP3 0.644/0.773/0.932、BP4 0.290/0.183/0.016/0.003）。強度別の複数区間に対応。
+- 実デモでPP3がMET 6件（strong 1・moderate 1・supporting 4）、NOT_MET 12件、N/A 10件。
+  BP4がMET 8件（moderate 2・supporting 6）、NOT_MET 10件、N/A 10件。
+  KCNJ5 p.Arg155Gln（REVEL 0.934）でPP3 strong、MYH7 p.Arg719Trp（0.814）でPP3 moderate。
+- 実デモ全体はMET 17、NOT_MET 98、NOT_EVALUATED 112、NOT_APPLICABLE 161、
+  MANUAL_REVIEW 4、DEPRECATED 56。VA-Spec Evidence Lineは115件。
+- pytest 119テスト成功、Ruff成功。5 Provider固定キャッシュによる全28件E2Eを含む。
+
 ## 未完了（次工程）
 
-1. PM1のgene/disease-specific対応（強度可変、PM1不使用geneのNOT_APPLICABLE表明）と、
+1. PP3/BP4はREVELのみ校正済み。SpliceAI等のsplicing機序は校正policy未設定のまま。
+2. PM1のgene/disease-specific対応（強度可変、PM1不使用geneのNOT_APPLICABLE表明）と、
    critical functional domainのreviewed Evidence入力経路。conditionとBS1疾患閾値の入力経路。
-2. BP7のRefSeq exon境界position adapterと校正済み保存性policy、PVS1 NMD等の計算の自動化拡張。
+3. BP7のRefSeq exon境界position adapterと校正済み保存性policy、PVS1 NMD等の計算の自動化拡張。
    現在はSpliceAI/保存性raw Evidenceとreviewed assessment入力経路まで。
-3. evaluateへのVCF直接入力・オンライン取得、症例文脈補足、準備済み入力の厳密なschema検証。
+4. evaluateへのVCF直接入力・オンライン取得、症例文脈補足、準備済み入力の厳密なschema検証。
 3. run-manifestに全Provider・実装ルールのハッシュを統合、ground truth比較レポート。
 4. Windows/Linux CI。
 
