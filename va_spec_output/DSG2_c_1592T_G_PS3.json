@@ -1,0 +1,85 @@
+{
+  "id": "evline:DSG2_c_1592T_G_PS3",
+  "type": "EvidenceLine",
+  "directionOfEvidenceProvided": "neutral",
+  "reportedIn": [
+    {
+      "type": "Document",
+      "pmid": "39227800",
+      "urls": [
+        "https://pubmed.ncbi.nlm.nih.gov/39227800/"
+      ]
+    }
+  ],
+  "description": "None of the 1 paper(s) examined yielded a usable evidence-based judgment for this variant (either the variant could not be identified in the text, or the per-paper judgment was itself inconclusive).",
+  "hasEvidenceItems": [
+    {
+      "id": "evline:paper-1-39227800",
+      "type": "EvidenceLine",
+      "directionOfEvidenceProvided": "neutral",
+      "reportedIn": [
+        {
+          "type": "Document",
+          "pmid": "39227800",
+          "urls": [
+            "https://pubmed.ncbi.nlm.nih.gov/39227800/"
+          ]
+        }
+      ],
+      "description": "The paper provides strong functional evidence across multiple levels, including in vivo mouse models showing cardiac dysfunction/fibrosis and in vitro assays showing protein degradation and aberrant signaling. These diverse assays consistently demonstrate a damaging effect of the p.Phe531Cys variant.",
+      "extensions": [
+        {
+          "name": "curatorHints",
+          "value": [
+            {
+              "severity": "warning",
+              "message": "This paper (PMID:39227800) self-reports multiple experimental systems: In vivo phenotype assessment (Echocardiography and ECG) (functionally_abnormal); Histological analysis (functionally_abnormal); Protein stability/degradation assay (functionally_abnormal); Cell signaling assay (functionally_abnormal). It is recommended to go back to the relevant part of the full text and manually confirm which of these is genuinely the most direct functional evidence for the overall direction below (there is a past instance of an indirect results table being cited by mistake)."
+            },
+            {
+              "severity": "caution",
+              "message": "This judgment (PMID:39227800) is based on a single study only. For criterion codes on the ClinGen side that require reproducibility across multiple studies (e.g., PS3_Moderate or stronger), this evidence alone may not be sufficient in strength."
+            },
+            {
+              "severity": "info",
+              "message": "No approved-assay list is registered for ARVC (no VCEP), so institutional applicability could not be checked automatically for any of this paper's (PMID:39227800) experiments."
+            },
+            {
+              "severity": "warning",
+              "message": "In this paper (PMID:39227800), none of the extracted experiments' key_findings contain any numeric detail, yet the LLM confidently concluded PS3. This suggests the extraction may describe the paper's general methodology rather than a measurement specifically reported for the target variant, so the judgment has been forced to not_clear (real-world instance: TP53 c.875A>G, where the paper is a large-scale saturation screen and the target variant's specific score was only in supplementary data)."
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "specifiedBy": {
+    "type": "Method",
+    "methodType": "PS3",
+    "name": "ARVC (no VCEP) ACMG/AMP PS3 evidence assessment (LLM-assisted draft)"
+  },
+  "contributions": [
+    {
+      "type": "Contribution",
+      "contributor": {
+        "id": "acmg-literature-llm-pipeline",
+        "type": "Agent",
+        "name": "ACMG literature-evidence LLM pipeline (gemma-4 via vLLM) - AI-generated draft evidence, requires human curator review before use"
+      },
+      "activityType": {
+        "name": "automated evidence evaluation"
+      },
+      "date": "2026-09-15"
+    }
+  ],
+  "extensions": [
+    {
+      "name": "curatorHints",
+      "value": [
+        {
+          "severity": "info",
+          "message": "None of the 1 paper(s) examined yielded a usable evidence-based judgment for this variant (either the variant could not be identified in the text, or the per-paper judgment was itself inconclusive)."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.pyc
+
+# OS
+.DS_Store
+
+# Office lock files
+~$*
+
+# Secrets / local config
+.env
+
+# Generated run logs
+logs/*.log

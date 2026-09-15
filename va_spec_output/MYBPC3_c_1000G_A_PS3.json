@@ -1,0 +1,36 @@
+{
+  "id": "evline:MYBPC3_c_1000G_A_PS3",
+  "type": "EvidenceLine",
+  "directionOfEvidenceProvided": "neutral",
+  "description": "None of the 0 paper(s) examined yielded a usable evidence-based judgment for this variant (either the variant could not be identified in the text, or the per-paper judgment was itself inconclusive).",
+  "specifiedBy": {
+    "type": "Method",
+    "methodType": "PS3",
+    "name": "Cardiomyopathy VCEP ACMG/AMP PS3 evidence assessment (LLM-assisted draft)"
+  },
+  "contributions": [
+    {
+      "type": "Contribution",
+      "contributor": {
+        "id": "acmg-literature-llm-pipeline",
+        "type": "Agent",
+        "name": "ACMG literature-evidence LLM pipeline (gemma-4 via vLLM) - AI-generated draft evidence, requires human curator review before use"
+      },
+      "activityType": {
+        "name": "automated evidence evaluation"
+      },
+      "date": "2026-09-15"
+    }
+  ],
+  "extensions": [
+    {
+      "name": "curatorHints",
+      "value": [
+        {
+          "severity": "info",
+          "message": "None of the 0 paper(s) examined yielded a usable evidence-based judgment for this variant (either the variant could not be identified in the text, or the per-paper judgment was itself inconclusive)."
+        }
+      ]
+    }
+  ]
+}

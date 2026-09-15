@@ -1,0 +1,563 @@
+{
+  "id": "statement:PTEN_c.278A_G_pathogenicity",
+  "type": "Statement",
+  "description": "Illustrative example: shows how this pipeline's PS3 EvidenceLine (a real, schema-validated output - see hasEvidenceLines below) would sit as ONE piece of evidence inside a full VariantPathogenicityStatement. The classification/strength/direction on THIS top-level Statement are NOT computed by this pipeline (that aggregation-across-all-criteria logic doesn't exist yet - see design doc section 14/'next steps') - they are set here to the variant's real, already-established ClinVar/ClinGen PTEN VCEP classification (Pathogenic), fetched live via ERepoClient.lookup('PTEN', 'c.278A>G'), purely so this example is internally consistent rather than inventing a fictional outcome.",
+  "specifiedBy": {
+    "type": "Method",
+    "name": "PTEN Variant Curation Expert Panel Specifications to the ACMG/AMP Variant Interpretation Guidelines",
+    "methodType": "ACMG/AMP"
+  },
+  "contributions": [
+    {
+      "type": "Contribution",
+      "contributor": {
+        "id": "clingen-pten-vcep",
+        "type": "Agent",
+        "name": "ClinGen PTEN Variant Curation Expert Panel"
+      },
+      "activityType": "classified",
+      "date": "2026-09-15T08:43:16.344936Z"
+    }
+  ],
+  "proposition": {
+    "type": "VariantPathogenicityProposition",
+    "subjectVariant": "https://reg.clinicalgenome.org/allele/CA000381",
+    "predicate": "isCausalFor",
+    "objectCondition": {
+      "conceptType": "Disease",
+      "name": "PTEN hamartoma tumor syndrome",
+      "primaryCoding": {
+        "system": "https://purl.obolibrary.org/obo/mondo.owl",
+        "code": "MONDO:0017623"
+      }
+    }
+  },
+  "direction": "supports",
+  "classification": {
+    "name": "Pathogenic",
+    "primaryCoding": {
+      "system": "ACMG Guidelines, 2015",
+      "code": "pathogenic"
+    }
+  },
+  "hasEvidenceLines": [
+    {
+      "id": "evline:PTEN_c_278A_G_PS3",
+      "type": "EvidenceLine",
+      "description": "3 independent papers agree on PS3, which is stronger support than a single-paper judgment alone.",
+      "extensions": [
+        {
+          "name": "curatorHints",
+          "value": [
+            {
+              "severity": "info",
+              "message": "3 independent papers agree on PS3, which is stronger support than a single-paper judgment alone."
+            }
+          ]
+        },
+        {
+          "name": "strengthEstimationMethod",
+          "value": "heuristic: 3 independent paper(s) with agreeing direction (1=supporting, 2=moderate, 3+=strong). This is a rough proxy, NOT a VCEP-calibrated ACMG strength determination - the underlying LLM judgment only assesses direction, never strength - and requires human curator confirmation."
+        }
+      ],
+      "specifiedBy": {
+        "type": "Method",
+        "name": "PTEN VCEP ACMG/AMP PS3 evidence assessment (LLM-assisted draft)",
+        "methodType": "PS3"
+      },
+      "contributions": [
+        {
+          "type": "Contribution",
+          "contributor": {
+            "id": "acmg-literature-llm-pipeline",
+            "type": "Agent",
+            "name": "ACMG literature-evidence LLM pipeline (gemma-4 via vLLM) - AI-generated draft evidence, requires human curator review before use"
+          },
+          "activityType": "automated evidence evaluation",
+          "date": "2026-09-15T08:37:34.809908Z"
+        }
+      ],
+      "reportedIn": [
+        {
+          "type": "Document",
+          "urls": [
+            "https://pubmed.ncbi.nlm.nih.gov/21194675/"
+          ],
+          "pmid": "21194675"
+        },
+        {
+          "type": "Document",
+          "urls": [
+            "https://pubmed.ncbi.nlm.nih.gov/29706350/"
+          ],
+          "pmid": "29706350"
+        },
+        {
+          "type": "Document",
+          "urls": [
+            "https://pubmed.ncbi.nlm.nih.gov/29373119/"
+          ],
+          "pmid": "29373119"
+        },
+        {
+          "type": "Document",
+          "urls": [
+            "https://pubmed.ncbi.nlm.nih.gov/25647146/"
+          ],
+          "pmid": "25647146"
+        },
+        {
+          "type": "Document",
+          "urls": [
+            "https://pubmed.ncbi.nlm.nih.gov/26579216/"
+          ],
+          "pmid": "26579216"
+        },
+        {
+          "type": "Document",
+          "urls": [
+            "https://pubmed.ncbi.nlm.nih.gov/22505997/"
+          ],
+          "pmid": "22505997"
+        },
+        {
+          "type": "Document",
+          "urls": [
+            "https://pubmed.ncbi.nlm.nih.gov/20718038/"
+          ],
+          "pmid": "20718038"
+        },
+        {
+          "type": "Document",
+          "urls": [
+            "https://pubmed.ncbi.nlm.nih.gov/29785012/"
+          ],
+          "pmid": "29785012"
+        },
+        {
+          "type": "Document",
+          "urls": [
+            "https://pubmed.ncbi.nlm.nih.gov/15805158/"
+          ],
+          "pmid": "15805158"
+        },
+        {
+          "type": "Document",
+          "urls": [
+            "https://pubmed.ncbi.nlm.nih.gov/24345843/"
+          ],
+          "pmid": "24345843"
+        },
+        {
+          "type": "Document",
+          "urls": [
+            "https://pubmed.ncbi.nlm.nih.gov/21828076/"
+          ],
+          "pmid": "21828076"
+        }
+      ],
+      "hasEvidenceItems": [
+        {
+          "id": "evline:paper-1-21194675",
+          "type": "EvidenceLine",
+          "description": "PMID:21194675 has a PMCID (PMC3014373) but no full_text came back from PubMed MCP (empty article body). Judgment should fall back to abstract-only or be marked insufficient_data.",
+          "extensions": [
+            {
+              "name": "curatorHints",
+              "value": [
+                {
+                  "severity": "info",
+                  "message": "Full text could not be obtained for PMID:21194675: PMID:21194675 has a PMCID (PMC3014373) but no full_text came back from PubMed MCP (empty article body). Judgment should fall back to abstract-only or be marked insufficient_data."
+                }
+              ]
+            }
+          ],
+          "reportedIn": [
+            {
+              "type": "Document",
+              "urls": [
+                "https://pubmed.ncbi.nlm.nih.gov/21194675/"
+              ],
+              "pmid": "21194675"
+            }
+          ],
+          "directionOfEvidenceProvided": "neutral"
+        },
+        {
+          "id": "evline:paper-2-29706350",
+          "type": "EvidenceLine",
+          "description": "PMID:29706350 has a PMCID (PMC5986715) but no full_text came back from PubMed MCP (empty article body). Judgment should fall back to abstract-only or be marked insufficient_data.",
+          "extensions": [
+            {
+              "name": "curatorHints",
+              "value": [
+                {
+                  "severity": "info",
+                  "message": "Full text could not be obtained for PMID:29706350: PMID:29706350 has a PMCID (PMC5986715) but no full_text came back from PubMed MCP (empty article body). Judgment should fall back to abstract-only or be marked insufficient_data."
+                }
+              ]
+            }
+          ],
+          "reportedIn": [
+            {
+              "type": "Document",
+              "urls": [
+                "https://pubmed.ncbi.nlm.nih.gov/29706350/"
+              ],
+              "pmid": "29706350"
+            }
+          ],
+          "directionOfEvidenceProvided": "neutral"
+        },
+        {
+          "id": "evline:paper-3-29373119",
+          "type": "EvidenceLine",
+          "description": "The variant H93R is shown to be loss-of-function through both in vivo neuronal morphology assays and in vitro biochemical PIP3 dephosphorylation assays. While the protein stability is normal, the catalytic activity and ability to rescue the knockout phenotype are significantly impaired.",
+          "extensions": [
+            {
+              "name": "curatorHints",
+              "value": [
+                {
+                  "severity": "warning",
+                  "message": "This paper (PMID:29373119) self-reports multiple experimental systems: in vivo rescue assay (soma size/morphology) (functionally_abnormal); biochemical lipid phosphatase activity (functionally_abnormal); protein stability assay (functionally_normal). It is recommended to go back to the relevant part of the full text and manually confirm which of these is genuinely the most direct functional evidence for the overall direction below (there is a past instance of an indirect results table being cited by mistake)."
+                },
+                {
+                  "severity": "caution",
+                  "message": "This judgment (PMID:29373119) is based on a single study only. For criterion codes on the ClinGen side that require reproducibility across multiple studies (e.g., PS3_Moderate or stronger), this evidence alone may not be sufficient in strength."
+                },
+                {
+                  "severity": "info",
+                  "message": "No approved-assay list is registered for PTEN VCEP, so institutional applicability could not be checked automatically for any of this paper's (PMID:29373119) experiments."
+                },
+                {
+                  "severity": "warning",
+                  "message": "The experiments in this paper (PMID:29373119) disagree on direction (in vivo rescue assay (soma size/morphology) = functionally_abnormal; biochemical lipid phosphatase activity = functionally_abnormal; protein stability assay = functionally_normal), yet the LLM confidently concluded PS3. This conflict was detected automatically and the judgment has been forced to not_clear (real-world instance: PTEN c.112C>T, where VAMP-seq showed functionally_normal but the Akt-activation assay showed functionally_abnormal, and the LLM adopted only the latter)."
+                }
+              ]
+            },
+            {
+              "name": "structuredEvidenceItems",
+              "value": [
+                {
+                  "label": "in vivo rescue assay (soma size/morphology): functionally_abnormal",
+                  "checked": true,
+                  "detail": "mouse (dentate gyrus neurons), readout: neuronal soma size and pS6 signaling, vs GFP-PTEN (wild-type) and Pten KO - H93R was unable to rescue the neuronal hypertrophy or increased pS6 signaling caused by Pten KO.; H93R expressed in wild-type mice induced a significant increase in soma size (dominant negative effect)."
+                },
+                {
+                  "label": "biochemical lipid phosphatase activity: functionally_abnormal",
+                  "checked": true,
+                  "detail": "HEK293 cells, readout: PIP3 levels via ELISA, vs Wild-type PTEN and Pten KO - Expression of the H93R mutant was unable to restore PIP3 levels to control levels in Pten-deficient HEK293 cells."
+                },
+                {
+                  "label": "protein stability assay: functionally_normal",
+                  "checked": true,
+                  "detail": "HEK293 cells, readout: protein half-life (cycloheximide chase), vs GFP-PTEN (wild-type) - The H93R mutation displayed no change in stability compared to control."
+                }
+              ]
+            }
+          ],
+          "reportedIn": [
+            {
+              "type": "Document",
+              "urls": [
+                "https://pubmed.ncbi.nlm.nih.gov/29373119/"
+              ],
+              "pmid": "29373119"
+            }
+          ],
+          "directionOfEvidenceProvided": "neutral"
+        },
+        {
+          "id": "evline:paper-4-25647146",
+          "type": "EvidenceLine",
+          "description": "The target variant H93R demonstrated significantly reduced catalytic activity (3% of WT) and decreased thermal stability in multiple biochemical assays using purified protein. These findings directly support a deleterious effect on PTEN function.",
+          "extensions": [
+            {
+              "name": "curatorHints",
+              "value": [
+                {
+                  "severity": "warning",
+                  "message": "This paper (PMID:25647146) self-reports multiple experimental systems: continuous enzymatic activity assay (functionally_abnormal); differential scanning fluorimetry (DSF) (functionally_abnormal). It is recommended to go back to the relevant part of the full text and manually confirm which of these is genuinely the most direct functional evidence for the overall direction below (there is a past instance of an indirect results table being cited by mistake)."
+                },
+                {
+                  "severity": "caution",
+                  "message": "This judgment (PMID:25647146) is based on a single study only. For criterion codes on the ClinGen side that require reproducibility across multiple studies (e.g., PS3_Moderate or stronger), this evidence alone may not be sufficient in strength."
+                },
+                {
+                  "severity": "info",
+                  "message": "No approved-assay list is registered for PTEN VCEP, so institutional applicability could not be checked automatically for any of this paper's (PMID:25647146) experiments."
+                }
+              ]
+            },
+            {
+              "name": "structuredEvidenceItems",
+              "value": [
+                {
+                  "label": "continuous enzymatic activity assay: functionally_abnormal",
+                  "checked": true,
+                  "detail": "purified recombinant protein, readout: kcat/Km (catalytic efficiency), vs wild-type PTEN - H93R PTEN has a kcat/Km of (4.5 ± 0.4) μMmin⁻¹, which is 3% that of the wild-type enzyme."
+                },
+                {
+                  "label": "differential scanning fluorimetry (DSF): functionally_abnormal",
+                  "checked": true,
+                  "detail": "purified recombinant protein, readout: Tm (melting temperature), vs wild-type PTEN - H93R PTEN had a low Tm of (38.1 ± 0.3) °C, which is close to physiological temperature (wild-type is 40.3 °C)."
+                }
+              ]
+            }
+          ],
+          "reportedIn": [
+            {
+              "type": "Document",
+              "urls": [
+                "https://pubmed.ncbi.nlm.nih.gov/25647146/"
+              ],
+              "pmid": "25647146"
+            }
+          ],
+          "directionOfEvidenceProvided": "supports"
+        },
+        {
+          "id": "evline:paper-5-26579216",
+          "type": "EvidenceLine",
+          "description": "The H93R variant demonstrated significant functional impairment through both loss of inhibitory control over signaling pathways (P-AKT and TH) and markedly decreased protein stability in a cell-based assay.",
+          "extensions": [
+            {
+              "name": "curatorHints",
+              "value": [
+                {
+                  "severity": "warning",
+                  "message": "This paper (PMID:26579216) self-reports multiple experimental systems: functional assay (protein phosphatase/signaling) (functionally_abnormal); protein stability (cycloheximide chase) (functionally_abnormal). It is recommended to go back to the relevant part of the full text and manually confirm which of these is genuinely the most direct functional evidence for the overall direction below (there is a past instance of an indirect results table being cited by mistake)."
+                },
+                {
+                  "severity": "caution",
+                  "message": "This judgment (PMID:26579216) is based on a single study only. For criterion codes on the ClinGen side that require reproducibility across multiple studies (e.g., PS3_Moderate or stronger), this evidence alone may not be sufficient in strength."
+                },
+                {
+                  "severity": "info",
+                  "message": "No approved-assay list is registered for PTEN VCEP, so institutional applicability could not be checked automatically for any of this paper's (PMID:26579216) experiments."
+                }
+              ]
+            },
+            {
+              "name": "structuredEvidenceItems",
+              "value": [
+                {
+                  "label": "functional assay (protein phosphatase/signaling): functionally_abnormal",
+                  "checked": true,
+                  "detail": "cell line (PC12), readout: ability to suppress TH expression and P-AKT levels, vs WT PTEN - H93R cannot suppress TH levels; H93R cannot suppress P-AKT levels"
+                },
+                {
+                  "label": "protein stability (cycloheximide chase): functionally_abnormal",
+                  "checked": true,
+                  "detail": "cell line (PC12), readout: protein degradation rate over 8 hours, vs WT PTEN - H93R is highly unstable; More than 80% of the mutant H93R PTEN protein was degraded after 8 hours"
+                }
+              ]
+            }
+          ],
+          "reportedIn": [
+            {
+              "type": "Document",
+              "urls": [
+                "https://pubmed.ncbi.nlm.nih.gov/26579216/"
+              ],
+              "pmid": "26579216"
+            }
+          ],
+          "directionOfEvidenceProvided": "supports"
+        },
+        {
+          "id": "evline:paper-6-22505997",
+          "type": "EvidenceLine",
+          "description": "The paper provides robust functional evidence using two distinct biophysical assays (SPR and NR) showing that the H93R mutation significantly alters both the binding affinity to membrane lipids and the structural orientation of the protein at the membrane interface. These results demonstrate a clear functional abnormality in protein-membrane interaction compared to wild-type PTEN.",
+          "extensions": [
+            {
+              "name": "curatorHints",
+              "value": [
+                {
+                  "severity": "warning",
+                  "message": "This paper (PMID:22505997) self-reports multiple experimental systems: Surface Plasmon Resonance (SPR) binding affinity (functionally_abnormal); Neutron Reflection (NR) structural analysis (functionally_abnormal). It is recommended to go back to the relevant part of the full text and manually confirm which of these is genuinely the most direct functional evidence for the overall direction below (there is a past instance of an indirect results table being cited by mistake)."
+                },
+                {
+                  "severity": "caution",
+                  "message": "This judgment (PMID:22505997) is based on a single study only. For criterion codes on the ClinGen side that require reproducibility across multiple studies (e.g., PS3_Moderate or stronger), this evidence alone may not be sufficient in strength."
+                },
+                {
+                  "severity": "info",
+                  "message": "No approved-assay list is registered for PTEN VCEP, so institutional applicability could not be checked automatically for any of this paper's (PMID:22505997) experiments."
+                }
+              ]
+            },
+            {
+              "name": "structuredEvidenceItems",
+              "value": [
+                {
+                  "label": "Surface Plasmon Resonance (SPR) binding affinity: functionally_abnormal",
+                  "checked": true,
+                  "detail": "Sparsely-tethered bilayer lipid membranes (stBLMs), readout: Dissociation constant (Kd) for PS and PI(4,5)P binding, vs Wild-type PTEN - H93R PTEN shows a significantly different binding profile compared to wild-type.; H93R has a 4-fold higher binding affinity to PS (Kd = 3.1 ± 0.3 µM) compared to WT (Kd = 11.9 ± 0.4 µM).; H93R shows a reduction in affinity to PI(4,5)P (Kd = 1.3 ± 0.2 µM) compared to WT (Kd = 0.4 ± 0.1 µM)."
+                },
+                {
+                  "label": "Neutron Reflection (NR) structural analysis: functionally_abnormal",
+                  "checked": true,
+                  "detail": "Sparsely-tethered bilayer lipid membranes (stBLMs), readout: Neutron scattering length density (nSLD) profiles / membrane association structure, vs Wild-type PTEN (truncated version) and WT PTEN - H93R PTEN exhibits a significantly different nSLD distribution at the membrane surface compared to WT.; The structural organization of the H93R mutant at the membrane interface is altered."
+                }
+              ]
+            }
+          ],
+          "reportedIn": [
+            {
+              "type": "Document",
+              "urls": [
+                "https://pubmed.ncbi.nlm.nih.gov/22505997/"
+              ],
+              "pmid": "22505997"
+            }
+          ],
+          "directionOfEvidenceProvided": "supports"
+        },
+        {
+          "id": "evline:paper-7-20718038",
+          "type": "EvidenceLine",
+          "description": "PMID:20718038 has a PMCID (PMC2998728) but no full_text came back from PubMed MCP (empty article body). Judgment should fall back to abstract-only or be marked insufficient_data.",
+          "extensions": [
+            {
+              "name": "curatorHints",
+              "value": [
+                {
+                  "severity": "info",
+                  "message": "Full text could not be obtained for PMID:20718038: PMID:20718038 has a PMCID (PMC2998728) but no full_text came back from PubMed MCP (empty article body). Judgment should fall back to abstract-only or be marked insufficient_data."
+                }
+              ]
+            }
+          ],
+          "reportedIn": [
+            {
+              "type": "Document",
+              "urls": [
+                "https://pubmed.ncbi.nlm.nih.gov/20718038/"
+              ],
+              "pmid": "20718038"
+            }
+          ],
+          "directionOfEvidenceProvided": "neutral"
+        },
+        {
+          "id": "evline:paper-8-29785012",
+          "type": "EvidenceLine",
+          "description": "The paper identifies p.His93Arg as an active site variant that is enzymatically inactive but maintains wild-type-like protein abundance. Because the assay measures abundance rather than enzymatic activity, it provides evidence that the variant does not affect stability, but it cannot be used as PS3 evidence for loss of function, nor BS3 for normal function in the context of its catalytic role.",
+          "extensions": [
+            {
+              "name": "curatorHints",
+              "value": [
+                {
+                  "severity": "info",
+                  "message": "No approved-assay list is registered for PTEN VCEP, so institutional applicability could not be checked automatically for any of this paper's (PMID:29785012) experiments."
+                }
+              ]
+            },
+            {
+              "name": "structuredEvidenceItems",
+              "value": [
+                {
+                  "label": "VAMP-seq (Variant Abundance by Massively Parallel Sequencing): functionally_normal",
+                  "checked": true,
+                  "detail": "engineered HEK 293T cell line, readout: steady-state protein abundance (EGFP:mCherry ratio), vs wild type PTEN - p.His93Arg is an active site variant known to be inactive without loss of abundance; The variant does not result in a loss of protein abundance"
+                }
+              ]
+            }
+          ],
+          "reportedIn": [
+            {
+              "type": "Document",
+              "urls": [
+                "https://pubmed.ncbi.nlm.nih.gov/29785012/"
+              ],
+              "pmid": "29785012"
+            }
+          ],
+          "directionOfEvidenceProvided": "neutral"
+        },
+        {
+          "id": "evline:paper-9-15805158",
+          "type": "EvidenceLine",
+          "description": "PMID:15805158 has a PMCID (PMC1736032) but no full_text came back from PubMed MCP (empty article body). Judgment should fall back to abstract-only or be marked insufficient_data.",
+          "extensions": [
+            {
+              "name": "curatorHints",
+              "value": [
+                {
+                  "severity": "info",
+                  "message": "Full text could not be obtained for PMID:15805158: PMID:15805158 has a PMCID (PMC1736032) but no full_text came back from PubMed MCP (empty article body). Judgment should fall back to abstract-only or be marked insufficient_data."
+                }
+              ]
+            }
+          ],
+          "reportedIn": [
+            {
+              "type": "Document",
+              "urls": [
+                "https://pubmed.ncbi.nlm.nih.gov/15805158/"
+              ],
+              "pmid": "15805158"
+            }
+          ],
+          "directionOfEvidenceProvided": "neutral"
+        },
+        {
+          "id": "evline:paper-10-24345843",
+          "type": "EvidenceLine",
+          "description": "The paper does not provide any functional assay data for the specific target variant PTEN c.278A>G (p.His93Arg). Therefore, no PS3/BS3 evidence can be extracted.",
+          "reportedIn": [
+            {
+              "type": "Document",
+              "urls": [
+                "https://pubmed.ncbi.nlm.nih.gov/24345843/"
+              ],
+              "pmid": "24345843"
+            }
+          ],
+          "directionOfEvidenceProvided": "neutral"
+        },
+        {
+          "id": "evline:paper-11-21828076",
+          "type": "EvidenceLine",
+          "description": "PMID:21828076 is not in PMC (no PMCID). Judgment should fall back to abstract-only or be marked insufficient_data.",
+          "extensions": [
+            {
+              "name": "curatorHints",
+              "value": [
+                {
+                  "severity": "info",
+                  "message": "Full text could not be obtained for PMID:21828076: PMID:21828076 is not in PMC (no PMCID). Judgment should fall back to abstract-only or be marked insufficient_data."
+                }
+              ]
+            }
+          ],
+          "reportedIn": [
+            {
+              "type": "Document",
+              "urls": [
+                "https://pubmed.ncbi.nlm.nih.gov/21828076/"
+              ],
+              "pmid": "21828076"
+            }
+          ],
+          "directionOfEvidenceProvided": "neutral"
+        }
+      ],
+      "directionOfEvidenceProvided": "supports",
+      "strengthOfEvidenceProvided": {
+        "primaryCoding": {
+          "system": "ACMG Guidelines, 2015",
+          "code": "strong"
+        }
+      },
+      "evidenceOutcome": {
+        "name": "ACMG 2015 PS3 strong Criterion Met (heuristic estimate, unconfirmed)",
+        "primaryCoding": {
+          "system": "ACMG Guidelines, 2015",
+          "code": "PS3_strong"
+        }
+      }
+    }
+  ]
+}

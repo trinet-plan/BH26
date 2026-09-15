@@ -1,0 +1,334 @@
+{
+  "ex.Statement001": {
+    "id": "ex:Statement001",
+    "type": "Statement",
+    "proposition": {
+      "id": "ex:Proposition001",
+      "type": "VariantPathogenicityProposition",
+      "subjectVariant": "ex:Variant001",
+      "predicate": "isCausalFor",
+      "objectCondition": {
+        "id": "clinvar.trait/939",
+        "conceptType": "Disease",
+        "name": "Autosomal dominant nonsyndromic hearing loss 2A",
+        "primaryCoding": {
+          "code": "C2677637",
+          "system": "https://www.ncbi.nlm.nih.gov/medgen/",
+          "iris": [
+            "http://identifiers.org/medgen/C2677637"
+          ]
+        }
+      },
+      "penetranceQualifier": {
+        "primaryCoding": {
+          "code": "high",
+          "system": "ga4gh-gks-term:pathogenicity-penetrance-qualifier"
+        },
+        "name": "high"
+      }
+    },
+    "direction": "supports",
+    "strength": {
+      "primaryCoding": {
+        "code": "definitive",
+        "system": "ACMG Guidelines, 2015"
+      }
+    },
+    "classification": {
+      "primaryCoding": {
+        "code": "pathogenic",
+        "system": "ACMG Guidelines, 2015"
+      }
+    },
+    "contributions": [
+      {
+        "type": "Contribution",
+        "contributor": {
+          "id": "clinvar.submitter/500139",
+          "type": "Agent",
+          "name": "ClinVar Staff, National Center for Biotechnology Information (NCBI)"
+        },
+        "activityType": {
+          "name": "evaluated",
+          "mappings": [
+            {
+              "coding": {
+                "code": "cg000011",
+                "system": "https://dataexchange.clinicalgenome.org/codes/"
+              },
+              "relation": "exactMatch"
+            }
+          ]
+        },
+        "date": "2015-08-20"
+      },
+      {
+        "type": "Contribution",
+        "contributor": {
+          "id": "clinvar.submitter/500139",
+          "type": "Agent",
+          "name": "ClinVar Staff, National Center for Biotechnology Information (NCBI)"
+        },
+        "activityType": {
+          "name": "submitted",
+          "mappings": [
+            {
+              "coding": {
+                "code": "cg000010",
+                "system": "https://dataexchange.clinicalgenome.org/codes/"
+              },
+              "relation": "exactMatch"
+            }
+          ]
+        },
+        "date": "2018-06-12"
+      }
+    ],
+    "specifiedBy": {
+      "type": "Method",
+      "name": "ClinGen Hearing Loss Expert Panel Specifications to the ACMG/AMP Variant Interpretation Guidelines",
+      "reportedIn": {
+        "type": "Document",
+        "urls": [
+          "https://clinicalgenome.org/docs/clingen-hearing-loss-expert-panel-specifications-to-the-acmg-amp-variant-interpretation-guidelines/"
+        ]
+      }
+    },
+    "hasEvidenceLines": [
+      {
+        "id": "ex:EvidenceLine001",
+        "type": "EvidenceLine",
+        "targetProposition": "ex:Proposition001",
+        "hasEvidenceItems": [
+          {
+            "id": "ex:StudyResult001",
+            "type": "CohortAlleleFrequencyStudyResult",
+            "name": "Overall Cohort Allele Frequency for 1-40819444_40819446-del",
+            "focusAllele": "ex:Variant001",
+            "focusAlleleFrequency": 0,
+            "focusAlleleCount": 0,
+            "locusAlleleCount": 34086,
+            "sourceDataSet": {
+              "id": "gnomad4.1.0",
+              "type": "DataSet",
+              "name": "gnomAD v4.1.0",
+              "version": "4.1.0"
+            },
+            "cohort": {
+              "id": "ALL",
+              "name": "Overall",
+              "type": "StudyGroup"
+            },
+            "specifiedBy": {
+              "type": "Method",
+              "name": "gnomAD methods",
+              "reportedIn": {
+                "type": "Document",
+                "name": "gnomAD help documentation",
+                "urls": [
+                  "https://gnomad.broadinstitute.org/help"
+                ]
+              }
+            }
+          }
+        ],
+        "directionOfEvidenceProvided": "supports",
+        "strengthOfEvidenceProvided": {
+          "primaryCoding": {
+            "code": "moderate",
+            "system": "ACMG Guidelines, 2015"
+          }
+        },
+        "evidenceOutcome": {
+          "primaryCoding": {
+            "code": "PM2_moderate",
+            "system": "ACMG Guidelines, 2015"
+          },
+          "name": "ACMG 2015 PM2 Moderate Criterion Met"
+        },
+        "specifiedBy": {
+          "type": "Method",
+          "methodType": "PM2",
+          "name": "ClinGen Hearing Loss Expert Panel Specifications to the ACMG/AMP Variant Interpretation Guidelines",
+          "reportedIn": {
+            "type": "Document",
+            "urls": [
+              "https://clinicalgenome.org/docs/clingen-hearing-loss-expert-panel-specifications-to-the-acmg-amp-variant-interpretation-guidelines/"
+            ]
+          }
+        },
+        "contributions": [
+          {
+            "type": "Contribution",
+            "contributor": {
+              "id": "curator001",
+              "type": "Agent"
+            },
+            "activityType": {
+              "name": "evidence evaluation"
+            },
+            "date": "2018-03-11"
+          }
+        ]
+      },
+      {
+        "id": "ex:EvidenceLine002",
+        "type": "EvidenceLine",
+        "targetProposition": "ex:Proposition001",
+        "hasEvidenceItems": [
+          {
+            "id": "ex:Statement002",
+            "type": "Statement",
+            "proposition": {
+              "type": "ExperimentalVariantFunctionalImpactProposition",
+              "subjectVariant": "ex:Variant001",
+              "predicate": "impactsFunctionOf",
+              "objectSequenceFeature": {
+                "id": "clinvar-gene:9132",
+                "conceptType": "Gene",
+                "primaryCoding": {
+                  "code": "ncbigene:9132",
+                  "system": "https://identifiers.org/ncbigene",
+                  "iris": [
+                    "https://identifiers.org/ncbigene:9132"
+                  ]
+                },
+                "name": "KCNQ4"
+              },
+              "experimentalContextQualifier": {
+                "title": "KCNQ4 VAMP Seq Expt 001",
+                "description": "Multiplex assessment of KCNQ4 protein variant abundance by massively parallel sequencing",
+                "phenotypicAssay": "flow cytometry",
+                "modelSystem": "immortalized human cells",
+                "variantLibrarySystem": "oligo-directed mutagenic PCR",
+                "profilingStrategy": "barcode sequencing",
+                "sequencingReadType": "single-segment (short read)"
+              }
+            },
+            "direction": "supports",
+            "classification": {
+              "primaryCoding": {
+                "code": "abnormal",
+                "system": "ga4gh-gks-term:experimental-var-func-impact-classification"
+              }
+            },
+            "specifiedBy": {
+              "type": "Method",
+              "methodType": {
+                "name": "variant interpretation guideline"
+              },
+              "reportedIn": {
+                "type": "Document",
+                "pmid": 29785012
+              }
+            },
+            "hasEvidenceLines": {
+              "id": "EvidenceLine003",
+              "type": "EvidenceLine",
+              "directionOfEvidenceProvided": "supports",
+              "specifiedBy": {
+                "type": "Method",
+                "name": "MAVE bayesian threshold probability method 001",
+                "reportedIn": {
+                  "type": "Document",
+                  "urls": [
+                    "https://mavedb.org/score-sets/urn:mavedb:00000013-a-1"
+                  ]
+                }
+              },
+              "hasEvidenceItems": [
+                {
+                  "id": "ex:StudyResult002",
+                  "type": "ExperimentalVariantFunctionalImpactStudyResult",
+                  "focusVariant": "ex:Variant001",
+                  "functionalImpactScore": 1.29395467005388,
+                  "specifiedBy": {
+                    "type": "Method",
+                    "methodType": {
+                      "name": "Experimental protocol"
+                    },
+                    "reportedIn": {
+                      "type": "Document",
+                      "pmid": 29785012
+                    }
+                  },
+                  "sourceDataSet": {
+                    "type": "DataSet",
+                    "name": "variant effect data set",
+                    "license": {
+                      "primaryCoding": {
+                        "code": "CC0",
+                        "system": "https://spdx.org/licenses/",
+                        "iris": [
+                          "https://spdx.org/licenses/CC0-1.0.html"
+                        ]
+                      }
+                    },
+                    "reportedIn": {
+                      "type": "Document",
+                      "urls": [
+                        "https://mavedb.org/score-sets/urn:mavedb:00000013-a-1"
+                      ]
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "directionOfEvidenceProvided": "supports",
+        "strengthOfEvidenceProvided": {
+          "primaryCoding": {
+            "code": "strong",
+            "system": "ACMG Guidelines, 2015"
+          }
+        },
+        "evidenceOutcome": {
+          "primaryCoding": {
+            "code": "PS3_strong",
+            "system": "ACMG Guidelines, 2015"
+          },
+          "name": "ACMG 2015 PS3 Supporting Criterion Met"
+        },
+        "specifiedBy": {
+          "type": "Method",
+          "methodType": "PS3",
+          "name": "ClinGen Hearing Loss Expert Panel Specifications to the ACMG/AMP Variant Interpretation Guidelines",
+          "reportedIn": {
+            "type": "Document",
+            "urls": [
+              "https://clinicalgenome.org/docs/clingen-hearing-loss-expert-panel-specifications-to-the-acmg-amp-variant-interpretation-guidelines/"
+            ]
+          }
+        },
+        "contributions": [
+          {
+            "type": "Contribution",
+            "contributor": {
+              "id": "curator002",
+              "type": "Agent"
+            },
+            "activityType": {
+              "name": "evidence evaluation"
+            },
+            "date": "2018-04-03"
+          }
+        ]
+      }
+    ],
+    "extensions": [
+      {
+        "name": "clinvarMethodCategory",
+        "value": "literature only"
+      },
+      {
+        "name": "clinvarReviewStatus",
+        "value": "no assertion criteria provided"
+      },
+      {
+        "name": "clinvarSubmittedClassification",
+        "value": "Pathogenic"
+      }
+    ]
+  }
+}

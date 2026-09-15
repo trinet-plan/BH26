@@ -1,0 +1,62 @@
+{
+  "id": "evline:MYBPC3_c_2905p1G_A_PS4",
+  "type": "EvidenceLine",
+  "directionOfEvidenceProvided": "neutral",
+  "reportedIn": [
+    {
+      "type": "Document",
+      "pmid": "27532257",
+      "urls": [
+        "https://pubmed.ncbi.nlm.nih.gov/27532257/"
+      ]
+    }
+  ],
+  "description": "None of the 1 paper(s) examined yielded a usable evidence-based judgment for this variant (either the variant could not be identified in the text, or the per-paper judgment was itself inconclusive).",
+  "hasEvidenceItems": [
+    {
+      "id": "evline:paper-1-27532257",
+      "type": "EvidenceLine",
+      "directionOfEvidenceProvided": "neutral",
+      "reportedIn": [
+        {
+          "type": "Document",
+          "pmid": "27532257",
+          "urls": [
+            "https://pubmed.ncbi.nlm.nih.gov/27532257/"
+          ]
+        }
+      ],
+      "description": "The target variant was not found in the provided text, so no association or enrichment can be assessed."
+    }
+  ],
+  "specifiedBy": {
+    "type": "Method",
+    "methodType": "PS4",
+    "name": "Cardiomyopathy VCEP ACMG/AMP PS4 evidence assessment (LLM-assisted draft)"
+  },
+  "contributions": [
+    {
+      "type": "Contribution",
+      "contributor": {
+        "id": "acmg-literature-llm-pipeline",
+        "type": "Agent",
+        "name": "ACMG literature-evidence LLM pipeline (gemma-4 via vLLM) - AI-generated draft evidence, requires human curator review before use"
+      },
+      "activityType": {
+        "name": "automated evidence evaluation"
+      },
+      "date": "2026-09-15"
+    }
+  ],
+  "extensions": [
+    {
+      "name": "curatorHints",
+      "value": [
+        {
+          "severity": "info",
+          "message": "None of the 1 paper(s) examined yielded a usable evidence-based judgment for this variant (either the variant could not be identified in the text, or the per-paper judgment was itself inconclusive)."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,280 @@
+{
+  "id": "evline:PTEN_c_278A_G_PS3",
+  "type": "EvidenceLine",
+  "directionOfEvidenceProvided": "supports",
+  "reportedIn": [
+    {
+      "type": "Document",
+      "pmid": "26579216",
+      "urls": [
+        "https://pubmed.ncbi.nlm.nih.gov/26579216/"
+      ]
+    },
+    {
+      "type": "Document",
+      "pmid": "24345843",
+      "urls": [
+        "https://pubmed.ncbi.nlm.nih.gov/24345843/"
+      ]
+    },
+    {
+      "type": "Document",
+      "pmid": "29373119",
+      "urls": [
+        "https://pubmed.ncbi.nlm.nih.gov/29373119/"
+      ]
+    },
+    {
+      "type": "Document",
+      "pmid": "29785012",
+      "urls": [
+        "https://pubmed.ncbi.nlm.nih.gov/29785012/"
+      ]
+    },
+    {
+      "type": "Document",
+      "pmid": "25647146",
+      "urls": [
+        "https://pubmed.ncbi.nlm.nih.gov/25647146/"
+      ]
+    },
+    {
+      "type": "Document",
+      "pmid": "22505997",
+      "urls": [
+        "https://pubmed.ncbi.nlm.nih.gov/22505997/"
+      ]
+    }
+  ],
+  "description": "3 independent papers agree on PS3, which is stronger support than a single-paper judgment alone.",
+  "hasEvidenceItems": [
+    {
+      "id": "evline:paper-1-26579216",
+      "type": "EvidenceLine",
+      "directionOfEvidenceProvided": "supports",
+      "reportedIn": [
+        {
+          "type": "Document",
+          "pmid": "26579216",
+          "urls": [
+            "https://pubmed.ncbi.nlm.nih.gov/26579216/"
+          ]
+        }
+      ],
+      "description": "The H93R variant demonstrates a loss of function in suppressing the PI3K/CREB and MAPK pathways and exhibits significantly decreased protein stability in a cell culture model. These multiple functional assays consistently support a deleterious effect on PTEN activity.",
+      "extensions": [
+        {
+          "name": "curatorHints",
+          "value": [
+            {
+              "severity": "warning",
+              "message": "This paper (PMID:26579216) self-reports multiple experimental systems: functional assay (inhibition of TH expression/phosphorylation) (functionally_abnormal); protein stability (cycloheximide chase) (functionally_abnormal). It is recommended to go back to the relevant part of the full text and manually confirm which of these is genuinely the most direct functional evidence for the overall direction below (there is a past instance of an indirect results table being cited by mistake)."
+            },
+            {
+              "severity": "caution",
+              "message": "This judgment (PMID:26579216) is based on a single study only. For criterion codes on the ClinGen side that require reproducibility across multiple studies (e.g., PS3_Moderate or stronger), this evidence alone may not be sufficient in strength."
+            },
+            {
+              "severity": "info",
+              "message": "No approved-assay list is registered for PTEN VCEP, so institutional applicability could not be checked automatically for any of this paper's (PMID:26579216) experiments."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "evline:paper-2-24345843",
+      "type": "EvidenceLine",
+      "directionOfEvidenceProvided": "neutral",
+      "reportedIn": [
+        {
+          "type": "Document",
+          "pmid": "24345843",
+          "urls": [
+            "https://pubmed.ncbi.nlm.nih.gov/24345843/"
+          ]
+        }
+      ],
+      "description": "The paper is a clinical association study and does not perform or report specific functional laboratory assays for the target variant p.His93Arg."
+    },
+    {
+      "id": "evline:paper-3-29373119",
+      "type": "EvidenceLine",
+      "directionOfEvidenceProvided": "neutral",
+      "reportedIn": [
+        {
+          "type": "Document",
+          "pmid": "29373119",
+          "urls": [
+            "https://pubmed.ncbi.nlm.nih.gov/29373119/"
+          ]
+        }
+      ],
+      "description": "Multiple assays, including in vivo neuronal soma size/signaling in mice and in vitro biochemical PIP3 dephosphorylation in HEK293 cells, demonstrate that the H93R variant is loss-of-function. Although protein stability is normal, the variant fails to rescue the knockout phenotype and exhibits impaired catalytic activity.",
+      "extensions": [
+        {
+          "name": "curatorHints",
+          "value": [
+            {
+              "severity": "warning",
+              "message": "This paper (PMID:29373119) self-reports multiple experimental systems: In vivo neuronal morphology (soma size) (functionally_abnormal); In vivo signaling assay (functionally_abnormal); Biochemical lipid phosphatase activity (functionally_abnormal); Protein stability (functionally_normal). It is recommended to go back to the relevant part of the full text and manually confirm which of these is genuinely the most direct functional evidence for the overall direction below (there is a past instance of an indirect results table being cited by mistake)."
+            },
+            {
+              "severity": "caution",
+              "message": "This judgment (PMID:29373119) is based on a single study only. For criterion codes on the ClinGen side that require reproducibility across multiple studies (e.g., PS3_Moderate or stronger), this evidence alone may not be sufficient in strength."
+            },
+            {
+              "severity": "info",
+              "message": "No approved-assay list is registered for PTEN VCEP, so institutional applicability could not be checked automatically for any of this paper's (PMID:29373119) experiments."
+            },
+            {
+              "severity": "warning",
+              "message": "The experiments in this paper (PMID:29373119) disagree on direction (In vivo neuronal morphology (soma size) = functionally_abnormal; In vivo signaling assay = functionally_abnormal; Biochemical lipid phosphatase activity = functionally_abnormal; Protein stability = functionally_normal), yet the LLM confidently concluded PS3. This conflict was detected automatically and the judgment has been forced to not_clear (real-world instance: PTEN c.112C>T, where VAMP-seq showed functionally_normal but the Akt-activation assay showed functionally_abnormal, and the LLM adopted only the latter)."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "evline:paper-4-29785012",
+      "type": "EvidenceLine",
+      "directionOfEvidenceProvided": "neutral",
+      "reportedIn": [
+        {
+          "type": "Document",
+          "pmid": "29785012",
+          "urls": [
+            "https://pubmed.ncbi.nlm.nih.gov/29785012/"
+          ]
+        }
+      ],
+      "description": "The assay shows the variant has wild-type-like abundance, but the text explicitly notes that this specific variant (p.His93Arg) is an active site variant that is 'inactive without loss of abundance'. Because the assay measures abundance rather than enzymatic activity, it fails to capture the loss of function, leading to conflicting directions between abundance and enzymatic activity.",
+      "extensions": [
+        {
+          "name": "curatorHints",
+          "value": [
+            {
+              "severity": "info",
+              "message": "No approved-assay list is registered for PTEN VCEP, so institutional applicability could not be checked automatically for any of this paper's (PMID:29785012) experiments."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "evline:paper-5-25647146",
+      "type": "EvidenceLine",
+      "directionOfEvidenceProvided": "supports",
+      "reportedIn": [
+        {
+          "type": "Document",
+          "pmid": "25647146",
+          "urls": [
+            "https://pubmed.ncbi.nlm.nih.gov/25647146/"
+          ]
+        }
+      ],
+      "description": "The variant showed significant loss of catalytic activity (3% of WT) and reduced conformational stability in purified protein assays. Both assays provide direct biochemical evidence of a deleterious effect on PTEN function.",
+      "extensions": [
+        {
+          "name": "curatorHints",
+          "value": [
+            {
+              "severity": "warning",
+              "message": "This paper (PMID:25647146) self-reports multiple experimental systems: Enzymatic activity assay (continuous assay measuring PIP hydrolysis) (functionally_abnormal); Differential scanning fluorimetry (DSF) for thermostability (functionally_abnormal). It is recommended to go back to the relevant part of the full text and manually confirm which of these is genuinely the most direct functional evidence for the overall direction below (there is a past instance of an indirect results table being cited by mistake)."
+            },
+            {
+              "severity": "caution",
+              "message": "This judgment (PMID:25647146) is based on a single study only. For criterion codes on the ClinGen side that require reproducibility across multiple studies (e.g., PS3_Moderate or stronger), this evidence alone may not be sufficient in strength."
+            },
+            {
+              "severity": "info",
+              "message": "No approved-assay list is registered for PTEN VCEP, so institutional applicability could not be checked automatically for any of this paper's (PMID:25647146) experiments."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "evline:paper-6-22505997",
+      "type": "EvidenceLine",
+      "directionOfEvidenceProvided": "supports",
+      "reportedIn": [
+        {
+          "type": "Document",
+          "pmid": "22505997",
+          "urls": [
+            "https://pubmed.ncbi.nlm.nih.gov/22505997/"
+          ]
+        }
+      ],
+      "description": "The paper provides quantitative functional evidence using multiple biophysical assays (SPR and NR) showing that the H93R mutation significantly alters the binding affinity and membrane-associated structure of PTEN compared to wild-type. The study uses highly controlled model membranes (stBLMs) to demonstrate a loss of the specific synergistic binding characteristic of the wild-type protein.",
+      "extensions": [
+        {
+          "name": "curatorHints",
+          "value": [
+            {
+              "severity": "warning",
+              "message": "This paper (PMID:22505997) self-reports multiple experimental systems: Surface Plasmon Resonance (SPR) binding assay (functionally_abnormal); Neutron Reflection (NR) structural analysis (functionally_abnormal). It is recommended to go back to the relevant part of the full text and manually confirm which of these is genuinely the most direct functional evidence for the overall direction below (there is a past instance of an indirect results table being cited by mistake)."
+            },
+            {
+              "severity": "caution",
+              "message": "This judgment (PMID:22505997) is based on a single study only. For criterion codes on the ClinGen side that require reproducibility across multiple studies (e.g., PS3_Moderate or stronger), this evidence alone may not be sufficient in strength."
+            },
+            {
+              "severity": "info",
+              "message": "No approved-assay list is registered for PTEN VCEP, so institutional applicability could not be checked automatically for any of this paper's (PMID:22505997) experiments."
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "strengthOfEvidenceProvided": {
+    "primaryCoding": {
+      "code": "strong",
+      "system": "ACMG Guidelines, 2015"
+    }
+  },
+  "evidenceOutcome": {
+    "primaryCoding": {
+      "code": "PS3_Strong",
+      "system": "ACMG Guidelines, 2015"
+    },
+    "name": "ACMG 2015 PS3 Strong Criterion Met (heuristic estimate, unconfirmed)"
+  },
+  "specifiedBy": {
+    "type": "Method",
+    "methodType": "PS3",
+    "name": "PTEN VCEP ACMG/AMP PS3 functional-evidence assessment (LLM-assisted draft)"
+  },
+  "contributions": [
+    {
+      "type": "Contribution",
+      "contributor": {
+        "id": "ps3-bs3-llm-pipeline",
+        "type": "Agent",
+        "name": "PS3/BS3 LLM pipeline (gemma-4 via vLLM) - AI-generated draft evidence, requires human curator review before use"
+      },
+      "activityType": {
+        "name": "automated evidence evaluation"
+      },
+      "date": "2026-09-15"
+    }
+  ],
+  "extensions": [
+    {
+      "name": "curatorHints",
+      "value": [
+        {
+          "severity": "info",
+          "message": "3 independent papers agree on PS3, which is stronger support than a single-paper judgment alone."
+        }
+      ]
+    },
+    {
+      "name": "strengthEstimationMethod",
+      "value": "heuristic: 3 independent paper(s) with agreeing direction (1=Supporting, 2=Moderate, 3+=Strong). This is a rough proxy, NOT a VCEP-calibrated ACMG strength determination - the underlying LLM judgment only assesses direction, never strength - and requires human curator confirmation."
+    }
+  ]
+}

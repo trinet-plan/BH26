@@ -1,0 +1,79 @@
+{
+  "id": "evline:GJB2_c_109G_A_BS4",
+  "type": "EvidenceLine",
+  "directionOfEvidenceProvided": "disputes",
+  "reportedIn": [
+    {
+      "type": "Document",
+      "pmid": "31160754",
+      "urls": [
+        "https://pubmed.ncbi.nlm.nih.gov/31160754/"
+      ]
+    }
+  ],
+  "description": "Only 1 of 1 paper(s) examined yielded usable evidence (this count is computed directly from the papers actually fetched and judged, not from any self-report on a single paper).",
+  "hasEvidenceItems": [
+    {
+      "id": "evline:paper-1-31160754",
+      "type": "EvidenceLine",
+      "directionOfEvidenceProvided": "disputes",
+      "reportedIn": [
+        {
+          "type": "Document",
+          "pmid": "31160754",
+          "urls": [
+            "https://pubmed.ncbi.nlm.nih.gov/31160754/"
+          ]
+        }
+      ],
+      "description": "The paper reports that p.Val37Ile segregates with hearing loss in families, specifically citing 21 affected siblings with the variant. While it acknowledges incomplete penetrance (some homozygotes may be unaffected), it explicitly states that these individuals were not counted as non-segregation observations due to the known age-dependent penetrance mechanism."
+    }
+  ],
+  "strengthOfEvidenceProvided": {
+    "primaryCoding": {
+      "code": "supporting",
+      "system": "ACMG Guidelines, 2015"
+    }
+  },
+  "evidenceOutcome": {
+    "primaryCoding": {
+      "code": "PP1_Supporting",
+      "system": "ACMG Guidelines, 2015"
+    },
+    "name": "ACMG 2015 PP1 Supporting Criterion Met (heuristic estimate, unconfirmed)"
+  },
+  "specifiedBy": {
+    "type": "Method",
+    "methodType": "BS4",
+    "name": "Hearing Loss VCEP ACMG/AMP BS4 evidence assessment (LLM-assisted draft)"
+  },
+  "contributions": [
+    {
+      "type": "Contribution",
+      "contributor": {
+        "id": "acmg-literature-llm-pipeline",
+        "type": "Agent",
+        "name": "ACMG literature-evidence LLM pipeline (gemma-4 via vLLM) - AI-generated draft evidence, requires human curator review before use"
+      },
+      "activityType": {
+        "name": "automated evidence evaluation"
+      },
+      "date": "2026-09-15"
+    }
+  ],
+  "extensions": [
+    {
+      "name": "curatorHints",
+      "value": [
+        {
+          "severity": "caution",
+          "message": "Only 1 of 1 paper(s) examined yielded usable evidence (this count is computed directly from the papers actually fetched and judged, not from any self-report on a single paper)."
+        }
+      ]
+    },
+    {
+      "name": "strengthEstimationMethod",
+      "value": "heuristic: 1 independent paper(s) with agreeing direction (1=Supporting, 2=Moderate, 3+=Strong). This is a rough proxy, NOT a VCEP-calibrated ACMG strength determination - the underlying LLM judgment only assesses direction, never strength - and requires human curator confirmation."
+    }
+  ]
+}

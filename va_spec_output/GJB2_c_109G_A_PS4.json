@@ -1,0 +1,81 @@
+{
+  "id": "evline:GJB2_c_109G_A_PS4",
+  "type": "EvidenceLine",
+  "directionOfEvidenceProvided": "neutral",
+  "reportedIn": [
+    {
+      "type": "Document",
+      "pmid": "31160754",
+      "urls": [
+        "https://pubmed.ncbi.nlm.nih.gov/31160754/"
+      ]
+    }
+  ],
+  "description": "None of the 1 paper(s) examined yielded a usable evidence-based judgment for this variant (either the variant could not be identified in the text, or the per-paper judgment was itself inconclusive).",
+  "hasEvidenceItems": [
+    {
+      "id": "evline:paper-1-31160754",
+      "type": "EvidenceLine",
+      "directionOfEvidenceProvided": "neutral",
+      "reportedIn": [
+        {
+          "type": "Document",
+          "pmid": "31160754",
+          "urls": [
+            "https://pubmed.ncbi.nlm.nih.gov/31160754/"
+          ]
+        }
+      ],
+      "description": "The study reports that p.Val37Ile homozygotes are significantly enriched in cases with an OR of 20 (95%CI 17–24, Z=31, p<0.0001) and biallelic cases (including compound heterozygotes) show an OR of 19 (95%CI 15–24, Z=26, p<0.0001) in Asians over population controls.",
+      "extensions": [
+        {
+          "name": "curatorHints",
+          "value": [
+            {
+              "severity": "warning",
+              "message": "This paper (PMID:31160754) was judged PS4-supporting, but affected_carriers and/or total_affected could not be extracted as concrete numbers. A significance claim without an extractable numerator/denominator on the affected side is hard for a curator to independently verify from this record alone."
+            },
+            {
+              "severity": "caution",
+              "message": "This paper (PMID:31160754) does not report any control/unaffected-side numbers at all. PS4 requires a comparison against a control/background rate, not just a count of affected carriers; confirm the comparison basis manually."
+            },
+            {
+              "severity": "warning",
+              "message": "In this paper (PMID:31160754), the LLM concluded PS4 but extracted no affected-side numbers at all (affected_carriers and total_affected are both null). A definitive enrichment claim with no concrete supporting count is internally inconsistent, so the judgment has been forced to not_clear."
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "specifiedBy": {
+    "type": "Method",
+    "methodType": "PS4",
+    "name": "Hearing Loss VCEP ACMG/AMP PS4 evidence assessment (LLM-assisted draft)"
+  },
+  "contributions": [
+    {
+      "type": "Contribution",
+      "contributor": {
+        "id": "acmg-literature-llm-pipeline",
+        "type": "Agent",
+        "name": "ACMG literature-evidence LLM pipeline (gemma-4 via vLLM) - AI-generated draft evidence, requires human curator review before use"
+      },
+      "activityType": {
+        "name": "automated evidence evaluation"
+      },
+      "date": "2026-09-15"
+    }
+  ],
+  "extensions": [
+    {
+      "name": "curatorHints",
+      "value": [
+        {
+          "severity": "info",
+          "message": "None of the 1 paper(s) examined yielded a usable evidence-based judgment for this variant (either the variant could not be identified in the text, or the per-paper judgment was itself inconclusive)."
+        }
+      ]
+    }
+  ]
+}
