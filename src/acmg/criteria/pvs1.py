@@ -15,20 +15,29 @@ def evaluate(input_data, services, config):
     if not consequences & ELIGIBLE:
         return result("PVS1", input_data, Status.NOT_APPLICABLE, "Not an eligible loss-of-function consequence",
                       evidence=[annotation])
-    early, mechanism = curated_context("PVS1", "gene_disease", input_data, services, annotation)
+    # The LoF-mechanism statement is a gene-level curation, the way autoPVS1 resolves it from
+    # a per-gene resource rather than from a disease the caller supplies.
+    early, mechanism = curated_context("PVS1", "gene_disease", input_data, services, annotation,
+                                       disease_required=False)
     if early:
         return early
     evidence = [annotation, mechanism]
+    condition = input_data.get("condition")
+    scope = {"assessment_scope": "gene_level",
+             "condition_assessment": "MATCHED" if condition and mechanism.get("condition") == condition
+             else "NOT_EVALUATED"}
     if not annotation.get("gene") or mechanism.get("gene") != annotation["gene"]:
         return result("PVS1", input_data, Status.MANUAL_REVIEW, "Gene-disease mapping unresolved",
-                      evidence=evidence, review=["Confirm gene-disease mechanism"])
+                      evidence=evidence, review=["Confirm gene-disease mechanism"],
+                      provenance=scope)
     if mechanism.get("lof_mechanism_established") is False:
         return result("PVS1", input_data, Status.NOT_MET, "Reviewed disease mechanism does not support LoF",
-                      evidence=evidence)
+                      evidence=evidence, provenance=scope)
     if mechanism.get("lof_mechanism_established") is not True:
         return result("PVS1", input_data, Status.NOT_EVALUATED, "LoF mechanism unknown",
-                      evidence=evidence, missing=["lof_mechanism_established"])
-    early, assessment = curated_context("PVS1", "lof_assessment", input_data, services, annotation)
+                      evidence=evidence, missing=["lof_mechanism_established"], provenance=scope)
+    early, assessment = curated_context("PVS1", "lof_assessment", input_data, services, annotation,
+                                        disease_required=False)
     if early:
         early.evidence = evidence + early.evidence[1:]
         return early
@@ -66,4 +75,5 @@ def evaluate(input_data, services, config):
             trace.append(f"Curated branch: {assessment['decision_tree_branch']}")
     return result("PVS1", input_data, Status.MANUAL_REVIEW, "Provisional PVS1 candidate; curator confirmation required",
                   evidence=evidence, review=[*points, "Confirm PVS1 decision path and proposed strength"],
-                  provenance={"provisional": True, "decision_path": trace, "recommended_strength": recommendation})
+                  provenance={"provisional": True, "decision_path": trace,
+                              "recommended_strength": recommendation, **scope})

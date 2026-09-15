@@ -123,11 +123,12 @@ ACMG cross-field検査で書込み前に検証します。構造正規化に使�
 ではありません。各基準のNOT_EVALUATED、NOT_APPLICABLE、MANUAL_REVIEW、DEPRECATEDも
 `results.json` と `summary.tsv` に記録されます。
 
-`condition`（疾患）は任意入力です。PS1・PM5・PM1・PP2・BP1は蛋白/遺伝子レベルで判定し、
+`condition`（疾患）は任意入力です。PS1・PM5・PM1・PP2・BP1・PVS1は蛋白/遺伝子レベルで判定し、
 疾患関連性は判定に混ぜず `condition_assessment`（MATCHED / NOT_EVALUATED）として分離記録し、
 未確認のままMETになった場合は確認事項を併記します。`condition` を与えた場合、別疾患の
 キュレーション済みEvidenceは流用されません。BS1は疾患別閾値そのものが疾患なしに定義できない
-ため、引き続き`condition`が必須です。
+ため、引き続き`condition`が必須です。PVS1のLoF機序は遺伝子単位のキュレーションとして扱います
+（autoPVS1がvariantとgenome版だけで動き、疾患入力を取らないのと同じ位置づけです）。
 
 ## Gitとデータ
 

@@ -81,8 +81,9 @@
 - PP2・BP1もconditionを任意化。gene_disease Evidenceを疾患非依存でも受け付け、
   assessment_scope=gene_levelとcondition_assessmentを分離記録する。MET時に疾患未確認なら
   確認事項を併記。conditionを与えた場合に別疾患のEvidenceを流用しない点は従来どおり。
-  これでPS1・PM5・PM1・PP2・BP1・BP7がcondition任意。conditionを要求するのは
-  BS1（疾患別閾値が疾患なしに定義できないため必須）とPVS1（未変更）のみ。
+  PVS1も同様に任意化。LoF機序は遺伝子単位のキュレーションとして扱う（autoPVS1もvariantと
+  genome版だけで動き、疾患入力を取らずPVS1.level等の遺伝子リストで機序を解決する）。
+  これでBS1以外の全基準がcondition任意。BS1のみ疾患別閾値が疾患なしに定義できないため必須。
 - 実デモではPP2・BP1の18件がcondition待ちからgene_disease Evidence待ちへ移動。
 
 - PM1 hotspot密度のisoform numbering取り違えを解消。窓に入った候補を1件ずつefetchし、
