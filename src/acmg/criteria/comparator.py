@@ -15,8 +15,11 @@ def evaluate_comparator(code, input_data, services, config):
                       evidence=[annotation], review=["Assess splice-effect equivalence"] if splice else [])
     fields = ("protein_id", "protein_start", "ref_aa", "alt_aa")
     if not all(annotation.get(field) for field in fields) or not input_data.get("condition"):
+        missing = [field for field in fields if not annotation.get(field)]
+        if not input_data.get("condition"):
+            missing.append("condition")
         return result(code, input_data, Status.NOT_EVALUATED, "Protein/disease context missing",
-                      evidence=[annotation], missing=[*fields, "condition"])
+                      evidence=[annotation], missing=missing)
     candidates = get_evidence("comparator", input_data, services)
     matching, qualified = [], []
     for candidate in candidates:

@@ -22,6 +22,10 @@
 - 同じ固定キャッシュから完全オフラインで全28件を再処理し、audit.json/variants.jsonが
   オンライン実行と同一SHA-256になることを確認。
 - Ensembl由来の17注釈Evidenceをground truthラベルから分離してevidence.jsonへ出力。
+- VEPをversion付きRefSeq transcriptへ限定し、17固有変異すべてのprotein_id、15変異の蛋白座標、
+  missense/synonymousのアミノ酸、導出可能な蛋白長差を保存。別isoformのconsequence混入を禁止。
+- VEPからAlphaMissense 10件、SpliceAI 15件、保存性17件をraw computational Evidenceとして保存。
+  RESTでmodel/data版を確定できないものはcalibration_eligible=falseとし、PP3/BP4へ不使用。
 - evaluate: 準備済みJSONから16コードのresults.json、summary.tsv、run-manifest.jsonと
   VA-Spec Evidence Lineを出力。VA-Spec 1.0.1/GKS-Core 1.0.0に合わせ、not-met=`neutral`、
   methodType=criterion、MappableConceptのtypeなしで書込み前に検証。
@@ -43,12 +47,13 @@
 - case2-var1と固定gnomAD 4.1.1キャッシュを使う回帰テストを追加。テスト限定の
   max AF=0.000014ではPM2 METとなり、VA-Specのsupports/supporting出力まで検証。
   gnomAD未登録のcase2-var2はcallability/AN不明のためAF=0にせずNOT_EVALUATEDを維持。
-- pytest 71テスト成功、Ruff成功。3 Provider固定キャッシュによる全28件E2Eを含む。
+- pytest 76テスト成功、Ruff成功。3 Provider固定キャッシュによる全28件E2Eを含む。
 - work/synthetic-run-1/2で内部CLI実行成功、入力エラー0。結果は合成variantでありdemo同定結果ではない。
 
 ## 未完了（次工程）
 
-1. BP7の予測/保存性・PVS1 NMD等の計算の自動化拡張。現在はreviewed assessmentを入力する経路。
+1. BP7のRefSeq exon境界position adapterと校正済み保存性policy、PVS1 NMD等の計算の自動化拡張。
+   現在はSpliceAI/保存性raw Evidenceとreviewed assessment入力経路まで。
 2. evaluateへのVCF直接入力・オンライン取得、症例文脈補足、準備済み入力の厳密なschema検証。
 3. run-manifestに全Provider・実装ルールのハッシュを統合、ground truth比較レポート。
 4. Windows/Linux CI。
@@ -67,5 +72,6 @@
 - prepare-demoに参照FASTAのassembly/出典/ハッシュのmanifest検証を追加すること。
 - identity候補はローカル契約とEnsemblライブProviderに対応し、全件取得・固定済み。
 - 品質・校正設定は現在テスト内の合成プロファイルのみ。本番の出典付き設定は未導入。
+  VEP予測Evidenceの取得・版不足による採点除外条件は実装済み。
 - 評価モデル/Provider契約にschema検証を追加し、未信頼な型・範囲値を早期に拒否すること。
 - ground truthのACMGコードや最終分類は、評価結果と混ぜない。

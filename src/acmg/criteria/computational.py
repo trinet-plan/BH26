@@ -24,7 +24,8 @@ def evaluate_prediction(code, input_data, services, config):
     predictions = [p for p in get_evidence("computational", input_data, services)
                    if p.get("predictor") == calibration["predictor"]
                    and p.get("predictor_version") == calibration["predictor_version"]
-                   and p.get("mechanism") == calibration["mechanism"]]
+                   and p.get("mechanism") == calibration["mechanism"]
+                   and p.get("calibration_eligible") is not False]
     if not predictions:
         return result(code, input_data, Status.NOT_EVALUATED, "Matching predictor score unavailable",
                       missing=[calibration["predictor"]], evidence=[annotation])

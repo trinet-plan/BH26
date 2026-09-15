@@ -89,6 +89,12 @@ class CuratedCriteriaTests(unittest.TestCase):
         item["comparator_variant"] = self.variant.to_dict()
         self.assertNotEqual(self.run_rule("PS1", item).status, Status.MET)
 
+    def test_comparator_reports_only_fields_actually_missing(self):
+        input_data = {key: value for key, value in self.input.items() if key != "condition"}
+        annotation = {key: value for key, value in self.annotation.items() if key != "condition"}
+        value = evaluate_record(input_data, make_services([annotation]), {}, ["PS1"])[0]
+        self.assertEqual(value.missing_inputs, ["condition"])
+
     def test_search_absence_requires_completeness(self):
         search = self.item("comparator_search", protein_id="NP_TEST.1", protein_start=10, complete=True)
         self.assertEqual(self.run_rule("PM5", search).status, Status.NOT_MET)

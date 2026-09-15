@@ -10,8 +10,10 @@ from acmg.providers.ensembl import EnsemblIdentityProvider
 class FakeClient:
     def __init__(self, body):
         self.body = body
+        self.urls = []
 
     def fetch(self, url, **kwargs):
+        self.urls.append(url)
         if "/sequence/" in url:
             if "100..101" in url:
                 return {"body": "AG", "retrieved_at": "2026-01-01T00:00:00Z"}
@@ -45,6 +47,40 @@ class EnsemblIdentityTests(unittest.TestCase):
         provider = EnsemblIdentityProvider(FakeClient(body), "115")
         with self.assertRaisesRegex(ValueError, "requested HGVS/build"):
             provider.map_record({"identity": {"TRANSCRIPT": "NM_1.2", "HGVSC": "c.1G>A"}})
+
+    def test_exact_refseq_protein_and_predictions_are_preserved(self):
+        body = [{"input": "NM_1.2:c.1G>A", "assembly_name": "GRCh38",
+                 "seq_region_name": "1", "start": 101, "end": 101,
+                 "allele_string": "G/A", "strand": 1,
+                 "transcript_consequences": [{
+                     "transcript_id": "NM_1.2", "gene_symbol": "TEST",
+                     "consequence_terms": ["missense_variant"],
+                     "protein_id": "NP_1.1", "protein_start": 7, "protein_end": 7,
+                     "amino_acids": "R/H", "alphamissense": {
+                         "am_pathogenicity": 0.9, "am_class": "likely_pathogenic"},
+                     "spliceai": {"DS_AG": 0.01, "DS_AL": 0.2, "DS_DG": 0, "DS_DL": 0.03},
+                     "conservation": -1.2,
+                 }]}]
+        client = FakeClient(body)
+        provider = EnsemblIdentityProvider(client, "116")
+        record = {"identity": {"TRANSCRIPT": "NM_1.2", "HGVSC": "c.1G>A", "GENE": "TEST"}}
+        _, annotation, predictions = provider.map_record_with_evidence(record)
+        self.assertEqual(
+            {key: annotation[key] for key in ("protein_id", "protein_start", "protein_end",
+                                               "ref_aa", "alt_aa", "protein_length_change")},
+            {"protein_id": "NP_1.1", "protein_start": 7, "protein_end": 7,
+             "ref_aa": "R", "alt_aa": "H", "protein_length_change": 0})
+        by_predictor = {item["predictor"]: item for item in predictions}
+        self.assertEqual(by_predictor["AlphaMissense"]["score"], 0.9)
+        self.assertEqual(by_predictor["SpliceAI"]["score"], 0.2)
+        self.assertEqual(by_predictor["Ensembl Compara conservation"]["score"], -1.2)
+        self.assertIn("refseq=1", client.urls[0])
+        self.assertIn("protein=1", client.urls[0])
+
+    def test_inframe_length_change_is_derived_from_changed_peptide(self):
+        consequence = {"consequence_terms": ["inframe_deletion"]}
+        self.assertEqual(__import__("acmg.providers.ensembl", fromlist=["_protein_length_change"])
+                         ._protein_length_change(consequence, "ABC", "-"), -3)
 
     def test_json_wrapped_sequence_is_supported(self):
         client = FakeClient([])

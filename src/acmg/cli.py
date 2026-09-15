@@ -77,16 +77,18 @@ def main(argv=None):
                 provider = EnsemblIdentityProvider(client, release)
                 mapped = {}
                 annotations = []
+                predictions = []
                 for record in records:
                     try:
-                        candidate, annotation = provider.map_record_with_annotation(record)
+                        candidate, annotation, record_predictions = provider.map_record_with_evidence(record)
                         mapped[record["record_id"]] = [candidate]
                         annotations.append(annotation)
+                        predictions.extend(record_predictions)
                     except ValueError as exc:
                         record["issues"].append(f"IDENTITY_PROVIDER_ERROR: {exc}")
                         mapped[record["record_id"]] = []
                 records = [reconcile(r, mapped[r["record_id"]], provider.reference) for r in records]
-                evidence = list(annotations)
+                evidence = [*annotations, *predictions]
                 external_client = CachedHttpClient(
                     args.evidence_cache_dir or args.cache_dir, offline=args.offline
                 )
@@ -166,6 +168,7 @@ def main(argv=None):
                 evidence = [item for item in evidence if item["variant_key"] in resolved_keys]
                 evidence = list({item["evidence_id"]: item for item in evidence}.values())
                 annotation_count = sum(item.get("category") == "annotation" for item in evidence)
+                prediction_count = sum(item.get("category") == "computational" for item in evidence)
                 (args.output_dir / "evidence.json").write_text(
                     json.dumps({"schema_version": "1.0", "evidence": evidence},
                                ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
@@ -180,6 +183,7 @@ def main(argv=None):
                         json.dumps(client.used, sort_keys=True).encode()).hexdigest(),
                     "records": len(records), "resolved": len(resolved),
                     "annotation_evidence": annotation_count,
+                    "computational_evidence": prediction_count,
                     "external_providers": external_manifest,
                     "external_network_used": external_client.network_used,
                     "external_cache_entries": external_client.used,

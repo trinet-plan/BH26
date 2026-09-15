@@ -56,6 +56,10 @@ class ComputationalTests(unittest.TestCase):
         self.config = {}
         self.assertEqual(self.run_rule(pp3).status, Status.NOT_EVALUATED)
 
+    def test_explicitly_uncalibrated_source_is_not_scored(self):
+        self.prediction["calibration_eligible"] = False
+        self.assertEqual(self.run_rule(pp3).status, Status.NOT_EVALUATED)
+
     def test_deprecated_independent_of_labels(self):
         self.input["CLNSIG"] = "Pathogenic"
         for module in (pp5, bp6):

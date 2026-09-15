@@ -2,10 +2,51 @@
 
 import hashlib
 import json
+from urllib.parse import quote
 
 from acmg.core.models import Variant
 from acmg.core.reference import normalize
 from acmg.providers.http import canonical_json
+
+
+VEP_OPTIONS = (
+    "AlphaMissense=1;Conservation=1;REVEL=1;SpliceAI=2;hgvs=1;protein=1;"
+    "refseq=1;transcript_version=1"
+)
+
+
+def _number(value):
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, (int, float)):
+        return value
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _amino_acids(consequence):
+    value = consequence.get("amino_acids")
+    if not isinstance(value, str) or not value:
+        return None, None
+    if "/" not in value:
+        return value, value
+    if value.count("/") != 1:
+        return None, None
+    ref, alt = value.split("/")
+    return (ref or None), (alt or None)
+
+
+def _protein_length_change(consequence, ref_aa, alt_aa):
+    terms = set(consequence.get("consequence_terms", []))
+    if terms & {"missense_variant", "synonymous_variant"}:
+        return 0
+    if terms & {"inframe_insertion", "inframe_deletion"} and ref_aa and alt_aa:
+        return len(alt_aa.replace("-", "")) - len(ref_aa.replace("-", ""))
+    # VEP's changed amino-acid token cannot establish the complete extension or
+    # truncation length for stop-loss, frameshift, start-loss, or stop-gain calls.
+    return None
 
 
 def reverse_complement(allele):
@@ -65,12 +106,17 @@ class EnsemblIdentityProvider:
         return candidate
 
     def map_record_with_annotation(self, record):
+        candidate, annotation, _ = self.map_record_with_evidence(record)
+        return candidate, annotation
+
+    def map_record_with_evidence(self, record):
         transcript = record["identity"].get("TRANSCRIPT")
         hgvsc = record["identity"].get("HGVSC")
         if not transcript or not hgvsc:
             raise ValueError("Record has no versioned transcript HGVS identity")
+        encoded_hgvs = quote(f"{transcript}:{hgvsc}", safe="")
         response = self.client.fetch(
-            f"https://rest.ensembl.org/vep/human/hgvs/{transcript}%3A{hgvsc}?hgvs=1",
+            f"https://rest.ensembl.org/vep/human/hgvs/{encoded_hgvs}?{VEP_OPTIONS}",
             dataset_version=self.release,
         )
         rows = response["body"]
@@ -115,9 +161,15 @@ class EnsemblIdentityProvider:
             "matched_identifiers": {"TRANSCRIPT": transcript, "HGVSC": hgvsc},
         }
         gene = record["identity"].get("GENE")
-        consequences = sorted({term for consequence in row.get("transcript_consequences", [])
-                               if consequence.get("gene_symbol") == gene
-                               for term in consequence.get("consequence_terms", [])})
+        transcript_rows = [item for item in row.get("transcript_consequences", [])
+                           if isinstance(item, dict) and item.get("transcript_id") == transcript]
+        if len(transcript_rows) > 1:
+            raise ValueError("Ensembl returned multiple consequences for the requested transcript")
+        consequence = transcript_rows[0] if transcript_rows else {}
+        if consequence.get("gene_symbol") and gene and consequence["gene_symbol"] != gene:
+            raise ValueError("Ensembl transcript consequence disagrees with requested gene")
+        consequences = sorted(set(consequence.get("consequence_terms", [])))
+        ref_aa, alt_aa = _amino_acids(consequence)
         annotation = {
             "category": "annotation", "variant_key": variant.key,
             "evidence_id": f"urn:sha256:{response_sha256}:annotation:{transcript}",
@@ -125,8 +177,88 @@ class EnsemblIdentityProvider:
             "retrieved_at": response["retrieved_at"], "quality_status": "PASS",
             "transcript": transcript, "gene": gene, "hgvsc": expected,
             "consequences": consequences,
+            "protein_id": consequence.get("protein_id"),
+            "hgvsp": consequence.get("hgvsp"),
+            "protein_start": consequence.get("protein_start"),
+            "protein_end": consequence.get("protein_end"),
+            "ref_aa": ref_aa, "alt_aa": alt_aa,
+            "protein_length_change": _protein_length_change(consequence, ref_aa, alt_aa),
             "high_confidence_null_or_splice": bool(
                 set(consequences) & {"stop_gained", "frameshift_variant", "splice_donor_variant",
                                      "splice_acceptor_variant", "start_lost"}),
         }
-        return candidate, annotation
+        predictions = self._prediction_evidence(
+            variant.key, transcript, consequence, response["retrieved_at"], response_sha256
+        )
+        return candidate, annotation, predictions
+
+    def _prediction_evidence(self, variant_key, transcript, consequence, retrieved_at,
+                             response_sha256):
+        common = {
+            "category": "computational", "variant_key": variant_key,
+            "source_version": self.release, "retrieved_at": retrieved_at,
+            "quality_status": "PASS", "transcript": transcript,
+        }
+        records = []
+
+        alpha = consequence.get("alphamissense")
+        if isinstance(alpha, dict) and _number(alpha.get("am_pathogenicity")) is not None:
+            records.append({
+                **common,
+                "evidence_id": f"urn:sha256:{response_sha256}:prediction:alphamissense:{transcript}",
+                "source": "Ensembl VEP AlphaMissense",
+                "predictor": "AlphaMissense",
+                "predictor_version": "2023",
+                "mechanism": "protein",
+                "score": _number(alpha["am_pathogenicity"]),
+                "classification": alpha.get("am_class"),
+                "calibration_eligible": False,
+                "calibration_note": "Model class thresholds are not ACMG PP3/BP4 evidence calibration",
+                "version_provenance": "AlphaMissense Database Copyright 2023; Ensembl VEP release " + self.release,
+            })
+
+        revel = _number(consequence.get("revel", consequence.get("REVEL")))
+        if revel is not None:
+            records.append({
+                **common,
+                "evidence_id": f"urn:sha256:{response_sha256}:prediction:revel:{transcript}",
+                "source": "Ensembl VEP REVEL",
+                "predictor": "REVEL",
+                # Ensembl REST does not expose the backing REVEL file version.
+                "predictor_version": f"unreported-Ensembl-{self.release}",
+                "mechanism": "protein", "score": revel,
+                "calibration_eligible": False,
+                "version_note": "Backing REVEL data version is not exposed by Ensembl REST",
+            })
+
+        splice = consequence.get("spliceai")
+        if isinstance(splice, dict):
+            deltas = {key: _number(splice.get(key)) for key in ("DS_AG", "DS_AL", "DS_DG", "DS_DL")}
+            valid = [value for value in deltas.values() if value is not None]
+            if valid:
+                records.append({
+                    **common,
+                    "evidence_id": f"urn:sha256:{response_sha256}:prediction:spliceai:{transcript}",
+                    "source": "Ensembl VEP SpliceAI",
+                    "predictor": "SpliceAI",
+                    "predictor_version": f"unreported-Ensembl-{self.release}",
+                    "mechanism": "splicing", "score": max(valid),
+                    "delta_scores": deltas,
+                    "dataset": "Ensembl/GENCODE v37 MANE raw scores (REST SpliceAI=2)",
+                    "calibration_eligible": False,
+                    "version_note": "SpliceAI model version is not exposed by Ensembl REST",
+                })
+
+        conservation = _number(consequence.get("conservation"))
+        if conservation is not None:
+            records.append({
+                **common,
+                "evidence_id": f"urn:sha256:{response_sha256}:prediction:conservation:{transcript}",
+                "source": "Ensembl VEP Conservation",
+                "predictor": "Ensembl Compara conservation",
+                "predictor_version": self.release,
+                "mechanism": "conservation", "score": conservation,
+                "calibration_eligible": False,
+                "version_note": "REST response does not identify the conservation method/track",
+            })
+        return records

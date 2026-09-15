@@ -31,6 +31,7 @@ class DemoPipelineTests(unittest.TestCase):
         manifest = json.loads((prepared / "identity-manifest.json").read_text(encoding="utf-8"))
         self.assertFalse(manifest["network_used"])
         self.assertEqual(manifest["annotation_evidence"], 17)
+        self.assertEqual(manifest["computational_evidence"], 42)
         self.assertEqual(manifest["external_providers"][0]["queried_variants"], 17)
         self.assertEqual(manifest["external_providers"][0]["observed_variants"], 15)
         self.assertEqual(manifest["external_providers"][1]["matched_records"], 13)

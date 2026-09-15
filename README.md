@@ -3,7 +3,8 @@
 demo-dataの4症例を対象とする、Evidence単位のACMG基準評価ツール。実装途中です。
 正式な対象範囲と完了条件は [計画](docs/PLAN.md)、現状と残作業は
 [進捗](docs/PROGRESS.md)、JSONのフィールド対応と制約は
-[VA-Spec 1.0.1 JSON出力仕様](docs/VA-SPEC-OUTPUT.md) を参照してください。
+[VA-Spec 1.0.1 JSON出力仕様](docs/VA-SPEC-OUTPUT.md)、蛋白注釈と予測値は
+[予測Evidence仕様](docs/PREDICTION-EVIDENCE.md) を参照してください。
 
 ## 現在動く機能
 
@@ -11,6 +12,7 @@ demo-dataの4症例を対象とする、Evidence単位のACMG基準評価ツー�
 - REF検証、indel左寄せ、同定Evidenceの照合、補正/保留の記録。
 - 全16コードの独立評価モジュール、一括評価、競合候補の表示。
 - Ensembl HGVS/GRCh38参照検証の内容ハッシュ付きキャッシュとオフライン再生。
+- version付きRefSeqに一致するVEP蛋白注釈と、AlphaMissense・SpliceAI・保存性raw Evidence。
 - gnomAD 4.1.1集団頻度とClinVar VCVの内容ハッシュ付きキャッシュ、オフライン再生。
 - 準備済みJSONとローカルEvidenceによる内部評価JSON・TSV・manifest出力。
 - GA4GH VA-Spec 1.0.1 ACMG Evidence Line互換JSONと、監査用envelope出力。
