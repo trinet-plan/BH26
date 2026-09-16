@@ -31,6 +31,19 @@ def load_context(document):
         unknown = set(value) - set(CONTEXT_FIELDS)
         _require(not unknown, f"Unsupported curated context fields for {key}: {sorted(unknown)}")
         parsed[key] = dict(value)
+    record_contexts = document.get("record_contexts", {})
+    _require(isinstance(record_contexts, dict),
+             "Curated context record_contexts must be an object")
+    parsed_record_contexts = {}
+    for record_id, value in record_contexts.items():
+        _require(isinstance(record_id, str) and record_id,
+                 "Curated record context requires a nonempty record_id")
+        _require(isinstance(value, dict),
+                 f"Curated record context for {record_id} must be an object")
+        unknown = set(value) - set(CONTEXT_FIELDS)
+        _require(not unknown,
+                 f"Unsupported curated record context fields for {record_id}: {sorted(unknown)}")
+        parsed_record_contexts[record_id] = dict(value)
     exceptions = document.get("ba1_exceptions")
     if exceptions is not None:
         _require(isinstance(exceptions, dict), "ba1_exceptions must be an object")
@@ -53,7 +66,8 @@ def load_context(document):
             # resolved to a GRCh38 allele; a wrong key would silently exempt the wrong variant.
             _require(all(item.get(field) for field in ("gene", "hgvs_c", "caid", "resolved_by")),
                      f"BA1 exception {key} requires gene, hgvs_c, caid and resolved_by")
-    return {"context_version": version, "records": parsed, "ba1_exceptions": exceptions,
+    return {"context_version": version, "records": parsed,
+            "record_contexts": parsed_record_contexts, "ba1_exceptions": exceptions,
             "source": document.get("source")}
 
 
@@ -62,7 +76,11 @@ def apply_context(record, context):
     if not context:
         return record
     key = Variant(**record["variant"]).key
-    updated = {**record, **context["records"].get(key, {})}
+    updated = {
+        **record,
+        **context["records"].get(key, {}),
+        **context.get("record_contexts", {}).get(record.get("record_id"), {}),
+    }
     exceptions = context.get("ba1_exceptions")
     # An incomplete list cannot say a variant is absent from it, so it resolves nothing.
     if exceptions and exceptions["complete"]:
@@ -80,7 +98,8 @@ def context_summary(context):
         return None
     exceptions = context.get("ba1_exceptions")
     summary = {"context_version": context["context_version"], "source": context.get("source"),
-               "records": len(context["records"])}
+               "records": len(context["records"]),
+               "record_contexts": len(context.get("record_contexts", {}))}
     if exceptions:
         summary["ba1_exceptions"] = {
             "source": exceptions["source"], "source_version": exceptions["source_version"],

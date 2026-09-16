@@ -147,10 +147,10 @@ BP3（`clingen-positive:bp3-foxg1`、supporting）がゲート通過後の
 `protein_length_change`・`nonfunctional_repeat`・`repetitive`・`functional_importance`
 まで走ってMET終端に到達する。BP3はgate fixtureを持たず正例fixtureのみで確認している。
 PVS1 evaluator自体はnonsense/frameshift、canonical/実証splice LoF、start-lossのGeneral
-decision treeと4段階強度に対応済み。デモのPVS1候補3件はgene_disease等の独立Evidenceが
-未投入のためNOT_EVALUATEDであり、判定ロジック未実装を意味しない。
+decision treeと4段階強度に対応済み。2026-09-16の機序Evidence投入後、デモのPVS1候補3件は
+gene_disease段階を通過し、transcript_assessmentまたはsplice_assessment待ちへ進んだ。
 
-### Evidence待ち（4基準、101件）
+### 2026-09-15時点のEvidence待ち（4基準、101件）
 
 | 待っているもの | 基準 | 件数 |
 | --- | --- | ---: |
@@ -158,6 +158,10 @@ decision treeと4段階強度に対応済み。デモのPVS1候補3件はgene_di
 | 疾患と疾患別頻度閾値 | BS1 | 28 |
 | ClinVar報告密度・region評価 | PM1 | 26 |
 | synonymous_assessment・gnomAD未登録 | BP7・PM2・BA1 | 8 |
+
+上表は機序投入前の固定runである。2026-09-16の再評価ではgene_disease待ち39件は0件となり、
+MET 1、NOT_MET 19、NOT_APPLICABLE 16、次段階のEvidence待ち3となった。詳細は
+[gene–disease DRAFT仕様](GENE-DISEASE-DRAFTS.md)を参照。
 
 ### 非推奨（2基準）
 
@@ -187,8 +191,8 @@ VA-Spec Evidence Line 140件（MET + NOT_MET）
 
 ## 残件（優先順）
 
-1. gene_disease（39件）。ClinGen CSpec RegistryにMYH7・MYBPC3・TNNI3の仕様がある。
-2. BS1の疾患と閾値（28件）。入力経路は完成済みで、閾値のキュレーションのみ。
+1. PVS1候補3件のtranscript/splice/NMD Evidence。
+2. BS1の疾患別閾値（28件）。疾患contextは投入済みで、閾値のキュレーションのみ。
 3. BA1例外リストの第三者照合。手入力のため原典Table 1との再確認が未実施。
 4. SpliceAIの版が宣言依存。版を確定できる配布元からの取得が望ましい。
 5. PM1のgene/disease対応、強度可変、critical domainのreviewed Evidence入力経路。

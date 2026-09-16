@@ -10,6 +10,7 @@ from acmg.core.input import audit_demo
 from acmg.core.identity import evaluation_inputs, reconcile
 from acmg.core.reference import FastaReference
 from acmg.core.models import CRITERIA, Variant
+from acmg.gene_disease import build_assessment_document, build_draft_document
 from acmg.output import run_internal
 from acmg.providers.clinvar import (
     VCV, ClinVarComparatorProvider, ClinVarHotspotProvider, ClinVarProvider,
@@ -61,8 +62,46 @@ def main(argv=None):
     evaluate.add_argument("--offline", action="store_true")
     evaluate.add_argument("--internal-only", action="store_true",
                           help="Explicitly omit VA-Spec export while its dependency gate is pending")
+    drafts = sub.add_parser(
+        "build-gene-disease-drafts",
+        help="Build review-only PP2/BP1/PVS1 mechanism candidates from versioned sources",
+    )
+    drafts.add_argument("--input", type=Path, required=True)
+    drafts.add_argument("--output", type=Path, required=True)
+    assessments = sub.add_parser(
+        "build-gene-disease-evidence",
+        help="Expand source-anchored mechanism decisions and optionally merge base evidence",
+    )
+    assessments.add_argument("--input", type=Path, required=True)
+    assessments.add_argument("--base-evidence", type=Path)
+    assessments.add_argument("--output", type=Path, required=True)
     args = parser.parse_args(argv)
     try:
+        if args.command == "build-gene-disease-evidence":
+            if args.output.exists():
+                raise ValueError(f"Output already exists: {args.output}")
+            source = json.loads(args.input.read_text(encoding="utf-8-sig"))
+            base = (json.loads(args.base_evidence.read_text(encoding="utf-8-sig"))
+                    if args.base_evidence else None)
+            payload = build_assessment_document(source, base)
+            args.output.parent.mkdir(parents=True, exist_ok=True)
+            args.output.write_text(
+                json.dumps(payload, ensure_ascii=False, indent=2, allow_nan=False) + "\n",
+                encoding="utf-8",
+            )
+            print(f"Generated combined evidence with {len(payload['evidence'])} records")
+            return 0
+        if args.command == "build-gene-disease-drafts":
+            if args.output.exists():
+                raise ValueError(f"Output already exists: {args.output}")
+            payload = build_draft_document(json.loads(args.input.read_text(encoding="utf-8-sig")))
+            args.output.parent.mkdir(parents=True, exist_ok=True)
+            args.output.write_text(
+                json.dumps(payload, ensure_ascii=False, indent=2, allow_nan=False) + "\n",
+                encoding="utf-8",
+            )
+            print(f"Generated {len(payload['evidence'])} review-only gene-disease drafts")
+            return 0
         if args.command == "evaluate":
             criteria = CRITERIA if args.criteria == "all" else tuple(args.criteria.split(","))
             if not criteria or any(code not in CRITERIA for code in criteria) or len(criteria) != len(set(criteria)):

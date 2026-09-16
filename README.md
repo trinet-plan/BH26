@@ -12,6 +12,8 @@ Evidence契約は [PVS1設計](docs/design/PVS1-PLAN.md) を参照してくだ�
 [判定ロジック・入力Evidenceガイド](docs/CRITERION-DECISION-GUIDE.md)にまとめています。
 全criterionのClinGen正例対応は [ClinGen正例リファレンス](docs/CLINGEN-POSITIVE-REFERENCES.md)
 にまとめています。
+PP2・BP1・PVS1用のgene–disease機序について、constraint・ClinVar分布・ClinGen GDVから
+レビュー候補を作る境界は [gene–disease DRAFT仕様](docs/GENE-DISEASE-DRAFTS.md) にまとめています。
 MET 52件の変異・強度・根拠数値は [MET一覧](docs/MET-RESULTS.md) にあります。
 
 ## 現在動く機能

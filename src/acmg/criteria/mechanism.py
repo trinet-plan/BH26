@@ -21,6 +21,28 @@ def evaluate_mechanism(code, input_data, services, config):
     if not annotation.get("gene") or annotation["gene"] != mechanism.get("gene"):
         return result(code, input_data, Status.MANUAL_REVIEW, "Gene identity mismatch",
                       evidence=evidence, review=["Resolve gene-disease mapping"])
+    applicability_field = f"{code.lower()}_applicable"
+    applicable = mechanism.get(applicability_field)
+    if applicable is False:
+        return result(
+            code,
+            input_data,
+            Status.NOT_APPLICABLE,
+            "Criterion is not applicable under the reviewed gene-disease specification",
+            evidence=evidence,
+            provenance={
+                "assessment_scope": "condition_specific" if mechanism.get("condition") else "gene_level",
+                "condition_assessment": (
+                    "MATCHED" if mechanism.get("condition") == input_data.get("condition")
+                    else "NOT_EVALUATED"
+                ),
+                "applicability_source": mechanism.get("applicability_source"),
+            },
+        )
+    if applicable is not None and applicable is not True:
+        return result(code, input_data, Status.NOT_EVALUATED,
+                      "Criterion applicability assessment is invalid", evidence=evidence,
+                      missing=[applicability_field])
     fields = ["missense_mechanism_established", "spectrum_review_complete"]
     fields += ["low_benign_missense_variation"] if code == "PP2" else ["predominantly_truncating"]
     early = require_boolean_fields(code, input_data, evidence, mechanism, fields)

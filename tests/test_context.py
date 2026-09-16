@@ -91,10 +91,25 @@ class CuratedContextTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "variant key"):
             load_context(document(records={"MYBPC3": {"condition": "MONDO:0000001"}}))
 
+    def test_record_context_overrides_reused_variant_context(self):
+        context = load_context(document(
+            records={KEY: {"condition": "MONDO:variant"}},
+            record_contexts={"case2:1:1": {"condition": "MONDO:record"}},
+        ))
+        first = apply_context({**self.record(), "record_id": "case1:1:1"}, context)
+        second = apply_context({**self.record(), "record_id": "case2:1:1"}, context)
+        self.assertEqual(first["condition"], "MONDO:variant")
+        self.assertEqual(second["condition"], "MONDO:record")
+
+    def test_unknown_record_context_field_is_rejected(self):
+        with self.assertRaisesRegex(ValueError, "Unsupported curated record context"):
+            load_context(document(record_contexts={"case1:1:1": {"unknown": True}}))
+
     def test_summary_reports_what_was_loaded(self):
         summary = context_summary(load_context(document(ba1_exceptions=EXCEPTIONS,
                                                         records={KEY: {"condition": "x"}})))
         self.assertEqual(summary["records"], 1)
+        self.assertEqual(summary["record_contexts"], 0)
         self.assertEqual(summary["ba1_exceptions"]["variants"], 1)
         self.assertTrue(summary["ba1_exceptions"]["complete"])
         # Every run records that the committed list was typed in by hand.

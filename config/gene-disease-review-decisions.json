@@ -1,0 +1,206 @@
+{
+  "schema_version": "1.0",
+  "source_version": "BH26-gene-disease-review-2026-09-16",
+  "assessed_at": "2026-09-16T00:00:00+09:00",
+  "method": "Disease-specific synthesis of ClinGen VCEP/GCEP statements, gnomAD v4.1.1 constraint and ClinVar gene-wide variant spectrum; VCEP applicability overrides numerical triage",
+  "policy_version": "BH26-gene-disease-review-v1",
+  "groups": [
+    {
+      "gene": "MYBPC3",
+      "condition": "MONDO:0005045",
+      "transcript": "NM_000256.3",
+      "variant_keys": [
+        "GRCh38:11:47351252:CT:C",
+        "GRCh38:11:47335041:C:T",
+        "GRCh38:11:47347665:AC:A",
+        "GRCh38:11:47343571:G:A",
+        "GRCh38:11:47348490:T:C",
+        "GRCh38:11:47350047:C:T",
+        "GRCh38:11:47346297:C:T"
+      ],
+      "gene_disease_validity": "Definitive",
+      "lof_mechanism_established": true,
+      "pp2_applicable": true,
+      "bp1_applicable": true,
+      "missense_mechanism_established": true,
+      "spectrum_review_complete": true,
+      "low_benign_missense_variation": false,
+      "predominantly_truncating": true,
+      "applicability_source": "General ACMG/AMP mechanism review; no MYBPC3-specific ClinGen VCEP rule was identified",
+      "review_summary": "ClinGen states that LoF is the HCM mechanism and that missense, nonsense, frameshift and splice variants can be pathogenic. ClinVar is strongly enriched for pathogenic truncating variants, but pathogenic missense and benign missense variants are both established; therefore PVS1 mechanism is established, while neither generic PP2 nor BP1 is met automatically.",
+      "sources": [
+        {
+          "title": "ClinGen MYBPC3–hypertrophic cardiomyopathy Gene-Disease Validity",
+          "url": "https://search.clinicalgenome.org/CCID:005515",
+          "version": "Definitive; 2021-10-07"
+        },
+        {
+          "title": "gnomAD gene constraint API",
+          "url": "https://gnomad.broadinstitute.org/gene/ENSG00000134571?dataset=gnomad_r4",
+          "version": "4.1.1"
+        },
+        {
+          "title": "ClinVar gene-wide spectrum queries",
+          "url": "https://www.ncbi.nlm.nih.gov/clinvar/",
+          "version": "retrieved 2026-09-16; pathogenic missense 37, benign missense 35, pathogenic truncating 940"
+        }
+      ]
+    },
+    {
+      "gene": "MYH7",
+      "condition": "MONDO:0005045",
+      "transcript": "NM_000257.4",
+      "variant_keys": [
+        "GRCh38:14:23417200:G:C",
+        "GRCh38:14:23425971:G:A",
+        "GRCh38:14:23420189:C:T"
+      ],
+      "gene_disease_validity": "Definitive",
+      "lof_mechanism_established": false,
+      "pp2_applicable": false,
+      "bp1_applicable": false,
+      "applicability_source": "ClinGen Cardiomyopathy VCEP MYH7 specification v2.0.0",
+      "review_summary": "The MYH7 VCEP explicitly marks PVS1, PP2 and BP1 Not Applicable. Regional missense enrichment is handled by PM1, so the high gnomAD missense Z score must not be double-counted as PP2.",
+      "sources": [
+        {
+          "title": "ClinGen Cardiomyopathy VCEP specifications for MYH7",
+          "url": "https://calculator.clinicalgenome.org/cspec/ui/svi/doc/135637574?version=2.0.0",
+          "version": "2.0.0; DOI 10.5281/zenodo.21139263"
+        },
+        {
+          "title": "ClinGen MYH7 gene page",
+          "url": "https://search.clinicalgenome.org/kb/genes/MYH7",
+          "version": "HCM Definitive; 2023-07-12"
+        },
+        {
+          "title": "gnomAD gene constraint API",
+          "url": "https://gnomad.broadinstitute.org/gene/ENSG00000092054?dataset=gnomad_r4",
+          "version": "4.1.1; missense Z 7.378650026979123"
+        }
+      ]
+    },
+    {
+      "gene": "TNNI3",
+      "condition": "MONDO:0005045",
+      "transcript": "NM_000363.5",
+      "variant_keys": ["GRCh38:19:55156239:G:A"],
+      "gene_disease_validity": "Definitive",
+      "lof_mechanism_established": false,
+      "pp2_applicable": true,
+      "bp1_applicable": true,
+      "missense_mechanism_established": true,
+      "spectrum_review_complete": true,
+      "low_benign_missense_variation": true,
+      "predominantly_truncating": false,
+      "applicability_source": "ClinGen TNNI3–HCM Gene-Disease Validity mechanism statement plus ClinVar spectrum",
+      "review_summary": "ClinGen reports a likely dominant-negative mechanism and that 91% of reported disease mutations are missense. The reviewed ClinVar query found 57 pathogenic/likely pathogenic versus 2 benign/likely benign missense VCVs. PP2 is supported; BP1 and PVS1 mechanisms are not.",
+      "sources": [
+        {
+          "title": "ClinGen TNNI3–hypertrophic cardiomyopathy Gene-Disease Validity",
+          "url": "https://search.clinicalgenome.org/CCID:006405",
+          "version": "Definitive; 2017-09-05"
+        },
+        {
+          "title": "ClinVar gene-wide spectrum queries",
+          "url": "https://www.ncbi.nlm.nih.gov/clinvar/",
+          "version": "retrieved 2026-09-16; pathogenic missense 57, benign missense 2, pathogenic truncating 23"
+        }
+      ]
+    },
+    {
+      "gene": "DSG2",
+      "condition": "MONDO:0016587",
+      "transcript": "NM_001943.5",
+      "variant_keys": ["GRCh38:18:31536370:T:G"],
+      "gene_disease_validity": "Definitive",
+      "lof_mechanism_established": true,
+      "pp2_applicable": true,
+      "bp1_applicable": true,
+      "missense_mechanism_established": true,
+      "spectrum_review_complete": true,
+      "low_benign_missense_variation": false,
+      "predominantly_truncating": false,
+      "applicability_source": "ClinGen DSG2–ARVC Gene-Disease Validity and disease-relevant variant-class review",
+      "review_summary": "DSG2 is definitively associated with ARVC and both decreased product level and altered sequence/missense mechanisms are reported. Benign missense variation is not low in the reviewed ClinVar spectrum, and the disease is not exclusively or safely modeled as truncating-only; PP2 and BP1 are not met.",
+      "sources": [
+        {
+          "title": "ClinGen DSG2–ARVC Gene-Disease Validity",
+          "url": "https://search.clinicalgenome.org/CCID:004704",
+          "version": "Definitive; 2018-09-14"
+        },
+        {
+          "title": "Inherited cardiac disease mechanism and variant classes",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10594882/",
+          "version": "2023; DSG2 decreased product level and altered sequence"
+        },
+        {
+          "title": "ClinVar gene-wide spectrum queries",
+          "url": "https://www.ncbi.nlm.nih.gov/clinvar/",
+          "version": "retrieved 2026-09-16; pathogenic missense 7, benign missense 40, pathogenic truncating 126"
+        }
+      ]
+    },
+    {
+      "gene": "KCNJ5",
+      "condition": "MONDO:0005045",
+      "transcript": "NM_000890.5",
+      "variant_keys": ["GRCh38:11:128911737:G:A"],
+      "gene_disease_validity": "UNRESOLVED_FOR_CONDITION",
+      "lof_mechanism_established": false,
+      "pp2_applicable": false,
+      "bp1_applicable": false,
+      "applicability_source": "Disease-context review: KCNJ5 validity is for familial hyperaldosteronism, not HCM",
+      "review_summary": "ClinGen supports KCNJ5 gain-of-function missense variation for familial hyperaldosteronism type III, not hypertrophic cardiomyopathy. The case source also treats this finding as phenotype-mismatched; HCM PP2/BP1 must not borrow the hyperaldosteronism mechanism.",
+      "sources": [
+        {
+          "title": "ClinGen KCNJ5–familial hyperaldosteronism type III Gene-Disease Validity",
+          "url": "https://search.clinicalgenome.org/CCID:008966",
+          "version": "Definitive; 2026-01-15; MONDO:0013359"
+        },
+        {
+          "title": "BH26 case 1 source audit",
+          "url": "demo-data/real_cases_groundtruth_integrated_v6_ja.md",
+          "version": "2026-09-08"
+        }
+      ]
+    },
+    {
+      "gene": "MYBPC3",
+      "condition": "MONDO:0016587",
+      "transcript": "NM_000256.3",
+      "variant_keys": ["GRCh38:11:47343571:G:A"],
+      "gene_disease_validity": "Limited",
+      "lof_mechanism_established": false,
+      "pp2_applicable": false,
+      "bp1_applicable": false,
+      "applicability_source": "ClinGen MYBPC3–ARVC validity is Limited",
+      "review_summary": "The definitive MYBPC3–HCM mechanism must not be transferred to the ARVC case. ClinGen classifies the MYBPC3–ARVC relationship as Limited, so PP2/BP1 are not applicable for this demo assessment.",
+      "sources": [
+        {
+          "title": "ClinGen MYBPC3 gene page",
+          "url": "https://search.clinicalgenome.org/kb/genes/MYBPC3",
+          "version": "ARVC Limited; 2019-08-06"
+        }
+      ]
+    },
+    {
+      "gene": "TNNI3",
+      "condition": "MONDO:0016587",
+      "transcript": "NM_000363.5",
+      "variant_keys": ["GRCh38:19:55156239:G:A"],
+      "gene_disease_validity": "UNRESOLVED_FOR_CONDITION",
+      "lof_mechanism_established": false,
+      "pp2_applicable": false,
+      "bp1_applicable": false,
+      "applicability_source": "Disease-context review: definitive TNNI3 validity is for HCM, not ARVC",
+      "review_summary": "The definitive TNNI3–HCM dominant-negative missense mechanism must not be transferred to the ARVC case. No condition-matched ClinGen relationship was identified for this review, so PP2/BP1 are not applicable.",
+      "sources": [
+        {
+          "title": "ClinGen TNNI3 gene page",
+          "url": "https://search.clinicalgenome.org/kb/genes/TNNI3",
+          "version": "HCM Definitive; 2017-09-05"
+        }
+      ]
+    }
+  ]
+}

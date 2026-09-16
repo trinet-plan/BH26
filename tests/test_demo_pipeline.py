@@ -135,7 +135,8 @@ class DemoPipelineTests(unittest.TestCase):
         pm5_met = next(result for result in pm5 if result["status"] == "MET")
         self.assertEqual(pm5_met["evidence_outcome"], "PM5")
         self.assertEqual(pm5_met["provenance"]["assessment_scope"], "protein_level")
-        self.assertEqual(pm5_met["provenance"]["condition_assessment"], "NOT_EVALUATED")
+        # The committed record-level context now supplies HCM for this case.
+        self.assertEqual(pm5_met["provenance"]["condition_assessment"], "MATCHED")
 
         met = [result for result in pm1 if result["status"] == "MET"]
         for result in met:

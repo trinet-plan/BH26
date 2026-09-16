@@ -71,6 +71,20 @@ class CuratedCriteriaTests(unittest.TestCase):
         del item["spectrum_review_complete"]
         self.assertEqual(self.run_rule("BP1", item).status, Status.NOT_EVALUATED)
 
+    def test_reviewed_vcep_not_applicable_overrides_generic_mechanism(self):
+        item = self.item(
+            "gene_disease",
+            gene="TEST",
+            pp2_applicable=False,
+            bp1_applicable=False,
+            applicability_source="ClinGen test VCEP v1",
+        )
+        pp2 = self.run_rule("PP2", item)
+        bp1 = self.run_rule("BP1", item)
+        self.assertEqual(pp2.status, Status.NOT_APPLICABLE)
+        self.assertEqual(bp1.status, Status.NOT_APPLICABLE)
+        self.assertEqual(pp2.provenance["applicability_source"], "ClinGen test VCEP v1")
+
     def region(self, **values):
         return self.item("region", protein_id="NP_TEST.1", start=5, end=20, **values)
 

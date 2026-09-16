@@ -199,6 +199,18 @@
   書込み前に検証する。synthetic all-criterion E2Eで16 assessment、未解決参照0を確認し、
   ClinGen正例・28件固定キャッシュE2Eを含む全169テストとRuffが成功した。
 
+### 2026-09-16 gene–disease機序投入
+
+- ClinGen GDV、gnomAD v4.1.1、ClinVar gene-wide spectrumを版付き入力として固定した。
+- DRAFT 15件を生成し、review結果も15件のexact variant×condition Evidenceへ展開できる。
+- 同一variantを別疾患で使う症例に対応するため、record_id単位のcontext overrideを追加した。
+- MYH7 VCEP v2.0.0のNot Applicableを数値triageより優先し、PP2・BP1・PVS1を除外する。
+- 元のgene_disease待ち39件は不足0件。MET 1、NOT_MET 19、NOT_APPLICABLE 16、
+  次段階Evidence待ち3。後者はtranscript_assessment 2件、splice_assessment 1件。
+- 生成Evidenceは`assessment_method=automated`、`human_signoff=false`を明示する。
+  臨床専門家の承認済みであるとは表現しない。
+- 全188テスト成功、Ruff成功、28レコード・3 criterionのVA-Spec検証成功。
+
 ## 未完了（次工程）
 
 1. BA1例外リストは手入力のため、原典Table 1との第三者照合が未実施。
