@@ -34,9 +34,7 @@ def evaluate_record(input_data, services, config, criteria=CRITERIA):
     by_code = {r.criterion: r for r in results}
     for left, right in CONFLICTS:
         pair = [by_code.get(left), by_code.get(right)]
-        if all(r is not None and (r.status == Status.MET or
-               (r.criterion == "PVS1" and r.status == Status.MANUAL_REVIEW and
-                r.provenance.get("recommended_strength"))) for r in pair):
+        if all(r is not None and r.status == Status.MET for r in pair):
             flag = f"REVIEW_OVERLAP:{left}:{right}"
             for value in pair:
                 value.conflict_flags.append(flag)

@@ -6,7 +6,8 @@ demo-dataの4症例を対象とする、Evidence単位のACMG基準評価ツー�
 [進捗](docs/PROGRESS.md)、JSONのフィールド対応と制約は
 [VA-Spec 1.0.1 JSON出力仕様](docs/VA-SPEC-OUTPUT.md)、蛋白注釈と予測値は
 [予測Evidence仕様](docs/PREDICTION-EVIDENCE.md)、PM1の2ルート設計と
-hotspot policyは [PM1設計](docs/PM1-PLAN.md) を参照してください。
+hotspot policyは [PM1設計](docs/PM1-PLAN.md)、PVS1のGeneral decision treeと
+Evidence契約は [PVS1設計](docs/PVS1-PLAN.md) を参照してください。
 
 ## 現在動く機能
 
@@ -19,6 +20,8 @@ hotspot policyは [PM1設計](docs/PM1-PLAN.md) を参照してください。
 - ClinVar exact protein comparator検索と、疾患評価を分離したPS1 protein-level判定。
 - 同一残基を対象とするPM5 residue検索と、疾患評価を分離したPM5 protein-level判定。
 - PM1のhotspot/critical domain 2ルート評価と、ClinVar missense densityによるhotspot proxy。
+- ClinGen General Guidanceに基づくPVS1 decision tree、4段階強度、condition/gene-level文脈、
+  decision trace、VA-Spec出力。
 - dbNSFP releaseを固定したREVEL/AlphaMissenseと、校正区間によるPP3/BP4判定。
 - 蛋白機序と splicing機序の2校正を併用するPP3/BP4（加算せず、BP4は全機序の一致を要求）。
 - gnomAD 4.1.1集団頻度とClinVar VCVの内容ハッシュ付きキャッシュ、オフライン再生。
@@ -163,8 +166,10 @@ run-manifestの `curated_context` にも毎回出力します。臨床利用の�
 疾患関連性は判定に混ぜず `condition_assessment`（MATCHED / NOT_EVALUATED）として分離記録し、
 未確認のままMETになった場合は確認事項を併記します。`condition` を与えた場合、別疾患の
 キュレーション済みEvidenceは流用されません。BS1は疾患別閾値そのものが疾患なしに定義できない
-ため、引き続き`condition`が必須です。PVS1のLoF機序は遺伝子単位のキュレーションとして扱います
-（autoPVS1がvariantとgenome版だけで動き、疾患入力を取らないのと同じ位置づけです）。
+ため、引き続き`condition`が必須です。PVS1はcondition-specific LoF機序を優先し、存在しない場合に
+gene-level機序へfallbackします。condition未指定時もgene-level Evidenceがあれば評価を継続し、
+`evaluation_context`とwarningに評価範囲を残します。NMD・transcript relevance・RNA assay・
+protein region等は出典付きの正規化Evidenceを要求し、未取得値を推測しません。
 
 ## Gitとデータ
 

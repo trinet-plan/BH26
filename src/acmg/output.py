@@ -75,7 +75,7 @@ def run_internal(input_path, evidence_path, config_path, output_dir, criteria=CR
     # Reuse is explicit at the caller: never silently overwrite evidence from an older run.
     output_dir.mkdir(parents=True, exist_ok=False)
     export_status = "VALIDATED" if va_spec else "NOT_PERFORMED"
-    payload = {"schema_version": "1.0", "records": outputs, "input_errors": errors,
+    payload = {"schema_version": "1.1", "records": outputs, "input_errors": errors,
                "va_spec_export": export_status}
     result_path = output_dir / "results.json"
     result_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, allow_nan=False) + "\n", encoding="utf-8")

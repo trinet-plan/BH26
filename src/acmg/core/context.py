@@ -9,7 +9,7 @@ so, and an incomplete list resolves nothing rather than asserting absence.
 from acmg.core.models import Variant
 
 
-CONTEXT_FIELDS = ("condition", "inheritance", "disease_frequency_threshold")
+CONTEXT_FIELDS = ("condition", "condition_label", "inheritance", "disease_frequency_threshold")
 
 
 def _require(condition, message):

@@ -30,7 +30,7 @@ Statement
 
 | パス | 内容 | VA-Spec成果物か |
 | --- | --- | --- |
-| `results.json` | 全基準の内部評価結果。未評価、対象外、要確認、非推奨も保持 | いいえ |
+| `results.json` | schema 1.1。全基準の内部評価結果。PVS1 trace、未評価、対象外、要確認、非推奨も保持 | いいえ |
 | `summary.tsv` | 内部評価結果の表形式要約 | いいえ |
 | `evidence-lines.json` | record、variant、Evidence参照をまとめたBH26監査用envelope | いいえ |
 | `va-spec-1.0.1/*.json` | 1ファイルにつき1個のACMG EvidenceLine | はい |

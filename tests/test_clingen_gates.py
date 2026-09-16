@@ -73,7 +73,7 @@ class ClinGenGateTests(unittest.TestCase):
     def test_loss_of_function_gate_covers_splice_and_frameshift(self):
         for record_id in ("clingen:pvs1-splice", "clingen:pvs1-frameshift"):
             result = self.by_record[record_id]["PVS1"]
-            self.assertEqual(result["missing_inputs"], ["gene_disease"])
+            self.assertEqual(result["missing_inputs"], ["loss-of-function disease mechanism"])
             self.assertIsNone(result["strength"])
 
     def test_expert_panel_provenance_travels_with_each_record(self):

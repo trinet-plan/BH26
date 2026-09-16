@@ -313,40 +313,6 @@ class CuratedCriteriaTests(unittest.TestCase):
         item["contradictory_rna_evidence"] = True
         self.assertEqual(self.run_rule("BP7", item).status, Status.MANUAL_REVIEW)
 
-    def test_pvs1_is_evaluated_without_condition(self):
-        """autoPVS1 resolves the LoF mechanism per gene, not from a disease the caller gives."""
-        input_data = {key: value for key, value in self.input.items() if key != "condition"}
-        annotation = {key: value for key, value in self.annotation.items() if key != "condition"}
-        annotation["consequences"] = ["frameshift_variant"]
-        mechanism = {key: value for key, value in
-                     self.item("gene_disease", gene="TEST",
-                               lof_mechanism_established=True).items() if key != "condition"}
-        lof = {key: value for key, value in
-               self.item("lof_assessment", biologically_relevant_transcript=True, exon_relevant=True,
-                         nmd_predicted=True, nmd_rule_source="test:nmd").items()
-               if key != "condition"}
-        value = evaluate_record(input_data, make_services([annotation, mechanism, lof]),
-                                {}, ["PVS1"])[0]
-        self.assertEqual(value.status, Status.MANUAL_REVIEW)
-        self.assertEqual(value.provenance["recommended_strength"], "very_strong")
-        self.assertEqual(value.provenance["assessment_scope"], "gene_level")
-        self.assertEqual(value.provenance["condition_assessment"], "NOT_EVALUATED")
-        self.assertIsNone(value.strength)
-
-    def test_pvs1_remains_provisional(self):
-        self.annotation["consequences"] = ["frameshift_variant"]
-        mechanism = self.item("gene_disease", gene="TEST", lof_mechanism_established=True)
-        lof = self.item("lof_assessment", biologically_relevant_transcript=True, exon_relevant=True,
-                        nmd_predicted=True, nmd_rule_source="test:nmd")
-        value = self.run_rule("PVS1", mechanism, lof)
-        self.assertEqual(value.status, Status.MANUAL_REVIEW)
-        self.assertIsNone(value.strength)
-        self.assertEqual(value.provenance["recommended_strength"], "very_strong")
-        lof["nmd_predicted"] = False
-        self.assertIsNone(self.run_rule("PVS1", mechanism, lof).provenance["recommended_strength"])
-        mechanism["lof_mechanism_established"] = False
-        self.assertEqual(self.run_rule("PVS1", mechanism, lof).status, Status.NOT_MET)
-
     def test_source_labels_do_not_affect_all_results(self):
         services = make_services([self.annotation])
         first = [r.to_dict() for r in evaluate_record(self.input, services, {})]

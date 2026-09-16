@@ -33,6 +33,7 @@ class OutputTests(unittest.TestCase):
     def test_all_criteria_and_summary_rows(self):
         output = self.output_dir()
         payload = self.run_fixture(output)
+        self.assertEqual(payload["schema_version"], "1.1")
         results = payload["records"][0]["results"]
         self.assertEqual([item["criterion"] for item in results], list(CRITERIA))
         self.assertEqual(len((output / "summary.tsv").read_text().splitlines()), 17)

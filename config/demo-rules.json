@@ -18,6 +18,37 @@
     "policy_source": "BH26 demo population evidence QC policy",
     "policy_version": "2026-09-15"
   },
+  "PVS1": {
+    "ruleset": {
+      "name": "clingen_general_pvs1",
+      "version": "2018+2023-splicing",
+      "sources": [
+        {
+          "id": "acmg_amp_2015",
+          "doi": "10.1038/gim.2015.30",
+          "pmid": "25741868"
+        },
+        {
+          "id": "clingen_pvs1_2018",
+          "doi": "10.1002/humu.23626",
+          "pmid": "30192042"
+        },
+        {
+          "id": "clingen_splicing_2023",
+          "doi": "10.1016/j.ajhg.2023.06.002",
+          "pmid": "37352859"
+        }
+      ]
+    },
+    "rules": {
+      "protein_loss_threshold": 0.1
+    },
+    "implementation": {
+      "condition_required": false,
+      "missing_condition_behavior": "use_gene_level_context",
+      "cnv_sv_supported": false
+    }
+  },
   "PM1": {
     "hotspot": {
       "window_aa": 5,

@@ -5,7 +5,7 @@
 ideaの概要設計v2、入力設計、VA-Spec実装仕様を基に、GRCh38のSNV・小規模indelを評価する。
 入力はdemo-dataの4症例VCF全行（noiseを含む）。原本は変更しない。
 全レコードの同定・補正・保留状況を記録し、検証済みvariantに16コードの結果を返す。
-PVS1は候補と推奨強度まででMANUAL_REVIEW、PP5/BP6はDEPRECATED。
+PVS1はClinGen General decision treeから適用可否と4段階強度を返し、PP5/BP6はDEPRECATED。
 通常対象はPS1, PM1, PM2, PM4, PM5, PP2, PP3, BA1, BS1, BP1, BP3, BP4, BP7。
 最終5段階分類、ランキング、Web UI、CSpec、残り12基準、GRCh37/CNV/SVは対象外。
 
@@ -31,7 +31,8 @@ PVS1は候補と推奨強度まででMANUAL_REVIEW、PP5/BP6はDEPRECATED。
 - statusはMET, NOT_MET, NOT_EVALUATED, NOT_APPLICABLE, MANUAL_REVIEW, DEPRECATED。
 - PM2はSupporting。非ゼロAFの普遍閾値は設定しない。BS1には疾患別閾値が必須。
 - 領域・機序・比較変異の根拠不足は確認待ち/未評価。予測器の校正は版管理する。
-- PVS1 decision treeの分岐・推奨強度・確認事項を返すが自動METにはしない。
+- PVS1はversion付きreviewed Evidenceが揃った分岐だけMETとし、不足はNOT_EVALUATED、
+  明示的な非適用はNOT_APPLICABLE、矛盾はMANUAL_REVIEWとする。
 - 基準間の競合と共有Evidenceを出す。最終分類/加点/自動重複解消はしない。
 
 ## インターフェースと成果物
@@ -50,7 +51,7 @@ EvidenceLineへ埋め込み、DataSet・StudyGroup・Method・Documentの由来�
 1. 入力監査・同定、元データ保全と全件追跡。
 2. 共通モデル、ローカルEvidence、PM2からVA-Spec出力への縦断経路。
 3. 実データProvider、キャッシュ、BA1/BS1、オフライン再現（gnomAD/ClinVarまで完了）。
-4. 予測/領域、比較/機序、暫定PVS1、非推奨コード、競合表示。
+4. 予測/領域、比較/機序、PVS1 General decision tree、非推奨コード、競合表示。
 5. 全症例デモ、README、依存ロック、pytest/Ruff、Windows/Linux CI。
 
 各基準の成立/不成立/欠損/対象外/確認待ち、境界値、API障害、同定矛盾、

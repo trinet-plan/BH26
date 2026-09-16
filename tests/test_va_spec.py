@@ -72,6 +72,21 @@ class VaSpecTests(unittest.TestCase):
             with self.subTest(code=code):
                 validate_1_0_1(to_evidence_line(result), code)
 
+    def test_all_pvs1_strengths_map(self):
+        expected = {
+            "very_strong": "PVS1",
+            "strong": "PVS1_strong",
+            "moderate": "PVS1_moderate",
+            "supporting": "PVS1_supporting",
+        }
+        for strength, outcome in expected.items():
+            value = CriterionResult("PVS1", Status.MET, VARIANT, "met", strength,
+                                    "supports", outcome, evidence=EVIDENCE)
+            with self.subTest(strength=strength):
+                line = to_evidence_line(value)
+                validate_1_0_1(line, "PVS1")
+                self.assertEqual(line["evidenceOutcome"]["primaryCoding"]["code"], outcome)
+
     def test_document_records_pinned_official_schema(self):
         document = export_document([])
         self.assertEqual(document["validated_by"]["schema_version"], "1.0.1")

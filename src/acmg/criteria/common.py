@@ -11,7 +11,8 @@ DEFAULT_STRENGTH = {
 
 
 def result(code, input_data, status, summary, *, strength=None, evidence=None,
-           missing=None, review=None, provenance=None):
+           missing=None, review=None, provenance=None, evaluation_context=None,
+           decision_trace=None, rules_used=None, warnings=None, unresolved_requirements=None):
     direction, outcome = None, None
     if status == Status.MET:
         direction = "disputes" if code.startswith("B") else "supports"
@@ -22,6 +23,9 @@ def result(code, input_data, status, summary, *, strength=None, evidence=None,
         code, status, input_data["variant"], summary, strength, direction, outcome,
         evidence=evidence or [], missing_inputs=missing or [], review_points=review or [],
         provenance={"rule_version": f"{code}-v1", **(provenance or {})},
+        evaluation_context=evaluation_context, decision_trace=decision_trace or [],
+        rules_used=rules_used or [], warnings=warnings or [],
+        unresolved_requirements=unresolved_requirements or [],
     )
 
 

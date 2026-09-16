@@ -23,10 +23,12 @@ class CuratedContextTests(unittest.TestCase):
 
     def test_disease_context_reaches_the_record(self):
         context = load_context(document(records={KEY: {
-            "condition": "MONDO:0000001", "inheritance": "autosomal_dominant",
+            "condition": "MONDO:0000001", "condition_label": "Test disease",
+            "inheritance": "autosomal_dominant",
             "disease_frequency_threshold": {"max_credible_af": 0.001}}}))
         updated = apply_context(self.record(), context)
         self.assertEqual(updated["condition"], "MONDO:0000001")
+        self.assertEqual(updated["condition_label"], "Test disease")
         self.assertEqual(updated["disease_frequency_threshold"]["max_credible_af"], 0.001)
         # Records without curated context are returned unchanged.
         other = apply_context(self.record({**VARIANT, "pos": 9}), context)

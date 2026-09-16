@@ -8,6 +8,7 @@
 | [計画](PLAN.md) | 当初計画と不変条件、対象範囲 |
 | [進捗](PROGRESS.md) | 工程順の実装記録 |
 | [PM1設計](PM1-PLAN.md) | PM1の2ルート設計とhotspot policy |
+| [PVS1設計](PVS1-PLAN.md) | PVS1 General decision treeとEvidence契約 |
 | [予測Evidence仕様](PREDICTION-EVIDENCE.md) | 蛋白注釈・予測値の取得と校正policy |
 | [VA-Spec出力](VA-SPEC-OUTPUT.md) | JSONのフィールド対応と制約 |
 
@@ -63,6 +64,9 @@ PM4（28）・BP3（28）・PVS1（25）・BP7（21）。転写産物注釈か�
 demo-dataにin-frame indelとstop lossが無いためPM4とBP3のゲートは実データで開かない。
 ClinGen Evidence Repository由来の5変異（`tests/fixtures/clingen-gate-*.json`）で、
 PVS1・PM4・BP3・BP7が対象consequenceで開き、それ以外では閉じることを確認している。
+PVS1 evaluator自体はnonsense/frameshift、canonical/実証splice LoF、start-lossのGeneral
+decision treeと4段階強度に対応済み。デモのPVS1候補3件はgene_disease等の独立Evidenceが
+未投入のためNOT_EVALUATEDであり、判定ロジック未実装を意味しない。
 
 ### Evidence待ち（4基準、101件）
 
@@ -106,7 +110,7 @@ VA-Spec Evidence Line 140件（MET + NOT_MET）
 3. BA1例外リストの第三者照合。手入力のため原典Table 1との再確認が未実施。
 4. SpliceAIの版が宣言依存。版を確定できる配布元からの取得が望ましい。
 5. PM1のgene/disease対応、強度可変、critical domainのreviewed Evidence入力経路。
-6. BP7の位置policy、PVS1の自動化拡張。
+6. BP7の位置policy。PVS1はNMD・MANE/transcript・RNA・protein region Evidenceの自動取得拡張。
 7. CI未設定。
 
 ## 対象外

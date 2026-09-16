@@ -138,4 +138,5 @@ NOT_EVALUATED 26件（報告密度不足10件、非missenseでregion Evidenceな
    （Luo et al., PMC6849945）は13 hotspot残基をPM1、105-204をPM1_supportingとし、RHD全体
    （77-204）ではない。版ごとに `source_version` 付きの別レコードとして持たないと結論が
    変わりうる。
-4. `condition` の入力経路。PM1のcondition_assessmentをMATCHEDにできるようにする。
+4. `condition` 入力は`evaluate --context`で対応済み。今後はregion Evidence側のconditionを
+   disease-specific policyから供給し、condition_assessmentをMATCHEDにできるようにする。

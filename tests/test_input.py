@@ -63,11 +63,15 @@ class DomainTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 Variant("GRCh38", "1", 1, "A", alt)
 
-    def test_provisional_and_deprecated_cannot_fire(self):
+    def test_deprecated_cannot_fire_and_pvs1_requires_strength(self):
         self.assertEqual(len(CRITERIA), 16)
-        for code in ("PVS1", "PP5", "BP6"):
+        for code in ("PP5", "BP6"):
             with self.assertRaises(ValueError):
                 CriterionResult(code, Status.MET, {}, "invalid")
+        with self.assertRaises(ValueError):
+            CriterionResult("PVS1", Status.MET, {}, "invalid")
+        value = CriterionResult("PVS1", Status.MET, {}, "valid", "very_strong")
+        self.assertEqual(value.strength, "very_strong")
 
 
 if __name__ == "__main__":

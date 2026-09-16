@@ -16,7 +16,7 @@
 - ドメイン契約、REF検証、indel左寄せ、同定候補照合、ラベルを除去した入力境界。
 - prepare-demo: indexed FASTAと出典付きローカル同定候補から検証済み入力を生成。
 - 16コードの独立評価モジュールと一括engine。機序/領域/比較根拠は出典付きreviewed Evidenceを要求。
-- PVS1は分岐履歴・推奨強度のみ。複雑な未自動化分岐はcurated branchで補足する。
+- PVS1は当初、分岐履歴・推奨強度だけを返す暫定実装として開始した。
 - 基準間の重複候補フラグ、ローカルEvidence/Population Service。
 - HTTPキャッシュ（内容ハッシュ検証、offline、タイムアウト、限定リトライ）とVEP adapterを実装。
 - Ensembl release 116で全17固有HGVSを同定し、GRCh38参照配列検証と応答キャッシュを固定。
@@ -149,17 +149,30 @@
   実データでの成立例は得られていない。ゲートはin-frame deletionのfixtureで確認している。
 - pytest 146テスト成功、Ruff成功。
 
+- PVS1の暫定MANUAL_REVIEW制約を廃止し、ACMG/AMP 2015、ClinGen SVI PVS1 2018、
+  ClinGen SVI Splicing 2023に基づくGeneral decision treeを実装。nonsense/frameshift、
+  canonical splice、RNA実証splice LoF、start-lossからvery strong/strong/moderate/supportingを
+  正式適用し、VA-Spec Evidence Lineへ変換する。
+- condition-specific LoF mechanismを優先し、未提供時または該当Evidenceがない場合はgene-levelへ
+  fallbackする。condition status、mechanism scope、decision trace、rule source、warning、
+  unresolved requirementをresults.json schema 1.1に記録する。
+- transcript、NMD、splice/RNA、protein region、population LoF、initiationの正規化Evidence契約を追加。
+  外部自動取得とCNV/SVは対象外で、不足を陰性へ変換しない。
+- 実デモの集計は従来どおりMET 32、NOT_MET 108、NOT_EVALUATED 101、NOT_APPLICABLE 147、
+  MANUAL_REVIEW 4、DEPRECATED 56。PVS1はNOT_APPLICABLE 25、NOT_EVALUATED 3。
+  pytest 159テスト成功、Ruff成功、全28件VA-Spec検証成功。
+
 ## 未完了（次工程）
 
 1. BA1例外リストは手入力のため、原典Table 1との第三者照合が未実施。
 2. SpliceAIは版がVEP経由の宣言に依存する。版を確定できる配布元からの取得が望ましい。
 3. PM1のgene/disease-specific対応（強度可変、PM1不使用geneのNOT_APPLICABLE表明）と、
-   critical functional domainのreviewed Evidence入力経路。conditionとBS1疾患閾値の入力経路。
-4. BP7のRefSeq exon境界position adapterと校正済み保存性policy、PVS1 NMD等の計算の自動化拡張。
+   critical functional domainのreviewed Evidence入力経路。BS1疾患閾値のキュレーション。
+4. BP7のRefSeq exon境界position adapterと校正済み保存性policy、PVS1 NMD等のEvidence取得自動化。
    現在はSpliceAI/保存性raw Evidenceとreviewed assessment入力経路まで。
 5. evaluateへのVCF直接入力・オンライン取得、症例文脈補足、準備済み入力の厳密なschema検証。
-3. run-manifestに全Provider・実装ルールのハッシュを統合、ground truth比較レポート。
-4. Windows/Linux CI。
+6. run-manifestに全Provider・実装ルールのハッシュを統合、ground truth比較レポート。
+7. Windows/Linux CI。
 
 ## 確認済み環境制約
 
@@ -174,7 +187,7 @@
 
 - prepare-demoに参照FASTAのassembly/出典/ハッシュのmanifest検証を追加すること。
 - identity候補はローカル契約とEnsemblライブProviderに対応し、全件取得・固定済み。
-- 品質・校正設定は現在テスト内の合成プロファイルのみ。本番の出典付き設定は未導入。
+- demo用の品質・校正設定は出典付きで導入済みだが、疾患・遺伝子別の臨床承認済みpolicyではない。
   VEP予測Evidenceの取得・版不足による採点除外条件は実装済み。
 - 評価モデル/Provider契約にschema検証を追加し、未信頼な型・範囲値を早期に拒否すること。
 - ground truthのACMGコードや最終分類は、評価結果と混ぜない。

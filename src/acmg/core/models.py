@@ -65,6 +65,11 @@ class CriterionResult:
     review_points: list[str] = field(default_factory=list)
     conflict_flags: list[str] = field(default_factory=list)
     provenance: dict = field(default_factory=dict)
+    evaluation_context: dict | None = None
+    decision_trace: list[dict] = field(default_factory=list)
+    rules_used: list[dict] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
+    unresolved_requirements: list[str] = field(default_factory=list)
 
     def __post_init__(self):
         if self.criterion not in CRITERIA:
@@ -72,10 +77,16 @@ class CriterionResult:
         self.status = Status(self.status)
         if self.criterion in {"PP5", "BP6"} and self.status != Status.DEPRECATED:
             raise ValueError("Deprecated criteria cannot be scored")
-        if self.criterion == "PVS1" and self.status == Status.MET:
-            raise ValueError("PVS1 is provisional")
         if self.status != Status.MET and self.strength is not None:
             raise ValueError("Only MET can carry applied strength; keep recommendations in metadata")
+        if (self.criterion == "PVS1" and self.status == Status.MET and
+                self.strength not in {"very_strong", "strong", "moderate", "supporting"}):
+            raise ValueError("PVS1 MET requires a supported applied strength")
 
     def to_dict(self):
-        return asdict(self)
+        value = asdict(self)
+        if self.criterion != "PVS1":
+            for key in ("evaluation_context", "decision_trace", "rules_used", "warnings",
+                        "unresolved_requirements"):
+                value.pop(key)
+        return value

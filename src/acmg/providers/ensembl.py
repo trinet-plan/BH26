@@ -181,6 +181,8 @@ class EnsemblIdentityProvider:
             "hgvsp": consequence.get("hgvsp"),
             "protein_start": consequence.get("protein_start"),
             "protein_end": consequence.get("protein_end"),
+            "exon": consequence.get("exon"), "intron": consequence.get("intron"),
+            "cds_start": consequence.get("cds_start"), "cds_end": consequence.get("cds_end"),
             "ref_aa": ref_aa, "alt_aa": alt_aa,
             "protein_length_change": _protein_length_change(consequence, ref_aa, alt_aa),
             "high_confidence_null_or_splice": bool(
