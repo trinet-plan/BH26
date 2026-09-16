@@ -42,7 +42,9 @@ exist only for PS3/BS3 (ps3_bs3.py), PS4 (ps4.py), and PP1/BS4
 from __future__ import annotations
 
 from acmg_pipeline.classification import ALL_ACMG_CODES, IMPLEMENTED_CODES, CriterionEvidence
+from acmg_pipeline.clinical_note import ClinicalNoteExtraction
 from acmg_pipeline.gate import CriterionStatus
+from acmg_pipeline.vcf_record import VariantRecord
 
 STUB_CODES = [code for code in ALL_ACMG_CODES if code not in IMPLEMENTED_CODES]
 
@@ -64,12 +66,20 @@ AUTOMATED_RULE_BASED_OTHER_TEAM = set(STUB_CODES) - LITERATURE_ADJACENT_BUT_CLIN
 _NOT_EVALUATED = CriterionStatus.UNKNOWN
 
 
-def stub_evidence(code: str, note: str = "") -> CriterionEvidence:
+def stub_evidence(
+    code: str,
+    variant: VariantRecord,
+    clinical_note: ClinicalNoteExtraction,
+    note: str = "",
+) -> CriterionEvidence:
     """
     Returns a NOT_EVALUATED placeholder CriterionEvidence for `code` - no
     judgment has been attempted, by this pipeline or (as far as this
     project knows) anyone else yet.
     """
+    # Stub criteria do not inspect either input yet, but accepting both here
+    # keeps their public boundary identical to implemented criteria.
+    del variant, clinical_note
     if code not in STUB_CODES:
         raise ValueError(
             f"{code!r} is not a stub code - it either has a real "
@@ -88,6 +98,9 @@ def stub_evidence(code: str, note: str = "") -> CriterionEvidence:
     )
 
 
-def all_stub_evidence() -> list[CriterionEvidence]:
+def all_stub_evidence(
+    variant: VariantRecord,
+    clinical_note: ClinicalNoteExtraction,
+) -> list[CriterionEvidence]:
     """Convenience: a NOT_EVALUATED CriterionEvidence for every stub code at once."""
-    return [stub_evidence(code) for code in STUB_CODES]
+    return [stub_evidence(code, variant, clinical_note) for code in STUB_CODES]

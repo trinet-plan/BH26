@@ -2,7 +2,7 @@
 
 from acmg_pipeline.clinical_note import ClinicalNoteExtraction
 from acmg_pipeline.common import AggregatedJudgment
-from acmg_pipeline.criteria import ps3_bs3, ps4, segregation
+from acmg_pipeline.criteria import ps3_bs3, ps4, segregation, stubs
 from acmg_pipeline.export import build_evidence_line
 from acmg_pipeline.vcf_record import VariantRecord
 
@@ -33,11 +33,22 @@ clinical_note = ClinicalNoteExtraction.from_json({
 })
 
 
-for module in (ps3_bs3, ps4, segregation):
+criterion_modules = {
+    "PS3": ps3_bs3,
+    "BS3": ps3_bs3,
+    "PS4": ps4,
+    "PP1": segregation,
+    "BS4": segregation,
+}
+for code, module in criterion_modules.items():
     prompt = module.build_prompt(variant, clinical_note, "paper body")
     assert "MYH7" in prompt
     assert "c.2155C>T" in prompt
     assert "R719W" in prompt
+    assert code in {"PS3", "BS3", "PS4", "PP1", "BS4"}
+
+stub_results = stubs.all_stub_evidence(variant, clinical_note)
+assert len(stub_results) == 23
 
 assert clinical_note.proband.phenotype.clinical_features[0].hpo_id == "HP:0001639"
 

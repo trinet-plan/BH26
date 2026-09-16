@@ -733,6 +733,9 @@ async def main():
         # not_evaluated_codes - an honest reflection of this demo's partial
         # coverage, not a claim that this project doesn't implement them.
         variant_evidence: dict[tuple[str, str], dict[str, object]] = {}
+        shared_inputs: dict[
+            tuple[str, str], tuple[VariantRecord, ClinicalNoteExtraction]
+        ] = {}
 
         for case in test_cases:
             gene, hgvsc = case["gene"], case["hgvsc"]
@@ -778,6 +781,7 @@ async def main():
 
             criterion_evidence = from_aggregated_judgment(aggregated, case["criterion"])
             variant_evidence.setdefault((gene, hgvsc), {})[case["criterion"]] = criterion_evidence
+            shared_inputs[(gene, hgvsc)] = (variant, clinical_note)
 
             evidence_line = build_evidence_line(
                 aggregated, variant=variant,
@@ -820,8 +824,9 @@ async def main():
         # demo, not a real curation, so the category shown here is only as
         # complete as the evidence gathered above.
         show(f"\n{'='*70}\n[Final ACMG/AMP classification per variant]\n{'='*70}")
-        stub_evidence = stubs_mod.all_stub_evidence()
         for (v_gene, v_hgvsc), real_by_code in variant_evidence.items():
+            variant, clinical_note = shared_inputs[(v_gene, v_hgvsc)]
+            stub_evidence = stubs_mod.all_stub_evidence(variant, clinical_note)
             full_evidence = list(real_by_code.values()) + stub_evidence
             result = classify(full_evidence)
             show(f"\n{v_gene} {v_hgvsc}:")

@@ -18,7 +18,9 @@ from __future__ import annotations
 from typing import Optional
 
 from acmg_pipeline.classification import ALL_ACMG_CODES, IMPLEMENTED_CODES, CriterionEvidence
+from acmg_pipeline.clinical_note import ClinicalNoteExtraction
 from acmg_pipeline.criteria import stubs
+from acmg_pipeline.vcf_record import VariantRecord
 
 
 def is_implemented(code: str) -> bool:
@@ -27,7 +29,12 @@ def is_implemented(code: str) -> bool:
     return code in IMPLEMENTED_CODES
 
 
-def get_criterion_evidence(code: str, real_evidence: Optional[CriterionEvidence] = None) -> CriterionEvidence:
+def get_criterion_evidence(
+    code: str,
+    variant: VariantRecord,
+    clinical_note: ClinicalNoteExtraction,
+    real_evidence: Optional[CriterionEvidence] = None,
+) -> CriterionEvidence:
     """
     Returns the CriterionEvidence to actually use for `code` in a
     classify() call.
@@ -46,12 +53,14 @@ def get_criterion_evidence(code: str, real_evidence: Optional[CriterionEvidence]
     implemented-vs-stub itself:
 
         evidence = [
-            get_criterion_evidence(code, my_results.get(code))
+            get_criterion_evidence(
+                code, variant, clinical_note, my_results.get(code)
+            )
             for code in ALL_ACMG_CODES
         ]
     """
     if not is_implemented(code):
-        return stubs.stub_evidence(code)
+        return stubs.stub_evidence(code, variant, clinical_note)
     if real_evidence is None:
         raise ValueError(
             f"{code!r} is an implemented code - it needs a real "

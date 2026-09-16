@@ -10,8 +10,10 @@ from acmg_pipeline.classification import (
 )
 from acmg_pipeline.criteria.registry import is_implemented, get_criterion_evidence
 from acmg_pipeline.criteria import stubs
+from acmg_pipeline.clinical_note import ClinicalNoteExtraction
 from acmg_pipeline.common import MatchStatus, VariantMatchingResult, PaperContribution
 from acmg_pipeline.criteria import ps4, segregation as seg
+from acmg_pipeline.vcf_record import VariantRecord
 
 passed = 0
 failed = 0
@@ -120,13 +122,18 @@ check("not_clear aggregate -> NOT_MET", from_aggregated_judgment(agg_empty, "PS4
 # --- 6. registry.get_criterion_evidence(): full 28-code loop ---
 print("\n[6] registry.get_criterion_evidence() over all 28 codes")
 fakes = {code: CriterionEvidence(code, CriterionStatus.MET, Strength.SUPPORTING) for code in IMPLEMENTED_CODES}
-evidence = [get_criterion_evidence(code, fakes.get(code)) for code in ALL_ACMG_CODES]
+shared_variant = VariantRecord("", 0, "", "", "", "", "", {"GENE": "TEST", "HGVSC": "c.1A>G"})
+shared_clinical_note = ClinicalNoteExtraction()
+evidence = [
+    get_criterion_evidence(code, shared_variant, shared_clinical_note, fakes.get(code))
+    for code in ALL_ACMG_CODES
+]
 check("produces exactly 28 CriterionEvidence entries", len(evidence) == 28)
 check("implemented codes come through unchanged", all(e.status == CriterionStatus.MET for e in evidence if e.code in IMPLEMENTED_CODES))
 check("stub codes come through as UNKNOWN/not-evaluated", all(e.status == CriterionStatus.UNKNOWN for e in evidence if e.code in stubs.STUB_CODES))
 
 try:
-    get_criterion_evidence("PS3", None)
+    get_criterion_evidence("PS3", shared_variant, shared_clinical_note, None)
     check("an implemented code with no real evidence supplied raises ValueError", False)
 except ValueError:
     check("an implemented code with no real evidence supplied raises ValueError", True)
