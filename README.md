@@ -10,6 +10,7 @@ hotspot policyは [PM1設計](docs/PM1-PLAN.md)、PVS1のGeneral decision tree�
 Evidence契約は [PVS1設計](docs/PVS1-PLAN.md) を参照してください。
 全criterionのClinGen正例対応は [ClinGen正例リファレンス](docs/CLINGEN-POSITIVE-REFERENCES.md)
 にまとめています。
+MET 52件の変異・強度・根拠数値は [MET一覧](docs/MET-RESULTS.md) にあります。
 
 ## 現在動く機能
 
