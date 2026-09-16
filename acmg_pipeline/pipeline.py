@@ -260,6 +260,8 @@ async def fetch_full_text(
 
 
 async def _fetch_full_text_uncached(mcp: ClientSession, pmid: str) -> tuple[str | None, str]:
+    unavailable_reason = None
+
     convert_result = await call_tool_safe(mcp, "convert_article_ids", {"ids": [pmid], "id_type": "pmid"})
     convert_text = "\n".join(getattr(b, "text", str(b)) for b in convert_result.content)
     try:
@@ -269,16 +271,17 @@ async def _fetch_full_text_uncached(mcp: ClientSession, pmid: str) -> tuple[str 
         pmcid = None
 
     if not pmcid:
-        return None, f"PMID:{pmid} is not in PMC (no PMCID). Judgment should fall back to abstract-only or be marked insufficient_data."
-
-    ft_result = await call_tool_safe(mcp, "get_full_text_article", {"pmc_ids": [pmcid]})
-    ft_text = "\n".join(getattr(b, "text", str(b)) for b in ft_result.content)
-    try:
-        ft_data = json.loads(ft_text)
-        article = ft_data["articles"][0]
-        full_text = article.get("full_text", "")
-        doi = article.get("doi", "")
-        if not full_text:
+        unavailable_reason = f"PMID:{pmid} is not in PMC (no PMCID)."
+    else:
+        ft_result = await call_tool_safe(mcp, "get_full_text_article", {"pmc_ids": [pmcid]})
+        ft_text = "\n".join(getattr(b, "text", str(b)) for b in ft_result.content)
+        try:
+            ft_data = json.loads(ft_text)
+            article = ft_data["articles"][0]
+            full_text = article.get("full_text", "")
+            doi = article.get("doi", "")
+            if full_text:
+                return full_text, f"Fetched from PubMed. PMCID={pmcid}, DOI={doi}"
             # Real bug found 2026-09-15 running the democase variants: the
             # PubMed MCP server can return a 200-ish "articles" record for a
             # PMCID with an empty/missing full_text field (e.g. PMID:8282798,
@@ -290,11 +293,59 @@ async def _fetch_full_text_uncached(mcp: ClientSession, pmid: str) -> tuple[str 
             # text to work with ("Please provide the full text..."), which
             # broke JSON parsing and looked like a flaky LLM failure rather
             # than the real cause (no text was ever sent). Treat this the
-            # same as "not in PMC" so it's skipped instead of prompted.
-            return None, f"PMID:{pmid} has a PMCID ({pmcid}) but no full_text came back from PubMed MCP (empty article body). Judgment should fall back to abstract-only or be marked insufficient_data."
-        return full_text, f"Fetched from PubMed. PMCID={pmcid}, DOI={doi}"
+            # same as "not in PMC" so it falls through to the abstract
+            # fallback below instead of being prompted with blank text.
+            unavailable_reason = f"PMID:{pmid} has a PMCID ({pmcid}) but no full_text came back from PubMed MCP (empty article body)."
+        except (json.JSONDecodeError, KeyError, IndexError) as e:
+            unavailable_reason = f"Failed to parse the full-text fetch result for PMID:{pmid}: {e}"
+
+    # Abstract fallback, added 2026-09-16: PMC full text is only available
+    # for ~20% of PMIDs (design doc section 2-3) - before this fallback
+    # existed, the other ~80% contributed literally nothing, even when
+    # get_article_metadata's abstract directly discusses the target variant
+    # (confirmed against real data: PMID:17351073, cited for MYH7 c.1594T>C's
+    # PP1 evidence, was skipped as "not in PMC" in every run to date, but its
+    # abstract explicitly reports the S532P mutant's force-generation data -
+    # exactly the kind of PS3-relevant finding this pipeline was missing).
+    # The `[ABSTRACT ONLY ...]` marker is prepended to the text itself
+    # (rather than added as a separate return value) so every build_prompt()
+    # caller sees the caveat with no signature change anywhere downstream -
+    # a real fingerprint of what evidence quality this judgment rests on.
+    abstract, abstract_note = await _fetch_abstract(mcp, pmid)
+    if abstract:
+        marked_text = (
+            "[ABSTRACT ONLY - full text was not available for this paper; the excerpt "
+            "below is the PubMed abstract, not the full article. Numeric details, "
+            "specific experiment counts, and per-family/per-patient data that would "
+            "normally only appear in the full text may be absent. Judge accordingly - "
+            "prefer not_clear over inferring specifics the abstract doesn't state.]\n\n"
+            + abstract
+        )
+        return marked_text, f"{unavailable_reason} {abstract_note}"
+
+    return None, f"{unavailable_reason} Abstract fallback also unavailable ({abstract_note}). Judgment marked insufficient_data."
+
+
+async def _fetch_abstract(mcp: ClientSession, pmid: str) -> tuple[str | None, str]:
+    """
+    Fetches just the title/abstract via get_article_metadata() - used by
+    _fetch_full_text_uncached() when PMC full text isn't available. Returns
+    (abstract, note); abstract is None (with an explanatory note) if
+    get_article_metadata has no abstract for this PMID either (e.g. a very
+    old record, or a non-journal source).
+    """
+    try:
+        result = await call_tool_safe(mcp, "get_article_metadata", {"pmids": [pmid]})
+        text = "\n".join(getattr(b, "text", str(b)) for b in result.content)
+        data = json.loads(text)
+        article = data["articles"][0]
+        abstract = article.get("abstract")
     except (json.JSONDecodeError, KeyError, IndexError) as e:
-        return None, f"Failed to parse the full-text fetch result: {e}"
+        return None, f"get_article_metadata failed to parse for PMID:{pmid}: {e}"
+
+    if not abstract:
+        return None, f"get_article_metadata returned no abstract for PMID:{pmid}."
+    return abstract, "Using the PubMed abstract instead (via get_article_metadata)."
 
 
 # ---------------------------------------------------------------------------
@@ -525,9 +576,72 @@ async def judge_variant(
 # separate, not-yet-wired call sites - this function covers literature
 # only.
 #
-# PMIDs still come from ERepoClient (this project's only PMID source today
-# - see the open question, raised 2026-09-16, about a PubMed-search
-# fallback for variants ERepo has no record of at all).
+# PMIDs come from ERepoClient first; when ERepo has zero citations for this
+# variant (e.g. it's genuinely novel/unregistered - the gap raised by the
+# user 2026-09-16, "PMIDありきの実装を変更しないといけない"), fall back to
+# search_candidate_pmids() below, a live PubMed search. See that function's
+# docstring for the query strategy and its real-data validation.
+
+async def search_candidate_pmids(
+    mcp: ClientSession, gene: str, hgvsp: str | None = None, disease: str | None = None,
+    max_results: int = 10,
+) -> list[str]:
+    """
+    Live PubMed search fallback for when ERepo has no curated citations at
+    all for a variant. Tries several query strategies, in order, stopping
+    once max_results candidates are collected - validated 2026-09-16
+    against real cases in this project's own demo data:
+
+      - "<gene> AND <protein change>" (e.g. "MYH7 AND Arg719Trp") works
+        well for missense variants - 5/5 real hits for a known MYH7
+        variant, including PMIDs already in this project's own ERepo-
+        sourced ground truth.
+      - Exact HGVS c./p. notation (e.g. "MYBPC3 AND c.278delA",
+        "MYBPC3 AND Lys93Argfs") returns ZERO results even for a variant
+        whose own source paper is indexed in PubMed - confirmed
+        empirically, not assumed. PubMed's indexing does not reliably
+        match this notation as literal text.
+      - "<gene>[Title] AND <disease, keywords>" works well as a fallback,
+        especially for indel/frameshift variants where the protein-change
+        query above doesn't apply well - found the exact real source paper
+        for MYBPC3 c.278delA (democase Case 1) via "MYBPC3[Title] AND
+        hypertrophic cardiomyopathy AND apical aneurysm" -> PMID 42428486,
+        the correct paper.
+      - A last-resort "<gene> AND novel variant" query, if the above
+        didn't find enough.
+
+    Results are CANDIDATES, not confirmed citations - unlike ERepo's
+    evidenceLinks (a VCEP already verified these papers discuss the
+    variant), a search hit is not guaranteed relevant until judge_single_
+    paper()'s own variant-matching/not_clear handling checks it against
+    the actual text. That's an acceptable tradeoff: the alternative is
+    finding nothing at all for a variant ERepo has never curated.
+    """
+    queries: list[str] = []
+    if hgvsp and hgvsp != "N/A":
+        aa_change = hgvsp.strip().removeprefix("p.").strip("()")
+        if aa_change:
+            queries.append(f"{gene} AND {aa_change}")
+    if disease:
+        queries.append(f"{gene}[Title] AND {disease.replace('_', ' ')}")
+    queries.append(f"{gene} AND novel variant")
+
+    seen: list[str] = []
+    for query in queries:
+        if len(seen) >= max_results:
+            break
+        try:
+            result = await call_tool_safe(mcp, "search_articles", {"query": query, "max_results": max_results})
+            text = "\n".join(getattr(b, "text", str(b)) for b in result.content)
+            data = json.loads(text)
+        except Exception as e:
+            show(f"  [PubMed search] query {query!r} failed: {e}")
+            continue
+        for pmid in data.get("pmids", []):
+            if pmid not in seen:
+                seen.append(pmid)
+    return seen[:max_results]
+
 
 async def judge_variant_from_structured_input(
     case_input: ApiCaseInput,
@@ -556,10 +670,23 @@ async def judge_variant_from_structured_input(
 
     erepo_result = erepo_client.lookup(gene, hgvsc)
     pmids = erepo_result.evidence_pmids
+    pmid_source = "erepo"
     show(f"\n[ERepo] {gene} {hgvsc}: found_in_erepo={erepo_result.found_in_erepo}, evidence_pmids={pmids}")
     if not pmids:
-        show("  -> No evidence PMIDs from ERepo; this variant cannot be evaluated by the literature path at all")
-        return {}
+        show("  -> No evidence PMIDs from ERepo; falling back to a live PubMed search "
+             "(this variant has no curated citations, e.g. it may be novel/unregistered)")
+        disease = variant.info.get("DISEASE_ASSOCIATION")
+        pmids = await search_candidate_pmids(mcp, gene, hgvsp, disease)
+        pmid_source = "pubmed_search"
+        show(f"[PubMed search] candidate PMIDs: {pmids}")
+        if not pmids:
+            show("  -> PubMed search also found nothing; this variant cannot be evaluated by the literature path at all")
+            return {}
+
+    if pmid_source == "pubmed_search":
+        show("  [caution] These PMIDs came from a live PubMed search, not a VCEP-curated "
+             "citation list - unlike ERepo's evidenceLinks, a search hit is not confirmed to "
+             "actually discuss this variant until the per-paper judgment below checks it.")
 
     results: dict[str, AggregatedJudgment] = {}
     for criterion in criteria:
