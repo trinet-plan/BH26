@@ -14,3 +14,15 @@ __pycache__/
 # Generated run logs
 logs/*.log
 .python-version
+
+# Virtual environments
+.venv/
+venv/
+
+# Test caches
+.pytest_cache/
+pytest-cache-files-*/
+
+# Local scratch directories
+work/
+.work/
