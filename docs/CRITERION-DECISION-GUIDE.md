@@ -42,8 +42,17 @@ Benignの最終5段階分類は行わない。CNV/SV、exon deletion/duplication
 
 ### 3.1 variantとannotation
 
-入力variantは`assembly/chrom/pos/ref/alt`を持ち、assemblyはGRCh38のみである。REF/ALTは空でない
-ACGT配列で、symbolic ALTやSVは受け付けない。
+全criterionの公開`evaluate()`は、共通契約の
+`acmg_pipeline.vcf_record.VariantRecord`と
+`acmg_pipeline.clinical_note.ClinicalNoteExtraction`を最初の2引数として受け取る。
+CLIのprepared JSONも、criterionを呼ぶ前に必ずこの2クラスへ変換される。
+
+入力variantの`chrom/pos/ref/alt`を内部の正規化variantへ変換する。assemblyはGRCh38のみを
+サポートし、`VariantRecord`自体にはassembly欄がないため、省略時はGRCh38、明示時は
+`info["ASSEMBLY"]`を使う。REF/ALTは空でないACGT配列で、symbolic ALTやSVは受け付けない。
+`ClinicalNoteExtraction`はproband、family、de novo情報を保持し、現在の16 criterionでは
+familyの`inheritance_pattern`を遺伝形式の補助入力として利用できる。記載のない臨床情報を
+推測して補わない。
 
 多くのcriterionは最初に`annotation` Evidenceを取得する。annotationには少なくとも次が必要である。
 

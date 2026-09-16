@@ -3,6 +3,7 @@
 from importlib import import_module
 from types import SimpleNamespace
 
+from acmg.core.interface import criterion_input, inputs_from_prepared_record
 from acmg.core.models import CRITERIA, Status, Variant
 from acmg.providers.local import LocalPopulationProvider
 from acmg.services.evidence import EvidenceService
@@ -25,11 +26,13 @@ def make_services(evidence, population_providers=None):
     return SimpleNamespace(population=PopulationService(providers), evidence=EvidenceService(evidence))
 
 
-def evaluate_record(input_data, services, config, criteria=CRITERIA):
+def evaluate_record(variant_record, clinical_note, services, config, criteria=CRITERIA):
+    input_data = criterion_input(variant_record, clinical_note)
     Variant(**input_data["variant"])
     if len(criteria) != len(set(criteria)) or any(code not in CRITERIA for code in criteria):
         raise ValueError("Criteria must be unique supported codes")
-    results = [import_module(f"acmg.criteria.{code.lower()}").evaluate(input_data, services, config)
+    results = [import_module(f"acmg.criteria.{code.lower()}").evaluate(
+        variant_record, clinical_note, services, config)
                for code in criteria]
     by_code = {r.criterion: r for r in results}
     for left, right in CONFLICTS:
@@ -39,3 +42,9 @@ def evaluate_record(input_data, services, config, criteria=CRITERIA):
             for value in pair:
                 value.conflict_flags.append(flag)
     return results
+
+
+def evaluate_prepared_record(input_data, services, config, criteria=CRITERIA):
+    """Compatibility adapter for stored prepared JSON; criteria never receive the dict."""
+    variant_record, clinical_note = inputs_from_prepared_record(input_data)
+    return evaluate_record(variant_record, clinical_note, services, config, criteria)

@@ -1,6 +1,7 @@
 import unittest
 from types import SimpleNamespace
 
+from acmg.core.interface import inputs_from_prepared_record
 from acmg.core.models import Status, Variant
 from acmg.criteria import pp3, bp4, pp5, bp6
 from acmg.services.evidence import EvidenceService
@@ -28,7 +29,8 @@ class ComputationalTests(unittest.TestCase):
 
     def run_rule(self, module):
         services = SimpleNamespace(evidence=EvidenceService([self.annotation, self.prediction]))
-        return module.evaluate(self.input, services, self.config)
+        variant, clinical_note = inputs_from_prepared_record(self.input)
+        return module.evaluate(variant, clinical_note, services, self.config)
 
     def test_calibrated_boundary(self):
         for score, expected in ((0.799, Status.NOT_MET), (0.8, Status.MET), (0.801, Status.MET)):
@@ -109,7 +111,8 @@ class SplicingCalibrationTests(unittest.TestCase):
     def run_rule(self, module, *extra):
         services = SimpleNamespace(evidence=EvidenceService(
             [self.annotation, self.protein, self.splicing, *extra]))
-        return module.evaluate(self.input, services, self.config)
+        variant, clinical_note = inputs_from_prepared_record(self.input)
+        return module.evaluate(variant, clinical_note, services, self.config)
 
     def test_both_mechanisms_are_reported(self):
         value = self.run_rule(bp4)

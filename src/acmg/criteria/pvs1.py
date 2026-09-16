@@ -7,8 +7,11 @@ turns a missing assessment into a negative conclusion.
 
 from copy import deepcopy
 
+from acmg.core.interface import criterion_input
 from acmg.core.models import Status, Variant
 from acmg.criteria.common import annotation_context, result, reviewed_or_automated
+from acmg_pipeline.clinical_note import ClinicalNoteExtraction
+from acmg_pipeline.vcf_record import VariantRecord
 
 
 TRUNCATING = {"stop_gained": "STOP_GAINED", "frameshift_variant": "FRAMESHIFT"}
@@ -404,7 +407,7 @@ def _start_loss_path(input_data, services, annotation, state):
                    strength=strength)
 
 
-def evaluate(input_data, services, config):
+def _evaluate_input(input_data, services, config):
     context = _base_context(input_data)
     warnings = []
     if not input_data.get("condition"):
@@ -519,3 +522,7 @@ def evaluate(input_data, services, config):
     if variant_type == "START_LOST":
         return _start_loss_path(input_data, services, annotation, state)
     raise AssertionError(f"Unhandled PVS1 variant type: {variant_type}")
+
+
+def evaluate(variant: VariantRecord, clinical_note: ClinicalNoteExtraction, services, config):
+    return _evaluate_input(criterion_input(variant, clinical_note), services, config)

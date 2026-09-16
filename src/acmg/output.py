@@ -11,6 +11,7 @@ from pathlib import Path
 from acmg import __version__
 from acmg.core.context import apply_context, context_summary, load_context
 from acmg.core.input import sha256_file
+from acmg.core.interface import inputs_from_prepared_record
 from acmg.core.models import CRITERIA, Variant
 from acmg.engine import evaluate_record, make_services
 
@@ -59,7 +60,11 @@ def run_internal(input_path, evidence_path, config_path, output_dir, criteria=CR
             identity = record.get("identity_provenance")
             if not isinstance(identity, list) or not identity:
                 raise ValueError("Prepared input requires identity_provenance from verified mapping")
-            results = evaluate_record(apply_context(record, context), services, config, criteria)
+            prepared = apply_context(record, context)
+            variant_record, clinical_note = inputs_from_prepared_record(prepared)
+            results = evaluate_record(
+                variant_record, clinical_note, services, config, criteria
+            )
             outputs.append({"record_id": record_id, "source": record.get("source", {}),
                             "variant": record["variant"], "identity_provenance": identity,
                             "results": [result.to_dict() for result in results]})

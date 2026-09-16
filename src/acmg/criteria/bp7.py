@@ -1,8 +1,12 @@
+from acmg.core.interface import criterion_input
 from acmg.core.models import Status
 from acmg.criteria.common import annotation_context, curated_context, require_boolean_fields, result
+from acmg_pipeline.clinical_note import ClinicalNoteExtraction
+from acmg_pipeline.vcf_record import VariantRecord
 
 
-def evaluate(input_data, services, config):
+def evaluate(variant: VariantRecord, clinical_note: ClinicalNoteExtraction, services, config):
+    input_data = criterion_input(variant, clinical_note)
     early, annotation = annotation_context("BP7", input_data, services)
     if early:
         return early

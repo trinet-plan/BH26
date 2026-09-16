@@ -1,7 +1,7 @@
 import unittest
 
 from acmg.core.models import Status, Variant
-from acmg.engine import evaluate_record, make_services
+from acmg.engine import evaluate_prepared_record, make_services
 
 
 RULES = {"PVS1": {
@@ -64,8 +64,8 @@ class PVS1DecisionTreeTests(unittest.TestCase):
                          lof_variants_frequent=frequent, **values)
 
     def evaluate_result(self, *items, input_data=None, config=RULES):
-        return evaluate_record(input_data or self.input, make_services(list(items)),
-                               config, ["PVS1"])[0]
+        return evaluate_prepared_record(input_data or self.input, make_services(list(items)),
+                                        config, ["PVS1"])[0]
 
     def truncating_evidence(self, consequence="frameshift_variant", *, condition=None):
         scoped = {"condition": condition} if condition else {}

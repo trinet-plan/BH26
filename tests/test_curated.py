@@ -2,7 +2,7 @@ import copy
 import unittest
 
 from acmg.core.models import CRITERIA, Status, Variant
-from acmg.engine import evaluate_record, make_services
+from acmg.engine import evaluate_prepared_record, make_services
 
 
 class CuratedCriteriaTests(unittest.TestCase):
@@ -20,10 +20,10 @@ class CuratedCriteriaTests(unittest.TestCase):
         return {**self.base, "category": category, "evidence_id": f"test:{category}", **values}
 
     def run_rule(self, code, *items):
-        return evaluate_record(self.input, make_services([self.annotation, *items]), {}, [code])[0]
+        return evaluate_prepared_record(self.input, make_services([self.annotation, *items]), {}, [code])[0]
 
     def test_all_sixteen_without_evidence(self):
-        values = evaluate_record(self.input, make_services([]), {})
+        values = evaluate_prepared_record(self.input, make_services([]), {})
         self.assertEqual([v.criterion for v in values], list(CRITERIA))
         self.assertEqual(sum(v.status == Status.DEPRECATED for v in values), 2)
         self.assertTrue(all(v.status in {Status.NOT_EVALUATED, Status.DEPRECATED} for v in values))
@@ -45,13 +45,13 @@ class CuratedCriteriaTests(unittest.TestCase):
                           spectrum_review_complete=True, low_benign_missense_variation=True,
                           predominantly_truncating=False).items() if key != "condition"}
         services = make_services([annotation, item])
-        value = evaluate_record(input_data, services, {}, ["PP2"])[0]
+        value = evaluate_prepared_record(input_data, services, {}, ["PP2"])[0]
         self.assertEqual(value.status, Status.MET)
         self.assertEqual(value.provenance["assessment_scope"], "gene_level")
         self.assertEqual(value.provenance["condition_assessment"], "NOT_EVALUATED")
         self.assertTrue(value.review_points)
         # BP1 reads the same record in the opposite direction and stays unmet here.
-        bp1 = evaluate_record(input_data, services, {}, ["BP1"])[0]
+        bp1 = evaluate_prepared_record(input_data, services, {}, ["BP1"])[0]
         self.assertEqual(bp1.status, Status.NOT_MET)
         self.assertEqual(bp1.review_points, [])
 
@@ -85,7 +85,7 @@ class CuratedCriteriaTests(unittest.TestCase):
 
     def run_pm1(self, item, config=None, input_data=None, annotation=None):
         services = make_services([annotation or self.annotation, item])
-        return evaluate_record(input_data or self.input, services, config or {}, ["PM1"])[0]
+        return evaluate_prepared_record(input_data or self.input, services, config or {}, ["PM1"])[0]
 
     def test_pm1_requires_a_declared_route(self):
         value = self.run_pm1(self.region(critical_functional_region=True, benign_depletion=True))
@@ -231,7 +231,7 @@ class CuratedCriteriaTests(unittest.TestCase):
     def test_ps1_does_not_require_condition(self):
         input_data = {key: value for key, value in self.input.items() if key != "condition"}
         annotation = {key: value for key, value in self.annotation.items() if key != "condition"}
-        value = evaluate_record(input_data, make_services([annotation]), {}, ["PS1"])[0]
+        value = evaluate_prepared_record(input_data, make_services([annotation]), {}, ["PS1"])[0]
         self.assertEqual(value.missing_inputs, ["complete_comparator_search"])
 
     def test_automated_ps1_protein_match_can_be_met_without_condition(self):
@@ -242,7 +242,7 @@ class CuratedCriteriaTests(unittest.TestCase):
         comparator.update(exact_protein_match=True, different_nucleotide_variant=True,
                           review_status_eligible=True, splice_effect_checked=True,
                           splice_conflict=False, conditions=["MONDO:0000001"])
-        value = evaluate_record(input_data, make_services([annotation, comparator]), {}, ["PS1"])[0]
+        value = evaluate_prepared_record(input_data, make_services([annotation, comparator]), {}, ["PS1"])[0]
         self.assertEqual(value.status, Status.MET)
         self.assertEqual(value.provenance["assessment_scope"], "protein_level")
         self.assertEqual(value.provenance["condition_assessment"], "NOT_EVALUATED")
@@ -282,7 +282,7 @@ class CuratedCriteriaTests(unittest.TestCase):
         search = {key: value for key, value in
                   self.item("comparator_search", protein_id="NP_TEST.1", protein_start=10,
                             complete=True, search_scope="residue").items() if key != "condition"}
-        value = evaluate_record(input_data, make_services([annotation, search]), {}, ["PM5"])[0]
+        value = evaluate_prepared_record(input_data, make_services([annotation, search]), {}, ["PM5"])[0]
         self.assertEqual(value.status, Status.NOT_MET)
 
     def test_automated_pm5_requires_a_confirmed_residue_match(self):
@@ -292,7 +292,7 @@ class CuratedCriteriaTests(unittest.TestCase):
         comparator.update(alt_aa="P", residue_match=True, different_nucleotide_variant=True,
                           review_status_eligible=True, splice_effect_checked=True,
                           splice_conflict=False, conditions=["MONDO:0000001"])
-        value = evaluate_record(input_data, make_services([annotation, comparator]), {}, ["PM5"])[0]
+        value = evaluate_prepared_record(input_data, make_services([annotation, comparator]), {}, ["PM5"])[0]
         self.assertEqual(value.status, Status.MET)
         self.assertEqual(value.strength, "moderate")
         self.assertEqual(value.provenance["condition_assessment"], "NOT_EVALUATED")
@@ -300,7 +300,7 @@ class CuratedCriteriaTests(unittest.TestCase):
         # the same record only raises a review point.
         del comparator["residue_match"]
         del comparator["primary_evidence"]
-        value = evaluate_record(input_data, make_services([annotation, comparator]), {}, ["PM5"])[0]
+        value = evaluate_prepared_record(input_data, make_services([annotation, comparator]), {}, ["PM5"])[0]
         self.assertEqual(value.status, Status.MANUAL_REVIEW)
 
     def test_bp7_and_rna_contradiction(self):
@@ -315,7 +315,7 @@ class CuratedCriteriaTests(unittest.TestCase):
 
     def test_source_labels_do_not_affect_all_results(self):
         services = make_services([self.annotation])
-        first = [r.to_dict() for r in evaluate_record(self.input, services, {})]
+        first = [r.to_dict() for r in evaluate_prepared_record(self.input, services, {})]
         altered = copy.deepcopy(self.input)
         altered.update(CLNSIG="Pathogenic", ACMG_CODES="PVS1,PS1,PM2", NOTE="ground truth")
-        self.assertEqual(first, [r.to_dict() for r in evaluate_record(altered, services, {})])
+        self.assertEqual(first, [r.to_dict() for r in evaluate_prepared_record(altered, services, {})])

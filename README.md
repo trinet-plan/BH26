@@ -35,6 +35,27 @@ MET 52件の変異・強度・根拠数値は [MET一覧](docs/MET-RESULTS.md) �
 - PP5/BP6を除く14 criterionすべてについて、ClinGen ERepo由来の独立正規化Evidenceから
   最低1件のMETを再現する正例E2Eスイート。
 
+## 共通criterion入力
+
+CLIと全16 criterionの公開入力は、他チームとの結合用に次のクラスへ統一しています。
+
+```python
+from acmg_pipeline.clinical_note import ClinicalNoteExtraction
+from acmg_pipeline.vcf_record import VariantRecord
+
+result = evaluate(
+    variant: VariantRecord,
+    clinical_note: ClinicalNoteExtraction,
+    services,
+    config,
+)
+```
+
+`VariantRecord` にassemblyフィールドがないため、省略時はこのツールが唯一対応する
+`GRCh38` として扱います。明示する場合は `variant.info["ASSEMBLY"]` を使用します。
+CLIのprepared JSONは評価直前にこの2クラスへ変換され、各criterionへdictを直接渡しません。
+criterionの結果と出力形式は従来どおりGA4GH VA-Spec 1.0.1 Evidence Lineです。
+
 実デモ全件の同定・注釈取得と、校正済み予測Evidence（dbNSFP REVEL）による
 PP3/BP4評価は完了しています。遺伝子-疾患機序（PP2/BP1/PVS1）と疾患別頻度閾値（BS1）の
 キュレーションは未完了です。現時点の16基準の状況は [俯瞰](docs/OVERVIEW.md) を参照してください。
