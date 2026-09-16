@@ -346,6 +346,19 @@ def entries_for(gene: str, hgvsc: str) -> list[GroundTruthEntry]:
     return [e for e in GROUND_TRUTH if e.gene == gene and e.hgvsc == hgvsc]
 
 
+def entries_for_criterion(criterion: str) -> list[GroundTruthEntry]:
+    """
+    All ground-truth entries for one ACMG code, e.g. entries_for_criterion
+    ("PVS1") - the intended entry point for whoever implements a Layer-1
+    code or PP4 and wants just their own code's fixtures, without pulling
+    in the other ~26 codes' worth of entries in GROUND_TRUTH. See also
+    query_ground_truth.py for a command-line version of this.
+    """
+    if criterion not in ALL_ACMG_CODES:
+        raise ValueError(f"{criterion!r} is not a recognized ACMG/AMP 2015 code")
+    return [e for e in GROUND_TRUTH if e.criterion == criterion]
+
+
 def unique_variants() -> list[tuple[str, str]]:
     seen: list[tuple[str, str]] = []
     for e in GROUND_TRUTH:
