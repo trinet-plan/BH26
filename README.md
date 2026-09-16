@@ -15,6 +15,9 @@ acmg_pipeline/            判定パイプライン本体
   common.py                 共通データ型(PaperContribution, FinalResult 等)
   export.py                 GA4GH VA-Spec EvidenceLine形式での出力
   gate.py                   ClinGen ERepoの既存キュレーション確認ゲート
+  vcf_record.py             criterion共通入力のVariantRecord
+  clinical_note.py          criterion共通入力のClinicalNoteExtraction
+  inputs.py                 共通入力から遺伝子・HGVS等を読む補助関数
   pipeline.py                PubMed MCP + LLMを繋ぐメイン実行スクリプト
   criteria/                  基準ごとの判定ロジック(PS3/BS3, PS4, PP1/BS4)
 
@@ -105,6 +108,24 @@ python3 -m acmg_pipeline.pipeline
 CLI引数は用意されていません。対象の遺伝子/変異を変えたい場合は
 `acmg_pipeline/pipeline.py` の `main()` 内 `test_cases`(505行目付近)を
 直接編集してください。
+
+## criterion入力インターフェース
+
+各criterionの入力は、他チームとの結合用に次の2オブジェクトへ統一しています。
+
+```python
+def judge(
+    variant: VariantRecord,
+    clinical_note: ClinicalNoteExtraction,
+) -> ...:
+    ...
+```
+
+文献プロンプトを作る `build_prompt()` も同じ2オブジェクトを受け取ります。
+遺伝子名・HGVS・別表記は `VariantRecord.info` の `GENE`、`HGVSC`、
+`HGVSP`、`EQUIVALENTS` から読みます。文献だけを評価し患者情報を使わない
+criterionでも、呼び出し境界を揃えるため空の `ClinicalNoteExtraction()` を
+渡してください。出力は従来どおり GA4GH VA-Spec `EvidenceLine` です。
 
 ## ライセンス・注意事項
 

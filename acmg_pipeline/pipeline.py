@@ -55,10 +55,13 @@ from acmg_pipeline.criteria import ps3_bs3 as ps3bs3_mod
 from acmg_pipeline.criteria import ps4 as ps4_mod
 from acmg_pipeline.criteria import segregation as seg_mod
 from acmg_pipeline.criteria import stubs as stubs_mod
+from acmg_pipeline.clinical_note import ClinicalNoteExtraction
 from acmg_pipeline.common import (
     PaperContribution, AggregatedJudgment, FinalResult, CuratorHint,
     MatchStatus, VariantMatchingResult,
 )
+from acmg_pipeline.inputs import variant_identity
+from acmg_pipeline.vcf_record import VariantRecord
 from acmg_pipeline.gate import ERepoClient
 from acmg_pipeline.export import build_evidence_line
 from acmg_pipeline.classification import classify, from_aggregated_judgment
@@ -344,10 +347,8 @@ async def judge_single_paper(
     engine: JudgmentEngine,
     mcp: ClientSession,
     pmid: str,
-    gene: str,
-    hgvsc: str,
-    hgvsp: str,
-    equivalents: list[str],
+    variant: VariantRecord,
+    clinical_note: ClinicalNoteExtraction,
     vcep_name: str | None,
     criterion: str,
 ) -> PaperContribution | None:
@@ -376,7 +377,7 @@ async def judge_single_paper(
         )
         return PaperContribution(pmid=pmid, result=result)
 
-    prompt = engine.build_prompt(gene, hgvsc, hgvsp, equivalents, full_text)
+    prompt = engine.build_prompt(variant, clinical_note, full_text)
     log(f"--- Prompt (first 1000 chars) ---\n{prompt[:1000]}")
 
     try:
@@ -396,6 +397,7 @@ async def judge_single_paper(
         show(f"     Raw JSON (first 500 chars): {json.dumps(raw_json, ensure_ascii=False)[:500]}")
         return None
 
+    gene, _, _, _ = variant_identity(variant)
     result = engine.finalize(judgment, gene=gene, vcep_name=vcep_name, criterion=criterion, pmid=pmid)
 
     show(f"LLM's raw judgment: direction = {judgment.overall_evidence.direction.value}")
@@ -412,10 +414,8 @@ async def judge_variant(
     engine: JudgmentEngine,
     mcp: ClientSession,
     pmids: list[str],
-    gene: str,
-    hgvsc: str,
-    hgvsp: str,
-    equivalents: list[str],
+    variant: VariantRecord,
+    clinical_note: ClinicalNoteExtraction,
     vcep_name: str | None,
     criterion: str,
     ground_truth: str | None = None,
@@ -438,11 +438,14 @@ async def judge_variant(
     there is no separate early-return branch here for "no paper yielded
     usable output".
     """
+    gene, hgvsc, hgvsp, _ = variant_identity(variant)
     show(f"\n{'='*70}\n[{engine.name}] {gene} {hgvsc} ({hgvsp}) - {len(pmids)} paper(s): {', '.join(pmids)}\n{'='*70}")
 
     contributions = []
     for pmid in pmids:
-        contribution = await judge_single_paper(engine, mcp, pmid, gene, hgvsc, hgvsp, equivalents, vcep_name, criterion)
+        contribution = await judge_single_paper(
+            engine, mcp, pmid, variant, clinical_note, vcep_name, criterion,
+        )
         if contribution is not None:
             contributions.append(contribution)
 
@@ -733,6 +736,25 @@ async def main():
 
         for case in test_cases:
             gene, hgvsc = case["gene"], case["hgvsc"]
+            variant = VariantRecord(
+                chrom="",
+                pos=0,
+                id="",
+                ref="",
+                alt="",
+                qual="",
+                filter="",
+                info={
+                    "GENE": gene,
+                    "HGVSC": hgvsc,
+                    "HGVSP": case["hgvsp"],
+                    "EQUIVALENTS": case["equivalents"],
+                },
+            )
+            # These regression cases are literature-only and have no
+            # patient note. The shared interface still carries an explicit
+            # empty extraction so every criterion receives the same inputs.
+            clinical_note = ClinicalNoteExtraction()
             engine = ENGINE_BY_CRITERION[case["criterion"]]
             erepo_result = erepo_client.lookup(gene, hgvsc)
             pmids = erepo_result.evidence_pmids
@@ -742,14 +764,23 @@ async def main():
                 show("  -> No evidence PMIDs from ERepo; skipping this variant")
                 continue
 
-            aggregated = await judge_variant(engine, mcp, pmids=pmids, **case)
+            aggregated = await judge_variant(
+                engine,
+                mcp,
+                pmids=pmids,
+                variant=variant,
+                clinical_note=clinical_note,
+                vcep_name=case["vcep_name"],
+                criterion=case["criterion"],
+                ground_truth=case.get("ground_truth"),
+            )
             direction = aggregated.aggregated_direction
 
             criterion_evidence = from_aggregated_judgment(aggregated, case["criterion"])
             variant_evidence.setdefault((gene, hgvsc), {})[case["criterion"]] = criterion_evidence
 
             evidence_line = build_evidence_line(
-                aggregated, gene=gene, hgvsc=hgvsc,
+                aggregated, variant=variant,
                 criterion=case["criterion"], vcep_name=case.get("vcep_name"),
             )
             out_path = VA_SPEC_OUTPUT_DIR / f"{evidence_line['id'].replace('evline:', '')}.json"

@@ -96,6 +96,8 @@ from acmg_pipeline.common import (
     AggregatedJudgment, CuratorHint, MatchStatus, PaperContribution,
     is_not_clear, strength_tier_from_paper_count,
 )
+from acmg_pipeline.inputs import variant_identity
+from acmg_pipeline.vcf_record import VariantRecord
 
 PIPELINE_AGENT = Agent(
     id="acmg-literature-llm-pipeline",
@@ -207,8 +209,7 @@ def build_paper_evidence_line(contribution: PaperContribution, criterion: str, i
 
 def build_evidence_line(
     aggregated: AggregatedJudgment,
-    gene: str,
-    hgvsc: str,
+    variant: VariantRecord,
     criterion: str,
     vcep_name: Optional[str] = None,
 ) -> dict:
@@ -219,6 +220,7 @@ def build_evidence_line(
     schema-validated ga4gh.va_spec.base.core.EvidenceLine instance - not a
     hand-built dict).
     """
+    gene, hgvsc, _, _ = variant_identity(variant)
     direction = aggregated.aggregated_direction
     all_pmids = [c.pmid for c in aggregated.contributions]
     relevant_pmids = [

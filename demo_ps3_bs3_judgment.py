@@ -18,6 +18,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from acmg_pipeline.criteria.ps3_bs3 import PS3BS3Judgment, finalize, build_prompt
+from acmg_pipeline.clinical_note import ClinicalNoteExtraction
+from acmg_pipeline.vcf_record import VariantRecord
 
 # ----------------------------------------------------------------------------
 # Example 1: RIT1 c.268A>G (p.Met90Val), idx 8336
@@ -144,8 +146,16 @@ if __name__ == "__main__":
     # Also check what the prompt itself looks like (just the beginning)
     print(f"\n{'='*70}\nSample output of build_prompt() (first 500 chars)\n{'='*70}")
     prompt = build_prompt(
-        gene="RIT1", hgvsc="c.268A>G", hgvsp="p.Met90Val",
-        equivalents=["M90V", "p.(Met90Val)"],
+        variant=VariantRecord(
+            chrom="", pos=0, id="", ref="", alt="", qual="", filter="",
+            info={
+                "GENE": "RIT1",
+                "HGVSC": "c.268A>G",
+                "HGVSP": "p.Met90Val",
+                "EQUIVALENTS": ["M90V", "p.(Met90Val)"],
+            },
+        ),
+        clinical_note=ClinicalNoteExtraction(),
         full_text="(the full paper text would go here)",
     )
     print(prompt[:500] + "...")
