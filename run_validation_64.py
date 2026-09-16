@@ -3,17 +3,30 @@ run_validation_64.py
 
 VALIDATION-mode run (see acmg_pipeline/gate.py's GateMode) of the LLM
 literature-judgment pipeline across every (variant, criterion) pair in
-test_data/full_criteria_ground_truth.py that this project has a real
-JudgmentEngine for (PS3/BS3/PS4/PP1/BS4 - see acmg_pipeline.classification.
-IMPLEMENTED_CODES). Ground truth is never shown to the LLM; it is only
-used afterward to score the result (see score_direction() in pipeline.py) -
-that is what "validation mode" means here, matching gate.py's own
-GateMode.VALIDATION docstring ("hides the ground truth, forces the
-downstream pipeline to run regardless").
+test_data/full_criteria_ground_truth.py whose criterion is in
+acmg_pipeline.classification.IMPLEMENTED_CODES. Ground truth is never
+shown to the LLM; it is only used afterward to score the result (see
+score_direction() in pipeline.py) - that is what "validation mode" means
+here, matching gate.py's own GateMode.VALIDATION docstring ("hides the
+ground truth, forces the downstream pipeline to run regardless").
 
-227 (variant, criterion) pairs across 60 of the 64 dataset variants (the
-other 4 have no ground truth for any of the 5 implemented codes - e.g.
-they're PP4/Layer-1-only entries).
+[Pair count, revised 2026-09-16]
+  The original 227-pair / 60-of-64-variant figure below was measured when
+  IMPLEMENTED_CODES was {"PS3", "BS3", "PS4", "PP1", "BS4"}. As of
+  2026-09-16, PP1/BS4 were handed off to another team and dropped from
+  IMPLEMENTED_CODES (see acmg_pipeline.classification and criteria/
+  stubs.py's HANDED_OFF_TO_OTHER_TEAM) - this script's own
+  _variant_criterion_pairs() filters on IMPLEMENTED_CODES directly, so it
+  now only selects PS3/BS3/PS4 pairs; the actual pair/variant count is
+  correspondingly smaller and has not been re-measured. PP1/BS4 pairs are
+  still in the ground-truth dataset and ENGINE_BY_CRITERION still has a
+  real engine for them (segregation.py) - only this script's own default
+  selection narrowed, not their availability.
+
+Historical figure (pre-2026-09-16, 5 implemented codes): 227 (variant,
+criterion) pairs across 60 of the 64 dataset variants (the other 4 had no
+ground truth for any of the 5 implemented codes then - e.g. they're
+PP4/Layer-1-only entries).
 
 [Full-text caching, revised 2026-09-16]
   A variant with ground truth for multiple implemented criteria (e.g.

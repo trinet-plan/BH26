@@ -107,16 +107,19 @@ from acmg_pipeline.vcf_record import VariantRecord
 # "check if previously reported", which needs the page's actual content
 # fetched, not just a link to it.
 #
-# PP1 is deliberately ABSENT here even though curator_info.
-# clinvar_report_context() covers it too (doc: "use AI to check if
-# segregation previously reported (clinvar)") - PP1 is one of the 5
-# IMPLEMENTED_CODES (this project's own literature judgment via
-# build_evidence_line()), so build_stub_evidence_line() refuses to run for
-# it at all (see that function's IMPLEMENTED_CODES guard). Wiring PP1's
-# curatorInfo requires adding it to build_evidence_line()'s REAL
-# EvidenceLine instead (that function takes gene/hgvsc strings today, not
-# a VariantRecord - needs a signature change) - left as a follow-up rather
-# than rushed into the already-tested real-judgment code path.
+# PP1 is ABSENT here even though curator_info.clinvar_report_context()
+# covers it too (doc: "use AI to check if segregation previously reported
+# (clinvar)"). Historically (through 2026-09-15) this was a hard
+# requirement: PP1 was in IMPLEMENTED_CODES (this project's own literature
+# judgment via build_evidence_line()), so build_stub_evidence_line() would
+# have refused to run for it (see that function's IMPLEMENTED_CODES
+# guard). As of the 2026-09-16 handoff (see acmg_pipeline.classification.
+# IMPLEMENTED_CODES and criteria/stubs.py's HANDED_OFF_TO_OTHER_TEAM), PP1
+# is a stub code again and that guard no longer blocks it - wiring
+# "PP1": curator_info.clinvar_report_context into this dict (mirroring
+# PM3, same underlying function) is now a legitimate option, just not
+# done here since it wasn't part of the IMPLEMENTED_CODES scope-change
+# itself; left as a genuine follow-up, not a blocked one.
 _CODE_CURATOR_INFO_FETCHERS = {
     "PM1": curator_info.uniprot_domain_context,
     "PM5": curator_info.uniprot_domain_context,
@@ -333,9 +336,10 @@ def _serialize_curator_info(ctx) -> Optional[dict]:
 
 def build_stub_evidence_line(code: str, variant: VariantRecord) -> Optional[dict]:
     """
-    A minimal EvidenceLine for one of the 23 codes this project doesn't
-    implement (PP4, or a Layer-1 code - see acmg_pipeline/criteria/
-    stubs.py) - NOT a judgment. Carries a `referenceLink` extension (see
+    A minimal EvidenceLine for one of the 25 codes this project doesn't
+    implement (PP1/BS4/PP4 handed off to another team, or a Layer-1 code -
+    see acmg_pipeline/criteria/stubs.py) - NOT a judgment. Carries a
+    `referenceLink` extension (see
     acmg_pipeline.criteria.reference_links, built from doc/recs for expert
     board.docx's per-criterion "what to show the curator" asks) so a
     curator or another team's tool has a direct link to check, with no
@@ -375,10 +379,12 @@ def build_stub_evidence_line(code: str, variant: VariantRecord) -> Optional[dict
     project actually has something (a real judgment OR a reference link)
     to say about that variant.
 
-    Raises ValueError for `code` in IMPLEMENTED_CODES (currently just PP1
-    among reference_links.CODES_WITH_REFERENCE_URL - the other 4
-    implemented codes have no doc/recs-for-expert-board.docx reference URL
-    at all) - that code has a REAL judgment via build_evidence_line(), and
+    Raises ValueError for `code` in IMPLEMENTED_CODES (PS3/BS3/PS4 as of
+    2026-09-16 - none of which has a doc/recs-for-expert-board.docx
+    reference URL, so this guard is not reachable via reference_links.
+    CODES_WITH_REFERENCE_URL today, but is kept as a defensive check
+    against IMPLEMENTED_CODES changing again) - that code has a REAL
+    judgment via build_evidence_line(), and
     a stub line here would collide on the exact same EvidenceLine id
     (both build f"evline:{gene}_{safe_hgvsc}_{code}"), silently shadowing
     real evidence with a placeholder if a caller ever included both. The

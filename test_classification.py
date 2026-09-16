@@ -31,8 +31,14 @@ def check(label, cond):
 print("[1] ACMG code list sanity")
 check("28 total codes", len(ALL_ACMG_CODES) == 28)
 check("no overlap between pathogenic/benign lists", not (set(PATHOGENIC_CODES) & set(BENIGN_CODES)))
-check("5 implemented codes", IMPLEMENTED_CODES == {"PS3", "BS3", "PS4", "PP1", "BS4"})
-check("23 stub codes", len(stubs.STUB_CODES) == 23)
+# IMPLEMENTED_CODES was {"PS3", "BS3", "PS4", "PP1", "BS4"} through
+# 2026-09-15; PP1/BS4 (still real, tested code in acmg_pipeline/criteria/
+# segregation.py, still exercised directly in section [5] below) were
+# handed off to another team on 2026-09-16 - see acmg_pipeline.
+# classification's own comment on IMPLEMENTED_CODES and criteria/stubs.py's
+# HANDED_OFF_TO_OTHER_TEAM.
+check("3 implemented codes", IMPLEMENTED_CODES == {"PS3", "BS3", "PS4"})
+check("25 stub codes", len(stubs.STUB_CODES) == 25)
 check("implemented + stub codes cover all 28 with no overlap",
       set(stubs.STUB_CODES) | IMPLEMENTED_CODES == set(ALL_ACMG_CODES)
       and not (set(stubs.STUB_CODES) & IMPLEMENTED_CODES))
@@ -84,6 +90,11 @@ except ValueError:
     check("duplicate PS3 raises ValueError", True)
 
 # --- 5. from_aggregated_judgment(): real per-paper data -> CriterionEvidence ---
+# PP1/BS4 (via segregation.py) are exercised here as a generic test of
+# from_aggregated_judgment()'s direction-matching logic, independent of
+# IMPLEMENTED_CODES - segregation.py is still real, working, previously-
+# validated code (see acmg_pipeline.pipeline.ENGINE_BY_CRITERION), even
+# though PP1/BS4 are no longer in IMPLEMENTED_CODES as of 2026-09-16.
 print("\n[5] from_aggregated_judgment() (using PS4/PP1 schemas with realistic fixture data)")
 
 j_ps4 = ps4.PS4Judgment(

@@ -5,12 +5,14 @@ URL generation helpers for the curator-facing reference pages named in
 doc/recs for expert board.docx (per-criterion "what to show the curator"
 requirements) - NOT judgment logic. This project does not implement PVS1/
 PS1/PM1/PM2/PM3/PM5/PP1/PP2/BA1/BS1/BS2/BP4's own decision logic (see
-acmg_pipeline/criteria/stubs.py - Layer-1 codes are another team's
-responsibility, PP1's literature/clinical-note judgment is this project's
-own but is separate from this doc's "show the ClinVar page" UI ask). These
-functions only build a reference URL a curator (or an AI assistant acting
-on the curator's behalf) can open - they never fetch, parse, or interpret
-the destination page's content.
+acmg_pipeline/criteria/stubs.py: PVS1/PS1/PM2/PP2/BA1/BS1/BS2 are Layer-1
+codes, another team's responsibility; PP1 was this project's own
+literature/segregation judgment for months (acmg_pipeline/criteria/
+segregation.py) but was handed off to another team on 2026-09-16 - see
+stubs.py's HANDED_OFF_TO_OTHER_TEAM - and is now a stub here too, like the
+Layer-1 codes). These functions only build a reference URL a curator (or
+an AI assistant acting on the curator's behalf) can open - they never
+fetch, parse, or interpret the destination page's content.
 
 Takes VariantRecord (acmg_pipeline.vcf_record) directly as the parameter,
 per the same "argument is a pulled-in entity class, not a bespoke wrapper"
@@ -262,7 +264,7 @@ _URL_BUILDERS = {
 # gnomad_variant_url() on an ALT="." record - but the code itself has a
 # defined URL strategy). Callers building a UI/EvidenceLine per code (see
 # acmg_pipeline.export.build_stub_evidence_line()) can use this to know
-# which of the 23 stub codes are even worth trying.
+# which of the 25 stub codes are even worth trying.
 CODES_WITH_REFERENCE_URL = frozenset(_URL_BUILDERS)
 
 

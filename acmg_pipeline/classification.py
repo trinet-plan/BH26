@@ -23,19 +23,19 @@ strength for met calls) into a single final ACMG/AMP variant classification.
   Per the user's decision (2026-09-15): since the eventual external API
   interface with other teams isn't settled yet, build the classification
   engine first - it can be built and tested today using only this
-  project's own 5 implemented criteria (PS3/BS3/PS4/PP1/BS4), and needs no
-  changes when other teams' criteria (PVS1, PM1, PM2, ...) are added later,
-  since it only cares about (code, status, strength) tuples, not how they
-  were produced.
+  project's own implemented criteria, and needs no changes when other
+  teams' criteria (PVS1, PM1, PM2, ...) are added later, since it only
+  cares about (code, status, strength) tuples, not how they were produced.
 
-[Where the 23 other ACMG codes come from]
+[Where the other ACMG codes come from]
   This module owns the canonical list of all 28 ACMG/AMP 2015 codes
-  (ALL_ACMG_CODES) and which 5 this project actually implements
-  (IMPLEMENTED_CODES). acmg_pipeline/criteria/stubs.py uses these to
-  generate a NOT_EVALUATED CriterionEvidence for every other code, so
-  classify() can be called with a genuinely complete evidence set (missing
-  evidence for an unimplemented code is explicit and visible, not silently
-  absent).
+  (ALL_ACMG_CODES) and which ones this project actually implements
+  (IMPLEMENTED_CODES = {"PS3", "BS3", "PS4"} as of 2026-09-16 - see the
+  comment on IMPLEMENTED_CODES below for the PP1/BS4/PP4 handoff history).
+  acmg_pipeline/criteria/stubs.py uses these to generate a NOT_EVALUATED
+  CriterionEvidence for every other code, so classify() can be called with
+  a genuinely complete evidence set (missing evidence for an unimplemented
+  code is explicit and visible, not silently absent).
 """
 
 from __future__ import annotations
@@ -62,10 +62,25 @@ BENIGN_CODES = [
 ]
 ALL_ACMG_CODES = PATHOGENIC_CODES + BENIGN_CODES
 
-# The 5 codes this project has a real judgment engine for (see
-# acmg_pipeline/criteria/{ps3_bs3,ps4,segregation}.py and design doc
-# section 15-5 for why exactly these 5 and not the other 23).
-IMPLEMENTED_CODES = {"PS3", "BS3", "PS4", "PP1", "BS4"}
+# The codes this project has a real judgment engine for (see
+# acmg_pipeline/criteria/{ps3_bs3,ps4}.py and design doc section 15-5 for
+# why these and not the other 25).
+#
+# [2026-09-16] Was {"PS3", "BS3", "PS4", "PP1", "BS4"} through the first
+# several months of this project - PP1/BS4 (acmg_pipeline/criteria/
+# segregation.py) were fully implemented and validated here (real LLM
+# runs, ERepo-sourced ground truth, VA-Spec export). Per the user's
+# explicit decision, PP1/BS4's judgment logic (and PP4's design research,
+# see stubs.py) have since been handed off to another team, with this
+# project's history transferred at both the doc and code level. This
+# project's own implemented scope is now PS3/BS3/PS4 only.
+# segregation.py itself is NOT deleted (still real, working, tested code -
+# see acmg_pipeline.pipeline.ENGINE_BY_CRITERION, which still maps PP1/BS4
+# to it) - only this constant, and everything derived from it (stubs.py's
+# STUB_CODES, the default criteria this project's own pipeline entry
+# points evaluate), changed to reflect that PP1/BS4 aren't this project's
+# own scope to claim credit for going forward.
+IMPLEMENTED_CODES = {"PS3", "BS3", "PS4"}
 
 
 class Strength(str, Enum):

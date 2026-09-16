@@ -688,14 +688,19 @@ async def judge_variant_from_structured_input(
     case_input: ApiCaseInput,
     mcp: ClientSession,
     erepo_client: ERepoClient,
-    criteria: tuple[str, ...] = ("PS3", "BS3", "PS4", "PP1", "BS4"),
+    criteria: tuple[str, ...] = ("PS3", "BS3", "PS4"),
     vcep_name: str | None = None,
     full_text_cache: dict[str, tuple[str | None, str]] | None = None,
 ) -> dict[str, AggregatedJudgment]:
     """
     Parses `case_input`'s embedded VCF (exactly 1 variant, per ApiCaseInput's
     own contract) and runs judge_variant() once per requested literature
-    criterion, using resolve_pmids_for_variant() above (ERepo first, live
+    criterion (default: this project's own current scope, PS3/BS3/PS4 -
+    PP1/BS4 were dropped from the default 2026-09-16 when their judgment
+    logic was handed off to another team; ENGINE_BY_CRITERION below still
+    maps them to segregation.py, so passing criteria=(...,"PP1","BS4") still
+    works, it's just no longer what a caller gets without asking), using
+    resolve_pmids_for_variant() above (ERepo first, live
     PubMed search fallback) to find citing PMIDs. Returns {criterion:
     AggregatedJudgment}; a criterion is omitted from the result (not given a
     not_clear placeholder) only when neither PMID source found anything for
@@ -730,15 +735,17 @@ async def judge_variant_from_structured_input(
 # ---------------------------------------------------------------------------
 #
 # Added 2026-09-16, per the user's decision that criteria this project
-# doesn't implement (the 16 Layer-1 automated/rule-based codes, PP4, and
-# the 6 clinical-record-only codes PS2/PM3/PM6/BS2/BP2/BP5) stay stubbed -
-# their real judgment logic is another team member's responsibility (see
+# doesn't implement (the 16 Layer-1 automated/rule-based codes, the 6
+# clinical-record-only codes PS2/PM3/PM6/BS2/BP2/BP5, and - per a further
+# 2026-09-16 decision, see acmg_pipeline/criteria/stubs.py's
+# HANDED_OFF_TO_OTHER_TEAM - PP1/BS4/PP4) stay stubbed - their real
+# judgment logic is another team member's responsibility (see
 # acmg_pipeline/criteria/stubs.py). This function is the single entry point
 # that produces a COMPLETE 28-code picture for one variant: real LLM
-# literature judgment for the 5 codes this project implements, honest
-# NOT_EVALUATED stubs for the other 23, combined via classification.
-# classify() exactly the same way test_full_criteria_ground_truth.py
-# already does for the ground-truth dataset.
+# literature judgment for the (now 3: PS3/BS3/PS4) codes this project
+# implements, honest NOT_EVALUATED stubs for the other 25, combined via
+# classification.classify() exactly the same way test_full_criteria_
+# ground_truth.py already does for the ground-truth dataset.
 #
 # Execution order (cheapest-first, matching classification.classify()'s own
 # BA1-short-circuit philosophy): stub lookups are instant, so in practice
@@ -746,10 +753,10 @@ async def judge_variant_from_structured_input(
 # here - there's nothing today for a stub to short-circuit, since this
 # project doesn't compute the Layer-1 values (gnomAD AF, ClinVar assertions,
 # etc.) that would make e.g. a BA1 short-circuit meaningful. Once another
-# team's real Layer-1/PP4 modules exist, swap their real CriterionEvidence
-# in place of stubs.stub_evidence(code) below - registry.get_criterion_
-# evidence() already supports exactly that swap without any other change
-# here.
+# team's real Layer-1/PP1/BS4/PP4 modules exist, swap their real
+# CriterionEvidence in place of stubs.stub_evidence(code) below - registry.
+# get_criterion_evidence() already supports exactly that swap without any
+# other change here.
 
 async def classify_variant_from_structured_input(
     case_input: ApiCaseInput,
@@ -761,6 +768,12 @@ async def classify_variant_from_structured_input(
     literature_results = await judge_variant_from_structured_input(
         case_input, mcp, erepo_client, vcep_name=vcep_name, full_text_cache=full_text_cache,
     )
+    # Note: judge_variant_from_structured_input()'s default `criteria` is
+    # IMPLEMENTED_CODES's 3 codes (PS3/BS3/PS4) - PP1/BS4 (still real,
+    # working code in criteria/segregation.py, still reachable via
+    # ENGINE_BY_CRITERION) are no longer requested by default here, so they
+    # fall into the stub loop below along with the other 24 non-implemented
+    # codes, per the 2026-09-16 handoff decision.
 
     evidence = [
         from_aggregated_judgment(aggregated, code)
@@ -1053,17 +1066,25 @@ async def main():
         tally = {"match": 0, "mismatch": 0, "reserved": 0}
         mismatches = []
         # Accumulates this run's real CriterionEvidence per variant (gene,
-        # hgvsc), keyed by which of the 5 implemented codes were actually
-        # evaluated for it - test_cases above often covers only one or two
-        # of the 5 per variant (e.g. MYH7 c.1594T>C is only ever run for
-        # PS3 here), not all 5, so this can't reuse registry.
-        # get_criterion_evidence()'s all-28-codes contract (it requires real
-        # evidence for every implemented code, by design - see registry.py).
-        # Instead the final classification pass below combines whatever was
-        # actually run with the 23 stub codes directly, and lets classify()
-        # itself report the implemented-but-not-run-here codes as
-        # not_evaluated_codes - an honest reflection of this demo's partial
-        # coverage, not a claim that this project doesn't implement them.
+        # hgvsc), keyed by which criterion was actually evaluated for it -
+        # test_cases above still exercises 5 criteria total (PS3/BS3/PS4,
+        # plus PP1/BS4 via ENGINE_BY_CRITERION -> segregation.py, still
+        # real working code even though PP1/BS4 left IMPLEMENTED_CODES on
+        # 2026-09-16 - see classification.py), and often only one or two
+        # of those 5 per variant (e.g. MYH7 c.1594T>C is only ever run for
+        # PS3 here), so this can't reuse registry.get_criterion_evidence()'s
+        # all-28-codes contract (it requires real evidence for every
+        # IMPLEMENTED_CODES code, by design - see registry.py, and PP1/BS4
+        # no longer satisfy that). Instead the final classification pass
+        # below combines whatever was actually run with the stub codes
+        # directly (skipping any stub whose code already has real evidence
+        # here - PP1/BS4 are stub codes now too, so without that skip
+        # classify() would see two CriterionEvidence for the same code and
+        # raise; see the stubs_for_variant filter below), and lets
+        # classify() itself report the implemented-but-not-run-here codes
+        # as not_evaluated_codes - an honest reflection of this demo's
+        # partial coverage, not a claim that this project doesn't
+        # implement them.
         variant_evidence: dict[tuple[str, str], dict[str, object]] = {}
 
         for case in test_cases:
@@ -1117,16 +1138,26 @@ async def main():
                 show(f"  - {m}")
 
         # Final ACMG/AMP classification per variant (classification.classify(),
-        # see acmg_pipeline/classification.py). Combines whichever of the 5
-        # implemented codes were actually run above for that variant with
-        # NOT_EVALUATED placeholders for the 23 codes this project doesn't
-        # implement (acmg_pipeline/criteria/stubs.py) - this is a pipeline
-        # demo, not a real curation, so the category shown here is only as
-        # complete as the evidence gathered above.
+        # see acmg_pipeline/classification.py). Combines whichever criteria
+        # were actually run above for that variant with NOT_EVALUATED
+        # placeholders for the stub codes this project doesn't implement
+        # (acmg_pipeline/criteria/stubs.py) - this is a pipeline demo, not a
+        # real curation, so the category shown here is only as complete as
+        # the evidence gathered above.
+        #
+        # stub_evidence_all is a FIXED list of every STUB_CODE, computed
+        # once outside the loop; as of 2026-09-16 that now includes PP1/BS4
+        # (see stubs.py's HANDED_OFF_TO_OTHER_TEAM), which test_cases above
+        # can still produce REAL evidence for via ENGINE_BY_CRITERION. Must
+        # filter out any stub whose code is already in real_by_code per
+        # variant, or classify() sees two CriterionEvidence for the same
+        # code (e.g. real PP1 for RUNX1 c.601C>T plus a stub PP1) and
+        # raises ValueError("duplicate evidence for ...").
         show(f"\n{'='*70}\n[Final ACMG/AMP classification per variant]\n{'='*70}")
-        stub_evidence = stubs_mod.all_stub_evidence()
+        stub_evidence_all = stubs_mod.all_stub_evidence()
         for (v_gene, v_hgvsc), real_by_code in variant_evidence.items():
-            full_evidence = list(real_by_code.values()) + stub_evidence
+            stubs_for_variant = [e for e in stub_evidence_all if e.code not in real_by_code]
+            full_evidence = list(real_by_code.values()) + stubs_for_variant
             result = classify(full_evidence)
             show(f"\n{v_gene} {v_hgvsc}:")
             met_str = ", ".join(f"{e.code}({e.strength.value})" for e in result.met) or "(none)"
