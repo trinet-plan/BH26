@@ -35,19 +35,10 @@ from acmg_pipeline.classification import (
 from acmg_pipeline.gate import CriterionStatus
 from acmg_pipeline.criteria import stubs
 from test_data.full_criteria_ground_truth import GROUND_TRUTH, unique_variants, entries_for
+from test_harness import Harness
 
-passed = 0
-failed = 0
-
-
-def check(label, cond):
-    global passed, failed
-    if cond:
-        passed += 1
-        print(f"  OK   {label}")
-    else:
-        failed += 1
-        print(f"  FAIL {label}")
+h = Harness()
+check = h.check
 
 
 # ============================================================================
@@ -132,5 +123,4 @@ print(f"\n{compared_n} variant(s) had both a real known classification and >=1 o
       f"codes; {match_n}/{compared_n} matched using only those codes (the rest is unevaluated by design).")
 
 
-print(f"\n{'='*40}\n{passed} passed, {failed} failed\n{'='*40}")
-sys.exit(1 if failed else 0)
+h.report_and_exit()

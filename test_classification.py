@@ -12,19 +12,10 @@ from acmg_pipeline.criteria.registry import is_implemented, get_criterion_eviden
 from acmg_pipeline.criteria import stubs
 from acmg_pipeline.common import MatchStatus, VariantMatchingResult, PaperContribution
 from acmg_pipeline.criteria import ps4, segregation as seg
+from test_harness import Harness
 
-passed = 0
-failed = 0
-
-
-def check(label, cond):
-    global passed, failed
-    if cond:
-        passed += 1
-        print(f"  OK   {label}")
-    else:
-        failed += 1
-        print(f"  FAIL {label}")
+h = Harness()
+check = h.check
 
 
 # --- 1. Code list sanity ---
@@ -145,5 +136,4 @@ except ValueError:
 full_result = classify(evidence)
 check("classify() accepts the full 28-entry set without error", full_result.not_evaluated_codes == [])
 
-print(f"\n{'='*40}\n{passed} passed, {failed} failed\n{'='*40}")
-sys.exit(1 if failed else 0)
+h.report_and_exit()
