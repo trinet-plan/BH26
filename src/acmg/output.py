@@ -117,6 +117,12 @@ def run_internal(input_path, evidence_path, config_path, output_dir, criteria=CR
         manifest["va_spec"] = {
             **va_document["validated_by"], "envelope_path": str(va_path),
             "envelope_sha256": sha256_file(va_path), "instance_count": len(va_instances),
+            "criterion_assessment_count": sum(
+                len(record["criterion_assessments"]) for record in va_document["records"]
+            ),
+            "referenced_evidence_count": sum(
+                len(record["referenced_evidence"]) for record in va_document["records"]
+            ),
             "instances": va_instances,
         }
     (output_dir / "run-manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

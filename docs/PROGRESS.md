@@ -188,6 +188,16 @@
 - 文書を整理した。MET一覧を`docs/MET-RESULTS.md`へ分離し（俯瞰は277行から200行）、
   criterion別設計のPM1-PLAN・PVS1-PLANを`docs/design/`へ移した。俯瞰の集計ブロックは
   demo-dataのみの値であることを見出しに明示し、fixture込みの合算と混同しないようにした。
+- VA-Spec監査envelopeをschema 1.1へ更新した。実行対象の全criterionについてMET/NOT_METだけで
+  なくNOT_EVALUATED、NOT_APPLICABLE、MANUAL_REVIEW、DEPRECATEDも
+  `criterion_assessments`へ残し、判定要約、Evidence ID、不足入力、review/conflict、規則由来を
+  記録する。PVS1はcontext・decision trace・rules・warning・未解決要件も保持する。
+- 個別Evidence Lineへ`bh26AssessmentDetails` extensionを追加し、単独ファイルでも判定過程を
+  監査可能にした。IRI参照は`referenced_evidence`のgeneric StudyResult catalogで解決し、
+  provider/version、取得日時、品質、method/policy、curator、domain observationを取得できる。
+  envelope専用schema、参照完全性、criterion重複、catalog key/id、line/assessment/extension一致を
+  書込み前に検証する。synthetic all-criterion E2Eで16 assessment、未解決参照0を確認し、
+  ClinGen正例・28件固定キャッシュE2Eを含む全169テストとRuffが成功した。
 
 ## 未完了（次工程）
 

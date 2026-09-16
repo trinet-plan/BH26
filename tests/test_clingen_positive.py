@@ -91,6 +91,21 @@ class ClinGenPositiveReferenceTests(unittest.TestCase):
         for criterion, expectation in self.expected["criteria"].items():
             self.assertIn((expectation["record_id"], criterion), exported)
 
+        for record in envelope["records"]:
+            self.assertEqual(
+                {item["criterion"] for item in record["criterion_assessments"]},
+                set(SUPPORTED),
+            )
+            catalog = record["referenced_evidence"]
+            for assessment in record["criterion_assessments"]:
+                self.assertTrue(set(assessment["evidenceItemIds"]) <= set(catalog))
+            for wrapped in record["evidence_lines"]:
+                extension = next(
+                    item for item in wrapped["evidence_line"]["extensions"]
+                    if item["name"] == "bh26AssessmentDetails"
+                )
+                self.assertEqual(extension["value"], wrapped["assessment_details"])
+
     def test_pvs1_reference_preserves_trace_and_rules(self):
         result = self.by_record["clingen-positive:pvs1-pah"]["PVS1"]
         self.assertEqual(result["evaluation_context"]["condition_status"], "PROVIDED")

@@ -32,12 +32,33 @@ Statement
 | --- | --- | --- |
 | `results.json` | schema 1.1。全基準の内部評価結果。PVS1 trace、未評価、対象外、要確認、非推奨も保持 | いいえ |
 | `summary.tsv` | 内部評価結果の表形式要約 | いいえ |
-| `evidence-lines.json` | record、variant、Evidence参照をまとめたBH26監査用envelope | いいえ |
+| `evidence-lines.json` | 全criterionの判断、Evidence Line、Evidence参照先をまとめたBH26監査用envelope | いいえ |
 | `va-spec-1.0.1/*.json` | 1ファイルにつき1個のACMG EvidenceLine | はい |
 | `run-manifest.json` | schema ID、ローカルprofileのSHA-256、生成ファイル一覧 | いいえ |
 
 `evidence-lines.json` は転送・監査を容易にする独自コンテナであり、それ自体を
 VA-Spec objectとは称さない。相互運用時は `va-spec-1.0.1` 配下のJSONを使用する。
+
+監査用envelopeはschema 1.1である。各recordの `criterion_assessments` は、MET/NOT_METだけで
+なく、NOT_EVALUATED、NOT_APPLICABLE、MANUAL_REVIEW、DEPRECATEDを含む実行対象criterionを
+すべて保持する。各assessmentにはstatus、summary、strength/direction/outcome、Evidence ID、
+不足入力、review point、conflict、rule provenanceを記録する。PVS1ではevaluation context、
+decision trace、rules used、warning、未解決要件も記録する。
+
+MET/NOT_METから作る個別Evidence Lineには `bh26AssessmentDetails` extensionを付け、同じ説明を
+単独ファイルでも確認できるようにする。標準化された方向・強度・outcomeはVA-Specの標準
+フィールドに置き、workflow固有情報だけをextensionへ置く。
+
+`referenced_evidence` はEvidence IDをキーとする解決カタログである。人口頻度以外の
+`hasEvidenceItems` がIRI参照であっても、同じenvelope内で対応するEvidence Itemを取得できる。
+各itemはBH26 generic StudyResult profileとして、DB/providerとversion、取得日時、品質、method、
+policy version、curator、評価日、一次資料、domain-specific observationsを保持する。これは公式の
+個別StudyResult subtypeとは称さず、公式profileが存在する人口頻度だけを
+`CohortAlleleFrequencyStudyResult` としてEvidence Lineへ直接埋め込む。
+元の正規化Evidence objectのcanonical JSON SHA-256も各catalog itemに保持する。
+
+envelopeは書込み前に専用schemaと参照整合性検査を通す。criterion重複・未知code、未解決Evidence
+ID、カタログkey/id不一致、Evidence Lineとassessment/extensionの不一致を出力エラーにする。
 
 ## EvidenceLineのフィールド対応
 
@@ -47,6 +68,7 @@ VA-Spec objectとは称さない。相互運用時は `va-spec-1.0.1` 配下のJ
 | `type` | 常に `EvidenceLine` |
 | `name` | criterionとGRCh38 variantを含む表示名 |
 | `description` | 内部判定の要約。判定根拠の監査用説明 |
+| `extensions` | `bh26AssessmentDetails`。status、Evidence ID、rule provenance、警告・trace等 |
 | `specifiedBy.type` | `Method` |
 | `specifiedBy.methodType` | `PM2`、`BA1`等のACMG criterion code |
 | `specifiedBy.reportedIn` | ACMG/AMP 2015文献（DOI、PMID、URL） |

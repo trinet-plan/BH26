@@ -144,6 +144,11 @@ PS1は同一アミノ酸変化のexact検索、PM5は同一残基のresidue検�
 16コードを評価し、results.json・summary.tsv・evidence-lines.json・run-manifest.jsonを生成します。
 `evidence-lines.json` は監査情報を含む独自envelopeです。各VA-Specオブジェクトは
 `va-spec-1.0.1/*.json` に1 Evidence Line/1ファイルで出力します。
+監査envelope schema 1.1は全criterionのworkflow statusを `criterion_assessments` に保持し、
+MET/NOT_MET以外の未評価・対象外・要確認・非推奨も欠落させません。個別Evidence Lineには
+`bh26AssessmentDetails` extensionを付け、判定status、Evidence ID、規則版、警告、PVS1 traceを
+単独ファイルでも確認できます。IRI参照の実体はenvelopeの `referenced_evidence` から解決でき、
+provider/version、取得日時、品質、method、curator、観測値を監査できます。
 gnomAD集団頻度は公式例に合わせ、各Evidence Lineの `hasEvidenceItems` に
 `CohortAlleleFrequencyStudyResult` としてDataSet・StudyGroup・Methodを含めて埋め込みます。
 VA-Specを意図的に省略する場合だけ `--internal-only` を指定します。

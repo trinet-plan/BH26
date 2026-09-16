@@ -57,6 +57,20 @@ class DemoPipelineTests(unittest.TestCase):
                             for record in results["records"]))
         self.assertEqual(results["va_spec_export"], "VALIDATED")
         self.assertTrue((evaluated / "evidence-lines.json").is_file())
+        envelope = json.loads((evaluated / "evidence-lines.json").read_text(encoding="utf-8"))
+        self.assertEqual(sum(len(record["criterion_assessments"])
+                             for record in envelope["records"]), 28 * len(CRITERIA))
+        for record in envelope["records"]:
+            self.assertEqual(
+                {item["criterion"] for item in record["criterion_assessments"]},
+                set(CRITERIA),
+            )
+            catalog = record["referenced_evidence"]
+            references = {
+                identifier for item in record["criterion_assessments"]
+                for identifier in item["evidenceItemIds"]
+            }
+            self.assertTrue(references <= set(catalog))
         pm2 = [result for record in results["records"] for result in record["results"]
                if result["criterion"] == "PM2"]
         self.assertTrue(any(result["status"] == "NOT_MET" for result in pm2))

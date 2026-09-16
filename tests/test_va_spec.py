@@ -2,7 +2,13 @@ import unittest
 from copy import deepcopy
 
 from acmg.core.models import CriterionResult, Status
-from acmg.va_spec.mapper import SCHEMA_ID, export_document, to_evidence_line, validate_1_0_1
+from acmg.va_spec.mapper import (
+    SCHEMA_ID,
+    export_document,
+    to_evidence_line,
+    validate_1_0_1,
+    validate_envelope,
+)
 
 
 VARIANT = {"assembly": "GRCh38", "chrom": "1", "pos": 2, "ref": "C", "alt": "T"}
@@ -91,6 +97,8 @@ class VaSpecTests(unittest.TestCase):
         document = export_document([])
         self.assertEqual(document["validated_by"]["schema_version"], "1.0.1")
         self.assertEqual(document["validated_by"]["schema_id"], SCHEMA_ID)
+        self.assertEqual(document["validated_by"]["audit_envelope_schema_version"], "1.1")
+        self.assertTrue(document["validated_by"]["audit_envelope_schema_sha256"])
 
     def test_1_0_1_contract_rejects_newer_gks_discriminator_and_mismatched_method(self):
         result = CriterionResult("PM2", Status.NOT_MET, VARIANT, "not rare", None, "none",
@@ -113,3 +121,82 @@ class VaSpecTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Conflicting evidence"):
             export_document([{"record_id": "test:1", "variant": VARIANT,
                               "results": [first, second]}])
+
+    def test_envelope_resolves_iri_to_structured_study_result(self):
+        result = CriterionResult("PM2", Status.NOT_MET, VARIANT, "not rare", None, "none",
+                                 "PM2_not_met", evidence=EVIDENCE).to_dict()
+        document = export_document([{
+            "record_id": "test:study-result", "variant": VARIANT, "results": [result],
+        }])
+        self.assertEqual(document["envelope_schema_version"], "1.1")
+        record = document["records"][0]
+        wrapped = record["evidence_lines"][0]
+        identifier = EVIDENCE[0]["evidence_id"]
+        self.assertEqual(identifier, wrapped["evidence_line"]["hasEvidenceItems"][0]["id"])
+        item = record["referenced_evidence"][identifier]
+        self.assertEqual(item["type"], "StudyResult")
+        self.assertEqual(item["sourceDataSet"]["version"], "4.1.1")
+        observations = next(extension["value"] for extension in item["extensions"]
+                            if extension["name"] == "observations")
+        evidence_hash = next(extension["value"] for extension in item["extensions"]
+                             if extension["name"] == "normalizedEvidenceSha256")
+        self.assertEqual(observations["AC"], 1)
+        self.assertEqual(observations["AN"], 100000)
+        self.assertEqual(len(evidence_hash), 64)
+        self.assertEqual(wrapped["assessment_details"]["status"], "NOT_MET")
+        self.assertEqual(wrapped["assessment_details"]["evidenceItemIds"], [identifier])
+        extension = wrapped["evidence_line"]["extensions"][0]
+        self.assertEqual(extension["name"], "bh26AssessmentDetails")
+        self.assertEqual(extension["value"]["status"], "NOT_MET")
+        self.assertEqual(extension["value"]["evidenceItemIds"], [identifier])
+
+    def test_pvs1_assessment_details_keep_decision_trace(self):
+        result = CriterionResult(
+            "PVS1", Status.MET, VARIANT, "NMD expected", "very_strong", "supports", "PVS1",
+            evidence=EVIDENCE,
+            evaluation_context={"gene": "TEST", "condition_status": "NOT_PROVIDED"},
+            decision_trace=[{"node_id": "NF02", "result": "PASS", "value": True}],
+            rules_used=[{"source": "ClinGen PVS1 2018"}],
+            warnings=["Condition was not provided."],
+        ).to_dict()
+        wrapped = export_document([{
+            "record_id": "test:pvs1", "variant": VARIANT, "results": [result],
+        }])["records"][0]["evidence_lines"][0]
+        details = wrapped["assessment_details"]
+        self.assertEqual(details["decisionTrace"][0]["node_id"], "NF02")
+        self.assertEqual(details["evaluationContext"]["gene"], "TEST")
+        self.assertEqual(details["rulesUsed"][0]["source"], "ClinGen PVS1 2018")
+        self.assertEqual(wrapped["evidence_line"]["extensions"][0]["value"], details)
+
+    def test_workflow_only_assessment_and_its_evidence_remain_auditable(self):
+        evidence = [{
+            "evidence_id": "https://example.org/evidence/annotation",
+            "category": "annotation", "source": "Ensembl VEP", "source_version": "116",
+            "retrieved_at": "2026-09-16T00:00:00Z", "quality_status": "PASS",
+            "variant_key": "GRCh38:1:2:C:T", "transcript": "NM_TEST.1",
+        }]
+        result = CriterionResult(
+            "PM1", Status.NOT_EVALUATED, VARIANT, "Reviewed region unavailable",
+            evidence=evidence, missing_inputs=["region"],
+            review_points=["Curate a disease-relevant functional region"],
+        ).to_dict()
+        record = export_document([{
+            "record_id": "test:workflow", "variant": VARIANT, "results": [result],
+        }])["records"][0]
+        self.assertEqual(record["evidence_lines"], [])
+        assessment = record["criterion_assessments"][0]
+        self.assertEqual(assessment["status"], "NOT_EVALUATED")
+        self.assertEqual(assessment["missingInputs"], ["region"])
+        self.assertEqual(assessment["reviewPoints"],
+                         ["Curate a disease-relevant functional region"])
+        self.assertIn(evidence[0]["evidence_id"], record["referenced_evidence"])
+
+    def test_audit_envelope_rejects_an_unresolved_evidence_reference(self):
+        result = CriterionResult("PM2", Status.NOT_MET, VARIANT, "not rare", None, "none",
+                                 "PM2_not_met", evidence=EVIDENCE).to_dict()
+        document = export_document([{
+            "record_id": "test:broken-reference", "variant": VARIANT, "results": [result],
+        }])
+        del document["records"][0]["referenced_evidence"][EVIDENCE[0]["evidence_id"]]
+        with self.assertRaisesRegex(ValueError, "Unresolved Evidence Item references"):
+            validate_envelope(document)

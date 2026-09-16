@@ -60,8 +60,23 @@ class OutputTests(unittest.TestCase):
         self.assertEqual(manifest["va_spec_export"], "VALIDATED")
         self.assertEqual(manifest["va_spec"]["schema_version"], "1.0.1")
         self.assertGreater(manifest["va_spec"]["instance_count"], 0)
+        self.assertEqual(manifest["va_spec"]["criterion_assessment_count"], len(CRITERIA))
+        self.assertGreater(manifest["va_spec"]["referenced_evidence_count"], 0)
         self.assertEqual(len(list((one / "va-spec-1.0.1").glob("*.json"))),
                          manifest["va_spec"]["instance_count"])
+        envelope = load_object(one / "evidence-lines.json")
+        self.assertEqual(envelope["envelope_schema_version"], "1.1")
+        self.assertEqual(len(envelope["records"][0]["criterion_assessments"]), len(CRITERIA))
+        self.assertEqual(
+            {item["criterion"] for item in envelope["records"][0]["criterion_assessments"]},
+            set(CRITERIA),
+        )
+        deprecated = {
+            item["criterion"]: item["status"]
+            for item in envelope["records"][0]["criterion_assessments"]
+            if item["criterion"] in {"PP5", "BP6"}
+        }
+        self.assertEqual(deprecated, {"PP5": "DEPRECATED", "BP6": "DEPRECATED"})
 
     def test_population_met_fixtures_emit_official_example_shaped_evidence_lines(self):
         output = self.output_dir()

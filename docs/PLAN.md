@@ -40,10 +40,12 @@ PVS1はClinGen General decision treeから適用可否と4段階強度を返し�
 Python 3.12、srcレイアウト。各基準はevaluate(input_data, services, config)を実装する。
 CLI: prepare-demo（監査・同定）、evaluate（JSON/VCF、選択基準、offline）。
 成果物: audit.json、variants.json、同定履歴、results.json、evidence-lines.json、summary.tsv、run-manifest.json。
-VA-Spec 1.0.1 schemaに合わせてACMG EvidenceLineを検証する。MET/NOT_METのみ標準出力へ変換する。
+VA-Spec 1.0.1 schemaに合わせてACMG EvidenceLineを検証する。MET/NOT_METのみ標準出力へ変換し、
+その他を含む全criterionのworkflow判断はschema検証済み監査envelopeへ保持する。
 独自envelopeと、1 Evidence Line/1 JSONのschema準拠成果物を分離する。
 公式例に合わせ、構造化できる集団頻度EvidenceはCohortAlleleFrequencyStudyResultとして
-EvidenceLineへ埋め込み、DataSet・StudyGroup・Method・Documentの由来を保持する。
+EvidenceLineへ埋め込み、DataSet・StudyGroup・Method・Documentの由来を保持する。IRI参照は同じ
+envelopeのEvidence Item catalogで解決し、個別Evidence Lineにも判定詳細extensionを付ける。
 未同定variantからEvidenceLineを作らない。暫定・非推奨・未評価は内部出力へ保持する。
 
 ## 工程と検証

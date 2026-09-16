@@ -11,7 +11,7 @@ from importlib.resources import files
 from ga4gh.va_spec.acmg_2015 import VariantPathogenicityEvidenceLine
 from jsonschema import Draft202012Validator, FormatChecker
 
-from acmg.core.models import Status
+from acmg.core.models import CRITERIA, Status
 
 
 SYSTEM = "ACMG Guidelines, 2015"
@@ -129,6 +129,127 @@ def va_evidence_item(item, variant):
     return evidence_reference(item)
 
 
+_EVIDENCE_NAMES = {
+    "annotation": "Transcript variant annotation",
+    "comparator": "Pathogenic comparator assessment",
+    "comparator_search": "ClinVar comparator search result",
+    "computational": "Computational prediction result",
+    "gene_disease": "Gene-disease mechanism assessment",
+    "hotspot_search": "ClinVar regional search result",
+    "nmd_prediction": "Nonsense-mediated decay prediction",
+    "population_lof": "Regional loss-of-function population assessment",
+    "protein_region": "Protein region impact assessment",
+    "region": "Protein region assessment",
+    "rna_assay": "RNA assay result",
+    "splice_assessment": "Splice consequence assessment",
+    "synonymous_assessment": "Synonymous variant assessment",
+    "transcript_assessment": "Transcript and exon relevance assessment",
+}
+
+
+def evidence_catalog_item(item):
+    """Build a resolvable audit object for an EvidenceLine IRI reference.
+
+    Only profiles standardized by VA-Spec are embedded in the validated EvidenceLine itself.
+    Other normalized evidence records are represented in the BH26 envelope as a generic
+    StudyResult-shaped object. Domain facts live in an Extension so they are not presented as
+    fields from an official VA-Spec StudyResult profile.
+    """
+    identifier = evidence_reference(item)
+    category = item.get("category", "evidence")
+    source = item.get("source")
+    version_value = item.get("source_version")
+    facts = {
+        key: value for key, value in item.items()
+        if key not in {
+            "evidence_id", "category", "source", "source_version", "retrieved_at",
+            "quality_status", "curator", "reviewed_at", "assessment_method", "method",
+            "policy_version",
+        }
+    }
+    value = {
+        "id": identifier,
+        "type": "StudyResult",
+        "name": _EVIDENCE_NAMES.get(category, f"{category.replace('_', ' ').title()} result"),
+        "description": (
+            f"Normalized {category} evidence used by the criterion evaluator; "
+            "domain-specific values are carried in the observations extension."
+        ),
+        "extensions": [
+            {"name": "bh26EvidenceCategory", "value": category},
+            {"name": "observations", "value": facts},
+            {"name": "normalizedEvidenceSha256", "value": hashlib.sha256(
+                json.dumps(item, sort_keys=True, separators=(",", ":"),
+                           ensure_ascii=False, allow_nan=False).encode()
+            ).hexdigest()},
+        ],
+        "qualityMeasures": {
+            "qualityStatus": item.get("quality_status"),
+            "retrievedAt": item.get("retrieved_at"),
+        },
+    }
+    if isinstance(source, str) and source:
+        dataset_key = f"{source}:{version_value or 'unversioned'}"
+        value["sourceDataSet"] = {
+            "id": stable_urn("dataset", dataset_key),
+            "type": "DataSet",
+            "name": source if not version_value else f"{source} {version_value}",
+        }
+        if isinstance(version_value, str) and version_value:
+            value["sourceDataSet"]["version"] = version_value
+    method = item.get("method") or item.get("assessment_method")
+    if method:
+        value["specifiedBy"] = {
+            "type": "Method",
+            "name": str(method),
+            "extensions": ([{"name": "policyVersion", "value": item["policy_version"]}]
+                           if item.get("policy_version") else []),
+        }
+    if item.get("curator"):
+        contribution = {
+            "type": "Contribution",
+            "contributor": {"type": "Agent", "name": item["curator"]},
+            "activityType": "evidence evaluation",
+        }
+        if item.get("reviewed_at"):
+            contribution["date"] = item["reviewed_at"]
+        value["contributions"] = [contribution]
+    reported = item.get("primary_evidence")
+    if isinstance(reported, list) and reported:
+        value["reportedIn"] = list(dict.fromkeys(
+            entry for entry in reported if isinstance(entry, str) and entry
+        ))
+    return value
+
+
+def assessment_details(result):
+    """Return the complete workflow explanation shared by all criterion outputs."""
+    value = {
+        "criterion": result.criterion,
+        "status": result.status.value,
+        "summary": result.summary,
+        "evidenceItemIds": list(dict.fromkeys(
+            evidence_reference(item) for item in result.evidence
+        )),
+        "provenance": result.provenance,
+    }
+    optional = {
+        "strength": result.strength,
+        "direction": result.direction,
+        "evidenceOutcome": result.evidence_outcome,
+        "missingInputs": result.missing_inputs,
+        "reviewPoints": result.review_points,
+        "conflictFlags": result.conflict_flags,
+        "evaluationContext": result.evaluation_context,
+        "decisionTrace": result.decision_trace,
+        "rulesUsed": result.rules_used,
+        "warnings": result.warnings,
+        "unresolvedRequirements": result.unresolved_requirements,
+    }
+    value.update({key: field_value for key, field_value in optional.items() if field_value})
+    return value
+
+
 @lru_cache(maxsize=1)
 def output_schema():
     resource = files("acmg.va_spec").joinpath("schemas/acmg-evidence-line-1.0.1-output.json")
@@ -140,6 +261,55 @@ def output_schema():
 def output_schema_sha256():
     resource = files("acmg.va_spec").joinpath("schemas/acmg-evidence-line-1.0.1-output.json")
     return hashlib.sha256(resource.read_bytes()).hexdigest()
+
+
+@lru_cache(maxsize=1)
+def envelope_schema():
+    resource = files("acmg.va_spec").joinpath("schemas/bh26-audit-envelope-1.1.json")
+    schema = json.loads(resource.read_text(encoding="utf-8"))
+    Draft202012Validator.check_schema(schema)
+    return schema
+
+
+def envelope_schema_sha256():
+    resource = files("acmg.va_spec").joinpath("schemas/bh26-audit-envelope-1.1.json")
+    return hashlib.sha256(resource.read_bytes()).hexdigest()
+
+
+def validate_envelope(document):
+    errors = sorted(Draft202012Validator(
+        envelope_schema(), format_checker=FormatChecker()
+    ).iter_errors(document), key=lambda item: list(item.path))
+    if errors:
+        raise ValueError(f"BH26 audit envelope validation failed: {errors[0].message}")
+    for record in document["records"]:
+        assessments = record["criterion_assessments"]
+        codes = [item["criterion"] for item in assessments]
+        if len(codes) != len(set(codes)) or any(code not in CRITERIA for code in codes):
+            raise ValueError("BH26 audit envelope has unknown or duplicate criterion assessment")
+        by_code = {item["criterion"]: item for item in assessments}
+        catalog = record["referenced_evidence"]
+        for identifier, item in catalog.items():
+            if item["id"] != identifier:
+                raise ValueError("BH26 audit Evidence Item key/id mismatch")
+        for assessment in assessments:
+            missing = set(assessment["evidenceItemIds"]) - set(catalog)
+            if missing:
+                raise ValueError(f"Unresolved Evidence Item references: {sorted(missing)}")
+        line_ids = set()
+        for wrapped in record["evidence_lines"]:
+            criterion = wrapped["criterion"]
+            if criterion not in by_code or wrapped["assessment_details"] != by_code[criterion]:
+                raise ValueError("EvidenceLine assessment details disagree with criterion audit")
+            line = wrapped["evidence_line"]
+            if line["id"] in line_ids:
+                raise ValueError("Duplicate EvidenceLine id in one record")
+            line_ids.add(line["id"])
+            details = next((item["value"] for item in line.get("extensions", [])
+                            if item.get("name") == "bh26AssessmentDetails"), None)
+            if details != by_code[criterion]:
+                raise ValueError("EvidenceLine extension disagrees with criterion audit")
+    return document
 
 
 def validate_1_0_1(line, criterion):
@@ -183,6 +353,8 @@ def to_evidence_line(result):
         ),
         "name": f"{result.criterion} assessment for {result.variant['assembly']}:{result.variant['chrom']}:{result.variant['pos']}:{result.variant['ref']}:{result.variant['alt']}",
         "description": result.summary,
+        "extensions": [{"name": "bh26AssessmentDetails",
+                        "value": assessment_details(result)}],
         "specifiedBy": {
             "type": "Method",
             "name": "ACMG/AMP 2015 with ClinGen General Guidance",
@@ -228,27 +400,34 @@ def to_evidence_line(result):
 def export_record(record):
     lines = []
     evidence = {}
+    assessments = []
     for result in record["results"]:
         # Rehydrate only the fields needed by the mapper while retaining the validated internal result.
         from acmg.core.models import CriterionResult
 
         value = CriterionResult(**result)
-        line = to_evidence_line(value)
-        if line is None:
-            continue
-        lines.append({"criterion": value.criterion, "evidence_line": line})
+        details = assessment_details(value)
+        assessments.append(details)
         for item in value.evidence:
             identifier = evidence_reference(item)
             if identifier in evidence and evidence[identifier] != item:
                 raise ValueError(f"Conflicting evidence object: {identifier}")
             evidence[identifier] = item
+        line = to_evidence_line(value)
+        if line is None:
+            continue
+        lines.append({"criterion": value.criterion, "evidence_line": line,
+                      "assessment_details": details})
     return {"record_id": record["record_id"], "variant": record["variant"],
-            "evidence_lines": lines, "referenced_evidence": evidence}
+            "criterion_assessments": assessments, "evidence_lines": lines,
+            "referenced_evidence": {
+                identifier: evidence_catalog_item(item) for identifier, item in evidence.items()
+            }}
 
 
 def export_document(records):
-    return {
-        "envelope_schema_version": "1.0",
+    document = {
+        "envelope_schema_version": "1.1",
         "profile": "Variant Pathogenicity Evidence Line (ACMG 2015)",
         "validated_by": {
             "schema_version": SCHEMA_VERSION,
@@ -256,6 +435,9 @@ def export_document(records):
             "validator": "jsonschema Draft202012Validator plus ACMG cross-field checks",
             "validation_scope": "Each evidence_line; enclosing records document is a BH26 envelope",
             "output_profile_schema_sha256": output_schema_sha256(),
+            "audit_envelope_schema_version": "1.1",
+            "audit_envelope_schema_id": envelope_schema()["$id"],
+            "audit_envelope_schema_sha256": envelope_schema_sha256(),
             "structural_normalizer": "ga4gh.va-spec",
             "structural_normalizer_version": version("ga4gh.va-spec"),
             "model": "VariantPathogenicityEvidenceLine",
@@ -263,3 +445,4 @@ def export_document(records):
         },
         "records": [export_record(record) for record in records],
     }
+    return validate_envelope(document)
