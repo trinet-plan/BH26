@@ -230,12 +230,34 @@ async def call_tool_safe(mcp: ClientSession, name: str, arguments: dict):
 # Fetching full text via PubMed MCP
 # ---------------------------------------------------------------------------
 
-async def fetch_full_text(mcp: ClientSession, pmid: str) -> tuple[str | None, str]:
+async def fetch_full_text(
+    mcp: ClientSession, pmid: str, cache: dict[str, tuple[str | None, str]] | None = None,
+) -> tuple[str | None, str]:
     """
     Fetches the full text for a PMID. Returns None with an explanatory note
     if the article is not in PMC. As noted in design doc section 2-3, only
     about 20% of articles are in PMC, so this branch is mandatory.
+
+    `cache`, when passed, is checked first and populated on the way out -
+    added 2026-09-16 so that testing a single variant against all 5
+    implemented criteria (test_case_ground_truth.md's 227-pair validation
+    run) doesn't re-fetch the same PMID's full text from PubMed MCP once
+    per criterion. The caller owns the cache's lifetime: pass a fresh dict
+    per variant (not a single dict for the whole run) so a variant's PMIDs
+    don't linger in memory or get reused for an unrelated variant that
+    happens to cite the same paper.
     """
+    if cache is not None and pmid in cache:
+        cached_text, cached_note = cache[pmid]
+        return cached_text, f"{cached_note} [full_text_cache hit - no PubMed MCP call made]"
+
+    result = await _fetch_full_text_uncached(mcp, pmid)
+    if cache is not None:
+        cache[pmid] = result
+    return result
+
+
+async def _fetch_full_text_uncached(mcp: ClientSession, pmid: str) -> tuple[str | None, str]:
     convert_result = await call_tool_safe(mcp, "convert_article_ids", {"ids": [pmid], "id_type": "pmid"})
     convert_text = "\n".join(getattr(b, "text", str(b)) for b in convert_result.content)
     try:
@@ -350,10 +372,11 @@ async def judge_single_paper(
     equivalents: list[str],
     vcep_name: str | None,
     criterion: str,
+    full_text_cache: dict[str, tuple[str | None, str]] | None = None,
 ) -> PaperContribution | None:
     show(f"\n--- PMID:{pmid} ---")
 
-    full_text, note = await fetch_full_text(mcp, pmid)
+    full_text, note = await fetch_full_text(mcp, pmid, cache=full_text_cache)
     show(f"[Full text] {note}")
     if not full_text:
         show(f"  -> Full text unavailable; PMID:{pmid} contributes no evidence (skipping the LLM call)")
@@ -419,6 +442,7 @@ async def judge_variant(
     vcep_name: str | None,
     criterion: str,
     ground_truth: str | None = None,
+    full_text_cache: dict[str, tuple[str | None, str]] | None = None,
 ) -> AggregatedJudgment:
     """
     Judges a variant using ALL of the given PMIDs (not just the first one),
@@ -429,6 +453,20 @@ async def judge_variant(
     `engine` selects which criterion family is being run (PS3/BS3, PS4, or
     PP1/BS4 - see ENGINE_BY_CRITERION) - everything else about this
     function is identical across all three.
+
+    `full_text_cache`, when passed, is forwarded to fetch_full_text() via
+    judge_single_paper() - added 2026-09-16 for the 227-pair validation run
+    (test_case_ground_truth.md) where the same variant is judged once per
+    implemented criterion it has ground truth for (up to 5x), each call
+    citing the same PMIDs. Any object satisfying the dict protocol (`in`,
+    `[...]`, `[...] = ...`) works here - a plain dict for simple ad hoc
+    reuse across a handful of judge_variant() calls, or (preferred for a
+    real batch run) acmg_pipeline.fulltext_cache.DiskBackedFullTextCache
+    passed as ONE instance for the WHOLE run: since a paper's full text
+    never changes, sharing it across variants (not just within one) and
+    across separate runs of the script is strictly better, not a risk -
+    see that module's docstring for why a per-variant-only cache still
+    left cross-variant and cross-run reuse on the table.
 
     Returns the AggregatedJudgment itself (not just its direction), so the
     caller can both score it against ground_truth (see score_direction())
@@ -442,7 +480,10 @@ async def judge_variant(
 
     contributions = []
     for pmid in pmids:
-        contribution = await judge_single_paper(engine, mcp, pmid, gene, hgvsc, hgvsp, equivalents, vcep_name, criterion)
+        contribution = await judge_single_paper(
+            engine, mcp, pmid, gene, hgvsc, hgvsp, equivalents, vcep_name, criterion,
+            full_text_cache=full_text_cache,
+        )
         if contribution is not None:
             contributions.append(contribution)
 
