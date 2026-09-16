@@ -65,20 +65,40 @@ import requests
 
 from acmg_pipeline.vcf_record import VariantRecord
 
+# Criteria: PVS1 (doc: "Add autoPVS1 chart data/result"). Site: AutoPVS1
+# (autopvs1.bgi.com). Logic: none - AutoPVS1 is a form-based web tool with
+# no deep-link/query-string API this project has found, so this is a fixed
+# URL, not built per-variant. Referenced directly in _URL_BUILDERS below
+# rather than via its own function, since there's no per-variant logic to
+# name a function after.
 AUTOPVS1_URL = "https://autopvs1.bgi.com"
+
 _TOGOID_CONVERT_URL = "https://api.togoid.dbcls.jp/convert"
 _TOGOID_TIMEOUT_SEC = 15
 
 
 def gene_to_uniprot_accession(gene_symbol: str) -> str | None:
     """
-    Resolves a gene symbol (e.g. "MYH7") to its UniProt accession (e.g.
-    "P12883") via TogoID's public REST API - the 2-hop route "hgnc_symbol,
-    hgnc,uniprot" (a direct hgnc_symbol->uniprot route doesn't exist in
-    TogoID). Returns None if the gene symbol doesn't resolve (unknown
-    symbol, network failure, or a real but symbol-less gene) rather than
-    raising - callers building an optional reference link shouldn't crash
-    the whole page over one missing cross-reference.
+    Helper for uniprot_page_url() (PM1/PM5) below - not itself tied to a
+    specific ACMG code.
+
+    Site: TogoID's public REST API (api.togoid.dbcls.jp/convert) - the
+      same ID-conversion service the TogoMCP connector's togoid_convertId
+      tool calls internally; called directly here since TogoMCP itself
+      isn't reachable from this project's own runtime code (it's a
+      connector wired into the Claude Code session, not a server this
+      project's Python process can dial into the way it does
+      pubmed.mcp.claude.com - see acmg_pipeline/pipeline.py's
+      connect_pubmed()).
+    Logic: resolves a gene symbol (e.g. "MYH7") to its UniProt accession
+      (e.g. "P12883") via the 2-hop route "hgnc_symbol,hgnc,uniprot" - a
+      direct hgnc_symbol->uniprot route does not exist in TogoID (confirmed
+      empirically: requesting it returns HTTP 400 "no route", with the
+      2-hop route given in the error's own suggestion). Returns None if the
+      gene symbol doesn't resolve (unknown symbol, network failure, or a
+      real but symbol-less gene) rather than raising - callers building an
+      optional reference link shouldn't crash the whole page over one
+      missing cross-reference.
     """
     try:
         resp = requests.get(
@@ -99,9 +119,20 @@ def gene_to_uniprot_accession(gene_symbol: str) -> str | None:
 
 
 def uniprot_page_url(variant: VariantRecord) -> str | None:
-    """For PM1, PM5 - "show variant location/domain" (the domain/hotspot
-    judgment itself is still not automatable here, but the UniProt entry
-    page a curator or PM1/PM5's real implementer would consult is)."""
+    """
+    Criteria: PM1, PM5 (doc: "show variant location/domain, use AI to
+      check hotspot/nearby benign variants" - the domain/hotspot judgment
+      itself is still NOT automated here; this only gets the reference
+      page a curator or PM1/PM5's real implementer would open to do it).
+    Site: UniProt (uniprot.org), the entry page for the gene's canonical
+      protein - shows domain boundaries, active sites, and known variants
+      in context, which is what "location/domain" means in practice.
+    Logic: variant.info["GENE"] (a symbol, e.g. "MYH7") -> UniProt
+      accession (e.g. "P12883") via gene_to_uniprot_accession() above, then
+      f"https://www.uniprot.org/uniprotkb/{accession}/entry". Returns None
+      if GENE is missing or the accession lookup fails (unknown symbol,
+      network error) - no accession means no valid page to link to.
+    """
     gene = variant.info.get("GENE")
     if not gene:
         return None
@@ -112,9 +143,22 @@ def uniprot_page_url(variant: VariantRecord) -> str | None:
 
 
 def clinvar_search_url(variant: VariantRecord) -> str | None:
-    """For PS1, PM3, PP1 - "show/check the ClinVar page" (doc's own wording
-    doesn't distinguish a different query per code; all three are asking
-    to look at the same variant's ClinVar record)."""
+    """
+    Criteria: PS1 ("show the clinvar page/summary for that codon"), PM3
+      ("use AI to check if in trans previously reported (clinvar)"), PP1
+      ("use AI to check if segregation previously reported (clinvar)") -
+      the doc phrases these three differently but all three point at the
+      same action (open this variant's ClinVar record), so one function
+      serves all three; the AI-driven "check if X was previously reported"
+      part is NOT done here, only the page to check it on.
+    Site: ClinVar (ncbi.nlm.nih.gov/clinvar), NCBI's search UI.
+    Logic: a term-search URL built as "<GENE>[gene] AND <HGVSc>" (e.g.
+      "MYH7[gene] AND c.2155C>T"), URL-encoded and appended to
+      ".../clinvar/?term=...". This is a SEARCH, not a direct accession
+      link - this project doesn't look up the ClinVar VariationID, so the
+      URL lands on ClinVar's own search results page rather than one
+      specific record. Returns None if GENE or HGVSC is missing.
+    """
     gene = variant.info.get("GENE")
     hgvsc = variant.info.get("HGVSC")
     if not gene or not hgvsc:
@@ -124,10 +168,23 @@ def clinvar_search_url(variant: VariantRecord) -> str | None:
 
 
 def gnomad_variant_url(variant: VariantRecord, dataset: str = "gnomad_r4") -> str | None:
-    """For PM2, BA1, BS1, BS2 - "show the gnomAD AF page" for this specific
-    variant. Returns None if ref/alt aren't concrete alleles (e.g. this
-    project's demo data uses ALT="." for some indels/deletions, which
-    isn't a real gnomAD-linkable allele representation)."""
+    """
+    Criteria: PM2, BA1, BS1, BS2 (doc: "show the gnomAD af page" - all four
+      are population-frequency codes read off the same variant-level AF
+      figure, just compared against different thresholds elsewhere).
+    Site: gnomAD (gnomad.broadinstitute.org), the per-variant page (allele
+      frequency broken out by population, plus quality/coverage flags).
+    Logic: gnomAD's variant URL is positional, not accession-based:
+      f".../variant/{chrom}-{pos}-{ref}-{alt}?dataset={dataset}" straight
+      from VariantRecord's own chrom/pos/ref/alt fields (no external
+      lookup needed - unlike uniprot_page_url() above). `dataset` defaults
+      to "gnomad_r4" (GRCh38); pass "gnomad_r2_1" for a GRCh37-sourced
+      VariantRecord (not exercised against real data - this project's own
+      demo VCFs all declare "##reference=GRCh38"). Returns None when
+      ref/alt aren't concrete alleles (e.g. this project's demo data uses
+      ALT="." for some indels/deletions - not a real gnomAD-linkable
+      representation, so no URL is better than a broken one).
+    """
     if not variant.ref or not variant.alt or variant.alt in (".", ""):
         return None
     return (f"https://gnomad.broadinstitute.org/variant/"
@@ -135,8 +192,17 @@ def gnomad_variant_url(variant: VariantRecord, dataset: str = "gnomad_r4") -> st
 
 
 def gnomad_gene_url(variant: VariantRecord, dataset: str = "gnomad_r4") -> str | None:
-    """For PP2 - "get the gnomAD zscore" (a gene-level constraint metric,
-    shown on the gene page, not a variant page)."""
+    """
+    Criteria: PP2 (doc: "get the gnomAD zscore" - the missense Z-score is a
+      GENE-level constraint metric, unlike PM2/BA1/BS1/BS2's variant-level
+      AF, so this points at gnomAD's gene page instead of its variant page).
+    Site: gnomAD (gnomad.broadinstitute.org), the gene page's "Constraint"
+      section (lists the missense Z-score and pLI/LOEUF alongside it).
+    Logic: f".../gene/{gene}?dataset={dataset}" from variant.info["GENE"]
+      directly - no lookup needed, gnomAD's gene URLs take a bare symbol.
+      Same `dataset` genome-build caveat as gnomad_variant_url() above.
+      Returns None if GENE is missing.
+    """
     gene = variant.info.get("GENE")
     if not gene:
         return None
@@ -160,6 +226,14 @@ _URL_BUILDERS = {
     "BS2": gnomad_variant_url,
     "PP2": gnomad_gene_url,
 }
+
+# Public: the codes this module can build a reference URL for at all (a
+# per-variant call may still return None for one of these - e.g.
+# gnomad_variant_url() on an ALT="." record - but the code itself has a
+# defined URL strategy). Callers building a UI/EvidenceLine per code (see
+# acmg_pipeline.export.build_stub_evidence_line()) can use this to know
+# which of the 23 stub codes are even worth trying.
+CODES_WITH_REFERENCE_URL = frozenset(_URL_BUILDERS)
 
 
 def reference_url_for_criterion(code: str, variant: VariantRecord) -> str | None:

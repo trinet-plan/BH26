@@ -96,6 +96,9 @@ from acmg_pipeline.common import (
     AggregatedJudgment, CuratorHint, MatchStatus, PaperContribution,
     is_not_clear, strength_tier_from_paper_count,
 )
+from acmg_pipeline.classification import IMPLEMENTED_CODES
+from acmg_pipeline.criteria import reference_links
+from acmg_pipeline.vcf_record import VariantRecord
 
 PIPELINE_AGENT = Agent(
     id="acmg-literature-llm-pipeline",
@@ -261,5 +264,74 @@ def build_evidence_line(
             date=datetime.now(timezone.utc),
         )],
         extensions=extensions,
+    )
+    return evidence_line.model_dump(mode="json", exclude_none=True)
+
+
+def build_stub_evidence_line(code: str, variant: VariantRecord) -> Optional[dict]:
+    """
+    A minimal EvidenceLine for one of the 23 codes this project doesn't
+    implement (PP4, or a Layer-1 code - see acmg_pipeline/criteria/
+    stubs.py) - NOT a judgment. Carries only a `referenceLink` extension
+    (see acmg_pipeline.criteria.reference_links, built from doc/recs for
+    expert board.docx's per-criterion "what to show the curator" asks) so
+    a curator or another team's tool has a direct link to check, with no
+    evidenceOutcome/strengthOfEvidenceProvided/contributions claiming a
+    judgment this pipeline never made.
+
+    `directionOfEvidenceProvided` is a required VA-Spec EvidenceLine field
+    (confirmed against the real ga4gh.va_spec Pydantic model - omitting it
+    raises a validation error) with no "not evaluated" option in Direction
+    (supports/neutral/disputes only - see ga4gh.va_spec.base.core.Direction);
+    NEUTRAL is used here, same as this module's own _direction_of_evidence()
+    does for a not_clear literature judgment - but unlike that case, nothing
+    was actually evaluated here, so `description` says so explicitly rather
+    than leaving NEUTRAL to imply "assessed as neutral evidence".
+
+    Returns None (build nothing) if this module has no reference URL for
+    `code` at all (see reference_links.CODES_WITH_REFERENCE_URL) rather
+    than emitting a placeholder EvidenceLine with no useful content in it - the
+    per-variant EvidenceLine list should only ever contain codes where this
+    project actually has something (a real judgment OR a reference link)
+    to say about that variant.
+
+    Raises ValueError for `code` in IMPLEMENTED_CODES (currently just PP1
+    among reference_links.CODES_WITH_REFERENCE_URL - the other 4
+    implemented codes have no doc/recs-for-expert-board.docx reference URL
+    at all) - that code has a REAL judgment via build_evidence_line(), and
+    a stub line here would collide on the exact same EvidenceLine id
+    (both build f"evline:{gene}_{safe_hgvsc}_{code}"), silently shadowing
+    real evidence with a placeholder if a caller ever included both. The
+    caller is responsible for only invoking this for codes it has no real
+    AggregatedJudgment for - see acmg_pipeline.pipeline.classify_variant_
+    from_structured_input() once it's wired to call this function.
+    """
+    if code in IMPLEMENTED_CODES:
+        raise ValueError(
+            f"{code!r} is an implemented code (has a real judgment via "
+            "build_evidence_line()) - build_stub_evidence_line() is only for "
+            "codes this project has no real evidence for."
+        )
+    url = reference_links.reference_url_for_criterion(code, variant)
+    if url is None:
+        return None
+    gene = variant.info.get("GENE", "")
+    hgvsc = variant.info.get("HGVSC", "")
+    safe_hgvsc = hgvsc.replace(">", "_").replace(".", "_").replace("+", "p").replace("-", "m")
+
+    evidence_line = EvidenceLine(
+        id=f"evline:{gene}_{safe_hgvsc}_{code}",
+        directionOfEvidenceProvided=Direction.NEUTRAL,
+        description=(
+            f"{code} is not evaluated by this pipeline (see acmg_pipeline/criteria/"
+            "stubs.py - a Layer-1 automated-evidence code or PP4, both other-team/"
+            "not-yet-implemented responsibilities here). No judgment was made; the "
+            "reference link below is a navigation aid only."
+        ),
+        specifiedBy=Method(
+            methodType=code,
+            name=f"{code}: reference link only, no automated judgment by this pipeline",
+        ),
+        extensions=[Extension(name="referenceLink", value=url)],
     )
     return evidence_line.model_dump(mode="json", exclude_none=True)
