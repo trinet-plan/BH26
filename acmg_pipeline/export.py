@@ -97,8 +97,14 @@ from acmg_pipeline.common import (
     is_not_clear, strength_tier_from_paper_count,
 )
 from acmg_pipeline.classification import IMPLEMENTED_CODES
-from acmg_pipeline.criteria import reference_links
+from acmg_pipeline.criteria import curator_info, reference_links
 from acmg_pipeline.vcf_record import VariantRecord
+
+# Codes whose stub EvidenceLine also gets a `curatorInfo` extension (see
+# build_stub_evidence_line()) - the doc's ask for these two goes beyond "show
+# a page" (reference_links.py) into "check hotspot/nearby benign variants",
+# which needs UniProt's actual feature data, not just a link to it.
+_CODES_WITH_CURATOR_INFO = {"PM1", "PM5"}
 
 PIPELINE_AGENT = Agent(
     id="acmg-literature-llm-pipeline",
@@ -272,12 +278,15 @@ def build_stub_evidence_line(code: str, variant: VariantRecord) -> Optional[dict
     """
     A minimal EvidenceLine for one of the 23 codes this project doesn't
     implement (PP4, or a Layer-1 code - see acmg_pipeline/criteria/
-    stubs.py) - NOT a judgment. Carries only a `referenceLink` extension
-    (see acmg_pipeline.criteria.reference_links, built from doc/recs for
-    expert board.docx's per-criterion "what to show the curator" asks) so
-    a curator or another team's tool has a direct link to check, with no
+    stubs.py) - NOT a judgment. Carries a `referenceLink` extension (see
+    acmg_pipeline.criteria.reference_links, built from doc/recs for expert
+    board.docx's per-criterion "what to show the curator" asks) so a
+    curator or another team's tool has a direct link to check, with no
     evidenceOutcome/strengthOfEvidenceProvided/contributions claiming a
-    judgment this pipeline never made.
+    judgment this pipeline never made. PM1/PM5 additionally get a
+    `curatorInfo` extension (see acmg_pipeline.criteria.curator_info) -
+    structured UniProt domain/nearby-variant FACTS, still not a hotspot/
+    benign-nearby verdict.
 
     [Why `extensions`, not `reportedIn` - decided 2026-09-16, don't "fix"
      this without re-reading]
@@ -333,6 +342,30 @@ def build_stub_evidence_line(code: str, variant: VariantRecord) -> Optional[dict
     hgvsc = variant.info.get("HGVSC", "")
     safe_hgvsc = hgvsc.replace(">", "_").replace(".", "_").replace("+", "p").replace("-", "m")
 
+    extensions = [Extension(name="referenceLink", value=url)]
+    if code in _CODES_WITH_CURATOR_INFO:
+        ctx = curator_info.uniprot_domain_context(variant)
+        if ctx is not None:
+            # Plain-dict serialization (not ctx.__dict__ directly, since
+            # covering_domains/nearby_variants are lists of dataclasses -
+            # Extension.value must be JSON-serializable). Same "structured
+            # facts, no verdict" convention as structuredEvidenceItems
+            # elsewhere in this module - see curator_info.py's own
+            # docstring for why no hotspot/benign-nearby judgment is made
+            # here.
+            extensions.append(Extension(name="curatorInfo", value={
+                "uniprotAccession": ctx.accession,
+                "proteinPosition": ctx.position,
+                "coveringDomains": [
+                    {"type": d.feature_type, "start": d.start, "end": d.end, "description": d.description}
+                    for d in ctx.covering_domains
+                ],
+                "nearbyVariants": [
+                    {"position": v.position, "description": v.description}
+                    for v in ctx.nearby_variants
+                ],
+            }))
+
     evidence_line = EvidenceLine(
         id=f"evline:{gene}_{safe_hgvsc}_{code}",
         directionOfEvidenceProvided=Direction.NEUTRAL,
@@ -340,12 +373,13 @@ def build_stub_evidence_line(code: str, variant: VariantRecord) -> Optional[dict
             f"{code} is not evaluated by this pipeline (see acmg_pipeline/criteria/"
             "stubs.py - a Layer-1 automated-evidence code or PP4, both other-team/"
             "not-yet-implemented responsibilities here). No judgment was made; the "
-            "reference link below is a navigation aid only."
+            "reference link (and, for PM1/PM5, the curatorInfo extension) below are "
+            "navigation/information aids only."
         ),
         specifiedBy=Method(
             methodType=code,
             name=f"{code}: reference link only, no automated judgment by this pipeline",
         ),
-        extensions=[Extension(name="referenceLink", value=url)],
+        extensions=extensions,
     )
     return evidence_line.model_dump(mode="json", exclude_none=True)
