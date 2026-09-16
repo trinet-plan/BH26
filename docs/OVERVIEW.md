@@ -61,6 +61,58 @@ $env:PYTHONPATH = 'src'
 BP3も23件あり、過去の限定556件走査で0件だった記録を更新した。個々のUUID、座標、適用コード、
 General Guidance evaluatorとの強度差は[正例一覧](CLINGEN-POSITIVE-REFERENCES.md)に固定している。
 
+## 検証範囲（demo-data + fixture）
+
+demo-dataと`tests/fixtures/`の4スイートを合わせた49レコード・758判定が現在の検証範囲。
+fixtureのEvidenceは各スイートの対象criterionをMETにする分だけを積むため、
+NOT_EVALUATEDが多いのは設計どおりで、網羅性の不足を意味しない。
+
+| スイート | レコード | 判定数 | 出力検証 |
+| --- | ---: | ---: | --- |
+| demo-data（4症例） | 28 | 448 | VA-Spec 1.0.1 schema |
+| clingen-positive | 13 | 273 | VA-Spec 1.0.1 schema |
+| clingen-gate | 5 | 80 | 内部評価 |
+| synthetic | 1 | 16 | 内部評価 |
+| population-met | 2 | 32 | 内部評価 |
+| 合計 | 49 | 758 | |
+
+### criterionごとのMET到達
+
+| code | demo MET | fixture MET | 到達 |
+| --- | ---: | ---: | --- |
+| PVS1 | 0 | 1 | fixtureのみ |
+| PS1 | 0 | 1 | fixtureのみ |
+| PM1 | 2 | 1 | 両方 |
+| PM2 | 0 | 4 | fixtureのみ |
+| PM4 | 0 | 1 | fixtureのみ |
+| PM5 | 1 | 1 | 両方 |
+| PP2 | 0 | 1 | fixtureのみ |
+| PP3 | 6 | 2 | 両方 |
+| PP5 | - | - | DEPRECATED |
+| BA1 | 11 | 2 | 両方 |
+| BS1 | 0 | 1 | fixtureのみ |
+| BP1 | 0 | 1 | fixtureのみ |
+| BP3 | 0 | 1 | fixtureのみ |
+| BP4 | 12 | 2 | 両方 |
+| BP6 | - | - | DEPRECATED |
+| BP7 | 0 | 1 | fixtureのみ |
+
+実装対象14 criterionすべてがMET終端に到達する。demo-dataだけで到達するのは
+PM1・PM5・PP3・BA1・BP4の5件で、残り9件はfixture側でのみ到達する。
+clingen-gateのMET 2件（PP3・BP4）はゲート確認の副産物として付随的に成立したもの。
+
+### status合算
+
+| status | demo | fixture | 合計 |
+| --- | ---: | ---: | ---: |
+| MET | 32 | 20 | 52 |
+| NOT_MET | 108 | 14 | 122 |
+| NOT_APPLICABLE | 147 | 113 | 260 |
+| NOT_EVALUATED | 101 | 145 | 246 |
+| MANUAL_REVIEW | 4 | 2 | 6 |
+| DEPRECATED | 56 | 16 | 72 |
+| 計 | 448 | 310 | 758 |
+
 ## 16基準の状況
 
 ### 判定に到達している（7基準）
@@ -103,7 +155,7 @@ decision treeと4段階強度に対応済み。デモのPVS1候補3件はgene_di
 
 PP5・BP6を各28件DEPRECATED。外部assertionを点数化せず一次Evidenceを取りに行く方針による。
 
-### 集計
+### 集計（demo-dataのみ。fixtureを含む合算は[検証範囲](#検証範囲demo-data--fixture)）
 
 ```
 MET 32 / NOT_MET 108 / NOT_APPLICABLE 147 / NOT_EVALUATED 101 / MANUAL_REVIEW 4 / DEPRECATED 56
