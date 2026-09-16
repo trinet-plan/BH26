@@ -59,9 +59,10 @@ from acmg_pipeline.common import (
     PaperContribution, AggregatedJudgment, FinalResult, CuratorHint,
     MatchStatus, VariantMatchingResult,
 )
-from acmg_pipeline.gate import ERepoClient
+from acmg_pipeline.gate import ERepoClient, _protein_equivalents
 from acmg_pipeline.export import build_evidence_line
 from acmg_pipeline.classification import classify, from_aggregated_judgment
+from acmg_pipeline.api_input import ApiCaseInput
 
 VA_SPEC_OUTPUT_DIR = Path("va_spec_output")
 VA_SPEC_OUTPUT_DIR.mkdir(exist_ok=True)
@@ -497,6 +498,77 @@ async def judge_variant(
         show(f"\n[Scoring] Ground truth: {ground_truth} / Adopted judgment: {aggregated.aggregated_direction.value}")
 
     return aggregated
+
+
+# ---------------------------------------------------------------------------
+# Driving the literature criteria from structured API-shaped input
+# ---------------------------------------------------------------------------
+#
+# Added 2026-09-16: the first wiring between acmg_pipeline.api_input.
+# ApiCaseInput (this project's real input contract, built from a plain dict
+# - e.g. an HTTP request body already run through json.loads(), never a
+# file - see api_input.py's own from_dict()/from_json_file() split) and the
+# existing literature JudgmentEngines. Takes VariantRecord directly (via
+# case_input.parse_vcf().record) rather than a separate wrapper class, per
+# the user's direction (2026-09-16): a criterion's input is one of the
+# pulled-in entity classes (VariantRecord / ClinicalNoteExtraction), not a
+# new parallel dataclass, so a later new VCF INFO key or clinical_note
+# field needs no call-site signature change here.
+#
+# Only drives PS3/BS3/PS4/PP1/BS4 (ENGINE_BY_CRITERION) - the literature
+# path. It does NOT touch case_input.clinical_note at all: none of these 5
+# codes' literature path needs it (see test_case_ground_truth.md's
+# criterion-input-group design). The clinical-note-only paths (PP1/BS4's
+# alternative "patient's own family" route via acmg_pipeline.criteria.
+# segregation.from_clinical_note_family(), and PS2/PM6's de-novo rule) are
+# separate, not-yet-wired call sites - this function covers literature
+# only.
+#
+# PMIDs still come from ERepoClient (this project's only PMID source today
+# - see the open question, raised 2026-09-16, about a PubMed-search
+# fallback for variants ERepo has no record of at all).
+
+async def judge_variant_from_structured_input(
+    case_input: ApiCaseInput,
+    mcp: ClientSession,
+    erepo_client: ERepoClient,
+    criteria: tuple[str, ...] = ("PS3", "BS3", "PS4", "PP1", "BS4"),
+    vcep_name: str | None = None,
+    full_text_cache: dict[str, tuple[str | None, str]] | None = None,
+) -> dict[str, AggregatedJudgment]:
+    """
+    Parses `case_input`'s embedded VCF (exactly 1 variant, per ApiCaseInput's
+    own contract), looks up ERepo for citing PMIDs, and runs judge_variant()
+    once per requested literature criterion. Returns {criterion:
+    AggregatedJudgment}; a criterion is omitted from the result (not given a
+    not_clear placeholder) only when ERepo has zero PMIDs for this variant
+    at all, in which case the whole result dict is empty and the caller
+    should treat this variant as "nothing this pipeline could evaluate",
+    same as run_validation_64.py's "No evidence PMIDs from ERepo; skipping
+    this variant entirely" branch.
+    """
+    variant = case_input.parse_vcf().record
+    gene = variant.info.get("GENE", "")
+    hgvsc = variant.info.get("HGVSC", "")
+    hgvsp = variant.info.get("HGVSP", "N/A")
+    equivalents = list(_protein_equivalents(hgvsp)) if hgvsp and hgvsp != "N/A" else [hgvsc]
+
+    erepo_result = erepo_client.lookup(gene, hgvsc)
+    pmids = erepo_result.evidence_pmids
+    show(f"\n[ERepo] {gene} {hgvsc}: found_in_erepo={erepo_result.found_in_erepo}, evidence_pmids={pmids}")
+    if not pmids:
+        show("  -> No evidence PMIDs from ERepo; this variant cannot be evaluated by the literature path at all")
+        return {}
+
+    results: dict[str, AggregatedJudgment] = {}
+    for criterion in criteria:
+        engine = ENGINE_BY_CRITERION[criterion]
+        results[criterion] = await judge_variant(
+            engine, mcp, pmids=pmids, gene=gene, hgvsc=hgvsc, hgvsp=hgvsp,
+            equivalents=equivalents, vcep_name=vcep_name, criterion=criterion,
+            full_text_cache=full_text_cache,
+        )
+    return results
 
 
 def parse_ground_truth(ground_truth: str) -> tuple[str, bool]:
