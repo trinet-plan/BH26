@@ -1,0 +1,184 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bh26.example/schema/va-spec-1.0.1-acmg-evidence-line-output",
+  "title": "BH26 restrictive output profile for VA-Spec 1.0.1 VariantPathogenicityEvidenceLine",
+  "$comment": "A restrictive self-contained subset of https://w3id.org/ga4gh/schema/va-spec/1.0.1/acmg-2015/json/VariantPathogenicityEvidenceLine for fields emitted by BH26.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {"const": "EvidenceLine"},
+    "id": {"type": "string", "format": "iri-reference"},
+    "name": {"type": "string", "minLength": 1},
+    "description": {"type": "string"},
+    "extensions": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/extension"}
+    },
+    "specifiedBy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {"const": "Method"},
+        "name": {"type": "string", "minLength": 1},
+        "methodType": {
+          "enum": [
+            "PVS1", "PS1", "PS2", "PS3", "PS4", "PM1", "PM2", "PM3", "PM4",
+            "PM5", "PM6", "PP1", "PP2", "PP3", "PP4", "PP5", "BA1", "BS1",
+            "BS2", "BS3", "BS4", "BP1", "BP2", "BP3", "BP4", "BP5", "BP6", "BP7"
+          ]
+        },
+        "reportedIn": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {"const": "Document"},
+            "name": {"type": "string"},
+            "urls": {"type": "array", "items": {"type": "string", "format": "uri"}},
+            "doi": {"type": "string", "pattern": "^10\\.(\\d+)(\\.\\d+)*/[\\w\\-.]+"},
+            "pmid": {"type": "string"}
+          },
+          "required": ["type"]
+        }
+      },
+      "required": ["type", "methodType", "reportedIn"]
+    },
+    "hasEvidenceItems": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {"type": "string", "format": "iri-reference"},
+          {"$ref": "#/$defs/cohortAlleleFrequencyStudyResult"}
+        ]
+      }
+    },
+    "directionOfEvidenceProvided": {"enum": ["supports", "neutral", "disputes"]},
+    "strengthOfEvidenceProvided": {"$ref": "#/$defs/acmgStrength"},
+    "evidenceOutcome": {"$ref": "#/$defs/acmgOutcome"}
+  },
+  "required": ["type", "specifiedBy", "directionOfEvidenceProvided", "evidenceOutcome"],
+  "allOf": [
+    {
+      "if": {
+        "properties": {"directionOfEvidenceProvided": {"enum": ["supports", "disputes"]}},
+        "required": ["directionOfEvidenceProvided"]
+      },
+      "then": {"required": ["strengthOfEvidenceProvided"]},
+      "else": {"not": {"required": ["strengthOfEvidenceProvided"]}}
+    }
+  ],
+  "$defs": {
+    "extension": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "value": {}
+      },
+      "required": ["name", "value"]
+    },
+    "coding": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "system": {"const": "ACMG Guidelines, 2015"},
+        "code": {"type": "string"}
+      },
+      "required": ["system", "code"]
+    },
+    "acmgStrength": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "primaryCoding": {
+          "allOf": [
+            {"$ref": "#/$defs/coding"},
+            {"properties": {"code": {"enum": ["standalone", "very strong", "strong", "moderate", "supporting"]}}}
+          ]
+        }
+      },
+      "required": ["primaryCoding"]
+    },
+    "acmgOutcome": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {"type": "string"},
+        "primaryCoding": {
+          "allOf": [
+            {"$ref": "#/$defs/coding"},
+            {
+              "properties": {
+                "code": {
+                  "pattern": "^((?:PVS1)(?:_(?:not_met|(?:strong|moderate|supporting)))?|(?:PS[1-4]|BS[1-4])(?:_(?:not_met|(?:very_strong|moderate|supporting)))?|BA1(?:_not_met)?|(?:PM[1-6])(?:_(?:not_met|(?:very_strong|strong|supporting)))?|(PP[1-5]|BP[1-7])(?:_(?:not_met|very_strong|strong|moderate))?)$"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "required": ["primaryCoding"]
+    },
+    "document": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {"const": "Document"},
+        "name": {"type": "string"},
+        "urls": {"type": "array", "items": {"type": "string", "format": "uri"}}
+      },
+      "required": ["type"]
+    },
+    "method": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {"const": "Method"},
+        "name": {"type": "string"},
+        "reportedIn": {"$ref": "#/$defs/document"}
+      },
+      "required": ["type"]
+    },
+    "dataSet": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {"type": "string", "format": "iri-reference"},
+        "type": {"const": "DataSet"},
+        "name": {"type": "string"},
+        "version": {"type": "string"}
+      },
+      "required": ["type"]
+    },
+    "studyGroup": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {"type": "string", "format": "iri-reference"},
+        "type": {"const": "StudyGroup"},
+        "name": {"type": "string"}
+      },
+      "required": ["type"]
+    },
+    "cohortAlleleFrequencyStudyResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {"type": "string", "format": "iri-reference"},
+        "type": {"const": "CohortAlleleFrequencyStudyResult"},
+        "name": {"type": "string"},
+        "focusAllele": {"type": "string", "format": "iri-reference"},
+        "focusAlleleFrequency": {"type": "number", "minimum": 0, "maximum": 1},
+        "focusAlleleCount": {"type": "integer", "minimum": 0},
+        "locusAlleleCount": {"type": "integer", "minimum": 1},
+        "sourceDataSet": {"$ref": "#/$defs/dataSet"},
+        "cohort": {"$ref": "#/$defs/studyGroup"},
+        "specifiedBy": {"$ref": "#/$defs/method"},
+        "qualityMeasures": {"type": "object", "additionalProperties": true}
+      },
+      "required": [
+        "type", "focusAllele", "focusAlleleFrequency", "focusAlleleCount",
+        "locusAlleleCount", "cohort"
+      ]
+    }
+  }
+}

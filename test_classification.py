@@ -31,8 +31,8 @@ def check(label, cond):
 print("[1] ACMG code list sanity")
 check("28 total codes", len(ALL_ACMG_CODES) == 28)
 check("no overlap between pathogenic/benign lists", not (set(PATHOGENIC_CODES) & set(BENIGN_CODES)))
-check("5 implemented codes", IMPLEMENTED_CODES == {"PS3", "BS3", "PS4", "PP1", "BS4"})
-check("23 stub codes", len(stubs.STUB_CODES) == 23)
+check("21 implemented codes", len(IMPLEMENTED_CODES) == 21)
+check("7 stub codes", len(stubs.STUB_CODES) == 7)
 check("implemented + stub codes cover all 28 with no overlap",
       set(stubs.STUB_CODES) | IMPLEMENTED_CODES == set(ALL_ACMG_CODES)
       and not (set(stubs.STUB_CODES) & IMPLEMENTED_CODES))

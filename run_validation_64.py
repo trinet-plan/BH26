@@ -5,7 +5,7 @@ VALIDATION-mode run (see acmg_pipeline/gate.py's GateMode) of the LLM
 literature-judgment pipeline across every (variant, criterion) pair in
 test_data/full_criteria_ground_truth.py that this project has a real
 JudgmentEngine for (PS3/BS3/PS4/PP1/BS4 - see acmg_pipeline.classification.
-IMPLEMENTED_CODES). Ground truth is never shown to the LLM; it is only
+LITERATURE_CODES). Ground truth is never shown to the LLM; it is only
 used afterward to score the result (see score_direction() in pipeline.py) -
 that is what "validation mode" means here, matching gate.py's own
 GateMode.VALIDATION docstring ("hides the ground truth, forces the
@@ -41,7 +41,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from acmg_pipeline.classification import IMPLEMENTED_CODES
+from acmg_pipeline.classification import LITERATURE_CODES
 from acmg_pipeline.fulltext_cache import DiskBackedFullTextCache
 from acmg_pipeline.gate import ERepoClient
 from test_data.full_criteria_ground_truth import GROUND_TRUTH, GroundTruthEntry
@@ -52,7 +52,11 @@ import acmg_pipeline.pipeline as pl
 def _variant_criterion_pairs() -> dict[tuple[str, str], list[GroundTruthEntry]]:
     by_variant: dict[tuple[str, str], list[GroundTruthEntry]] = {}
     for e in GROUND_TRUTH:
-        if e.criterion in IMPLEMENTED_CODES:
+        # Only the literature codes have a JudgmentEngine. Since the
+        # evidence-cli merge, IMPLEMENTED_CODES also covers the 16
+        # automated codes, which have no engine and must not be scored
+        # here (using it would KeyError in ENGINE_BY_CRITERION).
+        if e.criterion in LITERATURE_CODES:
             by_variant.setdefault((e.gene, e.hgvsc), []).append(e)
     return by_variant
 

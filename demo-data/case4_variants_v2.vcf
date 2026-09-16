@@ -1,0 +1,31 @@
+##fileformat=VCFv4.2
+##fileDate=20260908
+##triage_expansion=Additional real benign noise variants (TRIAGE_NOISE in NOTE field) were added on 2026-09-08 to expand this file into a pre-triage candidate pool, enabling vep_parser.py testing beyond the 2-3 case-report target variants.
+##caveat=Genomic POS coordinates (GRCh38) for HGVS c.-notation variants below are approximate placements for demo purposes; exact positions were not independently re-mapped from a reference genome build. HGVS c./p. notation and all frequency values for case4-var1 are taken directly from the cited source and are accurate.
+##source=BH26_DemoCase_RealCaseReport_v3
+##reference=GRCh38
+##comment=case4-var1 (DSG2) is the REAL variant from a real, published, open-access case report (Human Genome Variation, PMC9360431). case4-var2 and case4-var3 are REAL benign variants from separate ClinVar entries, added as noise for demo purposes (not part of the original case, which found no other ARVC gene variants).
+##INFO=<ID=GENE,Number=1,Type=String,Description="Gene symbol">
+##INFO=<ID=TRANSCRIPT,Number=1,Type=String,Description="RefSeq transcript">
+##INFO=<ID=HGVSC,Number=1,Type=String,Description="HGVS coding">
+##INFO=<ID=HGVSP,Number=1,Type=String,Description="HGVS protein">
+##INFO=<ID=ZYGOSITY,Number=1,Type=String,Description="Zygosity in proband">
+##INFO=<ID=CLNSIG,Number=1,Type=String,Description="Clinical significance">
+##INFO=<ID=GNOMAD_AF,Number=1,Type=Float,Description="Overall gnomAD AF (real, as reported: 16/280790)">
+##INFO=<ID=GNOMAD_AF_EAS,Number=1,Type=Float,Description="gnomAD East Asian AF (real, as reported: 16/19534)">
+##INFO=<ID=TOMMO_AF,Number=1,Type=Float,Description="ToMMo 14KJPN AF (real, as reported: 3/28258)">
+##INFO=<ID=HGVD_AF,Number=1,Type=Float,Description="HGVD (Japan) AF (real, as reported: 2/2418)">
+##INFO=<ID=NOTE,Number=.,Type=String,Description="Citation / design intent">
+##INFO=<ID=AM_PATHOGENICITY,Number=1,Type=Float,Description="AlphaMissense pathogenicity score (0-1), from user-provided annotation">
+##INFO=<ID=AM_CLASS,Number=1,Type=String,Description="AlphaMissense classification (likely_benign/ambiguous/likely_pathogenic)">
+##INFO=<ID=AG_SPLICING_SCORE,Number=1,Type=Float,Description="AlphaGenome splicing score, from user-provided annotation">
+##INFO=<ID=AG_IMPACT_RAW,Number=1,Type=Float,Description="AlphaGenome impact raw score, from user-provided annotation">
+##INFO=<ID=AG_IMPACT_PHRED,Number=1,Type=Float,Description="AlphaGenome impact PHRED-scaled score, from user-provided annotation">
+##annotation_source=AlphaMissense and AlphaGenome annotations added 2026-09-10 by user (case1-4_annotated_alphamissense_alphagenome_v4.xlsx). POS/REF/ALT corrected for case2-var1, case3-var1, case3-var2, case4-var1 (originally approximate placeholders; now re-mapped via ClinVar by the user) and case3-noise6 (originally approximate; user found real ClinVar entry and corrected position).
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
+18	31536370	case4-var1	T	G	99	PASS	GENE=DSG2;TRANSCRIPT=NM_001943.5;HGVSC=c.1592T>G;HGVSP=p.(Phe531Cys);ZYGOSITY=homozygous;CLNSIG=Conflicting_interpretations_of_pathogenicity;CLNREVSTAT=criteria_provided,_conflicting_classifications;CLNVARIATIONID=VCV000044283.23;GNOMAD_AF=0.0000570;GNOMAD_AF_EAS=0.000819;TOMMO_AF=0.000106;HGVD_AF=0.000827;ACMG_CODES=PS3_Strong(low_confidence_mouse_model),PS4_Strong;NOTE=CORRECTED_2026-09-08_per_human_curation_v2_(pptx3)-ClinVar_VCV000044283.23_actual_submitter_breakdown_CORRECTED_to_Likely_pathogenic(3)_Uncertain_significance(7)_Likely_benign(1)-this_resolves_the_earlier_flagged_suspicion_that_v1_curation_had_a_copy-paste_error_(previously_incorrectly_matched_case3_MYBPC3s_breakdown_exactly)-CURATORS_OWN_RE-DERIVATION_via_PS3(mouse_Dsg2_p.Phe536Cys_knock-in_homozygous_biventricular_dilation_reduced_LVEF_conduction_abnormalities_fibrosis_springer_s12916-024-03593-8,_CURATOR_FLAGS_LOW_CONFIDENCE_re_mouse_model_interpretation)+PS4(family_screening_only_homozygous_carriers_show_full_ARVC_phenotype_100pct_penetrance_heterozygous_unaffected)_reaches_2_Strong=Pathogenic_per_ACMG_table5-this_is_now_LESS_discordant_with_actual_ClinVar_submitters_since_3_of_11_labs_already_call_Likely_pathogenic_though_plurality_(7)_still_Uncertain-intended_use_case_remains_the_Pan-Asian_frequency_discordance_demonstration_gnomAD_EAS_approx_14x_higher_than_gnomAD_overall;AM_PATHOGENICITY=0.952;AM_CLASS=likely_pathogenic;AG_SPLICING_SCORE=0.04198;AG_IMPACT_RAW=1.422;AG_IMPACT_PHRED=27.55991
+1	156135237	case4-var2	T	C	80	PASS	GENE=LMNA;TRANSCRIPT=NM_170707.4;HGVSC=c.861T>C;HGVSP=p.(Ala287=);ZYGOSITY=heterozygous;CLNSIG=Benign;GNOMAD_AF=.;GNOMAD_AF_EAS=.;TOMMO_AF=0.010709;HGVD_AF=.;NOTE=REAL_VARIANT_LIVE_QUERIED_TogoMCP-not_part_of_original_case-synonymous_benign_noise;AG_SPLICING_SCORE=0.06404;AG_IMPACT_RAW=-0.7498;AG_IMPACT_PHRED=0.00012
+1	201361238	case4-var3	G	C	80	PASS	GENE=TNNT2;TRANSCRIPT=NM_000364.4;HGVSC=c.801+41C>G;HGVSP=p.(Thr274Arg);ZYGOSITY=heterozygous;CLNSIG=Benign;GNOMAD_AF=0.00878;GNOMAD_AF_EAS=.;TOMMO_AF=0.12573;HGVD_AF=.;NOTE=REAL_VARIANT-VCV000188689-not_part_of_original_case-common_benign_noise;AG_SPLICING_SCORE=0.4535;AG_IMPACT_RAW=-0.1771;AG_IMPACT_PHRED=0.06629
+11	47343571	case4-noise4	G	A	80	PASS	GENE=MYBPC3;TRANSCRIPT=NM_000256.3;HGVSC=c.1144C>T;HGVSP=p.(Arg382Trp);ZYGOSITY=heterozygous;CLNSIG=Benign;CLNVARIATIONID=VCV000042506;GNOMAD_AF=0.0130;NOTE=TRIAGE_NOISE-REAL_LIVE_TogoMCP-common_benign;AM_PATHOGENICITY=0.3417;AM_CLASS=ambiguous;AG_SPLICING_SCORE=0.06587;AG_IMPACT_RAW=0.7952;AG_IMPACT_PHRED=22.89183
+19	55156239	case4-noise5	G	A	80	PASS	GENE=TNNI3;TRANSCRIPT=NM_000363.5;HGVSC=c.244C>T;HGVSP=p.(Pro82Ser);ZYGOSITY=heterozygous;CLNSIG=Benign;CLNVARIATIONID=VCV000012421;GNOMAD_AF=0.0064;NOTE=TRIAGE_NOISE-REAL_LIVE_TogoMCP-benign_missense;AM_PATHOGENICITY=0.127;AM_CLASS=likely_benign;AG_SPLICING_SCORE=0.05162;AG_IMPACT_RAW=0.6033;AG_IMPACT_PHRED=20.62731
+19	55156285	case4-noise6	C	T	80	PASS	GENE=TNNI3;TRANSCRIPT=NM_000363.5;HGVSC=c.198G>A;HGVSP=p.(Glu66=);ZYGOSITY=heterozygous;CLNSIG=Benign;CLNVARIATIONID=VCV000043364;GNOMAD_AF=0.0392;NOTE=TRIAGE_NOISE-REAL_LIVE_TogoMCP-common_synonymous_benign;AG_SPLICING_SCORE=0.1609;AG_IMPACT_RAW=0.674;AG_IMPACT_PHRED=21.63253

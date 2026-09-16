@@ -5,16 +5,14 @@ Two things, deliberately kept separate:
 
   [1] Integrity checks on test_data/full_criteria_ground_truth.py itself -
       this is a DATA sanity check (are the entries well-formed?), not a
-      test of any judgment logic - this project doesn't implement PP4 or
-      the 16 Layer-1 codes (see design doc section 15-13/15-14; that's
-      another team member's responsibility). No acmg_pipeline module beyond
+      test of any judgment logic. No acmg_pipeline module beyond
       classification.py/gate.py's shared enums is exercised here.
 
   [2] A classify()-vs-reality comparison, run and REPORTED but never
-      asserted pass/fail. Feeding classify() only the 5 codes this project
-      actually implements (PS3/BS3/PS4/PP1/BS4) is expected to undershoot
+      asserted pass/fail. Feeding classify() the criteria represented in
+      the collected ground truth is expected to differ from a complete
       each variant's real, already-known classification for most of these
-      variants (23 of 28 codes are always NOT_EVALUATED here) - that gap is
+      variant review - that gap is
       the whole point of classification.py's `not_evaluated_codes` field,
       and printing it honestly is more useful than hiding it behind a
       passing assertion that doesn't mean what it looks like it means.
@@ -27,7 +25,8 @@ from collections import Counter
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from acmg_pipeline.classification import (
-    ALL_ACMG_CODES, IMPLEMENTED_CODES, CriterionEvidence, classify,
+    ALL_ACMG_CODES, AUTOMATED_CODES, IMPLEMENTED_CODES, LITERATURE_CODES,
+    CriterionEvidence, classify,
 )
 from acmg_pipeline.gate import CriterionStatus
 from acmg_pipeline.criteria import stubs
@@ -65,11 +64,11 @@ by_criterion = Counter(e.criterion for e in GROUND_TRUTH)
 covered = {c for c in ALL_ACMG_CODES if by_criterion.get(c, 0) > 0}
 print(f"\n  criteria with at least 1 ground-truth entry: {len(covered)}/28")
 print(f"  criteria with zero entries: {sorted(set(ALL_ACMG_CODES) - covered)}")
-check("the 5 implemented codes all have ground-truth coverage",
-      IMPLEMENTED_CODES.issubset(covered))
+check("the 5 literature codes all have ground-truth coverage",
+      LITERATURE_CODES.issubset(covered))
 check("PP4 has real ground-truth coverage (this session's specific ask)",
       by_criterion.get("PP4", 0) > 0)
-_layer1_codes = sorted(c for c in stubs.AUTOMATED_RULE_BASED_OTHER_TEAM if c != "PP4")
+_layer1_codes = sorted(AUTOMATED_CODES)
 _layer1_covered = [c for c in _layer1_codes if by_criterion.get(c, 0) > 0]
 check(f"at least 14 of the 16 Layer-1 codes have coverage (got {len(_layer1_covered)})",
       len(_layer1_covered) >= 14)
@@ -86,7 +85,7 @@ print(f"\n{sum(1 for _ in unique_variants())} unique variants across the dataset
 # ============================================================================
 # [2] classify() vs. each variant's real, already-known classification
 # ============================================================================
-print("\n[2] classify() (this project's 5 codes only) vs. each variant's real classification")
+print("\n[2] classify() (available integrated codes) vs. each variant's real classification")
 print("    (mismatches are EXPECTED - see module docstring; this is a report, not a pass/fail gate)\n")
 
 match_n = 0
@@ -107,7 +106,7 @@ for gene, hgvsc in unique_variants():
         for e in entries if e.criterion in IMPLEMENTED_CODES
     ]
     if not our_evidence:
-        continue  # this project has zero of the 5 implemented codes for this variant
+        continue  # no integrated implemented criterion exists for this variant
 
     result = classify(our_evidence)
     compared_n += 1
@@ -121,8 +120,8 @@ for gene, hgvsc in unique_variants():
           f"our classify()={result.category.value} (score={result.score}, from {codes_used}) "
           f"vs. real={real_outcome}")
 
-print(f"\n{compared_n} variant(s) had both a real known classification and >=1 of our 5 implemented "
-      f"codes; {match_n}/{compared_n} matched using only those codes (the rest is unevaluated by design).")
+print(f"\n{compared_n} variant(s) had both a real known classification and >=1 integrated implemented "
+      f"codes; {match_n}/{compared_n} matched using only those codes (the rest may be unevaluated).")
 
 
 print(f"\n{'='*40}\n{passed} passed, {failed} failed\n{'='*40}")

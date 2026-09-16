@@ -1,0 +1,18 @@
+[IMPORTANT: Unlike Cases 1, 2, and 4, this clinical narrative is CONSTRUCTED/FICTIONAL for demo purposes. It is NOT drawn from a specific published case report. However, the variant identities, population frequency data, and ClinVar status described below ARE real, drawn from real publications (see citations). This case is designed to demonstrate the Pan-Asian population-frequency scenario using a real, previously-controversial variant.]
+
+Case 3 — Patient ID: DEMO-CASE3-001 (fictional patient, Singaporean/Chinese ancestry)
+
+History (fictional): A 31-year-old patient of Singaporean Chinese ancestry presented with exertional dyspnea and was found to have asymmetric septal hypertrophy on echocardiography (wall thickness 17 mm), with no secondary cause identified (normotensive, no history of athletic training).
+
+Family history (fictional): The patient's father had a diagnosis of "thickened heart" in his 50s of unclear cause; no genetic testing was performed on him.
+
+Genetic findings (real variant identities, fictional patient context): A cardiomyopathy gene panel identified two candidate variants:
+1. MYH7 p.(Arg719Trp) — a well-established pathogenic variant (real ClinVar entry, see citation A)
+2. MYBPC3 p.(Glu334Lys) — a variant previously classified pathogenic, but found at a carrier frequency of 13/4810 (0.03%) in the Singapore SG10K cohort; ClinVar currently lists this variant as having conflicting interpretations of pathogenicity (see citation B). The same variant has also been reported as a variant of uncertain significance in 3 patients in a Hong Kong Chinese HCM cohort (see citation C), reinforcing that its true population frequency in East Asian/Southeast Asian ancestry is higher than initially appreciated from predominantly European reference databases.
+
+Clinical impression (fictional): Likely familial HCM; genetic result under specialist review given the presence of one well-established pathogenic variant (MYH7) alongside a second variant (MYBPC3) whose classification depends heavily on which population reference data is used.
+
+Citations:
+A. ClinVar VCV000014104 (MYH7 p.Arg719Trp, Pathogenic)
+B. The Need for Inclusive Genomic Research. Circulation: Genomic and Precision Medicine. DOI:10.1161/CIRCGEN.122.003736 (citing Tomar et al.'s SG10K analysis)
+C. Genetic landscape of hypertrophic cardiomyopathy in Hong Kong Chinese population. PMC12123433 (reports MYBPC3 c.1000G>A / p.Glu334Lys as VUS in n=3 patients)

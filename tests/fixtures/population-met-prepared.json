@@ -1,0 +1,38 @@
+{
+  "schema_version": "1.0",
+  "records": [
+    {
+      "record_id": "fixture:pm2-met",
+      "source": {"case_id": "fixture", "variant_id": "pm2-met"},
+      "variant": {"assembly": "GRCh38", "chrom": "1", "pos": 2, "ref": "C", "alt": "T"},
+      "identity_provenance": [
+        {
+          "source": "synthetic-test-fixture",
+          "source_version": "1",
+          "retrieved_at": "2026-09-15",
+          "matched_identifiers": {"variant_key": "GRCh38:1:2:C:T"}
+        }
+      ]
+    },
+    {
+      "record_id": "fixture:ba1-met",
+      "source": {"case_id": "fixture", "variant_id": "ba1-met"},
+      "variant": {"assembly": "GRCh38", "chrom": "2", "pos": 3, "ref": "G", "alt": "A"},
+      "identity_provenance": [
+        {
+          "source": "synthetic-test-fixture",
+          "source_version": "1",
+          "retrieved_at": "2026-09-15",
+          "matched_identifiers": {"variant_key": "GRCh38:2:3:G:A"}
+        }
+      ],
+      "ba1_exception_assessment": {
+        "evidence_id": "https://example.org/evidence/ba1-exception-check-negative",
+        "source": "synthetic-test-fixture",
+        "source_version": "1",
+        "reviewed_at": "2026-09-15",
+        "is_exception": false
+      }
+    }
+  ]
+}

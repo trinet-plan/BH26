@@ -1,0 +1,19 @@
+[Clinical narrative and variant findings below are drawn from a real, published, open-access case report (see citation). One additional benign "noise" variant (case2-var3) has been added from a separate real ClinVar entry to create a candidate shortlist; it was not part of the original published case.
+
+VERIFICATION NOTE (2026-09-08): This file was corrected after a prior draft contained content CROSS-CONTAMINATED from a different, unrelated 2019 case report (Alsters et al., Netherlands Heart Journal, a Dutch infant with different MYBPC3 variants). The claims "no history of maternal diabetes mellitus" and "family history negative for sudden death, cardiomyopathy, or heart failure" belonged to that other paper, not to Wang et al. 2025, and have been removed. The claim about a "broad differential diagnosis encompassing cardiomyopathies, channelopathies, and metabolic disorders" could not be confirmed in the retrieved abstract and has also been removed.]
+
+Citation: Wang J, Hong L, Li Y, Mao Z, Zhu Y, Qi M, Zhou R, Hong X (2025). Case Report: Lethal neonatal hypertrophic cardiomyopathy from compound heterozygous MYBPC3 variants. Front Cardiovasc Med 12:1726463. doi:10.3389/fcvm.2025.1726463. Open access, CC BY.
+
+Case 2 — Patient ID: DEMO-CASE2-001 (neonatal, forensic/molecular autopsy)
+
+History: Bi-allelic pathogenic variants in MYBPC3 cause a rare and lethal neonatal form of hypertrophic cardiomyopathy (HCM) that often evades detection during routine prenatal screening. A two-month-old infant died from sudden-onset acute heart failure. A full forensic autopsy with detailed histological examination was performed, together with trio-based whole-exome sequencing (WES) on the proband and both parents to identify the genetic etiology.
+
+Postmortem examination revealed severe HCM, an atrial septal defect (ASD), and extensive myocardial necrosis and fibrosis.
+
+Genetic findings: WES identified compound heterozygous pathogenic variants in MYBPC3:
+- A known paternal splice-site variant (c.2905+1G>A, exon 27)
+- A novel maternal truncating frameshift variant (c.836del; p.Gly279Valfs*21, exon 8)
+
+Both variants are predicted to result in complete loss of protein function. Western blot confirmed near-total absence of functional cMyBP-C protein, consistent with a null phenotype from the compound heterozygous state.
+
+Clinical impression: This "molecular autopsy" established a definitive genetic cause of death (biallelic loss-of-function MYBPC3: c.2905+1G>A classified Pathogenic [PVS1_VeryStrong + PS4_Strong + PM2_Moderate]; c.836del classified Likely Pathogenic [PVS1_VeryStrong + PM2_Moderate]). The diagnosis guided clinical management of the asymptomatic carrier parents, prompting long-term cardiac surveillance and enabling preimplantation genetic testing (PGT) for future family planning.

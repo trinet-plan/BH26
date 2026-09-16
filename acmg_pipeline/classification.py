@@ -23,16 +23,16 @@ strength for met calls) into a single final ACMG/AMP variant classification.
   Per the user's decision (2026-09-15): since the eventual external API
   interface with other teams isn't settled yet, build the classification
   engine first - it can be built and tested today using only this
-  project's own 5 implemented criteria (PS3/BS3/PS4/PP1/BS4), and needs no
+  project's five literature criteria (PS3/BS3/PS4/PP1/BS4), and needs no
   changes when other teams' criteria (PVS1, PM1, PM2, ...) are added later,
   since it only cares about (code, status, strength) tuples, not how they
   were produced.
 
-[Where the 23 other ACMG codes come from]
+[Where all 28 ACMG codes come from]
   This module owns the canonical list of all 28 ACMG/AMP 2015 codes
-  (ALL_ACMG_CODES) and which 5 this project actually implements
-  (IMPLEMENTED_CODES). acmg_pipeline/criteria/stubs.py uses these to
-  generate a NOT_EVALUATED CriterionEvidence for every other code, so
+  (ALL_ACMG_CODES), the five literature codes, and the sixteen imported
+  automated codes. acmg_pipeline/criteria/stubs.py generates a
+  NOT_EVALUATED CriterionEvidence for the remaining seven codes, so
   classify() can be called with a genuinely complete evidence set (missing
   evidence for an unimplemented code is explicit and visible, not silently
   absent).
@@ -62,10 +62,16 @@ BENIGN_CODES = [
 ]
 ALL_ACMG_CODES = PATHOGENIC_CODES + BENIGN_CODES
 
-# The 5 codes this project has a real judgment engine for (see
-# acmg_pipeline/criteria/{ps3_bs3,ps4,segregation}.py and design doc
-# section 15-5 for why exactly these 5 and not the other 23).
-IMPLEMENTED_CODES = {"PS3", "BS3", "PS4", "PP1", "BS4"}
+# The literature pipeline owns five criteria.  The in-process automated
+# evaluator imported from the evidence-cli work owns another sixteen.
+# Keeping these sets separate prevents a criterion from being emitted once
+# as real evidence and again as a placeholder.
+LITERATURE_CODES = {"PS3", "BS3", "PS4", "PP1", "BS4"}
+AUTOMATED_CODES = {
+    "PVS1", "PS1", "PM1", "PM2", "PM4", "PM5", "PP2", "PP3", "PP5",
+    "BA1", "BS1", "BP1", "BP3", "BP4", "BP6", "BP7",
+}
+IMPLEMENTED_CODES = LITERATURE_CODES | AUTOMATED_CODES
 
 
 class Strength(str, Enum):
