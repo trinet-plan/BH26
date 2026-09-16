@@ -98,11 +98,19 @@ async def main() -> None:
             hgvsp = entries[0].hgvsp
             equivalents = [hgvsp] if hgvsp and hgvsp != "N/A" else [hgvsc]
 
-            erepo_result = erepo_client.lookup(gene, hgvsc)
-            pmids = erepo_result.evidence_pmids
-            pl.show(f"\n[ERepo] {gene} {hgvsc}: evidence_pmids={pmids}")
+            # No direct erepo_client.lookup() here - resolve_pmids_for_variant()
+            # (ERepo first, live PubMed search fallback) is the single shared
+            # PMID resolver every caller should go through, per the user's
+            # 2026-09-16 direction. `disease` is unavailable from a
+            # GroundTruthEntry (unlike VariantRecord.info["DISEASE_ASSOCIATION"]
+            # in judge_variant_from_structured_input()), so the search
+            # fallback here only gets the protein-change and generic
+            # "novel variant" queries, not the disease-keyword one - a real
+            # but accepted degradation given what this script's own data
+            # source (test_data/full_criteria_ground_truth.py) carries.
+            pmids, _pmid_source = await pl.resolve_pmids_for_variant(mcp, erepo_client, gene, hgvsc, hgvsp)
             if not pmids:
-                pl.show("  -> No evidence PMIDs from ERepo; skipping this variant entirely")
+                pl.show("  -> No PMIDs from ERepo or PubMed search; skipping this variant entirely")
                 continue
 
             for e in entries:

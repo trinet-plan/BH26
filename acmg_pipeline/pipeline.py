@@ -643,6 +643,47 @@ async def search_candidate_pmids(
     return seen[:max_results]
 
 
+async def resolve_pmids_for_variant(
+    mcp: ClientSession, erepo_client: ERepoClient, gene: str, hgvsc: str,
+    hgvsp: str | None = None, disease: str | None = None,
+) -> tuple[list[str], str]:
+    """
+    The single, shared "how do we get PMIDs for this variant" resolver:
+    ERepo's curated evidenceLinks first, a live PubMed search (search_
+    candidate_pmids() above) only when ERepo has nothing. Returns
+    (pmids, source) where source is "erepo" or "pubmed_search" - an empty
+    pmids list means neither source found anything at all.
+
+    Extracted 2026-09-16 so every caller shares one resolution path rather
+    than each hand-rolling its own ERepo-only lookup: run_validation_64.py
+    used to call erepo_client.lookup() directly and never got the search
+    fallback judge_variant_from_structured_input() (below) already had,
+    silently skipping the exact variants (e.g. MYBPC3 c.1000G>A, DSG2
+    c.1592T>G - no ERepo record at all) that most needed it. Per the
+    user's explicit direction (2026-09-16): no caller should reference
+    ERepo directly anymore - always go through this function instead, so
+    a future change to the resolution strategy (e.g. a better search query,
+    or a third PMID source) only needs to happen in one place.
+    """
+    erepo_result = erepo_client.lookup(gene, hgvsc)
+    pmids = erepo_result.evidence_pmids
+    show(f"\n[ERepo] {gene} {hgvsc}: found_in_erepo={erepo_result.found_in_erepo}, evidence_pmids={pmids}")
+    if pmids:
+        return pmids, "erepo"
+
+    show("  -> No evidence PMIDs from ERepo; falling back to a live PubMed search "
+         "(this variant has no curated citations, e.g. it may be novel/unregistered)")
+    pmids = await search_candidate_pmids(mcp, gene, hgvsp, disease)
+    show(f"[PubMed search] candidate PMIDs: {pmids}")
+    if pmids:
+        show("  [caution] These PMIDs came from a live PubMed search, not a VCEP-curated "
+             "citation list - unlike ERepo's evidenceLinks, a search hit is not confirmed to "
+             "actually discuss this variant until the per-paper judgment checks it.")
+    else:
+        show("  -> PubMed search also found nothing; this variant cannot be evaluated by the literature path at all")
+    return pmids, "pubmed_search"
+
+
 async def judge_variant_from_structured_input(
     case_input: ApiCaseInput,
     mcp: ClientSession,
@@ -653,14 +694,14 @@ async def judge_variant_from_structured_input(
 ) -> dict[str, AggregatedJudgment]:
     """
     Parses `case_input`'s embedded VCF (exactly 1 variant, per ApiCaseInput's
-    own contract), looks up ERepo for citing PMIDs, and runs judge_variant()
-    once per requested literature criterion. Returns {criterion:
+    own contract) and runs judge_variant() once per requested literature
+    criterion, using resolve_pmids_for_variant() above (ERepo first, live
+    PubMed search fallback) to find citing PMIDs. Returns {criterion:
     AggregatedJudgment}; a criterion is omitted from the result (not given a
-    not_clear placeholder) only when ERepo has zero PMIDs for this variant
-    at all, in which case the whole result dict is empty and the caller
-    should treat this variant as "nothing this pipeline could evaluate",
-    same as run_validation_64.py's "No evidence PMIDs from ERepo; skipping
-    this variant entirely" branch.
+    not_clear placeholder) only when neither PMID source found anything for
+    this variant at all, in which case the whole result dict is empty and
+    the caller should treat this variant as "nothing this pipeline could
+    evaluate".
     """
     variant = case_input.parse_vcf().record
     gene = variant.info.get("GENE", "")
@@ -668,25 +709,10 @@ async def judge_variant_from_structured_input(
     hgvsp = variant.info.get("HGVSP", "N/A")
     equivalents = list(_protein_equivalents(hgvsp)) if hgvsp and hgvsp != "N/A" else [hgvsc]
 
-    erepo_result = erepo_client.lookup(gene, hgvsc)
-    pmids = erepo_result.evidence_pmids
-    pmid_source = "erepo"
-    show(f"\n[ERepo] {gene} {hgvsc}: found_in_erepo={erepo_result.found_in_erepo}, evidence_pmids={pmids}")
+    disease = variant.info.get("DISEASE_ASSOCIATION")
+    pmids, _pmid_source = await resolve_pmids_for_variant(mcp, erepo_client, gene, hgvsc, hgvsp, disease)
     if not pmids:
-        show("  -> No evidence PMIDs from ERepo; falling back to a live PubMed search "
-             "(this variant has no curated citations, e.g. it may be novel/unregistered)")
-        disease = variant.info.get("DISEASE_ASSOCIATION")
-        pmids = await search_candidate_pmids(mcp, gene, hgvsp, disease)
-        pmid_source = "pubmed_search"
-        show(f"[PubMed search] candidate PMIDs: {pmids}")
-        if not pmids:
-            show("  -> PubMed search also found nothing; this variant cannot be evaluated by the literature path at all")
-            return {}
-
-    if pmid_source == "pubmed_search":
-        show("  [caution] These PMIDs came from a live PubMed search, not a VCEP-curated "
-             "citation list - unlike ERepo's evidenceLinks, a search hit is not confirmed to "
-             "actually discuss this variant until the per-paper judgment below checks it.")
+        return {}
 
     results: dict[str, AggregatedJudgment] = {}
     for criterion in criteria:
