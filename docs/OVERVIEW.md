@@ -5,6 +5,7 @@
 | 文書 | 役割 |
 | --- | --- |
 | この文書 | 全体像・検証範囲・16基準の状況・判定方針・残件 |
+| [判定ロジックガイド](CRITERION-DECISION-GUIDE.md) | 全16 criterionの入力Evidence、分岐、status、strengthの実装仕様 |
 | [計画](PLAN.md) | 当初計画と不変条件、対象範囲 |
 | [進捗](PROGRESS.md) | 工程順の実装記録 |
 | [PM1設計](design/PM1-PLAN.md) | PM1の2ルート設計とhotspot policy |

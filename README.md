@@ -8,6 +8,8 @@ demo-dataの4症例を対象とする、Evidence単位のACMG基準評価ツー�
 [予測Evidence仕様](docs/PREDICTION-EVIDENCE.md)、PM1の2ルート設計と
 hotspot policyは [PM1設計](docs/design/PM1-PLAN.md)、PVS1のGeneral decision treeと
 Evidence契約は [PVS1設計](docs/design/PVS1-PLAN.md) を参照してください。
+全16 criterionの入力、判定順序、全status終端、strengthは
+[判定ロジック・入力Evidenceガイド](docs/CRITERION-DECISION-GUIDE.md)にまとめています。
 全criterionのClinGen正例対応は [ClinGen正例リファレンス](docs/CLINGEN-POSITIVE-REFERENCES.md)
 にまとめています。
 MET 52件の変異・強度・根拠数値は [MET一覧](docs/MET-RESULTS.md) にあります。
