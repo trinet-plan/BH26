@@ -11,3 +11,7 @@ ga4gh.va_spec>=0.4
 
 # democase/annotation_alphamissense_alphagenome_v1.xlsx の読み込み
 openpyxl>=3.1
+
+# REST API(doc/docker_api_deployment_plan_v1_ja.md) + ローカル動作確認用サーバー
+fastapi>=0.115
+uvicorn>=0.30
