@@ -45,6 +45,27 @@ judgment logic lives here. It exists for two purposes:
     for PP*/BP*) - see _default_strength() in the regeneration script.
     tier="A" throughout (an ERepo-curated VCEP classification).
 
+  "erepo" (batch 2, 2026-09-16): A second live ERepo pull, added on request
+    to substantially grow the dataset. The 115-gene candidate list from the
+    batch-1 PP5/BP6 search (test_case_ground_truth.md section 2) was
+    re-queried, but this time capturing EVERY variant each gene query
+    returned (ERepo caps each gene-only query at 25 variants - confirmed by
+    testing offset/start/skip/page/from params, none of which changed the
+    result - so "every variant" here means "up to 25 per gene", not
+    literally all of ERepo's holdings for large genes). Of the ~1,435
+    variants this surfaced that were not already in the dataset, 30 were
+    selected - the single richest-evidence-code variant from each of the 30
+    new (not-yet-represented) genes with the most total evidenceCodes
+    entries (648 evidence-code entries in total). Gene selection
+    intentionally favored genes with zero prior representation (MYO7A,
+    SLC26A4, CDH23, TECTA, OTOF-adjacent hearing-loss genes; SGCA/SGCB/SGCG/
+    SGCD limb-girdle muscular dystrophy; KCNQ1/SCN1A channelopathy genes;
+    APC, MLH1 hereditary cancer; FBN1 Marfan; TNNT2/TNNI3/TPM1/MYL2/MYL3/
+    ACTC1 cardiomyopathy; KRAS/NRAS/HRAS/PIK3CA cancer/RASopathy-adjacent;
+    RPGR/RPE65 retinal; BMPR2; FOXG1; SCN8A) over adding more variants from
+    genes already covered by batch 1, to maximize gene/VCEP diversity per
+    entry added. Raw snapshot: test_data/erepo_full_requery_2026-09-16_batch2.json.
+
   "democase": Hand-transcribed from democase/real_cases_groundtruth_
     integrated_v6_ja.md (already-researched, human-curated ground truth for
     the 4 BH26 demo case variants + a few pedagogically important companion
@@ -111,8 +132,8 @@ class GroundTruthEntry:
             raise ValueError(f"unknown tier {self.tier!r}")
 
 
-def _load_erepo_entries() -> list[GroundTruthEntry]:
-    raw = json.loads((_DATA_DIR / "erepo_full_requery_2026-09-15.json").read_text())
+def _load_erepo_snapshot(filename: str) -> list[GroundTruthEntry]:
+    raw = json.loads((_DATA_DIR / filename).read_text())
     return [
         GroundTruthEntry(
             gene=r["gene"], hgvsc=r["hgvsc"], hgvsp=r["hgvsp"], criterion=r["criterion"],
@@ -122,6 +143,13 @@ def _load_erepo_entries() -> list[GroundTruthEntry]:
         )
         for r in raw
     ]
+
+
+def _load_erepo_entries() -> list[GroundTruthEntry]:
+    return (
+        _load_erepo_snapshot("erepo_full_requery_2026-09-15.json")
+        + _load_erepo_snapshot("erepo_full_requery_2026-09-16_batch2.json")
+    )
 
 
 # ============================================================================
