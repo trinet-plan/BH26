@@ -58,7 +58,7 @@ class VariantRecord:
     id: str
     ref: str
     alt: str
-    qual: Optional[float]
+    qual: str
     filter: str
     info: dict[str, Any] = field(default_factory=dict)
 
