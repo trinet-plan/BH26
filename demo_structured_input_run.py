@@ -1,23 +1,33 @@
 """
 demo_structured_input_run.py
 
-Demonstrates acmg_pipeline.pipeline.judge_variant_from_structured_input():
+Demonstrates acmg_pipeline.pipeline.classify_variant_from_structured_input():
 builds an ApiCaseInput the way a real API caller would - a plain dict with
 "vcf"/"clinical_note" keys, exactly what json.loads(request_body) would
 produce, never a file (ApiCaseInput.from_json_file() is a demo-fixture
-convenience only, not the production path - see api_input.py) - then runs
-it through the literature judgment pipeline.
+convenience only, not the production path - see api_input.py) - runs the 5
+implemented literature criteria, fills the other 23 with stubs.stub_evidence()
+(their real logic is another team member's responsibility - see acmg_
+pipeline/criteria/stubs.py), and classifies the result.
 
-Uses the real democase Case 3 MYH7 c.2155C>T variant (democase/case3_
-variants_v2.vcf's actual case3-var1 row + INFO declarations) - this
-variant is ClinGen 3-star reviewed with real ERepo PMIDs already in this
-project's ground truth work, and its full text is already in cache/
-pubmed_fulltext/ from the 227-pair validation run, so this demo runs fast
-(cache hits) rather than needing fresh PubMed MCP fetches.
+Two real democase scenarios, chosen to exercise both branches of judge_
+variant_from_structured_input()'s ERepo lookup:
 
-Deliberately literature-path only (PS3/BS3/PS4/PP1/BS4) - see pipeline.
-judge_variant_from_structured_input()'s docstring for why clinical_note
-isn't touched by this call at all.
+  1. MYH7 c.2155C>T (Case 3, case3-var1) - ClinGen 3-star reviewed, has real
+     ERepo PMIDs (and its full text is already in cache/pubmed_fulltext/
+     from the 227-pair validation run, so this branch runs fast).
+  2. MYBPC3 c.278delA (Case 1, case1-var1) - a real but NOVEL variant (per
+     democase/real_cases_groundtruth_integrated_v6_ja.md section 3: not
+     registered in ClinVar/ClinGen at all). ERepoClient.lookup() returns
+     zero PMIDs for it, so this exercises the "literature path finds
+     nothing, everything falls to not_evaluated/stub" branch - the same
+     gap discussed with the user on 2026-09-16 (no PubMed-search fallback
+     exists yet for variants ERepo has never seen).
+
+Each embedded VCF INFO string below deliberately OMITS the demo file's own
+ACMG_CODES/TAVTIGIAN_POINTS fields - those are the demo data's own
+precomputed answer key (see vcf_record.py's docstring), not real annotation
+pipeline output, and must never be read as this project's own input.
 """
 
 import asyncio
@@ -32,37 +42,39 @@ from acmg_pipeline.fulltext_cache import DiskBackedFullTextCache
 from acmg_pipeline.gate import ERepoClient
 import acmg_pipeline.pipeline as pl
 
-# The embedded single-variant VCF text, exactly as democase/case3_variants_v2.vcf
-# declares it (header meta-lines trimmed to what parse_vcf() actually reads) -
-# this is what a real caller's JSON body's "vcf" field would contain.
-_CASE3_VAR1_VCF = """##fileformat=VCFv4.2
+_VCF_HEADER = """##fileformat=VCFv4.2
 ##INFO=<ID=GENE,Number=1,Type=String,Description="Gene symbol">
 ##INFO=<ID=TRANSCRIPT,Number=1,Type=String,Description="RefSeq transcript">
 ##INFO=<ID=HGVSC,Number=1,Type=String,Description="HGVS coding">
 ##INFO=<ID=HGVSP,Number=1,Type=String,Description="HGVS protein">
+##INFO=<ID=ZYGOSITY,Number=1,Type=String,Description="heterozygous/homozygous in proband">
 ##INFO=<ID=CLNSIG,Number=1,Type=String,Description="Clinical significance">
-##INFO=<ID=CLNVARIATIONID,Number=1,Type=String,Description="ClinVar accession">
+##INFO=<ID=CLNVARIATIONID,Number=1,Type=String,Description="ClinVar accession if registered">
+##INFO=<ID=DISEASE_ASSOCIATION,Number=1,Type=String,Description="Primary disease association of the gene">
 ##INFO=<ID=GNOMAD_AF,Number=1,Type=Float,Description="Overall gnomAD AF">
 #CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO
-14\t23425971\tcase3-var1\tG\tA\t99\tPASS\tGENE=MYH7;TRANSCRIPT=NM_000257.4;HGVSC=c.2155C>T;HGVSP=p.(Arg719Trp);CLNSIG=Pathogenic;CLNVARIATIONID=VCV000014104;GNOMAD_AF=0.000005
 """
 
-# The api_input.json envelope this represents - literally what an API
-# caller's request body would deserialize into. clinical_note is included
-# for completeness (ApiCaseInput carries it) but unused by this literature-
-# only demo.
-_API_REQUEST_BODY = {
-    "vcf": _CASE3_VAR1_VCF,
-    "clinical_note": Path("democase/case3_clinical_note_v1.txt").read_text(encoding="utf-8")
-    if Path("democase/case3_clinical_note_v1.txt").exists() else "",
+_SCENARIOS = {
+    "MYH7 c.2155C>T (Case 3 - has ERepo PMIDs)": (
+        _VCF_HEADER +
+        "14\t23425971\tcase3-var1\tG\tA\t99\tPASS\t"
+        "GENE=MYH7;TRANSCRIPT=NM_000257.4;HGVSC=c.2155C>T;HGVSP=p.(Arg719Trp);"
+        "CLNSIG=Pathogenic;CLNVARIATIONID=VCV000014104;GNOMAD_AF=0.000005\n",
+        "democase/case3_clinical_note_v1.txt",
+    ),
+    "MYBPC3 c.278delA (Case 1 - novel, zero ERepo PMIDs)": (
+        _VCF_HEADER +
+        "11\t47352561\tcase1-var1\tG\t.\t99\tPASS\t"
+        "GENE=MYBPC3;TRANSCRIPT=NM_000256.3;HGVSC=c.278delA;HGVSP=p.(Lys93ArgfsTer3);"
+        "ZYGOSITY=heterozygous;CLNSIG=Likely_Pathogenic;CLNVARIATIONID=not_registered_novel;"
+        "DISEASE_ASSOCIATION=hypertrophic_cardiomyopathy\n",
+        "democase/case1_clinical_note_v1.txt",
+    ),
 }
 
 
 async def main() -> None:
-    case_input = ApiCaseInput.from_dict(_API_REQUEST_BODY)  # dict in, no file involved
-    pl.show(f"[demo] ApiCaseInput built from a dict (not a file): "
-             f"vcf={len(case_input.vcf)} chars, clinical_note={len(case_input.clinical_note)} chars")
-
     full_text_cache = DiskBackedFullTextCache("cache/pubmed_fulltext")
 
     async with AsyncExitStack() as stack:
@@ -70,13 +82,20 @@ async def main() -> None:
         pl.show("[MCP] Connected to PubMed")
         erepo_client = ERepoClient()
 
-        results = await pl.judge_variant_from_structured_input(
-            case_input, mcp, erepo_client, full_text_cache=full_text_cache,
-        )
+        for label, (vcf_text, note_path) in _SCENARIOS.items():
+            pl.show(f"\n\n{'#'*70}\n# Scenario: {label}\n{'#'*70}")
 
-        pl.show(f"\n{'='*70}\n[Results]\n{'='*70}")
-        for criterion, aggregated in results.items():
-            pl.show(f"  {criterion}: {aggregated.aggregated_direction.value}")
+            request_body = {
+                "vcf": vcf_text,
+                "clinical_note": Path(note_path).read_text(encoding="utf-8") if Path(note_path).exists() else "",
+            }
+            case_input = ApiCaseInput.from_dict(request_body)  # dict in, no file involved
+            pl.show(f"[demo] ApiCaseInput built from a dict (not a file): "
+                    f"vcf={len(case_input.vcf)} chars, clinical_note={len(case_input.clinical_note)} chars")
+
+            await pl.classify_variant_from_structured_input(
+                case_input, mcp, erepo_client, full_text_cache=full_text_cache,
+            )
 
 
 if __name__ == "__main__":

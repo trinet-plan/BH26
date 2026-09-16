@@ -61,7 +61,8 @@ from acmg_pipeline.common import (
 )
 from acmg_pipeline.gate import ERepoClient, _protein_equivalents
 from acmg_pipeline.export import build_evidence_line
-from acmg_pipeline.classification import classify, from_aggregated_judgment
+from acmg_pipeline.classification import ALL_ACMG_CODES, IMPLEMENTED_CODES, ClassificationResult, classify, from_aggregated_judgment
+from acmg_pipeline.criteria import stubs
 from acmg_pipeline.api_input import ApiCaseInput
 
 VA_SPEC_OUTPUT_DIR = Path("va_spec_output")
@@ -569,6 +570,74 @@ async def judge_variant_from_structured_input(
             full_text_cache=full_text_cache,
         )
     return results
+
+
+# ---------------------------------------------------------------------------
+# Full 28-code classification from structured input
+# ---------------------------------------------------------------------------
+#
+# Added 2026-09-16, per the user's decision that criteria this project
+# doesn't implement (the 16 Layer-1 automated/rule-based codes, PP4, and
+# the 6 clinical-record-only codes PS2/PM3/PM6/BS2/BP2/BP5) stay stubbed -
+# their real judgment logic is another team member's responsibility (see
+# acmg_pipeline/criteria/stubs.py). This function is the single entry point
+# that produces a COMPLETE 28-code picture for one variant: real LLM
+# literature judgment for the 5 codes this project implements, honest
+# NOT_EVALUATED stubs for the other 23, combined via classification.
+# classify() exactly the same way test_full_criteria_ground_truth.py
+# already does for the ground-truth dataset.
+#
+# Execution order (cheapest-first, matching classification.classify()'s own
+# BA1-short-circuit philosophy): stub lookups are instant, so in practice
+# they're computed after the (comparatively expensive) literature judgment
+# here - there's nothing today for a stub to short-circuit, since this
+# project doesn't compute the Layer-1 values (gnomAD AF, ClinVar assertions,
+# etc.) that would make e.g. a BA1 short-circuit meaningful. Once another
+# team's real Layer-1/PP4 modules exist, swap their real CriterionEvidence
+# in place of stubs.stub_evidence(code) below - registry.get_criterion_
+# evidence() already supports exactly that swap without any other change
+# here.
+
+async def classify_variant_from_structured_input(
+    case_input: ApiCaseInput,
+    mcp: ClientSession,
+    erepo_client: ERepoClient,
+    vcep_name: str | None = None,
+    full_text_cache: dict[str, tuple[str | None, str]] | None = None,
+) -> ClassificationResult:
+    literature_results = await judge_variant_from_structured_input(
+        case_input, mcp, erepo_client, vcep_name=vcep_name, full_text_cache=full_text_cache,
+    )
+
+    evidence = [
+        from_aggregated_judgment(aggregated, code)
+        for code, aggregated in literature_results.items()
+    ]
+    evaluated_codes = set(literature_results)
+    for code in ALL_ACMG_CODES:
+        if code in evaluated_codes:
+            continue
+        if code in IMPLEMENTED_CODES:
+            # Implemented by this project, but not evaluated for this
+            # particular variant (e.g. ERepo had zero PMIDs at all, so
+            # judge_variant_from_structured_input() returned {} - see its
+            # own docstring). Distinct from "not our team's job" (the stub
+            # branch below): this is "should have been run, wasn't", so
+            # classify()'s not_evaluated_codes correctly flags it rather
+            # than silently treating it as a stub.
+            continue
+        evidence.append(stubs.stub_evidence(code))
+
+    result = classify(evidence)
+    show(f"\n{'='*70}\n[Classification]\n{'='*70}")
+    show(f"category = {result.category.value} (score={result.score}"
+         f"{', BA1 override' if result.ba1_override else ''})")
+    show(f"  met: {', '.join(f'{e.code}({e.strength.value})' for e in result.met) or '(none)'}")
+    show(f"  not_met: {', '.join(e.code for e in result.not_met) or '(none)'}")
+    if result.not_evaluated_codes:
+        show(f"  not_evaluated (implemented but not run for this variant): "
+             f"{', '.join(c for c in result.not_evaluated_codes if c in IMPLEMENTED_CODES) or '(none)'}")
+    return result
 
 
 def parse_ground_truth(ground_truth: str) -> tuple[str, bool]:
