@@ -174,6 +174,20 @@
   VCF anchorを修正し、indel anchorはEnsembl GRCh38参照配列で確認した。
 - 正例6テストを含む全165テスト成功、Ruff成功。既存28件の固定キャッシュE2Eは入力エラー0、
   VA-Spec VALIDATEDを維持した。
+- demo-dataとfixture 4スイートを固定キャッシュで再実行し、49レコード・758判定を集計した。
+  demo-dataは同定VERIFIED 24・CORRECTED 4・PENDING 0、評価は入力エラー0でVA-Spec VALIDATED。
+  MET 52件（demo 32・fixture 20）の内訳を[MET一覧](MET-RESULTS.md)に固定した。
+- PM4とBP3の記述を訂正した。demo-dataにin-frame indelとstop lossが無いためゲートは開かないが、
+  正例fixtureのOTC（PM4 moderate）とFOXG1（BP3 supporting）がゲート通過後の
+  protein_length_change・nonfunctional_repeat・repetitive・functional_importanceまで走り
+  MET終端に到達する。「実データで開かない」を「ロジック未検証」と読ませない記述に改めた。
+  あわせてgate fixtureが覆うのはPVS1・PM4・BP7の3件で、BP3は正例fixtureのみである点も明記した。
+- ERepoのmetCodeとの強度差2件を意図的な差として記録した。PP3はstrong（ERepo PP3_Moderate）、
+  BP1はsupporting（ERepo BP1_Strong）で、いずれもVCEPのcriterion-specific調整を
+  取り込まないGeneral Guidance適用の結果である。CSpec自動適用は対象外のため差のまま残す。
+- 文書を整理した。MET一覧を`docs/MET-RESULTS.md`へ分離し（俯瞰は277行から200行）、
+  criterion別設計のPM1-PLAN・PVS1-PLANを`docs/design/`へ移した。俯瞰の集計ブロックは
+  demo-dataのみの値であることを見出しに明示し、fixture込みの合算と混同しないようにした。
 
 ## 未完了（次工程）
 
