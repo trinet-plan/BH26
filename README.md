@@ -56,6 +56,28 @@ result = evaluate(
 CLIのprepared JSONは評価直前にこの2クラスへ変換され、各criterionへdictを直接渡しません。
 criterionの結果と出力形式は従来どおりGA4GH VA-Spec 1.0.1 Evidence Lineです。
 
+現在のVCFを共通入力へ変換する場合は、統合境界のadapterを使用します。VCFの各ALTは
+独立した`VariantRecord`になります。症例ごとの臨床情報を渡さない場合、現在のデモVCFでは
+`INFO/ZYGOSITY`だけを`ClinicalNoteExtraction.proband.genotype`へ移し、表現型、家族歴、
+de novo情報は推測せず空欄にします。
+
+```python
+from acmg.core.vcf_adapter import inputs_from_vcf
+from acmg_pipeline.clinical_note import ClinicalNoteExtraction
+
+clinical_note = ClinicalNoteExtraction.from_json(clinical_note_json)
+for variant, note in inputs_from_vcf(
+    "demo-data/case1_variants_v2.vcf",
+    clinical_note=clinical_note,
+):
+    results = evaluate_record(variant, note, services, config)
+```
+
+`parse_vcf()`を使用すると、同じ変換結果をVCFのmeta情報・INFO定義を含む
+`ParsedVcf`として取得できます。`CLNSIG`、`ACMG_CODES`、`NOTE`なども原入力の監査用に
+`VariantRecord.info`へ保持されますが、criterion内部のallowlistには入らず判定根拠には
+使用されません。変換は変異同定やGRCh38参照配列との照合を代替しません。
+
 実デモ全件の同定・注釈取得と、校正済み予測Evidence（dbNSFP REVEL）による
 PP3/BP4評価は完了しています。遺伝子-疾患機序（PP2/BP1/PVS1）と疾患別頻度閾値（BS1）の
 キュレーションは未完了です。現時点の16基準の状況は [俯瞰](docs/OVERVIEW.md) を参照してください。
