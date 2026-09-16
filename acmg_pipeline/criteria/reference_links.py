@@ -17,6 +17,21 @@ per the same "argument is a pulled-in entity class, not a bespoke wrapper"
 convention as acmg_pipeline.criteria.segregation.from_clinical_note_family() -
 a later VCF INFO field addition needs no signature change here.
 
+[Where the returned URL ends up in VA-Spec output]
+  Every function below just returns a plain `str | None` - none of them
+  touch VA-Spec themselves. The one caller today, acmg_pipeline.export.
+  build_stub_evidence_line(), puts that string into ONE specific place:
+  EvidenceLine.extensions, as Extension(name="referenceLink", value=url) -
+  deliberately NOT EvidenceLine.reportedIn (a Document there would be
+  spec-valid with just `urls` set, no `pmid` needed, but reportedIn means
+  "the source this evidence was reported in", and no evaluation of these
+  pages ever happens here - see that function's own docstring, "Why
+  extensions, not reportedIn", for the full reasoning; this was a
+  deliberate call, don't move it without reading that first). Each
+  function's own docstring below repeats this as a one-line "Field:" note
+  so it doesn't require jumping to export.py to know where its own output
+  lands.
+
 [Source: doc/recs for expert board.docx, verbatim per-criterion asks]
   PVS1:            "Add autoPVS1 chart data/result" -> https://autopvs1.bgi.com
   PS1:              "show the clinvar page/summary for that codon"
@@ -99,6 +114,9 @@ def gene_to_uniprot_accession(gene_symbol: str) -> str | None:
       real but symbol-less gene) rather than raising - callers building an
       optional reference link shouldn't crash the whole page over one
       missing cross-reference.
+    Field: not applicable here - this returns a bare accession string, not
+      a URL. See uniprot_page_url() (its only caller) for where its output
+      ultimately lands.
     """
     try:
         resp = requests.get(
@@ -132,6 +150,9 @@ def uniprot_page_url(variant: VariantRecord) -> str | None:
       f"https://www.uniprot.org/uniprotkb/{accession}/entry". Returns None
       if GENE is missing or the accession lookup fails (unknown symbol,
       network error) - no accession means no valid page to link to.
+    Field: EvidenceLine.extensions (Extension(name="referenceLink")) once
+      passed through export.build_stub_evidence_line() - see this module's
+      own docstring, "Where the returned URL ends up in VA-Spec output".
     """
     gene = variant.info.get("GENE")
     if not gene:
@@ -158,6 +179,9 @@ def clinvar_search_url(variant: VariantRecord) -> str | None:
       link - this project doesn't look up the ClinVar VariationID, so the
       URL lands on ClinVar's own search results page rather than one
       specific record. Returns None if GENE or HGVSC is missing.
+    Field: EvidenceLine.extensions (Extension(name="referenceLink")) once
+      passed through export.build_stub_evidence_line() - see this module's
+      own docstring, "Where the returned URL ends up in VA-Spec output".
     """
     gene = variant.info.get("GENE")
     hgvsc = variant.info.get("HGVSC")
@@ -184,6 +208,9 @@ def gnomad_variant_url(variant: VariantRecord, dataset: str = "gnomad_r4") -> st
       ref/alt aren't concrete alleles (e.g. this project's demo data uses
       ALT="." for some indels/deletions - not a real gnomAD-linkable
       representation, so no URL is better than a broken one).
+    Field: EvidenceLine.extensions (Extension(name="referenceLink")) once
+      passed through export.build_stub_evidence_line() - see this module's
+      own docstring, "Where the returned URL ends up in VA-Spec output".
     """
     if not variant.ref or not variant.alt or variant.alt in (".", ""):
         return None
@@ -202,6 +229,9 @@ def gnomad_gene_url(variant: VariantRecord, dataset: str = "gnomad_r4") -> str |
       directly - no lookup needed, gnomAD's gene URLs take a bare symbol.
       Same `dataset` genome-build caveat as gnomad_variant_url() above.
       Returns None if GENE is missing.
+    Field: EvidenceLine.extensions (Extension(name="referenceLink")) once
+      passed through export.build_stub_evidence_line() - see this module's
+      own docstring, "Where the returned URL ends up in VA-Spec output".
     """
     gene = variant.info.get("GENE")
     if not gene:
@@ -242,6 +272,10 @@ def reference_url_for_criterion(code: str, variant: VariantRecord) -> str | None
     asks to show for `code`, given `variant` - or None if this code has no
     URL-able reference page (see _URL_BUILDERS) or the variant lacks the
     fields needed to build one (e.g. ALT="." for gnomad_variant_url).
+    Field: EvidenceLine.extensions (Extension(name="referenceLink")) once
+      passed through export.build_stub_evidence_line() (its actual caller)
+      - see this module's own docstring, "Where the returned URL ends up
+      in VA-Spec output".
     """
     builder = _URL_BUILDERS.get(code)
     if builder is None:
@@ -250,9 +284,14 @@ def reference_url_for_criterion(code: str, variant: VariantRecord) -> str | None
 
 
 def all_reference_urls(variant: VariantRecord) -> dict[str, str]:
-    """Every code -> URL pair this module can build for `variant`, skipping
+    """
+    Every code -> URL pair this module can build for `variant`, skipping
     codes where the URL couldn't be constructed (rather than including a
-    None)."""
+    None).
+    Field: same as reference_url_for_criterion() above - each value here
+      lands in that code's own EvidenceLine.extensions, not one shared
+      bundle (see export.build_stub_evidence_line(), called once per code).
+    """
     return {
         code: url
         for code in _URL_BUILDERS
