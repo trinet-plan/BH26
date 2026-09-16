@@ -101,10 +101,27 @@ from acmg_pipeline.criteria import curator_info, reference_links
 from acmg_pipeline.vcf_record import VariantRecord
 
 # Codes whose stub EvidenceLine also gets a `curatorInfo` extension (see
-# build_stub_evidence_line()) - the doc's ask for these two goes beyond "show
-# a page" (reference_links.py) into "check hotspot/nearby benign variants",
-# which needs UniProt's actual feature data, not just a link to it.
-_CODES_WITH_CURATOR_INFO = {"PM1", "PM5"}
+# build_stub_evidence_line()), and which acmg_pipeline.criteria.curator_info
+# function supplies it - the doc's ask for these goes beyond "show a page"
+# (reference_links.py) into "check hotspot/nearby benign variants" or
+# "check if previously reported", which needs the page's actual content
+# fetched, not just a link to it.
+#
+# PP1 is deliberately ABSENT here even though curator_info.
+# clinvar_report_context() covers it too (doc: "use AI to check if
+# segregation previously reported (clinvar)") - PP1 is one of the 5
+# IMPLEMENTED_CODES (this project's own literature judgment via
+# build_evidence_line()), so build_stub_evidence_line() refuses to run for
+# it at all (see that function's IMPLEMENTED_CODES guard). Wiring PP1's
+# curatorInfo requires adding it to build_evidence_line()'s REAL
+# EvidenceLine instead (that function takes gene/hgvsc strings today, not
+# a VariantRecord - needs a signature change) - left as a follow-up rather
+# than rushed into the already-tested real-judgment code path.
+_CODE_CURATOR_INFO_FETCHERS = {
+    "PM1": curator_info.uniprot_domain_context,
+    "PM5": curator_info.uniprot_domain_context,
+    "PM3": curator_info.clinvar_report_context,
+}
 
 PIPELINE_AGENT = Agent(
     id="acmg-literature-llm-pipeline",
@@ -274,6 +291,46 @@ def build_evidence_line(
     return evidence_line.model_dump(mode="json", exclude_none=True)
 
 
+def _serialize_curator_info(ctx) -> Optional[dict]:
+    """
+    Plain-dict serialization for whichever acmg_pipeline.criteria.
+    curator_info context type `ctx` is (UniprotDomainContext for PM1/PM5,
+    ClinVarReportContext for PM3) - not ctx.__dict__ directly, since both
+    contain lists of nested dataclasses that Extension.value (must be
+    JSON-serializable) can't hold as-is. Returns None if `ctx` itself is
+    None (the fetcher found nothing - e.g. no VariationID resolved, or a
+    network error - see each fetcher's own docstring for when that
+    happens) - same "no data means no extension" convention as
+    reference_url_for_criterion() returning None upstream of this.
+    """
+    if ctx is None:
+        return None
+    if isinstance(ctx, curator_info.UniprotDomainContext):
+        return {
+            "uniprotAccession": ctx.accession,
+            "proteinPosition": ctx.position,
+            "coveringDomains": [
+                {"type": d.feature_type, "start": d.start, "end": d.end, "description": d.description}
+                for d in ctx.covering_domains
+            ],
+            "nearbyVariants": [
+                {"position": v.position, "description": v.description}
+                for v in ctx.nearby_variants
+            ],
+        }
+    if isinstance(ctx, curator_info.ClinVarReportContext):
+        return {
+            "clinvarVariationId": ctx.variation_id,
+            "segregationMentions": [
+                {"text": m.text, "matchedKeyword": m.matched_keyword} for m in ctx.segregation_mentions
+            ],
+            "transMentions": [
+                {"text": m.text, "matchedKeyword": m.matched_keyword} for m in ctx.trans_mentions
+            ],
+        }
+    raise TypeError(f"no curatorInfo serialization defined for {type(ctx).__name__}")
+
+
 def build_stub_evidence_line(code: str, variant: VariantRecord) -> Optional[dict]:
     """
     A minimal EvidenceLine for one of the 23 codes this project doesn't
@@ -343,28 +400,12 @@ def build_stub_evidence_line(code: str, variant: VariantRecord) -> Optional[dict
     safe_hgvsc = hgvsc.replace(">", "_").replace(".", "_").replace("+", "p").replace("-", "m")
 
     extensions = [Extension(name="referenceLink", value=url)]
-    if code in _CODES_WITH_CURATOR_INFO:
-        ctx = curator_info.uniprot_domain_context(variant)
-        if ctx is not None:
-            # Plain-dict serialization (not ctx.__dict__ directly, since
-            # covering_domains/nearby_variants are lists of dataclasses -
-            # Extension.value must be JSON-serializable). Same "structured
-            # facts, no verdict" convention as structuredEvidenceItems
-            # elsewhere in this module - see curator_info.py's own
-            # docstring for why no hotspot/benign-nearby judgment is made
-            # here.
-            extensions.append(Extension(name="curatorInfo", value={
-                "uniprotAccession": ctx.accession,
-                "proteinPosition": ctx.position,
-                "coveringDomains": [
-                    {"type": d.feature_type, "start": d.start, "end": d.end, "description": d.description}
-                    for d in ctx.covering_domains
-                ],
-                "nearbyVariants": [
-                    {"position": v.position, "description": v.description}
-                    for v in ctx.nearby_variants
-                ],
-            }))
+    fetcher = _CODE_CURATOR_INFO_FETCHERS.get(code)
+    if fetcher is not None:
+        ctx = fetcher(variant)
+        info_value = _serialize_curator_info(ctx)
+        if info_value is not None:
+            extensions.append(Extension(name="curatorInfo", value=info_value))
 
     evidence_line = EvidenceLine(
         id=f"evline:{gene}_{safe_hgvsc}_{code}",
@@ -373,8 +414,8 @@ def build_stub_evidence_line(code: str, variant: VariantRecord) -> Optional[dict
             f"{code} is not evaluated by this pipeline (see acmg_pipeline/criteria/"
             "stubs.py - a Layer-1 automated-evidence code or PP4, both other-team/"
             "not-yet-implemented responsibilities here). No judgment was made; the "
-            "reference link (and, for PM1/PM5, the curatorInfo extension) below are "
-            "navigation/information aids only."
+            "reference link (and, for PM1/PM3/PM5, the curatorInfo extension) below "
+            "are navigation/information aids only."
         ),
         specifiedBy=Method(
             methodType=code,
