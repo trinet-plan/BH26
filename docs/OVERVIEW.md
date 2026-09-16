@@ -1,8 +1,15 @@
 # 実装の俯瞰
 
-更新: 2026-09-15。数値は固定キャッシュによるオフライン実行の結果で、下記コマンドで再現できる。
-工程単位の記録は [進捗](PROGRESS.md)、当初計画は [計画](PLAN.md)、PM1の設計は
-[PM1設計](PM1-PLAN.md)、JSON出力仕様は [VA-Spec出力](VA-SPEC-OUTPUT.md) を参照。
+更新: 2026-09-16。数値は固定キャッシュによるオフライン実行の結果で、下記コマンドで再現できる。
+
+| 文書 | 役割 |
+| --- | --- |
+| この文書 | 全体像・16基準の状況・判定方針・残件 |
+| [計画](PLAN.md) | 当初計画と不変条件、対象範囲 |
+| [進捗](PROGRESS.md) | 工程順の実装記録 |
+| [PM1設計](PM1-PLAN.md) | PM1の2ルート設計とhotspot policy |
+| [予測Evidence仕様](PREDICTION-EVIDENCE.md) | 蛋白注釈・予測値の取得と校正policy |
+| [VA-Spec出力](VA-SPEC-OUTPUT.md) | JSONのフィールド対応と制約 |
 
 ```powershell
 $env:PYTHONPATH = 'src'

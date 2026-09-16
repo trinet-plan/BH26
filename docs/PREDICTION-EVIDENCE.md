@@ -1,7 +1,7 @@
 # Ensembl蛋白注釈・予測Evidence
 
-更新: 2026-09-15。対象はEnsembl REST/VEP release 116、GRCh38、入力で指定された
-version付きRefSeq transcriptである。
+更新: 2026-09-16。対象はEnsembl REST/VEP release 116とMyVariant.info経由のdbNSFP 4.8a、
+GRCh38、入力で指定されたversion付きRefSeq transcriptである。
 
 ## 取得とtranscript選択
 
@@ -24,27 +24,53 @@ stop-loss、frameshift、start-loss、stop-gainについて、変更tokenだけ�
 
 同じtranscript consequenceから以下を独立した `category=computational` Evidenceとして保存する。
 
-| predictor | 保存値 | VEP指定 | 現在の判定利用 |
+| predictor | 保存値 | VEP指定 | 判定利用 |
 |---|---|---|---|
 | AlphaMissense | `am_pathogenicity`, `am_class` | `AlphaMissense=1` | 不可 |
 | REVEL | score（返る場合のみ） | `REVEL=1` | 不可 |
-| SpliceAI | 4 delta scoreとその最大値 | `SpliceAI=2` | 不可 |
+| SpliceAI | 4 delta scoreとその最大値 | `SpliceAI=2` | 校正側の版宣言がある場合のみ |
 | Ensembl Compara conservation | RESTの数値 | `Conservation=1` | 不可 |
 
 `source`, Ensembl release、取得時刻、transcript、利用データセット説明を保持する。
 ただしEnsembl REST応答はREVEL backing file、SpliceAI model、conservation track/methodの版を
 十分に識別しない。AlphaMissenseの公開class閾値もACMG evidence strengthの校正ではない。
-このため全レコードを `calibration_eligible=false` とし、PP3/BP4 evaluatorは明示的に除外する。
+このためVEP由来の全レコードを `calibration_eligible=false` とする。
 値を取得できたことと、臨床判定に利用できることを同一視しない。
 
-## 校正policyの要件
+## dbNSFP（MyVariant.info経由）
 
-PP3/BP4へ渡すには、少なくともpredictor/model/data版、対象機序（proteinまたはsplicing）、
-対象consequence、score domain、criterion別interval・strength、校正文献またはVCEP仕様を
-固定したEvidence adapterが必要である。相関する複数predictorの票決は行わない。
+PP3/BP4に使う予測値はこちらから取得する。`/v1/metadata` の `src.dbnsfp.version` で
+dbNSFP release（現在4.8a）を確定し、各スコアの `predictor_version` に固定したうえで
+`calibration_eligible=true` とする。
 
-一般的な候補資料は、missenseにはPejaver et al. 2022（PMID: 36413997）、splicingには
-Walker et al. 2023（PMID: 37352859）である。ただし疾患・遺伝子別VCEP仕様がある場合は
+- 採用: REVEL、AlphaMissense（いずれもmechanism=protein）
+- 不採用: SIFT、PolyPhen-2。ClinGenの校正推奨対象ではないため基準入力に渡さない
+- dbNSFPはnonsynonymous SNV対象のため、indelには問い合わせない
+- 404は「値なし」として扱い、通信失敗とは区別する
+- transcript単位のリスト値は先頭値を採用し、欠損を0へ変換しない
+
+## 校正policy
+
+校正区間は `config/demo-rules.json` の `computational` に置く。1つのcalibrationは
+predictor/version、出典と版、対象機序、対象consequence、score domain、criterion別の
+interval・strengthを固定する。相関する複数predictorの票決は行わない。
+
+`selected_calibrations` に複数のcalibrationを並べられる。現在の設定は次の2つである。
+
+| calibration | 機序 | 出典 | 区間 |
+|---|---|---|---|
+| `revel-pejaver-2022` | protein | Pejaver et al. 2022（PMID: 36413997） | PP3 >=0.644 / 0.773 / 0.932、BP4 <=0.290 / 0.183 / 0.016 / 0.003 |
+| `spliceai-svi-2023` | splicing | Walker et al. 2023（PMID: 37352859） | PP3 >=0.2 supporting、BP4 <=0.1 supporting |
+
+機序は加算しない。PP3はいずれかの機序が区間を満たせば成立し、最も強い区間を採用する。
+BP4は適用対象の全機序が良性側を示す必要があり、splice影響が予測される場合は成立させず、
+阻止した機序を `benign_blocked_by` に記録する。低い蛋白スコアはsplice部位の破壊について
+何も言わないためである。
+
+Ensembl VEPはSpliceAIのモデル版を公開しないため、calibrationが `version_assertion`
+（source、unreported_version、asserted_version、asserted_by、justification）を明示した
+場合に限り使用する。宣言は結果のprovenanceへ `version_assertions` として残り、
+宣言がなければそのスコアは判定に使わない。疾患・遺伝子別VCEP仕様がある場合は、
 その適用範囲と版を優先して選ぶ。
 
 BP7はさらに、synonymous/noncoding variantが標準splice region外であることをtranscript exon
@@ -52,6 +78,14 @@ BP7はさらに、synonymous/noncoding variantが標準splice region外である
 VEPの今回の応答だけではRefSeq exon境界とconservation methodを十分に特定できないため、
 自動的な `synonymous_assessment` 生成は行わない。現在取得するSpliceAI・保存性値は、後続の
 校正済みBP7 adapterへ渡すraw Evidenceである。
+
+## PM5 ClinVar residue comparator
+
+PM5は同一残基の別アミノ酸変化を対象とするため、PS1のexact protein change検索では
+「他の置換が報告されていない」ことを示せない。遺伝子単位のmissense検索とesummaryで
+同一残基の候補を絞り、候補ごとにefetchとEnsembl照合で蛋白参照・残基・参照アミノ酸の一致と
+置換の相違を確認する。検索記録には `search_scope`（`exact_protein_change` / `residue`）を
+持たせ、PM5は `residue` の完了記録だけを不成立の根拠として受け付ける。
 
 ## PS1 ClinVar comparator
 

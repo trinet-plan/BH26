@@ -25,8 +25,9 @@ hotspot policyは [PM1設計](docs/PM1-PLAN.md) を参照してください。
 - 準備済みJSONとローカルEvidenceによる内部評価JSON・TSV・manifest出力。
 - GA4GH VA-Spec 1.0.1 ACMG Evidence Line互換JSONと、監査用envelope出力。
 
-実デモ全件の同定とEnsembl転写産物注釈の取得は完了しています。
-疾患別閾値・キュレーション・校正済み予測Evidenceの取得は未完了です。
+実デモ全件の同定・注釈取得と、校正済み予測Evidence（dbNSFP REVEL）による
+PP3/BP4評価は完了しています。遺伝子-疾患機序（PP2/BP1/PVS1）と疾患別頻度閾値（BS1）の
+キュレーションは未完了です。現時点の16基準の状況は [俯瞰](docs/OVERVIEW.md) を参照してください。
 監査結果のPENDINGを、変異の同定完了や基準の不成立と解釈しないでください。
 
 ## 開発環境
