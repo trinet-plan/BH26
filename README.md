@@ -6,8 +6,8 @@ demo-dataの4症例を対象とする、Evidence単位のACMG基準評価ツー�
 [進捗](docs/PROGRESS.md)、JSONのフィールド対応と制約は
 [VA-Spec 1.0.1 JSON出力仕様](docs/VA-SPEC-OUTPUT.md)、蛋白注釈と予測値は
 [予測Evidence仕様](docs/PREDICTION-EVIDENCE.md)、PM1の2ルート設計と
-hotspot policyは [PM1設計](docs/PM1-PLAN.md)、PVS1のGeneral decision treeと
-Evidence契約は [PVS1設計](docs/PVS1-PLAN.md) を参照してください。
+hotspot policyは [PM1設計](docs/design/PM1-PLAN.md)、PVS1のGeneral decision treeと
+Evidence契約は [PVS1設計](docs/design/PVS1-PLAN.md) を参照してください。
 全criterionのClinGen正例対応は [ClinGen正例リファレンス](docs/CLINGEN-POSITIVE-REFERENCES.md)
 にまとめています。
 MET 52件の変異・強度・根拠数値は [MET一覧](docs/MET-RESULTS.md) にあります。

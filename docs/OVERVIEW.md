@@ -7,8 +7,8 @@
 | この文書 | 全体像・検証範囲・16基準の状況・判定方針・残件 |
 | [計画](PLAN.md) | 当初計画と不変条件、対象範囲 |
 | [進捗](PROGRESS.md) | 工程順の実装記録 |
-| [PM1設計](PM1-PLAN.md) | PM1の2ルート設計とhotspot policy |
-| [PVS1設計](PVS1-PLAN.md) | PVS1 General decision treeとEvidence契約 |
+| [PM1設計](design/PM1-PLAN.md) | PM1の2ルート設計とhotspot policy |
+| [PVS1設計](design/PVS1-PLAN.md) | PVS1 General decision treeとEvidence契約 |
 | [ClinGen正例リファレンス](CLINGEN-POSITIVE-REFERENCES.md) | 14 criterionのClinGen正例と再現方法 |
 | [MET一覧](MET-RESULTS.md) | MET 52件の変異・強度・根拠数値 |
 | [予測Evidence仕様](PREDICTION-EVIDENCE.md) | 蛋白注釈・予測値の取得と校正policy |
