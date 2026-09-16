@@ -8,6 +8,8 @@ demo-dataの4症例を対象とする、Evidence単位のACMG基準評価ツー�
 [予測Evidence仕様](docs/PREDICTION-EVIDENCE.md)、PM1の2ルート設計と
 hotspot policyは [PM1設計](docs/PM1-PLAN.md)、PVS1のGeneral decision treeと
 Evidence契約は [PVS1設計](docs/PVS1-PLAN.md) を参照してください。
+全criterionのClinGen正例対応は [ClinGen正例リファレンス](docs/CLINGEN-POSITIVE-REFERENCES.md)
+にまとめています。
 
 ## 現在動く機能
 
@@ -27,6 +29,8 @@ Evidence契約は [PVS1設計](docs/PVS1-PLAN.md) を参照してください。
 - gnomAD 4.1.1集団頻度とClinVar VCVの内容ハッシュ付きキャッシュ、オフライン再生。
 - 準備済みJSONとローカルEvidenceによる内部評価JSON・TSV・manifest出力。
 - GA4GH VA-Spec 1.0.1 ACMG Evidence Line互換JSONと、監査用envelope出力。
+- PP5/BP6を除く14 criterionすべてについて、ClinGen ERepo由来の独立正規化Evidenceから
+  最低1件のMETを再現する正例E2Eスイート。
 
 実デモ全件の同定・注釈取得と、校正済み予測Evidence（dbNSFP REVEL）による
 PP3/BP4評価は完了しています。遺伝子-疾患機序（PP2/BP1/PVS1）と疾患別頻度閾値（BS1）の
@@ -49,6 +53,7 @@ editable installだけ失敗する環境では、次のように `PYTHONPATH` �
 ```powershell
 $env:PYTHONPATH = 'src'
 .venv/Scripts/python.exe -m unittest discover -s tests -v
+.venv/Scripts/python.exe -m unittest tests.test_clingen_positive -v
 .venv/Scripts/python.exe -m acmg audit-demo --input-dir demo-data --output-dir work/demo
 ```
 

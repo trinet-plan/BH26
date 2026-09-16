@@ -1,0 +1,240 @@
+{
+  "schema_version": "1.0",
+  "records": [
+    {
+      "record_id": "clingen-positive:pvs1-pah",
+      "source": {
+        "dataset": "ClinGen Evidence Repository",
+        "url": "https://erepo.clinicalgenome.org/evrepo/ui/classification/f5d8dc3f-dba0-4dc9-98cd-4a22b6a11a83",
+        "uuid": "f5d8dc3f-dba0-4dc9-98cd-4a22b6a11a83",
+        "caid": "CAR:CA229778",
+        "preferred_variant_title": "NM_000277.2(PAH):c.806delT (p.Ile269Thrfs)",
+        "retrieved_at": "2026-09-16T00:00:00Z"
+      },
+      "variant": {"assembly": "GRCh38", "chrom": "12", "pos": 102852850, "ref": "GA", "alt": "G"},
+      "transcript": "NM_000277.2",
+      "condition": "MONDO:0009861",
+      "condition_label": "phenylketonuria",
+      "inheritance": "Autosomal recessive inheritance",
+      "identity_provenance": [{"source": "ClinGen ERepo GRCh38 HGVS", "matched_identifier": "NC_000012.12:g.102852851del"}]
+    },
+    {
+      "record_id": "clingen-positive:pm1-pp3-pax6",
+      "source": {
+        "dataset": "ClinGen Evidence Repository",
+        "url": "https://erepo.clinicalgenome.org/evrepo/ui/classification/94abbf17-09a7-47b8-8d26-63bc6f30280f",
+        "uuid": "94abbf17-09a7-47b8-8d26-63bc6f30280f",
+        "caid": "CAR:CA379959645",
+        "preferred_variant_title": "NM_001368894.2(PAX6):c.52G>A (p.Gly18Arg)",
+        "retrieved_at": "2026-09-16T00:00:00Z"
+      },
+      "variant": {"assembly": "GRCh38", "chrom": "11", "pos": 31802793, "ref": "C", "alt": "T"},
+      "transcript": "NM_001368894.2",
+      "condition": "MONDO:0800183",
+      "condition_label": "PAX6-related ocular dysgenesis",
+      "inheritance": "Autosomal dominant inheritance",
+      "identity_provenance": [{"source": "ClinGen ERepo GRCh38 HGVS", "matched_identifier": "NC_000011.10:g.31802793C>T"}]
+    },
+    {
+      "record_id": "clingen-positive:ps1-gck",
+      "source": {
+        "dataset": "ClinGen Evidence Repository",
+        "url": "https://erepo.clinicalgenome.org/evrepo/ui/interpretation/d17187f9-d65a-4117-af07-cfcb9e907236",
+        "uuid": "d17187f9-d65a-4117-af07-cfcb9e907236",
+        "caid": "CAR:CA213814",
+        "preferred_variant_title": "NM_000162.5(GCK):c.630G>T (p.Met210Ile)",
+        "retrieved_at": "2026-09-16T00:00:00Z"
+      },
+      "variant": {"assembly": "GRCh38", "chrom": "7", "pos": 44149809, "ref": "C", "alt": "A"},
+      "transcript": "NM_000162.5",
+      "condition": "MONDO:0015967",
+      "condition_label": "monogenic diabetes",
+      "inheritance": "Semidominant inheritance",
+      "identity_provenance": [{"source": "ClinGen ERepo GRCh38 HGVS", "matched_identifier": "NC_000007.14:g.44149809C>A"}]
+    },
+    {
+      "record_id": "clingen-positive:pm2-gucy2d",
+      "source": {
+        "dataset": "ClinGen Evidence Repository",
+        "url": "https://erepo.clinicalgenome.org/evrepo/ui/interpretation/e4081a29-cfa7-40d5-b266-5ca0950eaed2",
+        "uuid": "e4081a29-cfa7-40d5-b266-5ca0950eaed2",
+        "caid": "CAR:CA226054",
+        "preferred_variant_title": "NM_000180.4(GUCY2D):c.1694T>C (p.Phe565Ser)",
+        "retrieved_at": "2026-09-16T00:00:00Z"
+      },
+      "variant": {"assembly": "GRCh38", "chrom": "17", "pos": 8009531, "ref": "T", "alt": "C"},
+      "transcript": "NM_000180.4",
+      "condition": "MONDO:0100453",
+      "condition_label": "GUCY2D-related recessive retinopathy",
+      "inheritance": "Autosomal recessive inheritance",
+      "identity_provenance": [{"source": "ClinGen ERepo GRCh38 HGVS", "matched_identifier": "NC_000017.11:g.8009531T>C"}]
+    },
+    {
+      "record_id": "clingen-positive:pp2-gck",
+      "source": {
+        "dataset": "ClinGen Evidence Repository",
+        "url": "https://erepo.clinicalgenome.org/evrepo/ui/classification/8baf769d-4142-48b1-9144-f9044b76b177",
+        "uuid": "8baf769d-4142-48b1-9144-f9044b76b177",
+        "caid": "CAR:CA367401768",
+        "preferred_variant_title": "NM_000162.5(GCK):c.499T>C (p.Trp167Arg)",
+        "retrieved_at": "2026-09-16T00:00:00Z"
+      },
+      "variant": {"assembly": "GRCh38", "chrom": "7", "pos": 44150049, "ref": "A", "alt": "G"},
+      "transcript": "NM_000162.5",
+      "condition": "MONDO:0015967",
+      "condition_label": "monogenic diabetes",
+      "inheritance": "Autosomal dominant inheritance",
+      "identity_provenance": [{"source": "ClinGen ERepo GRCh38 HGVS", "matched_identifier": "NC_000007.14:g.44150049A>G"}]
+    },
+    {
+      "record_id": "clingen-positive:pm4-otc",
+      "source": {
+        "dataset": "ClinGen Evidence Repository",
+        "url": "https://erepo.clinicalgenome.org/evrepo/ui/classification/1013949b-d83b-492b-adf2-b808a41e801c",
+        "uuid": "1013949b-d83b-492b-adf2-b808a41e801c",
+        "caid": "CAR:CA2424871675",
+        "preferred_variant_title": "NM_000531.6(OTC):c.264AAG[1] (p.Arg89del)",
+        "retrieved_at": "2026-09-16T00:00:00Z"
+      },
+      "variant": {"assembly": "GRCh38", "chrom": "X", "pos": 38369845, "ref": "GAAG", "alt": "G"},
+      "transcript": "NM_000531.6",
+      "condition": "MONDO:0010703",
+      "condition_label": "ornithine carbamoyltransferase deficiency",
+      "inheritance": "X-linked inheritance",
+      "identity_provenance": [{"source": "ClinGen ERepo GRCh38 HGVS", "matched_identifier": "NC_000023.11:g.38369846_38369848del"}]
+    },
+    {
+      "record_id": "clingen-positive:pm5-otc",
+      "source": {
+        "dataset": "ClinGen Evidence Repository",
+        "url": "https://erepo.clinicalgenome.org/evrepo/ui/classification/07236833-88e3-4b3a-9a4d-35a6c2230597",
+        "uuid": "07236833-88e3-4b3a-9a4d-35a6c2230597",
+        "caid": "CAR:CA090910",
+        "preferred_variant_title": "NM_000531.6(OTC):c.118C>T (p.Arg40Cys)",
+        "retrieved_at": "2026-09-16T00:00:00Z"
+      },
+      "variant": {"assembly": "GRCh38", "chrom": "X", "pos": 38367331, "ref": "C", "alt": "T"},
+      "transcript": "NM_000531.6",
+      "condition": "MONDO:0010703",
+      "condition_label": "ornithine carbamoyltransferase deficiency",
+      "inheritance": "X-linked inheritance",
+      "identity_provenance": [{"source": "ClinGen ERepo GRCh38 HGVS", "matched_identifier": "NC_000023.11:g.38367331C>T"}]
+    },
+    {
+      "record_id": "clingen-positive:bp4-slc6a8",
+      "source": {
+        "dataset": "ClinGen Evidence Repository",
+        "url": "https://erepo.clinicalgenome.org/evrepo/ui/classification/49ff12e7-0969-4d36-a6ca-664d4a65e974",
+        "uuid": "49ff12e7-0969-4d36-a6ca-664d4a65e974",
+        "caid": "CAR:CA415076138",
+        "preferred_variant_title": "NM_005629.4(SLC6A8):c.76G>A (p.Gly26Arg)",
+        "retrieved_at": "2026-09-16T00:00:00Z"
+      },
+      "variant": {"assembly": "GRCh38", "chrom": "X", "pos": 153688650, "ref": "G", "alt": "A"},
+      "transcript": "NM_005629.4",
+      "condition": "MONDO:0010305",
+      "condition_label": "creatine transporter deficiency",
+      "inheritance": "X-linked inheritance",
+      "identity_provenance": [{"source": "ClinGen ERepo GRCh38 HGVS", "matched_identifier": "NC_000023.11:g.153688650G>A"}]
+    },
+    {
+      "record_id": "clingen-positive:ba1-itgb3",
+      "source": {
+        "dataset": "ClinGen Evidence Repository",
+        "url": "https://erepo.clinicalgenome.org/evrepo/ui/interpretation/9b9e1625-5f63-4b04-aef5-9fa3f6098f24",
+        "uuid": "9b9e1625-5f63-4b04-aef5-9fa3f6098f24",
+        "caid": "CAR:CA8622916",
+        "preferred_variant_title": "NM_000212.2(ITGB3):c.342T>C (p.Ile114=)",
+        "retrieved_at": "2026-09-16T00:00:00Z"
+      },
+      "variant": {"assembly": "GRCh38", "chrom": "17", "pos": 47283530, "ref": "T", "alt": "C"},
+      "transcript": "NM_000212.2",
+      "condition": "MONDO:0010119",
+      "condition_label": "Glanzmann thrombasthenia",
+      "inheritance": "Autosomal recessive inheritance",
+      "ba1_exception_assessment": {
+        "source": "ClinGen SVI BA1 exception list",
+        "source_version": "2018",
+        "reviewed_at": "2026-09-16",
+        "is_exception": false
+      },
+      "identity_provenance": [{"source": "ClinGen ERepo GRCh38 HGVS", "matched_identifier": "NC_000017.11:g.47283530T>C"}]
+    },
+    {
+      "record_id": "clingen-positive:bs1-myh7",
+      "source": {
+        "dataset": "ClinGen Evidence Repository",
+        "url": "https://erepo.clinicalgenome.org/evrepo/ui/interpretation/dc6a24be-6cd7-45ac-a097-1d5031608aa7",
+        "uuid": "dc6a24be-6cd7-45ac-a097-1d5031608aa7",
+        "caid": "CAR:CA013661",
+        "preferred_variant_title": "NM_000257.3(MYH7):c.3382G>A (p.Ala1128Thr)",
+        "retrieved_at": "2026-09-16T00:00:00Z"
+      },
+      "variant": {"assembly": "GRCh38", "chrom": "14", "pos": 23420189, "ref": "C", "alt": "T"},
+      "transcript": "NM_000257.3",
+      "condition": "MONDO:0005045",
+      "condition_label": "hypertrophic cardiomyopathy",
+      "inheritance": "Autosomal dominant inheritance",
+      "disease_frequency_threshold": {
+        "condition": "MONDO:0005045",
+        "max_credible_af": 0.0002,
+        "inheritance": "Autosomal dominant inheritance",
+        "source": "ClinGen Cardiomyopathy VCEP MYH7 specification",
+        "source_version": "2.0.0",
+        "reviewed_at": "2026-09-16"
+      },
+      "identity_provenance": [{"source": "ClinGen ERepo GRCh38 HGVS", "matched_identifier": "NC_000014.9:g.23420189C>T"}]
+    },
+    {
+      "record_id": "clingen-positive:bp1-brca2",
+      "source": {
+        "dataset": "ClinGen Evidence Repository",
+        "url": "https://erepo.clinicalgenome.org/evrepo/ui/classification/60281fd2-8f05-4c28-abf1-89a1a3eded05",
+        "uuid": "60281fd2-8f05-4c28-abf1-89a1a3eded05",
+        "caid": "CAR:CA387765390",
+        "preferred_variant_title": "NM_000059.4(BRCA2):c.1732G>C (p.Gly578Arg)",
+        "retrieved_at": "2026-09-16T00:00:00Z"
+      },
+      "variant": {"assembly": "GRCh38", "chrom": "13", "pos": 32333210, "ref": "G", "alt": "C"},
+      "transcript": "NM_000059.4",
+      "condition": "MONDO:0700269",
+      "condition_label": "BRCA2-related cancer predisposition",
+      "inheritance": "Autosomal dominant inheritance",
+      "identity_provenance": [{"source": "ClinGen ERepo GRCh38 HGVS", "matched_identifier": "NC_000013.11:g.32333210G>C"}]
+    },
+    {
+      "record_id": "clingen-positive:bp3-foxg1",
+      "source": {
+        "dataset": "ClinGen Evidence Repository",
+        "url": "https://erepo.clinicalgenome.org/evrepo/ui/classification/6e2dafeb-f2f0-4001-98b4-3b72f6ccff6c",
+        "uuid": "6e2dafeb-f2f0-4001-98b4-3b72f6ccff6c",
+        "caid": "CAR:CA658658251",
+        "preferred_variant_title": "NM_005249.5(FOXG1):c.219GCC[8] (p.Pro79_Pro80dup)",
+        "retrieved_at": "2026-09-16T00:00:00Z"
+      },
+      "variant": {"assembly": "GRCh38", "chrom": "14", "pos": 28767509, "ref": "C", "alt": "CGCCGCC"},
+      "transcript": "NM_005249.5",
+      "condition": "MONDO:0100040",
+      "condition_label": "FOXG1 disorder",
+      "inheritance": "Autosomal dominant inheritance",
+      "identity_provenance": [{"source": "ClinGen ERepo GRCh38 HGVS", "matched_identifier": "NC_000014.9:g.28767510_28767515dup"}]
+    },
+    {
+      "record_id": "clingen-positive:bp7-pax6",
+      "source": {
+        "dataset": "ClinGen Evidence Repository",
+        "url": "https://erepo.clinicalgenome.org/evrepo/ui/classification/f6819b13-83d6-4f10-864c-e25c671697bc",
+        "uuid": "f6819b13-83d6-4f10-864c-e25c671697bc",
+        "caid": "CAR:CA10587116",
+        "preferred_variant_title": "NM_001368894.2(PAX6):c.1215C>T (p.Thr405=)",
+        "retrieved_at": "2026-09-16T00:00:00Z"
+      },
+      "variant": {"assembly": "GRCh38", "chrom": "11", "pos": 31790720, "ref": "G", "alt": "A"},
+      "transcript": "NM_001368894.2",
+      "condition": "MONDO:0800183",
+      "condition_label": "PAX6-related ocular dysgenesis",
+      "inheritance": "Autosomal dominant inheritance",
+      "identity_provenance": [{"source": "ClinGen ERepo GRCh38 HGVS", "matched_identifier": "NC_000011.10:g.31790720G>A"}]
+    }
+  ]
+}

@@ -162,6 +162,19 @@
   MANUAL_REVIEW 4、DEPRECATED 56。PVS1はNOT_APPLICABLE 25、NOT_EVALUATED 3。
   pytest 159テスト成功、Ruff成功、全28件VA-Spec検証成功。
 
+- ClinGen Evidence Repository 2.5.6のsummary APIを13,265件全走査し、PP5/BP6を除く
+  実装対象14 criterionすべてにMET例があることを確認。BP3は現行23件で、以前の限定556件走査に
+  基づく「0件」を更新した。
+- 13変異のClinGen正例fixtureを追加。ERepoの適用コードは期待値manifestだけに隔離し、評価入力は
+  GRCh38 variantと出典付き独立Evidenceだけで構成した。PVS1/PS1/PM1/PM2/PM4/PM5/PP2/PP3/
+  BA1/BS1/BP1/BP3/BP4/BP7が各1件以上METになり、VA-Spec 1.0.1出力も再読込検証する。
+- 参照値は公開解釈に照合した。例としてPAX6 REVEL=0.967、SLC6A8 REVEL=0.079、ITGB3
+  1342/24024、GUCY2D 1/1613704・PM2閾値0.0004、MYH7 10/34232・BS1閾値0.0002を使用。
+  GCK/FOXG1の旧assemblyまたは誤った
+  VCF anchorを修正し、indel anchorはEnsembl GRCh38参照配列で確認した。
+- 正例6テストを含む全165テスト成功、Ruff成功。既存28件の固定キャッシュE2Eは入力エラー0、
+  VA-Spec VALIDATEDを維持した。
+
 ## 未完了（次工程）
 
 1. BA1例外リストは手入力のため、原典Table 1との第三者照合が未実施。

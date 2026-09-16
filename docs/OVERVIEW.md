@@ -9,6 +9,7 @@
 | [進捗](PROGRESS.md) | 工程順の実装記録 |
 | [PM1設計](PM1-PLAN.md) | PM1の2ルート設計とhotspot policy |
 | [PVS1設計](PVS1-PLAN.md) | PVS1 General decision treeとEvidence契約 |
+| [ClinGen正例リファレンス](CLINGEN-POSITIVE-REFERENCES.md) | 14 criterionのClinGen正例と再現方法 |
 | [予測Evidence仕様](PREDICTION-EVIDENCE.md) | 蛋白注釈・予測値の取得と校正policy |
 | [VA-Spec出力](VA-SPEC-OUTPUT.md) | JSONのフィールド対応と制約 |
 
@@ -44,6 +45,22 @@ demo-dataの4症例28 ALTレコードを原本非改変で監査し、VERIFIED 2
 人のキュレーションは`config/curated-context.json`から入る（現在はClinGen SVI BA1例外リスト
 9変異、手入力）。
 
+## ClinGen正例スイート
+
+PP5/BP6を除く実装対象14 criterionは、ClinGen Evidence Repositoryの公開VCEP解釈から選んだ
+13変異で最低1件ずつMETを再現する。ERepoの`metCodes`は期待値manifestにだけ置き、evaluatorには
+prepared variantと独立に正規化したEvidenceだけを渡すため、専門家パネルの結論をそのまま根拠に
+する自己参照はない。VA-Spec 1.0.1 Evidence Lineの生成・schema検証までE2Eで確認する。
+
+```powershell
+$env:PYTHONPATH = 'src'
+.venv/Scripts/python.exe -m unittest tests.test_clingen_positive -v
+```
+
+2026-09-16取得のERepo 13,265件を全走査した結果、14 criterionすべてに現行MET例が存在した。
+BP3も23件あり、過去の限定556件走査で0件だった記録を更新した。個々のUUID、座標、適用コード、
+General Guidance evaluatorとの強度差は[正例一覧](CLINGEN-POSITIVE-REFERENCES.md)に固定している。
+
 ## 16基準の状況
 
 ### 判定に到達している（7基準）
@@ -62,8 +79,13 @@ demo-dataの4症例28 ALTレコードを原本非改変で監査し、VERIFIED 2
 
 PM4（28）・BP3（28）・PVS1（25）・BP7（21）。転写産物注釈から確定し、再評価を要しない。
 demo-dataにin-frame indelとstop lossが無いためPM4とBP3のゲートは実データで開かない。
+ただしこれはdemo-dataの構成によるもので、判定ロジックが未検証という意味ではない。
 ClinGen Evidence Repository由来の5変異（`tests/fixtures/clingen-gate-*.json`）で、
-PVS1・PM4・BP3・BP7が対象consequenceで開き、それ以外では閉じることを確認している。
+PVS1・PM4・BP7が対象consequenceで開き、それ以外では閉じることを確認している。
+さらに`clingen-positive-*` fixtureでは、PM4（`clingen-positive:pm4-otc`、moderate）と
+BP3（`clingen-positive:bp3-foxg1`、supporting）がゲート通過後の
+`protein_length_change`・`nonfunctional_repeat`・`repetitive`・`functional_importance`
+まで走ってMET終端に到達する。BP3はgate fixtureを持たず正例fixtureのみで確認している。
 PVS1 evaluator自体はnonsense/frameshift、canonical/実証splice LoF、start-lossのGeneral
 decision treeと4段階強度に対応済み。デモのPVS1候補3件はgene_disease等の独立Evidenceが
 未投入のためNOT_EVALUATEDであり、判定ロジック未実装を意味しない。
