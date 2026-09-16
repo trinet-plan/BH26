@@ -279,6 +279,20 @@ def build_stub_evidence_line(code: str, variant: VariantRecord) -> Optional[dict
     evidenceOutcome/strengthOfEvidenceProvided/contributions claiming a
     judgment this pipeline never made.
 
+    [Why `extensions`, not `reportedIn` - decided 2026-09-16, don't "fix"
+     this without re-reading]
+      `Document` (what EvidenceLine.reportedIn holds) validates fine with
+      only `urls` set, no `pmid` required - confirmed against the real
+      ga4gh.va_spec Pydantic model - so reportedIn=[Document(urls=[url])]
+      was considered as a more spec-native alternative to a custom
+      extension. Deliberately NOT used: `reportedIn` means "the source this
+      evidence was reported in" - using it for a gnomAD/ClinVar/UniProt/
+      AutoPVS1 page this pipeline never actually read or evaluated would
+      overstate this line's own claim (the whole point of this function is
+      that NO evaluation happened). `extensions` correctly marks the link
+      as auxiliary/navigational, matching this function's own "NOT a
+      judgment" framing above.
+
     `directionOfEvidenceProvided` is a required VA-Spec EvidenceLine field
     (confirmed against the real ga4gh.va_spec Pydantic model - omitting it
     raises a validation error) with no "not evaluated" option in Direction
