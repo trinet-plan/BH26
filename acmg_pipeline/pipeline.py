@@ -885,6 +885,9 @@ async def evaluate_variant_evidence_lines(
         hotspot_policy=automated_config.get("PM1", {}).get("hotspot"),
         with_gene_disease_draft=bool(automated_config.get("gene_disease_draft")),
         gene_disease_draft_policy=automated_config.get("gene_disease_draft"),
+        with_splice_default=bool(automated_config.get("PVS1", {}).get("splice_default_policy_version")),
+        splice_default_policy_version=automated_config.get("PVS1", {}).get("splice_default_policy_version"),
+        with_initiation_assessment=bool(automated_config.get("PVS1", {}).get("with_initiation_assessment")),
     )
     resolved = resolver.resolve(_identity_from_info(variant), _automated_variant(variant))
     services = make_services(
@@ -1023,6 +1026,9 @@ async def evaluate_selected_criteria(
             hotspot_policy=automated_config.get("PM1", {}).get("hotspot"),
             with_gene_disease_draft=bool(automated_config.get("gene_disease_draft")),
             gene_disease_draft_policy=automated_config.get("gene_disease_draft"),
+            with_splice_default=bool(automated_config.get("PVS1", {}).get("splice_default_policy_version")),
+            splice_default_policy_version=automated_config.get("PVS1", {}).get("splice_default_policy_version"),
+            with_initiation_assessment=bool(automated_config.get("PVS1", {}).get("with_initiation_assessment")),
         )
         resolved = resolver.resolve(_identity_from_info(variant), _automated_variant(variant))
         services = make_services(resolved.records, automated_config.get("population_providers"),

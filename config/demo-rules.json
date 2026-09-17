@@ -76,7 +76,9 @@
       "condition_required": false,
       "missing_condition_behavior": "use_gene_level_context",
       "cnv_sv_supported": false
-    }
+    },
+    "splice_default_policy_version": "splice-default-v1",
+    "with_initiation_assessment": true
   },
   "PM1": {
     "hotspot": {

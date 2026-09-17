@@ -62,6 +62,9 @@ from acmg_pipeline.providers.clingen_dosage import ClinGenDosageProvider
 from acmg_pipeline.providers.clingen_gene_validity import ClinGenGeneValidityProvider
 from acmg_pipeline.providers.gene_disease_draft import GeneDiseaseDraftProvider
 from acmg_pipeline.providers.gnomad_constraint import GnomadConstraintProvider
+from acmg_pipeline.providers.initiation import InitiationProvider
+from acmg_pipeline.providers.splice_default import SpliceDefaultProvider
+from acmg_pipeline.providers.upstream_pathogenic import UpstreamPathogenicProvider
 from acmg_pipeline.providers.dbnsfp import DbnsfpProvider
 from acmg_pipeline.providers.ensembl import EnsemblIdentityProvider
 from acmg_pipeline.providers.http import CachedHttpClient, FetchError
@@ -212,6 +215,9 @@ class ProviderEvidenceResolver:
         with_clingen_dosage: bool = False,
         with_gene_disease_draft: bool = False,
         gene_disease_draft_policy: dict | None = None,
+        with_splice_default: bool = False,
+        splice_default_policy_version: str | None = None,
+        with_initiation_assessment: bool = False,
     ):
         self._client = CachedHttpClient(cache_dir, offline=offline)
         self._external = (
@@ -228,6 +234,9 @@ class ProviderEvidenceResolver:
         self._with_clingen_dosage = with_clingen_dosage
         self._with_gene_disease_draft = with_gene_disease_draft
         self._gene_disease_draft_policy = gene_disease_draft_policy
+        self._with_splice_default = with_splice_default
+        self._splice_default_policy_version = splice_default_policy_version
+        self._with_initiation_assessment = with_initiation_assessment
         self._clingen_gene_validity = None
         self._gnomad_constraint = None
         self._ensembl = None
@@ -263,6 +272,8 @@ class ProviderEvidenceResolver:
         self._add_population(variant, resolved)
         self._add_lof_mechanism(annotation, variant, resolved)
         self._add_gene_disease_draft(annotation, variant, identity, resolved)
+        self._add_splice_default(annotation, variant, resolved)
+        self._add_initiation_assessment(annotation, variant, identity, resolved)
 
         try:
             suite = self._suite()
@@ -373,6 +384,71 @@ class ProviderEvidenceResolver:
             resolved.failures.append({"provider": GeneDiseaseDraftProvider.name, "error": str(exc)})
             return
         resolved.records.extend(drafts)
+
+    # Same set acmg_pipeline.criteria.pvs1.CANONICAL_SPLICE names - duplicated rather than
+    # imported to keep this module decoupled from criteria internals, the same way it never
+    # imports from pvs1.py for anything else.
+    _CANONICAL_SPLICE_CONSEQUENCES = frozenset({"splice_donor_variant", "splice_acceptor_variant"})
+
+    def _add_splice_default(self, annotation, variant, resolved):
+        """PVS1's SP01/SP02 default first-pass answer for canonical splice variants.
+
+        Off unless asked for, same convention as the other optional steps above. Only
+        for splice_donor_variant/splice_acceptor_variant - see
+        acmg_pipeline.providers.splice_default's own docstring for why this is a
+        literature base-rate default (checked against MYBPC3 c.2905+1G>A), not a
+        per-variant sequence computation.
+        """
+        if not self._with_splice_default or annotation is None:
+            return
+        if not (set(annotation.get("consequences") or []) & self._CANONICAL_SPLICE_CONSEQUENCES):
+            return
+        try:
+            provider = SpliceDefaultProvider(self._splice_default_policy_version)
+            records = provider.get_splice_assessment(
+                variant, annotation.get("transcript"),
+                generated_at=datetime.now(timezone.utc).isoformat(),
+            )
+        except ValueError as exc:
+            resolved.failures.append({"provider": SpliceDefaultProvider.name, "error": str(exc)})
+            return
+        resolved.records.extend(records)
+
+    def _add_initiation_assessment(self, annotation, variant, identity, resolved):
+        """PVS1's start-loss path (IC01/IC02/IC03) - wired for the first time here.
+
+        InitiationProvider and UpstreamPathogenicProvider have existed since before this
+        method, but only automated_cli.py's separate batch path ever called them - the
+        integrated pipeline never did, so a live start_lost variant always came back
+        UNKNOWN here regardless of what those two providers could answer. Same "off
+        unless asked for" convention as the other optional steps above.
+        """
+        if not self._with_initiation_assessment or annotation is None:
+            return
+        if "start_lost" not in (annotation.get("consequences") or []):
+            return
+        gene, transcript = annotation.get("gene"), annotation.get("transcript")
+        hgvsc = identity.get("HGVSC") if isinstance(identity, dict) else None
+        if not (gene and transcript and hgvsc):
+            return
+        release = self._ensembl_release or self._ensembl_provider().release
+        try:
+            records = InitiationProvider(self._external, release).get_initiation_assessment(
+                variant, gene, transcript, hgvsc)
+        except PROVIDER_ERRORS as exc:
+            resolved.failures.append({"provider": InitiationProvider.name, "error": str(exc)})
+            return
+        if not records:
+            return
+        record = records[0]
+        downstream_start_codon = record.get("downstream_start_codon")
+        try:
+            upstream = UpstreamPathogenicProvider(self._external, self._clinvar_release) \
+                .get_upstream_evidence(variant, gene, transcript, downstream_start_codon)
+        except PROVIDER_ERRORS as exc:
+            resolved.failures.append({"provider": UpstreamPathogenicProvider.name, "error": str(exc)})
+            upstream = {}
+        resolved.records.append({**record, **upstream})
 
     def _annotate(self, identity, variant, resolved):
         record = {"identity": identity}
