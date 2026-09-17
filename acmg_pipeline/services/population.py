@@ -65,6 +65,26 @@ def faf95(ac, an):
     return lower if lower > 0 else Decimal(0)
 
 
+STATISTICS = {"af": "allele frequency", "faf95": "filtering allele frequency"}
+
+
+def article(measure):
+    return ("an " if measure[0] in "aeiou" else "a ") + measure
+
+
+def observed_frequencies(observations, statistic):
+    """Pair each observation with the quantity `statistic` names.
+
+    A frequency threshold and the statistic it was calibrated against are one unit - an AF
+    cutoff compared with a FAF is a stricter cutoff than the one that was written down - so
+    every criterion that compares against a threshold reads the statistic from its own policy
+    and passes it here rather than picking one.
+    """
+    if statistic == "faf95":
+        return [(item, faf95(item.get("AC"), item.get("AN"))) for item in observations]
+    return [(item, number(item.get("AF"))) for item in observations]
+
+
 def usable_observations(resolved, variant, minimum_an):
     """Keep raw AF, FAF and cohort observations separate. Do not pool overlapping cohorts."""
     valid, rejected = [], []

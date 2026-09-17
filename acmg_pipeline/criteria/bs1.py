@@ -1,7 +1,9 @@
 from acmg_pipeline.constants import CriterionStatus
 from acmg_pipeline.automated_core.interface import criterion_input
 from acmg_pipeline.criteria.common import citable, population_context, result as _base_result
-from acmg_pipeline.services.population import FAF_METHOD, faf95, number
+from acmg_pipeline.services.population import (
+    FAF_METHOD, STATISTICS, article, number, observed_frequencies,
+)
 from acmg_pipeline.clinical_note import ClinicalNoteExtraction
 from acmg_pipeline.vcf_record import VariantRecord
 
@@ -44,9 +46,6 @@ def disease_specific_threshold(input_data):
                                   f"{assessment['inheritance']!r} inheritance, but this variant is "
                                   f"assessed as {input_data.get('inheritance')!r}")
     return number(assessment["max_credible_af"]), assessment, None
-
-
-STATISTICS = {"af", "faf95"}
 
 
 def frequency_statistic(input_data, applied, scope):
@@ -117,13 +116,10 @@ def evaluate(variant: VariantRecord, clinical_note: ClinicalNoteExtraction, serv
     if early:
         return early
     _, observations, rejected, failures, provenance = context
+    measure = STATISTICS[statistic]
+    scored = observed_frequencies(observations, statistic)
     if statistic == "faf95":
-        scored = [(item, faf95(item.get("AC"), item.get("AN"))) for item in observations]
-        measure = "filtering allele frequency"
         provenance = {**provenance, "faf_method": FAF_METHOD}
-    else:
-        scored = [(item, number(item.get("AF"))) for item in observations]
-        measure = "allele frequency"
     exceeding = [item for item, value in scored if value is not None and value > threshold]
     highest = max((value for _, value in scored if value is not None), default=None)
     provenance = {**provenance, "frequency_statistic": statistic,
@@ -132,17 +128,17 @@ def evaluate(variant: VariantRecord, clinical_note: ClinicalNoteExtraction, serv
     # says what was actually compared - and an incomplete search is not a negative result.
     if exceeding:
         status, strength = CriterionStatus.MET, "strong"
-        summary = (f"{len(exceeding)} of {len(observations)} resolved observation(s) have a {measure} "
+        summary = (f"{len(exceeding)} of {len(observations)} resolved observation(s) have {article(measure)} "
                    f"above {label} ({threshold}); highest {measure} {highest}")
     elif failures:
         status, strength = CriterionStatus.UNKNOWN, None
-        summary = (f"No resolved observation has a {measure} above {label} "
+        summary = (f"No resolved observation has {article(measure)} above {label} "
                    f"({threshold}; highest {measure} {highest}), but "
                    f"{len(failures)} population source(s) could not be queried, so the search "
                    f"is incomplete")
     else:
         status, strength = CriterionStatus.NOT_MET, None
-        summary = (f"Every population source resolved and none has a {measure} above {label} "
+        summary = (f"Every population source resolved and none has {article(measure)} above {label} "
                    f"({threshold}; highest {measure} {highest})")
     review = [] if scope == "disease_specific" else [
         "Confirm BS1 against a disease-specific maximum credible frequency"]

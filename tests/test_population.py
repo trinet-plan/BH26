@@ -19,6 +19,9 @@ class PopulationTests(unittest.TestCase):
         # "Absent from controls" is stated, not defaulted: pm2.evaluate() reports an unset
         # max_af as an unconfigured policy rather than running as the strictest threshold.
         self.config["PM2"]["max_af"] = 0
+        # 5% is the ACMG/AMP 2015 general figure and a point-estimate cutoff, so it is
+        # compared with AF; a VCEP specification replaces the pair, not just the number.
+        self.config["BA1"].update({"max_af": 0.05, "frequency_statistic": "af"})
         # BS1 falls back to this when no disease-specific threshold applies. Like every other
         # threshold in this project it lives in the policy, not in the code.
         self.config["BS1"].update({"default_max_credible_af": 0.0001,
@@ -98,6 +101,57 @@ class PopulationTests(unittest.TestCase):
             self.evaluate(ba1, self.services([self.observation(501)])).status,
             CriterionStatus.NOT_MET,
         )
+
+    def test_ba1_reports_an_unconfigured_threshold_instead_of_assuming_five_percent(self):
+        """5% was hardcoded, so a run silently disagreed with any VCEP that replaces it."""
+        for key in ("max_af", "frequency_statistic"):
+            del self.config["BA1"][key]
+        value = self.evaluate(ba1, self.services([self.observation(600)]))
+        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
+        self.assertEqual(value.missing_inputs, ["BA1.max_af", "BA1.frequency_statistic"])
+
+    def test_ba1_honours_a_vcep_threshold_below_the_general_figure(self):
+        """The ClinGen Cardiomyopathy VCEP uses 0.1%, not the ACMG/AMP general 5%."""
+        self.config["BA1"]["max_af"] = 0.001
+        self.input["ba1_exception_assessment"] = {
+            "source": "test", "source_version": "1", "reviewed_at": "2026-09-14",
+            "is_exception": False}
+        value = self.evaluate(ba1, self.services([self.observation(100)]))  # AF 1%
+        self.assertEqual(value.status, CriterionStatus.MET)
+        self.assertEqual(value.provenance["stand_alone_threshold"], "0.001")
+
+    def test_ba1_uses_the_statistic_the_policy_names(self):
+        observation = self.observation(516, an=10000)  # AF 0.0516, FAF95 0.0480
+        self.input["ba1_exception_assessment"] = {
+            "source": "test", "source_version": "1", "reviewed_at": "2026-09-14",
+            "is_exception": False}
+        for statistic, expected in (("af", CriterionStatus.MET), ("faf95", CriterionStatus.NOT_MET)):
+            with self.subTest(statistic=statistic):
+                self.config["BA1"]["frequency_statistic"] = statistic
+                value = self.evaluate(ba1, self.services([observation]))
+                self.assertEqual(value.status, expected)
+                self.assertEqual(value.provenance["frequency_statistic"], statistic)
+
+    def test_ba1_rejects_a_threshold_outside_zero_to_one(self):
+        for bad in (5, 0, "high"):
+            with self.subTest(max_af=bad):
+                self.config["BA1"]["max_af"] = bad
+                value = self.evaluate(ba1, self.services([self.observation(600)]))
+                self.assertEqual(value.status, CriterionStatus.UNKNOWN)
+                self.assertEqual(value.missing_inputs, ["BA1.max_af"])
+
+    def test_ba1_stops_on_an_unconfigured_population_policy(self):
+        """A stand-alone threshold does not substitute for the population quality policy."""
+        del self.config["BA1"]["minimum_an"]
+        value = self.evaluate(ba1, self.services([self.observation(600)]))
+        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
+        self.assertEqual(value.missing_inputs, ["BA1.minimum_an"])
+
+    def test_ba1_rejects_a_statistic_it_cannot_compute(self):
+        self.config["BA1"]["frequency_statistic"] = "popmax"
+        value = self.evaluate(ba1, self.services([self.observation(600)]))
+        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
+        self.assertEqual(value.missing_inputs, ["BA1.frequency_statistic"])
 
     def test_ba1_exception_list_is_policy_not_an_evidence_item(self):
         self.input["ba1_exception_assessment"] = {

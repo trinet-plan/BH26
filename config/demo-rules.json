@@ -11,7 +11,11 @@
   "BA1": {
     "minimum_an": 2000,
     "policy_source": "BH26 demo population evidence QC policy",
-    "policy_version": "2026-09-15"
+    "policy_version": "2026-09-15",
+    "max_af": 0.05,
+    "frequency_statistic": "af",
+    "threshold_source": "ACMG/AMP 2015 general BA1 figure: >5% point-estimate MAF. A VCEP specification replaces both the number and, where it says so, the statistic - e.g. the ClinGen Inherited Cardiomyopathy VCEP uses 0.1%, and ClinGen SVI recommends a filtering allele frequency",
+    "threshold_source_version": "acmg_amp_2015"
   },
   "BS1": {
     "minimum_an": 2000,
