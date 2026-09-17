@@ -1,0 +1,169 @@
+{
+  "population_providers": [
+    "gnomAD"
+  ],
+  "PM2": {
+    "minimum_an": 2000,
+    "max_af": 0,
+    "policy_source": "BH26 demo population evidence QC policy",
+    "policy_version": "2026-09-15"
+  },
+  "BA1": {
+    "minimum_an": 2000,
+    "policy_source": "BH26 demo population evidence QC policy",
+    "policy_version": "2026-09-15"
+  },
+  "BS1": {
+    "minimum_an": 2000,
+    "policy_source": "BH26 demo population evidence QC policy",
+    "policy_version": "2026-09-15"
+  },
+  "PVS1": {
+    "ruleset": {
+      "name": "clingen_general_pvs1",
+      "version": "2018+2023-splicing",
+      "sources": [
+        {
+          "id": "acmg_amp_2015",
+          "doi": "10.1038/gim.2015.30",
+          "pmid": "25741868"
+        },
+        {
+          "id": "clingen_pvs1_2018",
+          "doi": "10.1002/humu.23626",
+          "pmid": "30192042"
+        },
+        {
+          "id": "clingen_splicing_2023",
+          "doi": "10.1016/j.ajhg.2023.06.002",
+          "pmid": "37352859"
+        }
+      ]
+    },
+    "rules": {
+      "protein_loss_threshold": 0.1
+    },
+    "implementation": {
+      "condition_required": false,
+      "missing_condition_behavior": "use_gene_level_context",
+      "cnv_sv_supported": false
+    }
+  },
+  "PM1": {
+    "hotspot": {
+      "window_aa": 5,
+      "min_pathogenic": 3,
+      "max_benign": 0,
+      "method": "clinvar_local_density",
+      "policy_source": "BH26 demo PM1 hotspot proxy policy (fastVEP-style ClinVar missense density); not a ClinGen VCEP specification",
+      "policy_version": "PM1-hotspot-v1"
+    }
+  },
+  "computational": {
+    "calibrations": {
+      "revel-pejaver-2022": {
+        "predictor": "REVEL",
+        "predictor_version": "dbNSFP-4.8a",
+        "source": "Pejaver et al. 2022, Am J Hum Genet 109:2163-2177 (ClinGen SVI PP3/BP4 calibration)",
+        "version": "2022",
+        "mechanism": "protein",
+        "consequences": [
+          "missense_variant"
+        ],
+        "score_min": 0,
+        "score_max": 1,
+        "bands": {
+          "PP3": [
+            {
+              "min": 0.644,
+              "max": 1.0,
+              "strength": "supporting"
+            },
+            {
+              "min": 0.773,
+              "max": 1.0,
+              "strength": "moderate"
+            },
+            {
+              "min": 0.932,
+              "max": 1.0,
+              "strength": "strong"
+            }
+          ],
+          "BP4": [
+            {
+              "min": 0.0,
+              "max": 0.29,
+              "strength": "supporting"
+            },
+            {
+              "min": 0.0,
+              "max": 0.183,
+              "strength": "moderate"
+            },
+            {
+              "min": 0.0,
+              "max": 0.016,
+              "strength": "strong"
+            },
+            {
+              "min": 0.0,
+              "max": 0.003,
+              "strength": "very_strong"
+            }
+          ]
+        }
+      },
+      "spliceai-svi-2023": {
+        "predictor": "SpliceAI",
+        "predictor_version": "SpliceAI-1.3",
+        "source": "Walker et al. 2023, Am J Hum Genet 110:1046-1067 (ClinGen SVI Splicing Subgroup)",
+        "version": "2023",
+        "mechanism": "splicing",
+        "consequences": [
+          "missense_variant",
+          "synonymous_variant",
+          "intron_variant",
+          "splice_region_variant",
+          "splice_donor_region_variant",
+          "splice_polypyrimidine_tract_variant",
+          "coding_sequence_variant",
+          "5_prime_UTR_variant",
+          "3_prime_UTR_variant",
+          "stop_gained",
+          "start_lost"
+        ],
+        "score_min": 0,
+        "score_max": 1,
+        "scope_note": "Applies outside the donor/acceptor +/-1,2 dinucleotides, where PVS1 is used instead",
+        "version_assertion": {
+          "source": "Ensembl VEP SpliceAI",
+          "unreported_version": "unreported-Ensembl-116",
+          "asserted_version": "SpliceAI precomputed masked=0 scores served by Ensembl VEP release 116",
+          "asserted_by": "BH26 project configuration",
+          "justification": "Ensembl REST does not expose the SpliceAI model version; the release serving the score is recorded instead so the assumption is auditable"
+        },
+        "bands": {
+          "PP3": [
+            {
+              "min": 0.2,
+              "max": 1.0,
+              "strength": "supporting"
+            }
+          ],
+          "BP4": [
+            {
+              "min": 0.0,
+              "max": 0.1,
+              "strength": "supporting"
+            }
+          ]
+        }
+      }
+    },
+    "selected_calibrations": [
+      "revel-pejaver-2022",
+      "spliceai-svi-2023"
+    ]
+  }
+}

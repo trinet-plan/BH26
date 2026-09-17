@@ -43,6 +43,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Optional
 
+from acmg_pipeline.clinical_note import Family
 from acmg_pipeline.common import (
     MatchStatus, VariantMatchingResult, CuratorHint, FinalResult,
     PaperContribution, AggregatedJudgment,
@@ -83,6 +84,35 @@ class FamilySegregationData:
     unaffected_without_variant: Optional[int] = None
     informative_meioses: Optional[int] = None  # if the paper reports a LOD score/meiosis count directly
     notes: str = ""
+
+
+def from_clinical_note_family(family: Family, family_id: str = "proband_family") -> FamilySegregationData:
+    """
+    Tallies a clinical_note.Family's `relatives` into this same aggregate-
+    count shape, so a patient's OWN family (read directly off the clinical
+    note - no literature, no LLM extraction needed for this path) can feed
+    the same aggregate_multi_paper_results()/SegregationJudgment machinery
+    already built for literature-derived family data. Takes the pulled-in
+    acmg_pipeline.clinical_note.Family object directly rather than a
+    separate wrapper class, so a new Family field just needs handling here,
+    not a signature change at every call site.
+
+    Does NOT include the proband - ClinicalNoteExtraction.proband is a
+    separate object, not a Relative, and this project has not yet decided
+    the convention for folding the proband itself into a family's counts (a
+    literature paper's own family tables sometimes explicitly include the
+    index case, sometimes don't) - left for the caller to add explicitly
+    once that convention is settled.
+    """
+    counts = {"affected_with_variant": 0, "affected_without_variant": 0,
+              "unaffected_with_variant": 0, "unaffected_without_variant": 0}
+    for r in family.relatives:
+        if r.affected_status is None or r.variant_status is None:
+            continue  # unknown on either axis - not tallyable, not guessed
+        key = ("affected" if r.affected_status else "unaffected") + \
+              ("_with_variant" if r.variant_status else "_without_variant")
+        counts[key] += 1
+    return FamilySegregationData(family_id=family_id, **counts)
 
 
 @dataclass

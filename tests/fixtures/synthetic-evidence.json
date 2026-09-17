@@ -1,0 +1,14 @@
+{
+  "evidence": [
+    {
+      "category": "population", "variant_key": "GRCh38:1:2:C:T", "evidence_id": "synthetic:population",
+      "source": "synthetic", "source_version": "1", "retrieved_at": "2026-09-15", "population": "TEST",
+      "AC": 0, "AN": 10000, "AF": 0, "callable": true, "quality_status": "PASS"
+    },
+    {
+      "category": "annotation", "variant_key": "GRCh38:1:2:C:T", "evidence_id": "synthetic:annotation",
+      "source": "synthetic", "source_version": "1", "retrieved_at": "2026-09-15", "quality_status": "PASS",
+      "transcript": "NM_TEST.1", "consequences": ["missense_variant"]
+    }
+  ]
+}

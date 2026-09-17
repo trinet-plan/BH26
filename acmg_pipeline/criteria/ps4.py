@@ -45,6 +45,10 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Optional
 
+from acmg_pipeline.clinical_note import ClinicalNoteExtraction
+from acmg_pipeline.inputs import variant_identity
+from acmg_pipeline.vcf_record import VariantRecord
+
 from acmg_pipeline.common import (
     MatchStatus, VariantMatchingResult, CuratorHint, FinalResult,
     PaperContribution, AggregatedJudgment,
@@ -282,7 +286,14 @@ Output exactly this JSON structure:
 """
 
 
-def build_prompt(gene: str, hgvsc: str, hgvsp: str, equivalents: list[str], full_text: str) -> str:
+def build_prompt(
+    variant: VariantRecord,
+    clinical_note: ClinicalNoteExtraction,
+    full_text: str,
+) -> str:
+    """Build the literature prompt from the shared criterion input types."""
+    del clinical_note
+    gene, hgvsc, hgvsp, equivalents = variant_identity(variant)
     return PROMPT_TEMPLATE.format(
         gene=gene, hgvsc=hgvsc, hgvsp=hgvsp,
         equivalents=", ".join(equivalents), full_text=full_text,

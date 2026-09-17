@@ -1,8 +1,9 @@
-# BH26 — ACMG/AMP PS3/BS3/PS4/PP1/BS4 判定パイプライン
+# BH26 — ACMG/AMP 統合EvidenceLine生成パイプライン
 
 LLM(vLLM上のgemma-4)とPubMed MCPを組み合わせ、変異のACMG/AMP分類基準のうち
-「文献読解が必要な5基準」(PS3, BS3, PS4, PP1, BS4)について、人間キュレーターの
-一次スクリーニングを高速化する下書き判定を生成するパイプラインです。
+「文献読解が必要な5基準」(PS3, BS3, PS4, PP1, BS4)と、ルール・データベースに
+基づく16基準を統合し、人間キュレーター向けの下書き判定を生成します。残る7基準も
+NOT_EVALUATEDとして保持し、1変異につき全28基準のVA-Spec EvidenceLineを返します。
 
 設計方針・検証結果の詳細は [`ps3_bs3_ps4_implementation_v10.md`](ps3_bs3_ps4_implementation_v10.md)
 を参照してください。
@@ -15,11 +16,19 @@ acmg_pipeline/            判定パイプライン本体
   common.py                 共通データ型(PaperContribution, FinalResult 等)
   export.py                 GA4GH VA-Spec EvidenceLine形式での出力
   gate.py                   ClinGen ERepoの既存キュレーション確認ゲート
+  vcf_record.py             criterion共通入力のVariantRecord
+  clinical_note.py          criterion共通入力のClinicalNoteExtraction
+  inputs.py                 共通入力から遺伝子・HGVS等を読む補助関数
   pipeline.py                PubMed MCP + LLMを繋ぐメイン実行スクリプト
   criteria/                  基準ごとの判定ロジック(PS3/BS3, PS4, PP1/BS4)
 
+acmg/                     移植した自動判定器(16基準)
+config/                   自動判定の閾値・疾患文脈
+tests/                    自動判定と統合インターフェースのpytest
+
 democase/                 デモ用の臨床ノート・VCF・正解データ
 doc/                       設計・参加者向け資料
+examples/                 APIクライアントのスケルトンコード
 va_spec_output/           パイプライン実行結果(VA-Spec JSON)
 logs/                      実行ログ(git管理対象外)
 ref_impl/                  参考実装アーカイブ
@@ -75,6 +84,27 @@ cp .env.example .env
 
 ## 動作確認
 
+## 統合インターフェース
+
+他のスクリプトからは `acmg_pipeline.pipeline.evaluate_variant_evidence_lines()` を
+呼び出します。入力型はmain側の共通クラスそのものです。
+
+```python
+lines = await evaluate_variant_evidence_lines(
+    variant,                 # acmg_pipeline.vcf_record.VariantRecord
+    clinical_note,           # acmg_pipeline.clinical_note.ClinicalNoteExtraction
+    normalized_evidence=normalized_evidence,
+    automated_config=config,
+    mcp=pubmed_session,
+    erepo_client=erepo_client,
+)
+```
+
+`normalized_evidence` と `automated_config` は呼出し側が明示的に渡します。VCFのINFOを
+暗黙の判定根拠へ変換しません。返却順はACMGの標準順で固定され、各EvidenceLineの
+`bh26AssessmentDetails` に実状態、`referenceLink` に補助URLが入ります。補助URLは
+エビデンスとして参照済みであることを意味しないため `reportedIn` には入れません。
+
 ### ネットワーク不要(ロジックのみ)
 
 ```bash
@@ -83,6 +113,7 @@ python3 test_ps3_bs3_judgment.py
 python3 test_ps3_bs3_ps4_gate.py
 python3 test_ps3_bs3_ps4_gate_full.py
 python3 demo_ps3_bs3_judgment.py
+pytest tests -q
 ```
 
 いずれもpytest不要のスタンドアロンスクリプトで、末尾に `N passed, M failed` の
@@ -105,6 +136,122 @@ python3 -m acmg_pipeline.pipeline
 CLI引数は用意されていません。対象の遺伝子/変異を変えたい場合は
 `acmg_pipeline/pipeline.py` の `main()` 内 `test_cases`(505行目付近)を
 直接編集してください。
+
+## criterion入力インターフェース
+
+実装済みの PS3、BS3、PS4、PP1、BS4 と、未実装criterionのstubを含む
+全28 criterionの公開入力は、他チームとの結合用に次の2オブジェクトへ
+統一しています。
+
+```python
+def judge(
+    variant: VariantRecord,
+    clinical_note: ClinicalNoteExtraction,
+) -> ...:
+    ...
+```
+
+文献プロンプトを作る `build_prompt()` も同じ2オブジェクトを受け取ります。
+遺伝子名・HGVS・別表記は `VariantRecord.info` の `GENE`、`HGVSC`、
+`HGVSP`、`EQUIVALENTS` から読みます。文献だけを評価し患者情報を使わない
+criterionでも、呼び出し境界を揃えるため空の `ClinicalNoteExtraction()` を
+渡してください。出力は従来どおり GA4GH VA-Spec `EvidenceLine` です。
+
+## APIサーバーの起動
+
+1.  ビルド
+
+    ````bash
+    docker build -t acmg-api:v1 .
+    ```
+
+2. 起動(ホストの8000番で公開)
+
+    ````bash
+    docker run -d --name acmg-api -p 8000:8000 acmg-api:v1
+    ```
+
+3. 動作確認(これまでと同じcurl手順がそのまま使える)
+
+    ````bash
+    curl -s http://localhost:8000/health
+    ```
+
+    ````bash
+    JOB_ID=$(curl -s -X POST http://localhost:8000/v1/classify_criteria \
+      -H "Content-Type: application/json" \
+      -d @democase/case1_api_input_case1-noise2.json | jq -r .job_id)
+    ````
+
+    ````bash
+    curl -s http://localhost:8000/v1/classify_criteria/$JOB_ID | jq .
+    ```
+
+    `/v1/get_evidence_line_by_target_criteria` は指定した基準だけを評価する。
+    自動判定/未実装の基準のみなら同期で即座に結果が返る(`jq`でdemoケースの
+    JSONに`criteria`を足して投げる)。
+
+    ```bash
+    curl -s -X POST http://localhost:8000/v1/get_evidence_line_by_target_criteria \
+      -H "Content-Type: application/json" \
+      -d "$(jq '. + {criteria: ["PM2", "BA1"]}' democase/case1_api_input_case1-noise2.json)" | jq .
+    ```
+
+    文献(LLM)判定基準(`PS3`/`BS3`/`PS4`)を1つでも含めると、
+    `/v1/classify_criteria` と同様にjob_id + pollingになる。
+
+    ```bash
+    JOB_ID=$(curl -s -X POST http://localhost:8000/v1/get_evidence_line_by_target_criteria \
+      -H "Content-Type: application/json" \
+      -d "$(jq '. + {criteria: ["PS3", "BS3"]}' democase/case1_api_input_case1-noise2.json)" | jq -r .job_id)
+    ```
+
+    ```bash
+    curl -s http://localhost:8000/v1/get_evidence_line_by_target_criteria/$JOB_ID | jq .
+    ```
+
+4. 停止
+
+    ````bash
+    docker rm -f acmg-api
+    ```
+
+上記1〜2の代わりに [`compose.yaml`](compose.yaml) を使ってもよい
+(`docker compose up -d --build` / 停止は `docker compose down`)。
+
+## APIエンドポイント仕様
+
+各エンドポイントのリクエスト/レスポンス形・エラー条件は
+[`doc/api_spec_ja.md`](doc/api_spec_ja.md) を参照してください。
+
+## APIクライアントの例
+
+APIクライアントの実装例は以下にあります。
+
+* [`examples/client_example.py`](examples/client_example.py) — `/v1/classify_criteria`
+  (全28基準を評価しACMG分類まで出す。常に非同期)
+
+  APIサーバー起動後に以下のコマンドを実行してください。
+
+  ```bash
+  python3 examples/client_example.py democase/case1_api_input_case1-noise2.json
+  ```
+
+* [`examples/target_criteria_client_example.py`](examples/target_criteria_client_example.py) —
+  `/v1/get_evidence_line_by_target_criteria`
+  (指定した基準だけを評価しVA-Spec EvidenceLineを返す。分類は行わない)
+
+  自動判定/未実装の基準のみを指定した場合は同期で即座に結果が返ります。
+
+  ```bash
+  python3 examples/target_criteria_client_example.py democase/case1_api_input_case1-noise2.json PM2 BA1
+  ```
+
+  文献(LLM)判定基準(`PS3`/`BS3`/`PS4`)を1つでも含めると非同期(job_id + ポーリング)になります。
+
+  ```bash
+  python3 examples/target_criteria_client_example.py democase/case1_api_input_case1-noise2.json PS3 BS3
+  ```
 
 ## ライセンス・注意事項
 

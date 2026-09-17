@@ -9,7 +9,10 @@ in, get a pass/fail report against real ERepo/demo-case data, without
 writing your own comparison loop.
 
 [The contract your judgment function must satisfy]
-  def judge(gene: str, hgvsc: str) -> tuple[CriterionStatus, Optional[Strength]]:
+  def judge(
+      variant: VariantRecord,
+      clinical_note: ClinicalNoteExtraction,
+  ) -> tuple[CriterionStatus, Optional[Strength]]:
       ...
       return CriterionStatus.MET, Strength.MODERATE   # or:
       return CriterionStatus.NOT_MET, None            # strength must be None when NOT_MET
@@ -22,7 +25,7 @@ writing your own comparison loop.
 [Usage]
   from test_data.criterion_runner import run_criterion_check
 
-  def judge_pvs1(gene: str, hgvsc: str) -> tuple[CriterionStatus, Optional[Strength]]:
+  def judge_pvs1(variant, clinical_note) -> tuple[CriterionStatus, Optional[Strength]]:
       ...  # your real PVS1 decision-tree logic
       return CriterionStatus.MET, Strength.VERY_STRONG
 
@@ -46,10 +49,15 @@ from typing import Callable, Optional
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from acmg_pipeline.classification import Strength
+from acmg_pipeline.clinical_note import ClinicalNoteExtraction
 from acmg_pipeline.gate import CriterionStatus
+from acmg_pipeline.vcf_record import VariantRecord
 from test_data.full_criteria_ground_truth import GroundTruthEntry, entries_for_criterion
 
-JudgeFn = Callable[[str, str], tuple[CriterionStatus, Optional[Strength]]]
+JudgeFn = Callable[
+    [VariantRecord, ClinicalNoteExtraction],
+    tuple[CriterionStatus, Optional[Strength]],
+]
 
 
 @dataclass
@@ -82,7 +90,8 @@ class CriterionCheckResult:
 
 def run_criterion_check(criterion: str, judge: JudgeFn) -> CriterionCheckResult:
     """
-    Calls judge(gene, hgvsc) once per ground-truth entry for `criterion` and
+    Calls judge(variant, clinical_note) once per ground-truth entry for
+    `criterion` and
     compares (status, strength) against that entry's known real value.
     Entries for the same (gene, hgvsc) with a different criterion are never
     passed to `judge` - you only ever see the criterion you're testing.
@@ -90,8 +99,13 @@ def run_criterion_check(criterion: str, judge: JudgeFn) -> CriterionCheckResult:
     entries = entries_for_criterion(criterion)
     result = CriterionCheckResult(criterion=criterion, total=len(entries), matched=0)
     for e in entries:
+        variant = VariantRecord(
+            chrom="", pos=0, id="", ref="", alt="", qual="", filter="",
+            info={"GENE": e.gene, "HGVSC": e.hgvsc, "HGVSP": e.hgvsp},
+        )
+        clinical_note = ClinicalNoteExtraction()
         try:
-            got_status, got_strength = judge(e.gene, e.hgvsc)
+            got_status, got_strength = judge(variant, clinical_note)
         except Exception as exc:
             result.errored.append((e, exc))
             continue
@@ -108,7 +122,11 @@ if __name__ == "__main__":
     # says NOT_MET, just to show what a report looks like before any real
     # logic exists. Replace this with an import of the real implementation
     # once it exists (e.g. `from acmg_pipeline.criteria.pvs1 import judge`).
-    def placeholder_judge(gene: str, hgvsc: str) -> tuple[CriterionStatus, Optional[Strength]]:
+    def placeholder_judge(
+        variant: VariantRecord,
+        clinical_note: ClinicalNoteExtraction,
+    ) -> tuple[CriterionStatus, Optional[Strength]]:
+        del variant, clinical_note
         return CriterionStatus.NOT_MET, None
 
     report = run_criterion_check("PVS1", placeholder_judge)

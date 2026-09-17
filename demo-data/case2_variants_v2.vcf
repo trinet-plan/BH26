@@ -1,0 +1,30 @@
+##fileformat=VCFv4.2
+##fileDate=20260908
+##triage_expansion=Additional real benign noise variants (TRIAGE_NOISE in NOTE field) were added on 2026-09-08 to expand this file into a pre-triage candidate pool, enabling vep_parser.py testing beyond the 2-3 case-report target variants.
+##caveat=Genomic POS coordinates (GRCh38) for HGVS c.-notation variants below are approximate placements for demo purposes; exact positions were not independently re-mapped from a reference genome build. HGVS c./p. notation is taken directly from the cited source and is accurate.
+##source=BH26_DemoCase_RealCaseReport_v3
+##reference=GRCh38
+##comment=case2-var1 and case2-var2 are REAL variants from a real, published, open-access case report (Wang et al. 2025, Front Cardiovasc Med, DOI:10.3389/fcvm.2025.1726463). case2-var3 is a REAL benign variant from a separate ClinVar entry, added as noise for demo purposes.
+##INFO=<ID=GENE,Number=1,Type=String,Description="Gene symbol">
+##INFO=<ID=TRANSCRIPT,Number=1,Type=String,Description="RefSeq transcript">
+##INFO=<ID=HGVSC,Number=1,Type=String,Description="HGVS coding">
+##INFO=<ID=HGVSP,Number=1,Type=String,Description="HGVS protein">
+##INFO=<ID=INHERITANCE,Number=1,Type=String,Description="Parent of origin">
+##INFO=<ID=CLNSIG,Number=1,Type=String,Description="Clinical significance">
+##INFO=<ID=CLNVARIATIONID,Number=1,Type=String,Description="ClinVar accession if registered">
+##INFO=<ID=ACMG_CODES,Number=.,Type=String,Description="ACMG/AMP codes">
+##INFO=<ID=NOTE,Number=.,Type=String,Description="Citation / design intent">
+##INFO=<ID=AM_PATHOGENICITY,Number=1,Type=Float,Description="AlphaMissense pathogenicity score (0-1), from user-provided annotation">
+##INFO=<ID=AM_CLASS,Number=1,Type=String,Description="AlphaMissense classification (likely_benign/ambiguous/likely_pathogenic)">
+##INFO=<ID=AG_SPLICING_SCORE,Number=1,Type=Float,Description="AlphaGenome splicing score, from user-provided annotation">
+##INFO=<ID=AG_IMPACT_RAW,Number=1,Type=Float,Description="AlphaGenome impact raw score, from user-provided annotation">
+##INFO=<ID=AG_IMPACT_PHRED,Number=1,Type=Float,Description="AlphaGenome impact PHRED-scaled score, from user-provided annotation">
+##annotation_source=AlphaMissense and AlphaGenome annotations added 2026-09-10 by user (case1-4_annotated_alphamissense_alphagenome_v4.xlsx). POS/REF/ALT corrected for case2-var1, case3-var1, case3-var2, case4-var1 (originally approximate placeholders; now re-mapped via ClinVar by the user) and case3-noise6 (originally approximate; user found real ClinVar entry and corrected position).
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
+11	47335041	case2-var1	C	T	99	PASS	GENE=MYBPC3;TRANSCRIPT=NM_000256.3;HGVSC=c.2905+1G>A;HGVSP=p.?;EXON=27;INHERITANCE=paternal;CLNSIG=Pathogenic;CLNVARIATIONID=VCV000042666;DBSNP=rs397515991;CLNREVSTAT=criteria_provided,_multiple_submitters,_no_conflicts;ACMG_CODES=PVS1_VeryStrong,PS4_Strong,PM2_Moderate;TAVTIGIAN_POINTS=14;NOTE=CORRECTED_2026-09-08_per_human_curation_(pptx)-ADDED_PS4(ClinVar_VCV000042666_cites_case-control_comparison_study_PMID:27532257)_previously_missing_from_this_file-PVS1(splice_donor_disruption,LOF_established_mechanism)+PS4+PM2(gnomAD_0.0014pct,UK_Biobank_2_carriers,1000genomes_undetected)=Pathogenic_per_ACMG_table5_and_Tavtigian(+14)-REQUIRED_TOGETHER_with_case2-var2_(compound_heterozygous,_autosomal_recessive);AG_SPLICING_SCORE=3.017;AG_IMPACT_RAW=1.835;AG_IMPACT_PHRED=33.42884
+11	47339500	case2-var2	G	.	99	PASS	GENE=MYBPC3;TRANSCRIPT=NM_000256.3;HGVSC=c.836del;HGVSP=p.(Gly279Valfs*21);EXON=8;INHERITANCE=maternal;CLNSIG=Likely_Pathogenic;CLNVARIATIONID=not_registered_novel;ACMG_CODES=PVS1_VeryStrong,PM2_Moderate;TAVTIGIAN_POINTS=10;NOTE=CORRECTED_2026-09-08_per_human_curation_(pptx)-REMOVED_PM3_(not_used_by_the_human_curator_despite_confirmed_trans_configuration_via_trio-WES-my_earlier_standard-extension_addition_was_not_supported)-ALSO_REMOVED_earlier_incorrect_PM6-PVS1(PTC,NMD_predicted,LOF_established,Western_blot_confirmed_absent_protein)+PM2(undetected_in_gnomAD/UK_Biobank/1000genomes,_no_ClinVar/dbSNP_ID)=Likely_Pathogenic_per_ACMG_table5(not_simply_Pathogenic);Tavtigian_+10=Pathogenic_(methods_disagree)-REQUIRED_TOGETHER_with_case2-var1_(compound_heterozygous,_autosomal_recessive)-ground_truth_for_this_case_is_TWO_variants_both_needed_not_a_single_winner
+1	201361238	case2-var3	G	C	80	PASS	GENE=TNNT2;TRANSCRIPT=NM_000364.4;HGVSC=c.801+41C>G;HGVSP=p.(Thr274Arg);INHERITANCE=unknown;CLNSIG=Benign;CLNVARIATIONID=VCV000188689;ACMG_CODES=BS1,BP4;NOTE=REAL_VARIANT-not_part_of_original_case-added_as_benign_noise-extremely_common_in_Japanese_ToMMo_(12.6pct);AG_SPLICING_SCORE=0.4535;AG_IMPACT_RAW=-0.1771;AG_IMPACT_PHRED=0.06629
+11	47343571	case2-noise2	G	A	80	PASS	GENE=MYBPC3;TRANSCRIPT=NM_000256.3;HGVSC=c.1144C>T;HGVSP=p.(Arg382Trp);ZYGOSITY=heterozygous;CLNSIG=Benign;CLNVARIATIONID=VCV000042506;GNOMAD_AF=0.0130;NOTE=TRIAGE_NOISE-REAL_LIVE_TogoMCP-common_benign;AM_PATHOGENICITY=0.3417;AM_CLASS=ambiguous;AG_SPLICING_SCORE=0.06587;AG_IMPACT_RAW=0.7952;AG_IMPACT_PHRED=22.89183
+11	47350047	case2-noise3	C	T	80	PASS	GENE=MYBPC3;TRANSCRIPT=NM_000256.3;HGVSC=c.472G>A;HGVSP=p.(Val158Met);ZYGOSITY=heterozygous;CLNSIG=Benign;CLNVARIATIONID=VCV000042758;GNOMAD_AF=0.0895;NOTE=TRIAGE_NOISE-REAL_LIVE_TogoMCP-very_common_benign;AM_PATHOGENICITY=0.7314;AM_CLASS=likely_pathogenic;AG_SPLICING_SCORE=0.04216;AG_IMPACT_RAW=0.7026;AG_IMPACT_PHRED=21.9838
+14	23417200	case2-noise4	G	C	80	PASS	GENE=MYH7;TRANSCRIPT=NM_000257.4;HGVSC=c.4472C>G;HGVSP=p.(Ser1491Cys);ZYGOSITY=heterozygous;CLNSIG=Benign;CLNVARIATIONID=VCV000043020;GNOMAD_AF=0.0119;NOTE=TRIAGE_NOISE-REAL_LIVE_TogoMCP-common_benign_MYH7;AM_PATHOGENICITY=0.1415;AM_CLASS=likely_benign;AG_SPLICING_SCORE=0.0471;AG_IMPACT_RAW=0.7319;AG_IMPACT_PHRED=22.29402
+19	55156279	case2-noise5	C	A	80	PASS	GENE=TNNI3;TRANSCRIPT=NM_000363.5;HGVSC=c.204G>T;HGVSP=p.(Arg68=);ZYGOSITY=heterozygous;CLNSIG=Benign;CLNVARIATIONID=VCV000043366;GNOMAD_AF=0.0501;NOTE=TRIAGE_NOISE-REAL_LIVE_TogoMCP-very_common_synonymous_benign;AG_SPLICING_SCORE=0.07722;AG_IMPACT_RAW=0.2831;AG_IMPACT_PHRED=13.97498

@@ -12,27 +12,24 @@ from acmg_pipeline.criteria.registry import is_implemented, get_criterion_eviden
 from acmg_pipeline.criteria import stubs
 from acmg_pipeline.common import MatchStatus, VariantMatchingResult, PaperContribution
 from acmg_pipeline.criteria import ps4, segregation as seg
+from test_harness import Harness
 
-passed = 0
-failed = 0
-
-
-def check(label, cond):
-    global passed, failed
-    if cond:
-        passed += 1
-        print(f"  OK   {label}")
-    else:
-        failed += 1
-        print(f"  FAIL {label}")
+h = Harness()
+check = h.check
 
 
 # --- 1. Code list sanity ---
 print("[1] ACMG code list sanity")
 check("28 total codes", len(ALL_ACMG_CODES) == 28)
 check("no overlap between pathogenic/benign lists", not (set(PATHOGENIC_CODES) & set(BENIGN_CODES)))
-check("5 implemented codes", IMPLEMENTED_CODES == {"PS3", "BS3", "PS4", "PP1", "BS4"})
-check("23 stub codes", len(stubs.STUB_CODES) == 23)
+# IMPLEMENTED_CODES was {"PS3", "BS3", "PS4", "PP1", "BS4"} through
+# 2026-09-15; PP1/BS4 (still real, tested code in acmg_pipeline/criteria/
+# segregation.py, still exercised directly in section [5] below) were
+# handed off to another team on 2026-09-16 - see acmg_pipeline.
+# classification's own comment on IMPLEMENTED_CODES and criteria/stubs.py's
+# HANDED_OFF_TO_OTHER_TEAM.
+check("19 implemented codes", len(IMPLEMENTED_CODES) == 19)
+check("9 stub codes", len(stubs.STUB_CODES) == 9)
 check("implemented + stub codes cover all 28 with no overlap",
       set(stubs.STUB_CODES) | IMPLEMENTED_CODES == set(ALL_ACMG_CODES)
       and not (set(stubs.STUB_CODES) & IMPLEMENTED_CODES))
@@ -84,6 +81,11 @@ except ValueError:
     check("duplicate PS3 raises ValueError", True)
 
 # --- 5. from_aggregated_judgment(): real per-paper data -> CriterionEvidence ---
+# PP1/BS4 (via segregation.py) are exercised here as a generic test of
+# from_aggregated_judgment()'s direction-matching logic, independent of
+# IMPLEMENTED_CODES - segregation.py is still real, working, previously-
+# validated code (see acmg_pipeline.pipeline.ENGINE_BY_CRITERION), even
+# though PP1/BS4 are no longer in IMPLEMENTED_CODES as of 2026-09-16.
 print("\n[5] from_aggregated_judgment() (using PS4/PP1 schemas with realistic fixture data)")
 
 j_ps4 = ps4.PS4Judgment(
@@ -113,9 +115,9 @@ check("asking for BS4 when the evidence actually points PP1 -> NOT_MET (not misl
 check("asking for PP1 (the direction that was actually found) -> MET",
       from_aggregated_judgment(agg_pp1, "PP1").status == CriterionStatus.MET)
 
-# not_clear -> NOT_MET, not a crash and not silently MET
+# not_clear -> UNKNOWN, not a crash and not silently MET
 agg_empty = ps4.aggregate_multi_paper_results([])
-check("not_clear aggregate -> NOT_MET", from_aggregated_judgment(agg_empty, "PS4").status == CriterionStatus.NOT_MET)
+check("not_clear aggregate -> UNKNOWN", from_aggregated_judgment(agg_empty, "PS4").status == CriterionStatus.UNKNOWN)
 
 # --- 6. registry.get_criterion_evidence(): full 28-code loop ---
 print("\n[6] registry.get_criterion_evidence() over all 28 codes")
@@ -132,7 +134,6 @@ except ValueError:
     check("an implemented code with no real evidence supplied raises ValueError", True)
 
 full_result = classify(evidence)
-check("classify() accepts the full 28-entry set without error", full_result.not_evaluated_codes == [])
+check("UNKNOWN entries remain not evaluated", set(full_result.not_evaluated_codes) == set(stubs.STUB_CODES))
 
-print(f"\n{'='*40}\n{passed} passed, {failed} failed\n{'='*40}")
-sys.exit(1 if failed else 0)
+h.report_and_exit()

@@ -1,6 +1,12 @@
 # Python
 __pycache__/
 *.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+pytest-cache-files-*/
+.work/
+work/
 
 # OS
 .DS_Store
@@ -14,3 +20,19 @@ __pycache__/
 # Generated run logs
 logs/*.log
 .python-version
+
+# Virtual environments
+.venv/
+venv/
+
+# Test caches
+.pytest_cache/
+pytest-cache-files-*/
+
+# Local scratch directories
+work/
+.work/
+
+# Cached PubMed full-text (acmg_pipeline/fulltext_cache.py) - regenerable,
+# and shouldn't put paper full text into git history
+cache/

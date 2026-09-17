@@ -156,3 +156,17 @@ class ClinicalNoteExtraction:
             family=Family.from_json(data.get("family") or {}),
             de_novo=DeNovo.from_json(data.get("de_novo") or {}),
         )
+
+
+def extract_clinical_note(text: str) -> ClinicalNoteExtraction:
+    """Boundary for the clinical-note extraction component.
+
+    The public API intentionally accepts the main project's original free-text
+    ``clinical_note`` field.  Until the dedicated extractor supplied by the
+    clinical-note workstream is connected here, do not infer clinical facts
+    from prose: return an empty extraction and let dependent criteria be
+    reported as UNKNOWN.
+    """
+    if not isinstance(text, str):
+        raise TypeError("clinical_note must be a string")
+    return ClinicalNoteExtraction()

@@ -9,7 +9,7 @@ pipeline.py's ENGINE_BY_CRITERION (real JudgmentEngine instances - build_
 prompt/from_json/finalize/aggregate, used to actually run the LLM) stays
 there, not here: stub codes have no engine to run at all, so a registry
 that only lists "which codes have engines" would be misleading about the
-other 23. This module is about classification-time evidence lookup instead
+remaining seven. This module is about classification-time evidence lookup instead
 - see get_criterion_evidence().
 """
 
@@ -17,7 +17,8 @@ from __future__ import annotations
 
 from typing import Optional
 
-from acmg_pipeline.classification import ALL_ACMG_CODES, IMPLEMENTED_CODES, CriterionEvidence
+from acmg_pipeline.classification import CriterionEvidence
+from acmg_pipeline.constants import ALL_ACMG_CODES, IMPLEMENTED_CODES
 from acmg_pipeline.criteria import stubs
 
 
@@ -32,7 +33,7 @@ def get_criterion_evidence(code: str, real_evidence: Optional[CriterionEvidence]
     Returns the CriterionEvidence to actually use for `code` in a
     classify() call.
 
-    - For an implemented code (PS3/BS3/PS4/PP1/BS4), the caller must have
+    - For an implemented literature or automated code, the caller must have
       already produced a real CriterionEvidence (e.g. via
       classification.from_aggregated_judgment() after running the LLM
       pipeline) and pass it as `real_evidence` - this function does not run

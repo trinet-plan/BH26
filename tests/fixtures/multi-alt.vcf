@@ -1,0 +1,5 @@
+##fileformat=VCFv4.2
+##reference=GRCh38
+##INFO=<ID=AF,Number=A,Type=Float,Description="Allele frequency, per ALT">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
+1	100	variant-1	A	C,G	50	PASS	AF=0.1,0.2

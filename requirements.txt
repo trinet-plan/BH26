@@ -7,7 +7,12 @@ requests>=2.30
 
 # GA4GH VA-Spec形式でのエビデンス出力(acmg_pipeline/export.py)
 # ga4gh.core / ga4gh.vrs は依存関係として自動的にインストールされる
-ga4gh.va_spec>=0.4
+ga4gh.va_spec==0.5.0a4
+jsonschema==4.25.1
 
 # democase/annotation_alphamissense_alphagenome_v1.xlsx の読み込み
 openpyxl>=3.1
+
+# REST API(doc/docker_api_deployment_plan_v1_ja.md) + ローカル動作確認用サーバー
+fastapi>=0.115
+uvicorn>=0.30

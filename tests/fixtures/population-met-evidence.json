@@ -1,0 +1,32 @@
+{
+  "evidence": [
+    {
+      "category": "population",
+      "variant_key": "GRCh38:1:2:C:T",
+      "evidence_id": "https://example.org/evidence/pm2-zero-frequency",
+      "source": "synthetic",
+      "source_version": "1",
+      "retrieved_at": "2026-09-15T00:00:00Z",
+      "population": "TEST",
+      "AC": 0,
+      "AN": 10000,
+      "AF": 0,
+      "callable": true,
+      "quality_status": "PASS"
+    },
+    {
+      "category": "population",
+      "variant_key": "GRCh38:2:3:G:A",
+      "evidence_id": "https://example.org/evidence/ba1-high-frequency",
+      "source": "synthetic",
+      "source_version": "1",
+      "retrieved_at": "2026-09-15T00:00:00Z",
+      "population": "TEST",
+      "AC": 501,
+      "AN": 10000,
+      "AF": 0.0501,
+      "callable": true,
+      "quality_status": "PASS"
+    }
+  ]
+}

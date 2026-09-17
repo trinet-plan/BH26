@@ -49,6 +49,10 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Optional
 
+from acmg_pipeline.clinical_note import ClinicalNoteExtraction
+from acmg_pipeline.inputs import variant_identity
+from acmg_pipeline.vcf_record import VariantRecord
+
 from acmg_pipeline.gate import check_approved_assay, AssayApplicability
 from acmg_pipeline.common import (
     MatchStatus, VariantMatchingResult, CuratorHint, FinalResult,
@@ -308,7 +312,18 @@ expected shape (with placeholder content):
 """
 
 
-def build_prompt(gene: str, hgvsc: str, hgvsp: str, equivalents: list[str], full_text: str) -> str:
+def build_prompt(
+    variant: VariantRecord,
+    clinical_note: ClinicalNoteExtraction,
+    full_text: str,
+) -> str:
+    """Build the literature prompt from the shared criterion input types.
+
+    ``clinical_note`` is intentionally accepted at the common boundary even
+    though PS3/BS3 is decided from functional literature, not patient data.
+    """
+    del clinical_note
+    gene, hgvsc, hgvsp, equivalents = variant_identity(variant)
     return PROMPT_TEMPLATE.format(
         gene=gene,
         hgvsc=hgvsc,
