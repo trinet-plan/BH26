@@ -2,7 +2,7 @@ from acmg_pipeline.constants import CriterionStatus
 """Protein length / repeat / critical-region assessments with explicit missingness."""
 
 from acmg_pipeline.criteria.common import (
-    annotation_context, curated_context, require_boolean_fields, result as _base_result,
+    annotation_context, curated_context, require_boolean_fields, result,
 )
 
 # ACMG PM1 reads "mutational hot spot and/or critical and well-established functional
@@ -13,19 +13,6 @@ from acmg_pipeline.criteria.common import (
 PM1_ROUTES = ("mutational_hotspot", "critical_functional_domain")
 HOTSPOT_POLICY_FIELDS = ("window_aa", "min_pathogenic", "max_benign", "method",
                          "policy_source", "policy_version")
-
-
-def result(code, input_data, status, summary, **kwargs):
-    scope = {
-        "PM1": "PM1 evaluates a variant in a reviewed mutational hotspot or critical functional domain with no conflicting benign variation.",
-        "PM4": "PM4 evaluates protein-length changes caused by an in-frame insertion, in-frame deletion, or stop-loss variant.",
-        "BP3": "BP3 evaluates in-frame insertions or deletions in a repetitive region without known function.",
-    }[code]
-    outcome = (f"the available evidence satisfies {code}" if status == CriterionStatus.MET else
-               f"{code} was evaluated but its requirements were not satisfied" if status == CriterionStatus.NOT_MET else
-               "no MET or NOT_MET judgment is made from the available information")
-    message = f"{summary.rstrip('.')}. {scope} Outcome: {status.value.upper()}; {outcome}."
-    return _base_result(code, input_data, status, message, **kwargs)
 
 
 def evaluate_region(code, input_data, services, config):

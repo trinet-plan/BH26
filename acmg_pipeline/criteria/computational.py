@@ -1,24 +1,12 @@
 from acmg_pipeline.constants import CriterionStatus
 """Explicit calibration intervals, never vote counts or cross-predictor thresholds."""
 
-from acmg_pipeline.criteria.common import annotation_context, get_evidence, result as _base_result
+from acmg_pipeline.criteria.common import annotation_context, get_evidence, result
 from acmg_pipeline.services.population import number
 
 
 STRENGTH_ORDER = {"supporting": 1, "moderate": 2, "strong": 3, "very_strong": 4}
 REQUIRED = ("predictor", "predictor_version", "source", "version", "mechanism", "consequences")
-
-
-def result(code, input_data, status, summary, **kwargs):
-    scope = {
-        "PP3": "PP3 evaluates calibrated computational evidence supporting a damaging effect.",
-        "BP4": "BP4 evaluates calibrated computational evidence supporting a benign effect.",
-    }[code]
-    outcome = (f"the available evidence satisfies {code}" if status == CriterionStatus.MET else
-               f"{code} was evaluated but its requirements were not satisfied" if status == CriterionStatus.NOT_MET else
-               "no MET or NOT_MET judgment is made from the available information")
-    message = f"{summary.rstrip('.')}. {scope} Outcome: {status.value.upper()}; {outcome}."
-    return _base_result(code, input_data, status, message, **kwargs)
 
 
 def selected_calibrations(config):
