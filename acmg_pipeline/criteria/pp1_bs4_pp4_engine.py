@@ -16,19 +16,20 @@ per the user's explicit direction (2026-09-17): "pipelineと繋げて。テス�
   conversion - lives here instead, the same separation segregation.py
   (judgment logic) already keeps from export.py (VA-Spec conversion).
 
-[The points-to-Strength mapping is a provisional design choice, NOT
- reviewed by the team that wrote pp4_pp1_bs4.py/evaluator.py]
+[The points-to-Strength mapping now follows the paper's own Table 4]
   evaluator.py's DIAGNOSTIC_YIELD_POINT_TABLE and pp4_pp1_bs4.py's
   segregation scoring both produce points on the same Tavtigian-compatible
   scale acmg_pipeline.classification already uses (1/2/4/8 = Supporting/
-  Moderate/Strong/Very_Strong), but neither module says how a continuous
-  point value (e.g. 3.5, or a value above 8) should map onto this
-  project's discrete Strength enum for classify(). _strength_for_points()
-  below floors to the nearest tier at or below the point value (matching
-  evaluator.py's own "for values between rows, use the lower point value"
-  convention for its own table) - this is this project's own
-  interpretation, flagged here for the pp4_pp1_bs4 branch's own author to
-  confirm or correct, not an authoritative ClinGen reading.
+  Moderate/Strong/Very_Strong). This module used to floor PP4's points and
+  PP1's points to a Strength independently, which is only correct when one
+  of the two has no evidence at all; when both contribute for the same
+  locus, independent flooring can report a combined strength the shared
+  +5.0-point cap does not actually support. to_criterion_evidence() (below)
+  now calls acmg_pipeline.criteria.pp1_pp4_strength_table.
+  combined_pp1_pp4_strength() instead, which implements Table 4 from
+  Biesecker et al., 2024 (see that module's own docstring for the table
+  itself and the tie-break rule it uses when Table 4 allows more than one
+  split for a given combined total).
 
 [Why PP1/BS4/PP4 need a curated reference record, and what happens
  without one]
@@ -46,21 +47,31 @@ per the user's explicit direction (2026-09-17): "pipelineと繋げて。テス�
   reference" path and (using a synthetic in-test reference record, the
   same pattern test_pp4_pp1_bs4.py's own fixtures already use) the "real
   evidence produced" path.
+
+  The diagnostic_yield / locus_model / testing_method fields still must be
+  curated (they are literature-derived Bayesian-input statistics no tool
+  can compute from a single patient). phenotype_hpo no longer has to be:
+  evaluate() (below) now gets PP4's phenotype_match gate from
+  acmg_pipeline.pubcasefinder instead, per the BH26 ACMG criteria
+  definition v2 (2026-09-14)'s Layer 2 ("表現型データが必要...PubCaseFinder
+  等を想定").
 """
 
 from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Optional
 
 from acmg_pipeline.classification import CriterionEvidence, Strength
 from acmg_pipeline.clinical_note import ClinicalNoteExtraction
 from acmg_pipeline.constants import CriterionStatus
+from acmg_pipeline.criteria.pp1_pp4_strength_table import combined_pp1_pp4_strength
 from acmg_pipeline.criteria.pp4_pp1_bs4 import (
     LocusEvidenceResult,
+    PhenotypeMatchResult,
     PP4ReferenceRecord,
     evaluate_locus_evidence,
+    patient_hpo_terms,
 )
 from acmg_pipeline.vcf_record import VariantRecord
 
@@ -101,19 +112,6 @@ def load_reference_records(path: Path = _DEFAULT_REGISTRY_PATH) -> dict[str, dic
     return result
 
 
-def _strength_for_points(points: float) -> Optional[Strength]:
-    """Floor `points` to the highest Tavtigian tier it reaches, or None below Supporting(1)."""
-    if points >= 8:
-        return Strength.VERY_STRONG
-    if points >= 4:
-        return Strength.STRONG
-    if points >= 2:
-        return Strength.MODERATE
-    if points >= 1:
-        return Strength.SUPPORTING
-    return None
-
-
 def _unknown_all(reason: str) -> dict[str, CriterionEvidence]:
     return {
         code: CriterionEvidence(code=code, status=CriterionStatus.UNKNOWN, source=reason)
@@ -124,36 +122,42 @@ def _unknown_all(reason: str) -> dict[str, CriterionEvidence]:
 def to_criterion_evidence(result: LocusEvidenceResult) -> dict[str, CriterionEvidence]:
     """Map one LocusEvidenceResult onto separate PP1/BS4/PP4 CriterionEvidence.
 
-    PP4 is scored from result.pp4 alone (independent of segregation). PP1
-    is scored from result.segregation.pp1_points_used - already zeroed by
+    PP4's and PP1's raw point contributions (0 when not applicable/not
+    evaluable) are floored to a Strength TOGETHER, via
+    pp1_pp4_strength_table.combined_pp1_pp4_strength() - Table 4 from
+    Biesecker et al., 2024 - rather than independently: PP1 is scored from
+    result.segregation.pp1_points_used, already zeroed by
     evaluate_locus_evidence() itself when high-yield locus homogeneity
     makes it redundant with PP4, so reading it directly (rather than
-    pp1_points_raw) correctly reports PP1 as NOT_MET in that case, not as
-    a fabricated MET that double-counts the same evidence. BS4 is scored
-    from segregation.bs4_met/bs4_points (always exactly -4.0 in the
-    current segregation scoring logic - see pp4_pp1_bs4.py - so no
-    points-to-strength floor is needed for it).
+    pp1_points_raw) correctly reports PP1 as NOT_MET in that case, not as a
+    fabricated MET that double-counts the same evidence. BS4 is scored from
+    segregation.bs4_met/bs4_points (always exactly -4.0 in the current
+    segregation scoring logic - see pp4_pp1_bs4.py - so no points-to-
+    strength floor is needed for it; Table 4 does not cover BS4).
     """
     evidence: dict[str, CriterionEvidence] = {}
 
+    pp4_points = result.pp4.points if result.pp4 is not None and result.pp4.applicable else 0.0
+    pp1_points = result.segregation.pp1_points_used if result.segregation.pp1_evaluable else 0.0
+    strengths = combined_pp1_pp4_strength(pp1_points=pp1_points, pp4_points=pp4_points)
+
     if result.pp4 is not None and result.pp4.applicable:
-        strength = _strength_for_points(result.pp4.points)
         evidence["PP4"] = (
-            CriterionEvidence(code="PP4", status=CriterionStatus.MET, strength=strength,
+            CriterionEvidence(code="PP4", status=CriterionStatus.MET, strength=strengths.pp4,
                               source=f"pp1_bs4_pp4_engine: {result.pp4.reference_id}")
-            if strength is not None
+            if strengths.pp4 is not None
             else CriterionEvidence(code="PP4", status=CriterionStatus.NOT_MET,
                                     source=f"pp1_bs4_pp4_engine: {result.pp4.reference_id} (below Supporting threshold)")
         )
     elif result.pp4 is not None:
         evidence["PP4"] = CriterionEvidence(
             code="PP4", status=CriterionStatus.NOT_MET,
-            source=f"pp1_bs4_pp4_engine: {result.pp4.reason}",
+            source=f"pp1_bs4_pp4_engine: {result.pp4.reason} ({result.phenotype_match.reason})",
         )
     else:
         evidence["PP4"] = CriterionEvidence(
             code="PP4", status=CriterionStatus.UNKNOWN,
-            source="pp1_bs4_pp4_engine: phenotype not evaluable against curated reference",
+            source=f"pp1_bs4_pp4_engine: phenotype not evaluable ({result.phenotype_match.reason})",
         )
 
     if not result.segregation.pp1_evaluable:
@@ -162,11 +166,10 @@ def to_criterion_evidence(result: LocusEvidenceResult) -> dict[str, CriterionEvi
             source="pp1_bs4_pp4_engine: segregation not evaluable (no family data or unknown inheritance mode)",
         )
     else:
-        pp1_strength = _strength_for_points(result.segregation.pp1_points_used)
         evidence["PP1"] = (
-            CriterionEvidence(code="PP1", status=CriterionStatus.MET, strength=pp1_strength,
+            CriterionEvidence(code="PP1", status=CriterionStatus.MET, strength=strengths.pp1,
                               source="pp1_bs4_pp4_engine: family segregation")
-            if pp1_strength is not None
+            if strengths.pp1 is not None
             else CriterionEvidence(code="PP1", status=CriterionStatus.NOT_MET,
                                     source="pp1_bs4_pp4_engine: family segregation below Supporting threshold")
         )
@@ -272,13 +275,24 @@ async def evaluate(
     registry location, mainly for tests.
 
     HPO normalization (acmg_pipeline.hpo_extraction.normalize_hpo(), a
-    TogoMCP + LLM round trip) only runs once a curated reference record is
-    actually found for this gene - with no APPROVED entry the result is
-    UNKNOWN regardless of phenotype, so normalizing first would just spend
-    real network/LLM cost on an answer that's already decided. The import
-    is local (not top-level) because hpo_extraction requires VLLM_BASE_URL/
-    VLLM_API_KEY at import time (same reason clinical_note.py lazily
-    imports clinical_extraction.py instead of importing it at module load).
+    TogoMCP + LLM round trip) and the PubCaseFinder phenotype-specificity
+    lookup (acmg_pipeline.pubcasefinder.rank_genes_by_phenotype(), TogoMCP)
+    only run once a curated reference record is actually found for this gene
+    - with no APPROVED entry the result is UNKNOWN regardless of phenotype,
+    so spending real network/LLM cost first would be wasted on an answer
+    that's already decided. Both imports are local (not top-level) because
+    hpo_extraction requires VLLM_BASE_URL/VLLM_API_KEY at import time (same
+    reason clinical_note.py lazily imports clinical_extraction.py instead of
+    importing it at module load).
+
+    PubCaseFinder (Layer 2 of the BH26 ACMG criteria definition v2) supplies
+    PP4's phenotype_match gate directly from the patient's own HPO profile,
+    superseding evaluate_locus_evidence()'s default required-HPO-list match
+    against reference.phenotype_hpo - curators no longer need to populate
+    that field per gene for PP4 to be evaluable. If PubCaseFinder itself
+    raises (rate limit, no recognized HPO IDs, HTTP error) or the patient has
+    no normalized HPO terms at all, phenotype_match falls back to "not
+    evaluable" (matched=None) rather than a guessed match/non-match.
     """
     gene = str(variant.info.get("GENE", ""))
     registry_path = Path(config.get("pp4_reference_records_path", _DEFAULT_REGISTRY_PATH))
@@ -287,8 +301,27 @@ async def evaluate(
     if entry is None:
         return _unknown_all(f"pp1_bs4_pp4_engine: no APPROVED curated PP4 reference record for gene {gene!r}")
 
-    from acmg_pipeline import hpo_extraction
+    from acmg_pipeline import hpo_extraction, pubcasefinder
     clinical_note = await hpo_extraction.normalize_hpo(clinical_note)
+
+    patient_terms = patient_hpo_terms(clinical_note)
+    hpo_ids = [term.hpo_id for term in patient_terms]
+    if not hpo_ids:
+        phenotype_match_override = PhenotypeMatchResult(
+            matched=None, patient_terms=patient_terms, reason="no_normalized_proband_hpo",
+        )
+    else:
+        try:
+            ranking = await pubcasefinder.rank_genes_by_phenotype(hpo_ids)
+        except (ValueError, RuntimeError) as exc:
+            phenotype_match_override = PhenotypeMatchResult(
+                matched=None, patient_terms=patient_terms,
+                reason=f"pubcasefinder_unavailable:{exc}",
+            )
+        else:
+            phenotype_match_override = pubcasefinder.phenotype_match_from_gene_ranking(
+                ranking, gene, patient_terms=patient_terms,
+            )
 
     gates = entry["gates"]
     result = evaluate_locus_evidence(
@@ -299,5 +332,6 @@ async def evaluate(
         fully_penetrant=gates.get("fully_penetrant"),
         low_phenocopy=gates.get("low_phenocopy"),
         ar_case_mode=gates.get("ar_case_mode"),
+        phenotype_match_override=phenotype_match_override,
     )
     return to_criterion_evidence(result)

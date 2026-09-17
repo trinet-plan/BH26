@@ -18,6 +18,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import acmg_pipeline.hpo_extraction as hpo_extraction
+import acmg_pipeline.pubcasefinder as pubcasefinder
 from acmg_pipeline.classification import CriterionStatus, Strength
 from acmg_pipeline.clinical_note import (
     ClinicalFeature, ClinicalNoteExtraction, Family, Proband, ProbandPhenotype, Relative,
@@ -46,6 +47,28 @@ async def _identity_normalize_hpo(extraction):
 
 
 hpo_extraction.normalize_hpo = _identity_normalize_hpo
+
+
+def _fake_rank_genes_by_phenotype(*, top_gene: str = "GENE1"):
+    # engine.evaluate() now also calls pubcasefinder.rank_genes_by_phenotype()
+    # (a real TogoMCP round trip to PubCaseFinder) for PP4's phenotype_match
+    # gate instead of matching reference.phenotype_hpo directly. Faking the
+    # ranking here keeps this file offline/deterministic, the same way
+    # _identity_normalize_hpo() stands in for the real TogoMCP HPO lookup.
+    # `top_gene` is whichever gene this fixture puts at rank 1; the other
+    # gene of the pair is always ranked 2, to test both PP4's matched=True
+    # (rank 1) and matched=False (ranked, but not rank 1) paths.
+    async def _fake(hpo_ids):
+        other = "OTHER_GENE" if top_gene != "OTHER_GENE" else "GENE1"
+        return {"results": [
+            {"rank": 1, "score": 1.0, "gene_symbol": top_gene, "matched_hpo_ids": hpo_ids},
+            {"rank": 2, "score": 0.5, "gene_symbol": other, "matched_hpo_ids": []},
+        ]}
+
+    return _fake
+
+
+pubcasefinder.rank_genes_by_phenotype = _fake_rank_genes_by_phenotype()
 
 
 def run_evaluate(variant, note, config):
@@ -150,6 +173,37 @@ check("PP4 still MET without family data", solo_results["PP4"].status == Criteri
 check("PP1 UNKNOWN without family data (not evaluable, not a fabricated NOT_MET)",
       solo_results["PP1"].status == CriterionStatus.UNKNOWN)
 check("BS4 UNKNOWN without family data", solo_results["BS4"].status == CriterionStatus.UNKNOWN)
+
+
+# ============================================================================
+# [2b] PubCaseFinder supplies phenotype_match, not reference.phenotype_hpo
+# ============================================================================
+print("\n[2b] PubCaseFinder phenotype-specificity gate")
+
+# GENE1 ranks below OTHER_GENE for this phenotype profile -> not a phenotype
+# match, even though reference.phenotype_hpo (still present in the fixture
+# above) would have matched under the old required-HPO-list check.
+pubcasefinder.rank_genes_by_phenotype = _fake_rank_genes_by_phenotype(top_gene="OTHER_GENE")
+not_top_ranked_results = run_evaluate(_variant("GENE1"), note_no_family, config)
+check("PP4 NOT_MET when GENE1 is not PubCaseFinder's top-ranked gene",
+      not_top_ranked_results["PP4"].status == CriterionStatus.NOT_MET)
+check("reason cites PubCaseFinder, not the curated HPO list",
+      "pubcasefinder" in not_top_ranked_results["PP4"].source)
+
+# PubCaseFinder itself unavailable (rate limit / no recognized HPO IDs / HTTP
+# error) -> "not evaluable", not a fabricated non-match.
+async def _raising_rank(hpo_ids):
+    raise ValueError("PUBCASEFINDER_RATE_LIMIT_EXCEEDED")
+
+
+pubcasefinder.rank_genes_by_phenotype = _raising_rank
+unavailable_results = run_evaluate(_variant("GENE1"), note_no_family, config)
+check("PP4 UNKNOWN when PubCaseFinder raises",
+      unavailable_results["PP4"].status == CriterionStatus.UNKNOWN)
+check("reason cites pubcasefinder_unavailable",
+      "pubcasefinder_unavailable" in unavailable_results["PP4"].source)
+
+pubcasefinder.rank_genes_by_phenotype = _fake_rank_genes_by_phenotype()
 
 
 # ============================================================================
