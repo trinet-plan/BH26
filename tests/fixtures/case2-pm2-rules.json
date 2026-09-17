@@ -1,0 +1,9 @@
+{
+  "population_providers": ["gnomAD"],
+  "PM2": {
+    "minimum_an": 2000,
+    "max_af": 0.000014,
+    "policy_source": "case2 regression test only; not a clinical threshold",
+    "policy_version": "1"
+  }
+}

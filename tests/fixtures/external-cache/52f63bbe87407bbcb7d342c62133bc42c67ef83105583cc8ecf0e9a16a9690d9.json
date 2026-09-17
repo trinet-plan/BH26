@@ -1,0 +1,1 @@
+{"body":{"_id":"chr11:g.47335041C>T","_version":2},"body_sha256":"fcbcbe1029603f175520f948ec393f4e85d5d50cef6485f79bd6057c7aff79c7","request":{"data":null,"dataset_version":"4.8a","format":"json","url":"https://myvariant.info/v1/variant/chr11%3Ag.47335041C%3ET?assembly=hg38&fields=dbnsfp.revel,dbnsfp.alphamissense"},"retrieved_at":"2026-09-15T12:16:56.086284+00:00"}

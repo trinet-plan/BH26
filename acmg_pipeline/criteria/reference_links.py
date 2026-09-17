@@ -3,16 +3,12 @@ acmg_pipeline/criteria/reference_links.py
 
 URL generation helpers for the curator-facing reference pages named in
 doc/recs for expert board.docx (per-criterion "what to show the curator"
-requirements) - NOT judgment logic. This project does not implement PVS1/
-PS1/PM1/PM2/PM3/PM5/PP1/PP2/BA1/BS1/BS2/BP4's own decision logic (see
-acmg_pipeline/criteria/stubs.py: PVS1/PS1/PM2/PP2/BA1/BS1/BS2 are Layer-1
-codes, another team's responsibility; PP1 was this project's own
-literature/segregation judgment for months (acmg_pipeline/criteria/
-segregation.py) but was handed off to another team on 2026-09-16 - see
-stubs.py's HANDED_OFF_TO_OTHER_TEAM - and is now a stub here too, like the
-Layer-1 codes). These functions only build a reference URL a curator (or
-an AI assistant acting on the curator's behalf) can open - they never
-fetch, parse, or interpret the destination page's content.
+requirements) - NOT judgment logic. Some listed criteria are evaluated by
+the integrated automated engine, some by the literature engine, and some
+remain stubs; this module is deliberately independent of those decisions. These
+functions only build a reference URL a curator (or an AI assistant acting
+on the curator's behalf) can open - they never fetch, parse, or interpret
+the destination page's content.
 
 Takes VariantRecord (acmg_pipeline.vcf_record) directly as the parameter,
 per the same "argument is a pulled-in entity class, not a bespoke wrapper"
@@ -21,8 +17,8 @@ a later VCF INFO field addition needs no signature change here.
 
 [Where the returned URL ends up in VA-Spec output]
   Every function below just returns a plain `str | None` - none of them
-  touch VA-Spec themselves. The one caller today, acmg_pipeline.export.
-  build_stub_evidence_line(), puts that string into ONE specific place:
+  touch VA-Spec themselves. acmg_pipeline.export.build_reference_extensions()
+  puts that string into ONE specific place on real and stub lines alike:
   EvidenceLine.extensions, as Extension(name="referenceLink", value=url) -
   deliberately NOT EvidenceLine.reportedIn (a Document there would be
   spec-valid with just `urls` set, no `pmid` needed, but reportedIn means
@@ -153,7 +149,7 @@ def uniprot_page_url(variant: VariantRecord) -> str | None:
       if GENE is missing or the accession lookup fails (unknown symbol,
       network error) - no accession means no valid page to link to.
     Field: EvidenceLine.extensions (Extension(name="referenceLink")) once
-      passed through export.build_stub_evidence_line() - see this module's
+      passed through export.build_reference_extensions() - see this module's
       own docstring, "Where the returned URL ends up in VA-Spec output".
     """
     gene = variant.info.get("GENE")
@@ -182,7 +178,7 @@ def clinvar_search_url(variant: VariantRecord) -> str | None:
       URL lands on ClinVar's own search results page rather than one
       specific record. Returns None if GENE or HGVSC is missing.
     Field: EvidenceLine.extensions (Extension(name="referenceLink")) once
-      passed through export.build_stub_evidence_line() - see this module's
+      passed through export.build_reference_extensions() - see this module's
       own docstring, "Where the returned URL ends up in VA-Spec output".
     """
     gene = variant.info.get("GENE")
@@ -211,7 +207,7 @@ def gnomad_variant_url(variant: VariantRecord, dataset: str = "gnomad_r4") -> st
       ALT="." for some indels/deletions - not a real gnomAD-linkable
       representation, so no URL is better than a broken one).
     Field: EvidenceLine.extensions (Extension(name="referenceLink")) once
-      passed through export.build_stub_evidence_line() - see this module's
+      passed through export.build_reference_extensions() - see this module's
       own docstring, "Where the returned URL ends up in VA-Spec output".
     """
     if not variant.ref or not variant.alt or variant.alt in (".", ""):
@@ -232,7 +228,7 @@ def gnomad_gene_url(variant: VariantRecord, dataset: str = "gnomad_r4") -> str |
       Same `dataset` genome-build caveat as gnomad_variant_url() above.
       Returns None if GENE is missing.
     Field: EvidenceLine.extensions (Extension(name="referenceLink")) once
-      passed through export.build_stub_evidence_line() - see this module's
+      passed through export.build_reference_extensions() - see this module's
       own docstring, "Where the returned URL ends up in VA-Spec output".
     """
     gene = variant.info.get("GENE")
@@ -242,9 +238,8 @@ def gnomad_gene_url(variant: VariantRecord, dataset: str = "gnomad_r4") -> str |
 
 
 # code -> the reference-link function to call, for codes this module can
-# produce a URL for. PM1/PM5 (needs a gene->UniProt lookup, not string
-# assembly) and PP3/BP4 (a threshold table, not a single reference page)
-# are deliberately absent - see the module docstring.
+# produce a URL for. PM1/PM5 use a gene->UniProt lookup; PP3/BP4 are absent
+# because their request is a threshold table, not a single reference page.
 _URL_BUILDERS = {
     "PVS1": lambda v: AUTOPVS1_URL,
     "PS1": clinvar_search_url,
@@ -263,8 +258,8 @@ _URL_BUILDERS = {
 # per-variant call may still return None for one of these - e.g.
 # gnomad_variant_url() on an ALT="." record - but the code itself has a
 # defined URL strategy). Callers building a UI/EvidenceLine per code (see
-# acmg_pipeline.export.build_stub_evidence_line()) can use this to know
-# which of the 25 stub codes are even worth trying.
+# acmg_pipeline.export.build_reference_extensions()) can use this to know
+# which criteria have a curator-facing reference link worth generating.
 CODES_WITH_REFERENCE_URL = frozenset(_URL_BUILDERS)
 
 
@@ -275,7 +270,7 @@ def reference_url_for_criterion(code: str, variant: VariantRecord) -> str | None
     URL-able reference page (see _URL_BUILDERS) or the variant lacks the
     fields needed to build one (e.g. ALT="." for gnomad_variant_url).
     Field: EvidenceLine.extensions (Extension(name="referenceLink")) once
-      passed through export.build_stub_evidence_line() (its actual caller)
+      passed through export.build_reference_extensions() (its actual caller)
       - see this module's own docstring, "Where the returned URL ends up
       in VA-Spec output".
     """
@@ -292,7 +287,7 @@ def all_reference_urls(variant: VariantRecord) -> dict[str, str]:
     None).
     Field: same as reference_url_for_criterion() above - each value here
       lands in that code's own EvidenceLine.extensions, not one shared
-      bundle (see export.build_stub_evidence_line(), called once per code).
+      bundle (see export.build_reference_extensions(), called once per code).
     """
     return {
         code: url

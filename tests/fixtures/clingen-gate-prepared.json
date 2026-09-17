@@ -1,0 +1,237 @@
+{
+  "schema_version": "1.0",
+  "records": [
+    {
+      "record_id": "clingen:pvs1-splice",
+      "source": {
+        "dataset": "ClinGen Evidence Repository expert-panel interpretation",
+        "url": "https://erepo.clinicalgenome.org/evrepo/ui/classification/0cb2a0b5-8a1c-4379-9fa5-36eb5f2a96f8",
+        "caid": "CAR:CA012771",
+        "gene": "MYBPC3",
+        "transcript": "NM_000256.3",
+        "hgvs_c": "c.26-2A>G",
+        "condition": "hypertrophic cardiomyopathy",
+        "expert_panel_outcome": null,
+        "expert_panel_codes": [
+          "PS4_Supporting",
+          "PP1",
+          "PVS1_Moderate"
+        ],
+        "selected_for": "exercises the PVS1 applicability gate",
+        "entry_method": "manual_transcription from the erepo API result"
+      },
+      "variant": {
+        "assembly": "GRCh38",
+        "chrom": "11",
+        "pos": 47351507,
+        "ref": "T",
+        "alt": "C"
+      },
+      "transcript": "NM_000256.3",
+      "identity_provenance": [
+        {
+          "source": "Ensembl VEP HGVS",
+          "source_version": "116",
+          "retrieved_at": "2026-09-15T12:55:45.050375+00:00",
+          "response_sha256": "7a93fd1273237bdb6383aeccab75870c3f4f26ce965333398e11e515718e507f",
+          "matched_identifiers": {
+            "TRANSCRIPT": "NM_000256.3",
+            "HGVSC": "c.26-2A>G"
+          },
+          "variant": {
+            "assembly": "GRCh38",
+            "chrom": "11",
+            "pos": 47351507,
+            "ref": "T",
+            "alt": "C"
+          }
+        }
+      ]
+    },
+    {
+      "record_id": "clingen:pvs1-frameshift",
+      "source": {
+        "dataset": "ClinGen Evidence Repository expert-panel interpretation",
+        "url": "https://erepo.clinicalgenome.org/evrepo/ui/classification/f5d8dc3f-dba0-4dc9-98cd-4a22b6a11a83",
+        "caid": "CAR:CA229778",
+        "gene": "PAH",
+        "transcript": "NM_000277.3",
+        "hgvs_c": "c.806del",
+        "condition": "phenylketonuria",
+        "expert_panel_outcome": "Pathogenic",
+        "expert_panel_codes": [
+          "PM2",
+          "PVS1",
+          "PP4"
+        ],
+        "selected_for": "exercises the PVS1 applicability gate",
+        "entry_method": "manual_transcription from the erepo API result"
+      },
+      "variant": {
+        "assembly": "GRCh38",
+        "chrom": "12",
+        "pos": 102852850,
+        "ref": "GA",
+        "alt": "G"
+      },
+      "transcript": "NM_000277.3",
+      "identity_provenance": [
+        {
+          "source": "Ensembl VEP HGVS",
+          "source_version": "116",
+          "retrieved_at": "2026-09-15T12:57:29.534625+00:00",
+          "response_sha256": "51208fc884abd8719b17a14daa88cfee3da9b355d1051a1104cb4d94ddecbe0e",
+          "matched_identifiers": {
+            "TRANSCRIPT": "NM_000277.3",
+            "HGVSC": "c.806del"
+          },
+          "variant": {
+            "assembly": "GRCh38",
+            "chrom": "12",
+            "pos": 102852850,
+            "ref": "GA",
+            "alt": "G"
+          }
+        }
+      ]
+    },
+    {
+      "record_id": "clingen:pm4-inframe-del",
+      "source": {
+        "dataset": "ClinGen Evidence Repository expert-panel interpretation",
+        "url": "https://erepo.clinicalgenome.org/evrepo/ui/classification/e8215039-95f4-4f85-a85e-1cc2d33278f0",
+        "caid": "CAR:CA013921",
+        "gene": "MYH7",
+        "transcript": "NM_000257.4",
+        "hgvs_c": "c.3658_3660del",
+        "condition": "hypertrophic cardiomyopathy",
+        "expert_panel_outcome": null,
+        "expert_panel_codes": [
+          "PS4_Supporting",
+          "PM4_Supporting",
+          "PM2"
+        ],
+        "selected_for": "exercises the PM4 applicability gate",
+        "entry_method": "manual_transcription from the erepo API result"
+      },
+      "variant": {
+        "assembly": "GRCh38",
+        "chrom": "14",
+        "pos": 23419910,
+        "ref": "TCTC",
+        "alt": "T"
+      },
+      "transcript": "NM_000257.4",
+      "identity_provenance": [
+        {
+          "source": "Ensembl VEP HGVS",
+          "source_version": "116",
+          "retrieved_at": "2026-09-15T12:56:30.514570+00:00",
+          "response_sha256": "cd495e6a3b443a6f74dbcea6d979974c0fee320b9342813e1f530992baf3763c",
+          "matched_identifiers": {
+            "TRANSCRIPT": "NM_000257.4",
+            "HGVSC": "c.3658_3660del"
+          },
+          "variant": {
+            "assembly": "GRCh38",
+            "chrom": "14",
+            "pos": 23419910,
+            "ref": "TCTC",
+            "alt": "T"
+          }
+        }
+      ]
+    },
+    {
+      "record_id": "clingen:bp7-synonymous-mybpc3",
+      "source": {
+        "dataset": "ClinGen Evidence Repository expert-panel interpretation",
+        "url": "https://erepo.clinicalgenome.org/evrepo/ui/classification/c9ca6c99-9d4b-43fe-815c-1af6e25a79f7",
+        "caid": "CAR:CA015028",
+        "gene": "MYBPC3",
+        "transcript": "NM_000256.3",
+        "hgvs_c": "c.405A>G",
+        "condition": "hypertrophic cardiomyopathy",
+        "expert_panel_outcome": null,
+        "expert_panel_codes": [
+          "BP7"
+        ],
+        "selected_for": "exercises the BP7 applicability gate",
+        "entry_method": "manual_transcription from the erepo API result"
+      },
+      "variant": {
+        "assembly": "GRCh38",
+        "chrom": "11",
+        "pos": 47350503,
+        "ref": "T",
+        "alt": "C"
+      },
+      "transcript": "NM_000256.3",
+      "identity_provenance": [
+        {
+          "source": "Ensembl VEP HGVS",
+          "source_version": "116",
+          "retrieved_at": "2026-09-15T12:56:11.039331+00:00",
+          "response_sha256": "97063990ed04dd321bc79a085d846c5f7d1bc907b71a05c4a93534a9674f8829",
+          "matched_identifiers": {
+            "TRANSCRIPT": "NM_000256.3",
+            "HGVSC": "c.405A>G"
+          },
+          "variant": {
+            "assembly": "GRCh38",
+            "chrom": "11",
+            "pos": 47350503,
+            "ref": "T",
+            "alt": "C"
+          }
+        }
+      ]
+    },
+    {
+      "record_id": "clingen:bp7-synonymous-myh7",
+      "source": {
+        "dataset": "ClinGen Evidence Repository expert-panel interpretation",
+        "url": "https://erepo.clinicalgenome.org/evrepo/ui/classification/642005b8-321a-4b2e-9a08-c3cc99d24a7e",
+        "caid": "CAR:CA013313",
+        "gene": "MYH7",
+        "transcript": "NM_000257.4",
+        "hgvs_c": "c.3036C>T",
+        "condition": "hypertrophic cardiomyopathy",
+        "expert_panel_outcome": null,
+        "expert_panel_codes": [
+          "BA1",
+          "BP7"
+        ],
+        "selected_for": "exercises the BP7 applicability gate",
+        "entry_method": "manual_transcription from the erepo API result"
+      },
+      "variant": {
+        "assembly": "GRCh38",
+        "chrom": "14",
+        "pos": 23423610,
+        "ref": "G",
+        "alt": "A"
+      },
+      "transcript": "NM_000257.4",
+      "identity_provenance": [
+        {
+          "source": "Ensembl VEP HGVS",
+          "source_version": "116",
+          "retrieved_at": "2026-09-15T12:57:03.161212+00:00",
+          "response_sha256": "15e66316cc6fd2fbd237d51858acc58a290bfa8330119e72a21e89988b82313a",
+          "matched_identifiers": {
+            "TRANSCRIPT": "NM_000257.4",
+            "HGVSC": "c.3036C>T"
+          },
+          "variant": {
+            "assembly": "GRCh38",
+            "chrom": "14",
+            "pos": 23423610,
+            "ref": "G",
+            "alt": "A"
+          }
+        }
+      ]
+    }
+  ]
+}

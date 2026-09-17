@@ -23,65 +23,43 @@ strength for met calls) into a single final ACMG/AMP variant classification.
   Per the user's decision (2026-09-15): since the eventual external API
   interface with other teams isn't settled yet, build the classification
   engine first - it can be built and tested today using only this
-  project's own implemented criteria, and needs no changes when other
-  teams' criteria (PVS1, PM1, PM2, ...) are added later, since it only
-  cares about (code, status, strength) tuples, not how they were produced.
+  project's five literature criteria (PS3/BS3/PS4/PP1/BS4), and needs no
+  changes when other teams' criteria (PVS1, PM1, PM2, ...) are added later,
+  since it only cares about (code, status, strength) tuples, not how they
+  were produced.
 
-[Where the other ACMG codes come from]
+[Where all 28 ACMG codes come from]
   This module owns the canonical list of all 28 ACMG/AMP 2015 codes
-  (ALL_ACMG_CODES) and which ones this project actually implements
-  (IMPLEMENTED_CODES = {"PS3", "BS3", "PS4"} as of 2026-09-16 - see the
-  comment on IMPLEMENTED_CODES below for the PP1/BS4/PP4 handoff history).
-  acmg_pipeline/criteria/stubs.py uses these to generate a NOT_EVALUATED
-  CriterionEvidence for every other code, so classify() can be called with
-  a genuinely complete evidence set (missing evidence for an unimplemented
-  code is explicit and visible, not silently absent).
+  (ALL_ACMG_CODES), the five literature codes, and the sixteen imported
+  automated codes. acmg_pipeline/criteria/stubs.py generates a
+  NOT_EVALUATED CriterionEvidence for the remaining seven codes, so
+  classify() can be called with a genuinely complete evidence set (missing
+  evidence for an unimplemented code is explicit and visible, not silently
+  absent).
 """
 
 from __future__ import annotations
+from acmg_pipeline.constants import CriterionStatus
 
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Optional
 
 from acmg_pipeline.common import AggregatedJudgment, is_not_clear, strength_tier_from_paper_count
-from acmg_pipeline.gate import CriterionStatus, MatchStatus
+from acmg_pipeline.constants import (
+    ALL_ACMG_CODES,
+    AUTOMATED_CODES,
+    IMPLEMENTED_CODES,
+    LITERATURE_CODES,
+    PATHOGENIC_CODES,
+    BENIGN_CODES,
+    CriterionStatus,
+)
+from acmg_pipeline.gate import MatchStatus
 
 # ============================================================================
 # 1. The full ACMG/AMP 2015 code list
 # ============================================================================
-
-PATHOGENIC_CODES = [
-    "PVS1", "PS1", "PS2", "PS3", "PS4",
-    "PM1", "PM2", "PM3", "PM4", "PM5", "PM6",
-    "PP1", "PP2", "PP3", "PP4", "PP5",
-]
-BENIGN_CODES = [
-    "BA1", "BS1", "BS2", "BS3", "BS4",
-    "BP1", "BP2", "BP3", "BP4", "BP5", "BP6", "BP7",
-]
-ALL_ACMG_CODES = PATHOGENIC_CODES + BENIGN_CODES
-
-# The codes this project has a real judgment engine for (see
-# acmg_pipeline/criteria/{ps3_bs3,ps4}.py and design doc section 15-5 for
-# why these and not the other 25).
-#
-# [2026-09-16] Was {"PS3", "BS3", "PS4", "PP1", "BS4"} through the first
-# several months of this project - PP1/BS4 (acmg_pipeline/criteria/
-# segregation.py) were fully implemented and validated here (real LLM
-# runs, ERepo-sourced ground truth, VA-Spec export). Per the user's
-# explicit decision, PP1/BS4's judgment logic (and PP4's design research,
-# see stubs.py) have since been handed off to another team, with this
-# project's history transferred at both the doc and code level. This
-# project's own implemented scope is now PS3/BS3/PS4 only.
-# segregation.py itself is NOT deleted (still real, working, tested code -
-# see acmg_pipeline.pipeline.ENGINE_BY_CRITERION, which still maps PP1/BS4
-# to it) - only this constant, and everything derived from it (stubs.py's
-# STUB_CODES, the default criteria this project's own pipeline entry
-# points evaluate), changed to reflect that PP1/BS4 aren't this project's
-# own scope to claim credit for going forward.
-IMPLEMENTED_CODES = {"PS3", "BS3", "PS4"}
-
 
 class Strength(str, Enum):
     SUPPORTING = "supporting"
@@ -184,7 +162,10 @@ def classify(evidence: list[CriterionEvidence]) -> ClassificationResult:
 
     met = [e for e in by_code.values() if e.status == CriterionStatus.MET]
     not_met = [e for e in by_code.values() if e.status == CriterionStatus.NOT_MET]
-    not_evaluated_codes = sorted(set(ALL_ACMG_CODES) - set(by_code))
+    not_evaluated_codes = sorted(
+        code for code in ALL_ACMG_CODES
+        if code not in by_code or by_code[code].status == CriterionStatus.UNKNOWN
+    )
 
     ba1 = by_code.get("BA1")
     if ba1 is not None and ba1.status == CriterionStatus.MET:
@@ -250,7 +231,9 @@ def from_aggregated_judgment(aggregated: AggregatedJudgment, code: str) -> Crite
     ]
     source = f"llm_pipeline:{','.join(f'PMID{p}' for p in relevant_pmids)}" if relevant_pmids else "llm_pipeline:no_usable_paper"
 
-    if is_not_clear(direction) or direction.value != code:
+    if is_not_clear(direction):
+        return CriterionEvidence(code=code, status=CriterionStatus.UNKNOWN, source=source)
+    if direction.value != code:
         return CriterionEvidence(code=code, status=CriterionStatus.NOT_MET, source=source)
 
     tier = strength_tier_from_paper_count(len(relevant_pmids))

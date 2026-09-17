@@ -85,8 +85,15 @@ VA-Spec EvidenceLine (as a plain dict, ready for json.dump()).
 
 from __future__ import annotations
 
+from copy import deepcopy
 from datetime import datetime, timezone
-from typing import Optional
+from functools import lru_cache
+from typing import Any, Optional
+
+from jsonschema import Draft202012Validator, FormatChecker
+
+from acmg_pipeline.criteria.common import DEFAULT_STRENGTH
+from acmg_pipeline.automated_va_spec import OUTCOME_PATTERN, output_schema
 
 from ga4gh.core.models import Coding, Extension, MappableConcept
 from ga4gh.va_spec.base.core import Agent, Contribution, Direction, Document, EvidenceLine, Method
@@ -96,35 +103,37 @@ from acmg_pipeline.common import (
     AggregatedJudgment, CuratorHint, MatchStatus, PaperContribution,
     is_not_clear, strength_tier_from_paper_count,
 )
-from acmg_pipeline.classification import IMPLEMENTED_CODES
+from acmg_pipeline.constants import IMPLEMENTED_CODES, CriterionStatus
 from acmg_pipeline.criteria import curator_info, reference_links
 from acmg_pipeline.vcf_record import VariantRecord
 
-# Codes whose stub EvidenceLine also gets a `curatorInfo` extension (see
-# build_stub_evidence_line()), and which acmg_pipeline.criteria.curator_info
+# Codes whose EvidenceLine also gets a `curatorInfo` extension (see
+# build_reference_extensions()), and which acmg_pipeline.criteria.curator_info
 # function supplies it - the doc's ask for these goes beyond "show a page"
 # (reference_links.py) into "check hotspot/nearby benign variants" or
 # "check if previously reported", which needs the page's actual content
 # fetched, not just a link to it.
 #
-# PP1 is ABSENT here even though curator_info.clinvar_report_context()
-# covers it too (doc: "use AI to check if segregation previously reported
-# (clinvar)"). Historically (through 2026-09-15) this was a hard
-# requirement: PP1 was in IMPLEMENTED_CODES (this project's own literature
-# judgment via build_evidence_line()), so build_stub_evidence_line() would
-# have refused to run for it (see that function's IMPLEMENTED_CODES
-# guard). As of the 2026-09-16 handoff (see acmg_pipeline.classification.
-# IMPLEMENTED_CODES and criteria/stubs.py's HANDED_OFF_TO_OTHER_TEAM), PP1
-# is a stub code again and that guard no longer blocks it - wiring
-# "PP1": curator_info.clinvar_report_context into this dict (mirroring
-# PM3, same underlying function) is now a legitimate option, just not
-# done here since it wasn't part of the IMPLEMENTED_CODES scope-change
-# itself; left as a genuine follow-up, not a blocked one.
+# PP1 is deliberately absent here: its requested ClinVar page is attached
+# as a referenceLink to the real literature EvidenceLine, while curatorInfo
+# remains limited to the previously implemented PM1/PM3/PM5 fetchers.
 _CODE_CURATOR_INFO_FETCHERS = {
     "PM1": curator_info.uniprot_domain_context,
     "PM5": curator_info.uniprot_domain_context,
     "PM3": curator_info.clinvar_report_context,
 }
+
+# The ACMG/AMP 2015 guideline itself, cited as the source of every
+# criterion's Method. evidence-cli already attached this to its scored
+# lines, and the 1.0.1 output schema requires `specifiedBy.reportedIn`,
+# so the literature and workflow lines built here carry it too - without
+# it they were the only lines in the document whose Method named no
+# source at all.
+ACMG_2015_METHOD_DOCUMENT = Document(
+    name="Richards et al., 2015, Genet Med.",
+    doi="10.1038/gim.2015.30",
+    pmid="25741868",
+)
 
 PIPELINE_AGENT = Agent(
     id="acmg-literature-llm-pipeline",
@@ -133,6 +142,154 @@ PIPELINE_AGENT = Agent(
         "AI-generated draft evidence, requires human curator review before use"
     ),
 )
+
+
+def default_strength(code: str) -> str:
+    """The ACMG/AMP 2015 default strength of one criterion code.
+
+    evidence-cli's own DEFAULT_STRENGTH map covers only the 16 codes it
+    implements, so it cannot answer for PP1/BS4/PS3/BS3/PS4. The ACMG
+    prefix rule covers all 28 and agrees with that map everywhere the two
+    overlap (asserted in tests), so it is derived rather than duplicated.
+    """
+    if code == "PVS1":
+        return "very_strong"
+    if code == "BA1":
+        return "stand_alone"
+    return {"PS": "strong", "BS": "strong", "PM": "moderate",
+            "PP": "supporting", "BP": "supporting"}[code[:2]]
+
+
+def evidence_line_id(code: str, gene: str, safe_hgvsc: str) -> str:
+    """The single EvidenceLine id scheme for the integrated 28-line document.
+
+    Every builder in this module goes through here, including the adapter
+    for evidence-cli results (build_automated_evidence_line), which would
+    otherwise carry that project's own `urn:bh26:evidence-line:<sha256>`
+    form. Two ids for one document was a real problem, not a cosmetic one:
+
+      * the split ran along MET/NOT_MET vs. every other status, not along
+        which half produced the line, so the SAME criterion changed id
+        FORM depending on its outcome - a consumer could not look a line
+        up by (variant, criterion);
+      * the urn hashed `evidence_outcome` into the id, so re-running with
+        a different threshold (PP3_strong -> PP3_moderate) changed the id
+        of the same variant/criterion, breaking run-to-run diffing and
+        anything anchored to a line (curator comments, review state).
+
+    `evline:{gene}_{safe_hgvsc}_{code}` is stable across runs and
+    reconstructible from (variant, criterion) alone. It stays a valid
+    JSON-Schema `iri-reference`, which is all the 1.0.1 output schema asks
+    of `id`.
+
+    acmg/va_spec/mapper.py's urn scheme is deliberately left alone: the
+    standalone `acmg evaluate` CLI has no gene/HGVSC to build this form
+    from (only assembly:chrom:pos:ref:alt), and its own output contract
+    and tests are pinned to the urn.
+    """
+    return f"evline:{gene}_{safe_hgvsc}_{code}"
+
+
+@lru_cache(maxsize=1)
+def _integrated_line_schema() -> dict:
+    """The 1.0.1 output schema, widened to the fields the integrated document uses.
+
+    `acmg/va_spec/schemas/acmg-evidence-line-1.0.1-output.json` describes
+    exactly what evidence-cli emits for a scored criterion, so applying it
+    verbatim to all 28 lines is impossible in two ways:
+
+      * it is `additionalProperties: false` and lists neither `reportedIn`
+        nor `contributions`, both of which the literature lines carry
+        (PMIDs of the papers judged, and the LLM agent's contribution);
+      * it requires `evidenceOutcome`, which a workflow line
+        (NOT_EVALUATED / MANUAL_REVIEW / NOT_APPLICABLE) must not have -
+        emitting one would assert a judgment that was never made.
+
+    So the schema file itself is NOT edited - its sha256 is recorded as
+    provenance by acmg_pipeline.automated_va_spec.output_schema_sha256() and travels
+    inside audit envelopes; changing it would silently invalidate those.
+    Instead this derives an in-memory superset: the same property schemas,
+    plus the two literature-only fields, with `evidenceOutcome` demoted
+    from required (it is still cross-checked by _check_acmg_semantics()
+    whenever it IS present).
+    """
+    schema = deepcopy(output_schema())
+    schema["required"] = [key for key in schema["required"] if key != "evidenceOutcome"]
+    schema["properties"]["reportedIn"] = {"type": "array"}
+    schema["properties"]["contributions"] = {"type": "array"}
+    # `hasEvidenceItems` in 1.0.1 accepts an IRI string or a cohort allele
+    # frequency StudyResult - evidence-cli's only two shapes. The
+    # literature lines nest one full EvidenceLine per paper judged (see
+    # build_paper_evidence_line), which the real ga4gh.va_spec model
+    # explicitly allows and which is where the per-paper rationale and
+    # curator hints live. Accept that third shape here rather than
+    # flatten it away; the nested objects are already Pydantic-validated
+    # as EvidenceLine at construction time.
+    schema["properties"]["hasEvidenceItems"]["items"]["oneOf"].append(
+        {"type": "object", "properties": {"type": {"const": "EvidenceLine"}},
+         "required": ["type"]}
+    )
+    # `acmgStrength` / `acmgOutcome` are MappableConcepts. evidence-cli
+    # hand-builds them without the `type` discriminator; the real
+    # ga4gh.core.models.MappableConcept that the literature lines are dumped
+    # from emits `"type": "MappableConcept"`. Both are valid VA-Spec, so the
+    # discriminator is permitted rather than stripped from the Pydantic
+    # output. NOTE: this leaves the two halves emitting slightly different
+    # shapes for the same two fields - worth settling one way or the other,
+    # but not by deleting a field the upstream model considers correct.
+    for name in ("acmgStrength", "acmgOutcome"):
+        schema["$defs"][name].setdefault("properties", {})["type"] = {
+            "const": "MappableConcept"
+        }
+    return schema
+
+
+def _check_acmg_semantics(line: dict, criterion: str) -> None:
+    """The cross-field ACMG rules from validate_1_0_1(), for any line that scores.
+
+    Same three checks, in the same order, so a line that has an
+    evidenceOutcome is held to exactly the standard evidence-cli's scored
+    lines already were - previously these applied only to the 16 automated
+    codes' MET/NOT_MET lines, leaving the literature codes free to emit
+    e.g. direction=supports alongside a *_not_met outcome.
+    """
+    outcome = line["evidenceOutcome"]["primaryCoding"]["code"]
+    direction = line["directionOfEvidenceProvided"]
+    if line["specifiedBy"]["methodType"] != criterion or not OUTCOME_PATTERN.fullmatch(outcome):
+        raise ValueError(f"VA-Spec ACMG criterion mapping mismatch for {criterion}")
+    if outcome.split("_", 1)[0] != criterion:
+        raise ValueError(f"VA-Spec methodType/evidenceOutcome mismatch for {criterion}")
+    expected = "neutral" if outcome.endswith("_not_met") else (
+        "disputes" if criterion.startswith("B") else "supports"
+    )
+    if direction != expected:
+        raise ValueError(
+            f"VA-Spec direction/evidenceOutcome mismatch for {criterion}: "
+            f"{direction!r} with outcome {outcome!r} (expected {expected!r})"
+        )
+
+
+def validate_integrated_line(line: dict, criterion: str) -> dict:
+    """Validate one line of the integrated 28-line document. Applied to ALL 28.
+
+    Scored lines (those carrying an evidenceOutcome) get the same schema
+    and ACMG semantic checks that acmg_pipeline.automated_va_spec.validate_1_0_1()
+    applies to evidence-cli's output; workflow lines get the schema checks
+    minus the evidenceOutcome requirement. Raises ValueError on the first
+    problem, matching validate_1_0_1()'s behaviour.
+    """
+    errors = sorted(
+        Draft202012Validator(_integrated_line_schema(), format_checker=FormatChecker())
+        .iter_errors(line),
+        key=lambda item: list(item.path),
+    )
+    if errors:
+        raise ValueError(
+            f"VA-Spec 1.0.1 schema validation failed for {criterion}: {errors[0].message}"
+        )
+    if line.get("evidenceOutcome"):
+        _check_acmg_semantics(line, criterion)
+    return line
 
 
 def _pubmed_url(pmid: str) -> str:
@@ -201,8 +358,15 @@ def _strength_blocks(
         return None, None, None
     code_base = direction.value
     strength = MappableConcept(primaryCoding=Coding(code=tier, system=System.ACMG.value))
+    # An ACMG outcome code carries a strength suffix only when the strength
+    # DIFFERS from the criterion's own default - "PP1_supporting" is not a
+    # legal code, because supporting is what plain PP1 already means. This
+    # is the same rule evidence-cli applies in acmg/criteria/common.py
+    # result(); before the merge nothing checked it on this side, and
+    # PP1/BS4 at the supporting tier emitted the illegal form.
+    outcome_code = code_base if tier == default_strength(code_base) else f"{code_base}_{tier}"
     outcome = MappableConcept(
-        primaryCoding=Coding(code=f"{code_base}_{tier}", system=System.ACMG.value),
+        primaryCoding=Coding(code=outcome_code, system=System.ACMG.value),
         name=f"ACMG 2015 {code_base} {tier} Criterion Met (heuristic estimate, unconfirmed)",
     )
     disclosure = Extension(
@@ -240,6 +404,7 @@ def build_evidence_line(
     hgvsc: str,
     criterion: str,
     vcep_name: Optional[str] = None,
+    variant: Optional[VariantRecord] = None,
 ) -> dict:
     """
     Builds the top-level, aggregated VA-Spec EvidenceLine for one
@@ -258,7 +423,23 @@ def build_evidence_line(
 
     strength, outcome, strength_disclosure = _strength_blocks(direction, len(relevant_pmids))
     hints_ext = _hints_extension(aggregated.aggregation_hints)
-    extensions = [e for e in (hints_ext, strength_disclosure) if e] or None
+    status = (
+        CriterionStatus.UNKNOWN.value if is_not_clear(direction)
+        else CriterionStatus.MET.value if direction.value == criterion
+        else CriterionStatus.NOT_MET.value
+    )
+    assessment_ext = Extension(
+        name="bh26AssessmentDetails",
+        value={
+            "criterion": criterion,
+            "status": status,
+            "summary": " ".join(h.message for h in aggregated.aggregation_hints)
+            or f"Literature evidence was evaluated for {criterion}.",
+        },
+    )
+    extensions = [e for e in (hints_ext, strength_disclosure, assessment_ext) if e]
+    if variant is not None:
+        extensions.extend(build_reference_extensions(criterion, variant))
 
     description = " ".join(h.message for h in aggregated.aggregation_hints) or None
 
@@ -267,7 +448,7 @@ def build_evidence_line(
     )
 
     evidence_line = EvidenceLine(
-        id=f"evline:{gene}_{safe_hgvsc}_{criterion}",
+        id=evidence_line_id(criterion, gene, safe_hgvsc),
         directionOfEvidenceProvided=_direction_of_evidence(direction, criterion),
         reportedIn=[_document(pmid) for pmid in all_pmids] or None,
         description=description,
@@ -283,15 +464,18 @@ def build_evidence_line(
                 f"{vcep_name or 'Unspecified VCEP'} ACMG/AMP {criterion} "
                 "evidence assessment (LLM-assisted draft)"
             ),
+            reportedIn=ACMG_2015_METHOD_DOCUMENT,
         ),
         contributions=[Contribution(
             contributor=PIPELINE_AGENT,
             activityType="automated evidence evaluation",
             date=datetime.now(timezone.utc),
         )],
-        extensions=extensions,
+        extensions=extensions or None,
     )
-    return evidence_line.model_dump(mode="json", exclude_none=True)
+    return validate_integrated_line(
+        evidence_line.model_dump(mode="json", exclude_none=True), criterion
+    )
 
 
 def _serialize_curator_info(ctx) -> Optional[dict]:
@@ -334,12 +518,112 @@ def _serialize_curator_info(ctx) -> Optional[dict]:
     raise TypeError(f"no curatorInfo serialization defined for {type(ctx).__name__}")
 
 
-def build_stub_evidence_line(code: str, variant: VariantRecord) -> Optional[dict]:
+def build_reference_extensions(code: str, variant: VariantRecord) -> list[Extension]:
+    """Build auxiliary curator links/facts without making them evidence claims."""
+    extensions: list[Extension] = []
+    try:
+        url = reference_links.reference_url_for_criterion(code, variant)
+    except Exception:
+        # Reference pages are optional navigation aids. Their network/lookup
+        # failure must never erase the criterion assessment itself.
+        url = None
+    if url is not None:
+        extensions.append(Extension(name="referenceLink", value=url))
+
+    fetcher = _CODE_CURATOR_INFO_FETCHERS.get(code)
+    if fetcher is not None:
+        try:
+            info_value = _serialize_curator_info(fetcher(variant))
+        except Exception:
+            info_value = None
+        if info_value is not None:
+            extensions.append(Extension(name="curatorInfo", value=info_value))
+    return extensions
+
+
+def _variant_identity(variant: VariantRecord) -> tuple[str, str, str]:
+    gene = str(variant.info.get("GENE", ""))
+    hgvsc = str(variant.info.get("HGVSC", ""))
+    fallback = f"{variant.chrom}_{variant.pos}_{variant.ref}_{variant.alt}"
+    safe_hgvsc = (hgvsc or fallback).replace(">", "_").replace(".", "_").replace("+", "p").replace("-", "m")
+    return gene or "unknown-gene", hgvsc, safe_hgvsc
+
+
+def build_workflow_evidence_line(
+    code: str,
+    variant: VariantRecord,
+    *,
+    status: str,
+    description: str,
+    details: Optional[dict[str, Any]] = None,
+) -> dict:
+    """Emit a neutral VA-Spec line for a non-scoreable workflow state."""
+    gene, _hgvsc, safe_hgvsc = _variant_identity(variant)
+    assessment = {
+        "criterion": code,
+        "status": status,
+        "summary": description,
+    }
+    if details:
+        assessment.update(details)
+    extensions = [Extension(name="bh26AssessmentDetails", value=assessment)]
+    extensions.extend(build_reference_extensions(code, variant))
+    line = EvidenceLine(
+        id=evidence_line_id(code, gene, safe_hgvsc),
+        directionOfEvidenceProvided=Direction.NEUTRAL,
+        description=description,
+        specifiedBy=Method(
+            methodType=code,
+            name=f"ACMG/AMP {code} assessment ({status.lower().replace('_', ' ')})",
+            reportedIn=ACMG_2015_METHOD_DOCUMENT,
+        ),
+        extensions=extensions,
+    )
+    return validate_integrated_line(
+        line.model_dump(mode="json", exclude_none=True), code
+    )
+
+
+def build_automated_evidence_line(result, variant: VariantRecord) -> dict:
+    """Map one evidence-cli result and attach main's curator-reference extensions."""
+    from acmg_pipeline.automated_va_spec import assessment_details, to_evidence_line, validate_1_0_1
+
+    status = CriterionStatus(result.status)
+    if status in {CriterionStatus.MET, CriterionStatus.NOT_MET}:
+        line = to_evidence_line(result)
+        additions = [e.model_dump(mode="json", exclude_none=True)
+                     for e in build_reference_extensions(result.criterion, variant)]
+        if additions:
+            line.setdefault("extensions", []).extend(additions)
+        # Re-key onto the integrated document's single id scheme. The urn
+        # to_evidence_line() produced is correct for the standalone
+        # `acmg evaluate` CLI, but inside the 28-line document it would be
+        # the only line addressed differently - and it hashes the outcome,
+        # so it moves whenever a threshold changes. See evidence_line_id().
+        gene, _hgvsc, safe_hgvsc = _variant_identity(variant)
+        line["id"] = evidence_line_id(result.criterion, gene, safe_hgvsc)
+        # validate_1_0_1() still runs: these lines always score, so they
+        # are held to the strict schema (no relaxation for a missing
+        # evidenceOutcome) as before the merge.
+        return validate_1_0_1(line, result.criterion)
+
+    details = assessment_details(result)
+    summary = result.summary or f"{result.criterion} was not scored ({status.value})."
+    return build_workflow_evidence_line(
+        result.criterion,
+        variant,
+        status=status.value,
+        description=summary,
+        details={key: value for key, value in details.items()
+                 if key not in {"criterion", "status", "summary"}},
+    )
+
+
+def build_stub_evidence_line(code: str, variant: VariantRecord) -> dict:
     """
-    A minimal EvidenceLine for one of the 25 codes this project doesn't
-    implement (PP1/BS4/PP4 handed off to another team, or a Layer-1 code -
-    see acmg_pipeline/criteria/stubs.py) - NOT a judgment. Carries a
-    `referenceLink` extension (see
+    A minimal EvidenceLine for one of the seven codes this integrated
+    pipeline doesn't implement - NOT a judgment. Carries a `referenceLink`
+    extension when one is available (see
     acmg_pipeline.criteria.reference_links, built from doc/recs for expert
     board.docx's per-criterion "what to show the curator" asks) so a
     curator or another team's tool has a direct link to check, with no
@@ -372,19 +656,13 @@ def build_stub_evidence_line(code: str, variant: VariantRecord) -> Optional[dict
     was actually evaluated here, so `description` says so explicitly rather
     than leaving NEUTRAL to imply "assessed as neutral evidence".
 
-    Returns None (build nothing) if this module has no reference URL for
-    `code` at all (see reference_links.CODES_WITH_REFERENCE_URL) rather
-    than emitting a placeholder EvidenceLine with no useful content in it - the
-    per-variant EvidenceLine list should only ever contain codes where this
-    project actually has something (a real judgment OR a reference link)
-    to say about that variant.
+    A line is always returned, even if no reference URL exists, so the
+    integrated interface has exactly one explicit state for all 28 codes.
 
-    Raises ValueError for `code` in IMPLEMENTED_CODES (PS3/BS3/PS4 as of
-    2026-09-16 - none of which has a doc/recs-for-expert-board.docx
-    reference URL, so this guard is not reachable via reference_links.
-    CODES_WITH_REFERENCE_URL today, but is kept as a defensive check
-    against IMPLEMENTED_CODES changing again) - that code has a REAL
-    judgment via build_evidence_line(), and
+    Raises ValueError for `code` in IMPLEMENTED_CODES (currently just PP1
+    among reference_links.CODES_WITH_REFERENCE_URL - the other 4
+    implemented codes have no doc/recs-for-expert-board.docx reference URL
+    at all) - that code has a REAL judgment via build_evidence_line(), and
     a stub line here would collide on the exact same EvidenceLine id
     (both build f"evline:{gene}_{safe_hgvsc}_{code}"), silently shadowing
     real evidence with a placeholder if a caller ever included both. The
@@ -398,35 +676,14 @@ def build_stub_evidence_line(code: str, variant: VariantRecord) -> Optional[dict
             "build_evidence_line()) - build_stub_evidence_line() is only for "
             "codes this project has no real evidence for."
         )
-    url = reference_links.reference_url_for_criterion(code, variant)
-    if url is None:
-        return None
-    gene = variant.info.get("GENE", "")
-    hgvsc = variant.info.get("HGVSC", "")
-    safe_hgvsc = hgvsc.replace(">", "_").replace(".", "_").replace("+", "p").replace("-", "m")
-
-    extensions = [Extension(name="referenceLink", value=url)]
-    fetcher = _CODE_CURATOR_INFO_FETCHERS.get(code)
-    if fetcher is not None:
-        ctx = fetcher(variant)
-        info_value = _serialize_curator_info(ctx)
-        if info_value is not None:
-            extensions.append(Extension(name="curatorInfo", value=info_value))
-
-    evidence_line = EvidenceLine(
-        id=f"evline:{gene}_{safe_hgvsc}_{code}",
-        directionOfEvidenceProvided=Direction.NEUTRAL,
+    return build_workflow_evidence_line(
+        code,
+        variant,
+        status=CriterionStatus.UNKNOWN.value,
         description=(
-            f"{code} is not evaluated by this pipeline (see acmg_pipeline/criteria/"
-            "stubs.py - a Layer-1 automated-evidence code or PP4, both other-team/"
-            "not-yet-implemented responsibilities here). No judgment was made; the "
-            "reference link (and, for PM1/PM3/PM5, the curatorInfo extension) below "
-            "are navigation/information aids only."
+            f"{code} is not evaluated by this integrated pipeline. No judgment was "
+            "made; any referenceLink or curatorInfo extension is an auxiliary "
+            "curation aid only."
         ),
-        specifiedBy=Method(
-            methodType=code,
-            name=f"{code}: reference link only, no automated judgment by this pipeline",
-        ),
-        extensions=extensions,
+        details={"missingInputs": ["criterion implementation"]},
     )
-    return evidence_line.model_dump(mode="json", exclude_none=True)

@@ -15,19 +15,69 @@ API層とパイプライン担当者(別の人)との唯一の境界(doc/docker_
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
 
-from acmg_pipeline.api_input import ApiCaseInput
-from acmg_pipeline.classification import ClassificationResult, classify
-from acmg_pipeline.criteria.stubs import all_stub_evidence
+from acmg_pipeline.classification import CriterionEvidence, Strength, classify
+from acmg_pipeline.clinical_note import extract_clinical_note
+from acmg_pipeline.constants import ALL_ACMG_CODES, CriterionStatus
+from acmg_pipeline.gate import ERepoClient
+from acmg_pipeline.pipeline import evaluate_variant_evidence_lines
+from acmg_pipeline.vcf_record import VariantRecord, parse_vcf
 
 
 @dataclass
 class PipelineOutput:
-    classification: ClassificationResult
+    classification: Any
     evidence_lines: dict[str, dict]
 
-# TODO: mock関数
-def run_pipeline(case: ApiCaseInput) -> PipelineOutput:
-    case.parse_vcf()  # 1バリアント契約の検証(不正な場合の ValueError はそのまま呼び出し元に伝播する)
-    return PipelineOutput(classification=classify(all_stub_evidence()), evidence_lines={})
+def load_automated_config() -> dict:
+    """Load server-owned rule settings; callers cannot override them."""
+    path = Path(__file__).resolve().parents[1] / "config" / "demo-rules.json"
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _assessment(line: dict) -> dict:
+    for extension in line.get("extensions", []):
+        if extension.get("name") == "bh26AssessmentDetails":
+            return extension.get("value") or {}
+    return {}
+
+
+def _evidence_from_line(code: str, line: dict) -> CriterionEvidence:
+    details = _assessment(line)
+    status = CriterionStatus(details.get("status", CriterionStatus.UNKNOWN.value))
+    if status != CriterionStatus.MET:
+        return CriterionEvidence(code=code, status=status, source="integrated_pipeline")
+    strength = line.get("strengthOfEvidenceProvided", {}).get("primaryCoding", {}).get("code")
+    return CriterionEvidence(code=code, status=status, strength=Strength(strength), source="integrated_pipeline")
+
+
+async def run_pipeline(
+    variant: VariantRecord,
+    clinical_note: str,
+    *,
+    mcp,
+    erepo_client: ERepoClient,
+    vcep_name: str | None = None,
+    full_text_cache=None,
+) -> PipelineOutput:
+    """Evaluate 19 implemented and 9 UNKNOWN stub criteria in ACMG order."""
+    extraction = extract_clinical_note(clinical_note)
+    lines = await evaluate_variant_evidence_lines(
+        variant, extraction,
+        automated_config=load_automated_config(),
+        mcp=mcp, erepo_client=erepo_client, vcep_name=vcep_name,
+        full_text_cache=full_text_cache,
+    )
+    evidence_lines = {code: line for code, line in zip(ALL_ACMG_CODES, lines)}
+    return PipelineOutput(
+        classification=classify([_evidence_from_line(code, evidence_lines[code]) for code in ALL_ACMG_CODES]),
+        evidence_lines=evidence_lines,
+    )
+
+
+def parse_request_vcf(vcf: str) -> VariantRecord:
+    return parse_vcf(vcf).record

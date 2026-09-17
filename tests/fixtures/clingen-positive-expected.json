@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0",
+  "source": {
+    "name": "ClinGen Evidence Repository",
+    "api": "https://erepo.clinicalgenome.org/evrepo/api/summary/classifications",
+    "api_version": "2.5.6",
+    "retrieved_at": "2026-09-16T00:00:00Z",
+    "record_count_at_retrieval": 13265,
+    "selection": "At least one public VCEP interpretation with the criterion in metCodes; normalized independent evidence is stored separately from these expected outcomes."
+  },
+  "criteria": {
+    "PVS1": {"record_id": "clingen-positive:pvs1-pah", "strength": "very_strong", "source_met_code": "PVS1"},
+    "PS1": {"record_id": "clingen-positive:ps1-gck", "strength": "strong", "source_met_code": "PS1"},
+    "PM1": {"record_id": "clingen-positive:pm1-pp3-pax6", "strength": "moderate", "source_met_code": "PM1"},
+    "PM2": {"record_id": "clingen-positive:pm2-gucy2d", "strength": "supporting", "source_met_code": "PM2_Supporting"},
+    "PM4": {"record_id": "clingen-positive:pm4-otc", "strength": "moderate", "source_met_code": "PM4"},
+    "PM5": {"record_id": "clingen-positive:pm5-otc", "strength": "moderate", "source_met_code": "PM5"},
+    "PP2": {"record_id": "clingen-positive:pp2-gck", "strength": "supporting", "source_met_code": "PP2"},
+    "PP3": {"record_id": "clingen-positive:pm1-pp3-pax6", "strength": "strong", "source_met_code": "PP3_Moderate"},
+    "BA1": {"record_id": "clingen-positive:ba1-itgb3", "strength": "stand_alone", "source_met_code": "BA1"},
+    "BS1": {"record_id": "clingen-positive:bs1-myh7", "strength": "strong", "source_met_code": "BS1"},
+    "BP1": {"record_id": "clingen-positive:bp1-brca2", "strength": "supporting", "source_met_code": "BP1_Strong"},
+    "BP3": {"record_id": "clingen-positive:bp3-foxg1", "strength": "supporting", "source_met_code": "BP3"},
+    "BP4": {"record_id": "clingen-positive:bp4-slc6a8", "strength": "moderate", "source_met_code": "BP4"},
+    "BP7": {"record_id": "clingen-positive:bp7-pax6", "strength": "supporting", "source_met_code": "BP7"}
+  }
+}

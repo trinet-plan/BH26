@@ -9,26 +9,17 @@ pipeline.py's ENGINE_BY_CRITERION (real JudgmentEngine instances - build_
 prompt/from_json/finalize/aggregate, used to actually run the LLM) stays
 there, not here: stub codes have no engine to run at all, so a registry
 that only lists "which codes have engines" would be misleading about the
-other codes. This module is about classification-time evidence lookup
-instead - see get_criterion_evidence().
-
-Note: ENGINE_BY_CRITERION still has real engines for PP1/BS4 (segregation.py)
-even though they are no longer in IMPLEMENTED_CODES as of 2026-09-16 (see
-acmg_pipeline.classification and criteria/stubs.py's HANDED_OFF_TO_OTHER_TEAM) -
-a caller can still run judge_variant() for PP1/BS4 directly via that engine,
-but get_criterion_evidence()/is_implemented() below now treat PP1/BS4 as
-stub codes, so passing real PP1/BS4 evidence through get_criterion_evidence()
-is ignored in favor of a stub (see is_implemented()'s docstring below).
+remaining seven. This module is about classification-time evidence lookup instead
+- see get_criterion_evidence().
 """
 
 from __future__ import annotations
 
 from typing import Optional
 
-from acmg_pipeline.classification import ALL_ACMG_CODES, IMPLEMENTED_CODES, CriterionEvidence
-from acmg_pipeline.clinical_note import ClinicalNoteExtraction
+from acmg_pipeline.classification import CriterionEvidence
+from acmg_pipeline.constants import ALL_ACMG_CODES, IMPLEMENTED_CODES
 from acmg_pipeline.criteria import stubs
-from acmg_pipeline.vcf_record import VariantRecord
 
 
 def is_implemented(code: str) -> bool:
@@ -37,18 +28,13 @@ def is_implemented(code: str) -> bool:
     return code in IMPLEMENTED_CODES
 
 
-def get_criterion_evidence(
-    code: str,
-    variant: VariantRecord,
-    clinical_note: ClinicalNoteExtraction,
-    real_evidence: Optional[CriterionEvidence] = None,
-) -> CriterionEvidence:
+def get_criterion_evidence(code: str, real_evidence: Optional[CriterionEvidence] = None) -> CriterionEvidence:
     """
     Returns the CriterionEvidence to actually use for `code` in a
     classify() call.
 
-    - For an implemented code (PS3/BS3/PS4 as of 2026-09-16), the caller
-      must have already produced a real CriterionEvidence (e.g. via
+    - For an implemented literature or automated code, the caller must have
+      already produced a real CriterionEvidence (e.g. via
       classification.from_aggregated_judgment() after running the LLM
       pipeline) and pass it as `real_evidence` - this function does not run
       anything itself.
@@ -61,14 +47,12 @@ def get_criterion_evidence(
     implemented-vs-stub itself:
 
         evidence = [
-            get_criterion_evidence(
-                code, variant, clinical_note, my_results.get(code)
-            )
+            get_criterion_evidence(code, my_results.get(code))
             for code in ALL_ACMG_CODES
         ]
     """
     if not is_implemented(code):
-        return stubs.stub_evidence(code, variant, clinical_note)
+        return stubs.stub_evidence(code)
     if real_evidence is None:
         raise ValueError(
             f"{code!r} is an implemented code - it needs a real "

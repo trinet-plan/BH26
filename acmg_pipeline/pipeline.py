@@ -60,10 +60,29 @@ from acmg_pipeline.common import (
     MatchStatus, VariantMatchingResult,
 )
 from acmg_pipeline.gate import ERepoClient, _protein_equivalents
-from acmg_pipeline.export import build_evidence_line
-from acmg_pipeline.classification import ALL_ACMG_CODES, IMPLEMENTED_CODES, ClassificationResult, classify, from_aggregated_judgment
+from acmg_pipeline.export import (
+    build_automated_evidence_line,
+    build_evidence_line,
+    build_stub_evidence_line,
+    build_workflow_evidence_line,
+)
+from acmg_pipeline.classification import (
+    ALL_ACMG_CODES,
+    AUTOMATED_CODES,
+    IMPLEMENTED_CODES,
+    LITERATURE_CODES,
+    ClassificationResult,
+    classify,
+    from_aggregated_judgment,
+)
 from acmg_pipeline.criteria import stubs
 from acmg_pipeline.api_input import ApiCaseInput
+from acmg_pipeline.clinical_note import ClinicalNoteExtraction
+from acmg_pipeline.vcf_record import VariantRecord
+from acmg_pipeline.automated_core.models import CRITERIA as AUTOMATED_CRITERIA
+from acmg_pipeline.automated_core.models import Variant as AutomatedVariant
+from acmg_pipeline.services.resolve import ProviderEvidenceResolver
+from acmg_pipeline.automated_engine import evaluate_record as evaluate_automated_record, make_services
 
 VA_SPEC_OUTPUT_DIR = Path("va_spec_output")
 VA_SPEC_OUTPUT_DIR.mkdir(exist_ok=True)
@@ -695,12 +714,7 @@ async def judge_variant_from_structured_input(
     """
     Parses `case_input`'s embedded VCF (exactly 1 variant, per ApiCaseInput's
     own contract) and runs judge_variant() once per requested literature
-    criterion (default: this project's own current scope, PS3/BS3/PS4 -
-    PP1/BS4 were dropped from the default 2026-09-16 when their judgment
-    logic was handed off to another team; ENGINE_BY_CRITERION below still
-    maps them to segregation.py, so passing criteria=(...,"PP1","BS4") still
-    works, it's just no longer what a caller gets without asking), using
-    resolve_pmids_for_variant() above (ERepo first, live
+    criterion, using resolve_pmids_for_variant() above (ERepo first, live
     PubMed search fallback) to find citing PMIDs. Returns {criterion:
     AggregatedJudgment}; a criterion is omitted from the result (not given a
     not_clear placeholder) only when neither PMID source found anything for
@@ -709,6 +723,30 @@ async def judge_variant_from_structured_input(
     evaluate".
     """
     variant = case_input.parse_vcf().record
+    return await judge_variant_from_shared_input(
+        variant,
+        mcp,
+        erepo_client,
+        criteria=criteria,
+        vcep_name=vcep_name,
+        full_text_cache=full_text_cache,
+    )
+
+
+async def judge_variant_from_shared_input(
+    variant: VariantRecord,
+    mcp: ClientSession,
+    erepo_client: ERepoClient,
+    criteria: tuple[str, ...] = ("PS3", "BS3", "PS4"),
+    vcep_name: str | None = None,
+    full_text_cache: dict[str, tuple[str | None, str]] | None = None,
+) -> dict[str, AggregatedJudgment]:
+    """Run the five literature criteria directly from main's shared input class."""
+    if not isinstance(variant, VariantRecord):
+        raise TypeError("variant must be acmg_pipeline.vcf_record.VariantRecord")
+    unknown = set(criteria) - LITERATURE_CODES
+    if unknown:
+        raise ValueError(f"Unsupported literature criteria: {sorted(unknown)}")
     gene = variant.info.get("GENE", "")
     hgvsc = variant.info.get("HGVSC", "")
     hgvsp = variant.info.get("HGVSP", "N/A")
@@ -730,22 +768,156 @@ async def judge_variant_from_structured_input(
     return results
 
 
+_IDENTITY_INFO_KEYS = ("GENE", "TRANSCRIPT", "HGVSC", "HGVSP", "CLNVARIATIONID")
+
+
+def _identity_from_info(variant: VariantRecord) -> dict:
+    """The INFO subset the providers need to look this variant up.
+
+    Deliberately an allowlist, not the whole INFO dict: CLNSIG and
+    ACMG_CODES sit in the same column and are conclusions, not lookup
+    keys - nothing downstream should be able to reach them by accident.
+    """
+    wanted = {key.casefold(): key for key in _IDENTITY_INFO_KEYS}
+    identity = {}
+    for name, value in variant.info.items():
+        key = wanted.get(name.casefold())
+        if key is not None and value not in (None, ""):
+            identity[key] = str(value)
+    return identity
+
+
+def _automated_variant(variant: VariantRecord) -> AutomatedVariant:
+    """The evidence-cli Variant for provider lookups (GRCh38 unless INFO says otherwise)."""
+    assembly = next(
+        (str(value) for name, value in variant.info.items() if name.casefold() == "assembly"),
+        "GRCh38",
+    )
+    return AutomatedVariant(
+        assembly=assembly,
+        chrom=variant.chrom,
+        pos=variant.pos,
+        ref=variant.ref,
+        alt=variant.alt,
+    )
+
+
+async def evaluate_variant_evidence_lines(
+    variant: VariantRecord,
+    clinical_note: ClinicalNoteExtraction,
+    *,
+    automated_config: dict,
+    mcp: ClientSession,
+    erepo_client: ERepoClient,
+    evidence_resolver=None,
+    vcep_name: str | None = None,
+    full_text_cache: dict[str, tuple[str | None, str]] | None = None,
+) -> list[dict]:
+    """Return exactly one VA-Spec EvidenceLine for each of the 28 ACMG codes.
+
+    Evidence for the automated criteria is retrieved and normalized by the
+    server-side ProviderEvidenceResolver. The VCF INFO column supplies
+    identity and context only - GENE,
+    TRANSCRIPT, HGVSC, CLNVARIATIONID here, the rest via
+    `acmg_pipeline.automated_core.interface.criterion_input`. It is never read as evidence:
+    the demo VCFs' CLNSIG/ACMG_CODES are already-reached conclusions, the
+    AM_*/AG_* scores have no calibration entry, and no population
+    frequency is present at all. See acmg/services/resolve.py.
+    """
+    if not isinstance(variant, VariantRecord):
+        raise TypeError("variant must be acmg_pipeline.vcf_record.VariantRecord")
+    if not isinstance(clinical_note, ClinicalNoteExtraction):
+        raise TypeError(
+            "clinical_note must be acmg_pipeline.clinical_note.ClinicalNoteExtraction"
+        )
+    if not isinstance(automated_config, dict):
+        raise TypeError("automated_config must be a dictionary")
+
+    resolver = evidence_resolver or ProviderEvidenceResolver(
+        automated_config.get("evidence_cache_dir", "cache/evidence"),
+        offline=bool(automated_config.get("offline")),
+        ensembl_release=automated_config.get("ensembl_release"),
+    )
+    resolved = resolver.resolve(_identity_from_info(variant), _automated_variant(variant))
+    services = make_services(
+        resolved.records,
+        automated_config.get("population_providers"),
+    )
+    automated_results = evaluate_automated_record(
+        variant,
+        clinical_note,
+        services,
+        automated_config,
+        criteria=AUTOMATED_CRITERIA,
+    )
+    automated_by_code = {result.criterion: result for result in automated_results}
+
+    literature_results = await judge_variant_from_shared_input(
+        variant,
+        mcp,
+        erepo_client,
+        vcep_name=vcep_name,
+        full_text_cache=full_text_cache,
+    )
+    gene = str(variant.info.get("GENE", ""))
+    hgvsc = str(variant.info.get("HGVSC", ""))
+
+    by_code: dict[str, dict] = {}
+    for code in AUTOMATED_CODES:
+        result = automated_by_code.get(code)
+        if result is None:
+            by_code[code] = build_workflow_evidence_line(
+                code,
+                variant,
+                status="unknown",
+                description=f"{code} automated evaluation returned no result.",
+                details={"missingInputs": ["automated criterion result"]},
+            )
+        else:
+            by_code[code] = build_automated_evidence_line(result, variant)
+
+    for code in LITERATURE_CODES:
+        aggregated = literature_results.get(code)
+        if aggregated is None:
+            by_code[code] = build_workflow_evidence_line(
+                code,
+                variant,
+                status="unknown",
+                description=f"{code} was not evaluated because no literature was resolved.",
+                details={"missingInputs": ["resolvable literature PMID"]},
+            )
+        else:
+            by_code[code] = build_evidence_line(
+                aggregated,
+                gene,
+                hgvsc,
+                code,
+                vcep_name=vcep_name,
+                variant=variant,
+            )
+
+    for code in ALL_ACMG_CODES:
+        if code not in IMPLEMENTED_CODES:
+            by_code[code] = build_stub_evidence_line(code, variant)
+
+    lines = [by_code[code] for code in ALL_ACMG_CODES]
+    ids = [line["id"] for line in lines]
+    method_codes = [line["specifiedBy"]["methodType"] for line in lines]
+    if len(lines) != 28 or len(set(ids)) != 28 or tuple(method_codes) != ALL_ACMG_CODES:
+        raise RuntimeError("Integrated ACMG output must contain 28 ordered, unique criteria")
+    return lines
+
+
 # ---------------------------------------------------------------------------
 # Full 28-code classification from structured input
 # ---------------------------------------------------------------------------
 #
 # Added 2026-09-16, per the user's decision that criteria this project
-# doesn't implement (the 16 Layer-1 automated/rule-based codes, the 6
-# clinical-record-only codes PS2/PM3/PM6/BS2/BP2/BP5, and - per a further
-# 2026-09-16 decision, see acmg_pipeline/criteria/stubs.py's
-# HANDED_OFF_TO_OTHER_TEAM - PP1/BS4/PP4) stay stubbed - their real
-# judgment logic is another team member's responsibility (see
-# acmg_pipeline/criteria/stubs.py). This function is the single entry point
-# that produces a COMPLETE 28-code picture for one variant: real LLM
-# literature judgment for the (now 3: PS3/BS3/PS4) codes this project
-# implements, honest NOT_EVALUATED stubs for the other 25, combined via
-# classification.classify() exactly the same way test_full_criteria_
-# ground_truth.py already does for the ground-truth dataset.
+# This older classification-only entry point runs the five literature
+# criteria. Use evaluate_variant_evidence_lines() above for the integrated
+# 28-code VA-Spec output (five literature, sixteen automated, seven stubs).
+# classify() exactly the same way test_full_criteria_ground_truth.py
+# already does for the ground-truth dataset.
 #
 # Execution order (cheapest-first, matching classification.classify()'s own
 # BA1-short-circuit philosophy): stub lookups are instant, so in practice
@@ -753,10 +925,10 @@ async def judge_variant_from_structured_input(
 # here - there's nothing today for a stub to short-circuit, since this
 # project doesn't compute the Layer-1 values (gnomAD AF, ClinVar assertions,
 # etc.) that would make e.g. a BA1 short-circuit meaningful. Once another
-# team's real Layer-1/PP1/BS4/PP4 modules exist, swap their real
-# CriterionEvidence in place of stubs.stub_evidence(code) below - registry.
-# get_criterion_evidence() already supports exactly that swap without any
-# other change here.
+# team's real Layer-1/PP4 modules exist, swap their real CriterionEvidence
+# in place of stubs.stub_evidence(code) below - registry.get_criterion_
+# evidence() already supports exactly that swap without any other change
+# here.
 
 async def classify_variant_from_structured_input(
     case_input: ApiCaseInput,
@@ -768,12 +940,6 @@ async def classify_variant_from_structured_input(
     literature_results = await judge_variant_from_structured_input(
         case_input, mcp, erepo_client, vcep_name=vcep_name, full_text_cache=full_text_cache,
     )
-    # Note: judge_variant_from_structured_input()'s default `criteria` is
-    # IMPLEMENTED_CODES's 3 codes (PS3/BS3/PS4) - PP1/BS4 (still real,
-    # working code in criteria/segregation.py, still reachable via
-    # ENGINE_BY_CRITERION) are no longer requested by default here, so they
-    # fall into the stub loop below along with the other 24 non-implemented
-    # codes, per the 2026-09-16 handoff decision.
 
     evidence = [
         from_aggregated_judgment(aggregated, code)
@@ -1066,25 +1232,17 @@ async def main():
         tally = {"match": 0, "mismatch": 0, "reserved": 0}
         mismatches = []
         # Accumulates this run's real CriterionEvidence per variant (gene,
-        # hgvsc), keyed by which criterion was actually evaluated for it -
-        # test_cases above still exercises 5 criteria total (PS3/BS3/PS4,
-        # plus PP1/BS4 via ENGINE_BY_CRITERION -> segregation.py, still
-        # real working code even though PP1/BS4 left IMPLEMENTED_CODES on
-        # 2026-09-16 - see classification.py), and often only one or two
-        # of those 5 per variant (e.g. MYH7 c.1594T>C is only ever run for
-        # PS3 here), so this can't reuse registry.get_criterion_evidence()'s
-        # all-28-codes contract (it requires real evidence for every
-        # IMPLEMENTED_CODES code, by design - see registry.py, and PP1/BS4
-        # no longer satisfy that). Instead the final classification pass
-        # below combines whatever was actually run with the stub codes
-        # directly (skipping any stub whose code already has real evidence
-        # here - PP1/BS4 are stub codes now too, so without that skip
-        # classify() would see two CriterionEvidence for the same code and
-        # raise; see the stubs_for_variant filter below), and lets
-        # classify() itself report the implemented-but-not-run-here codes
-        # as not_evaluated_codes - an honest reflection of this demo's
-        # partial coverage, not a claim that this project doesn't
-        # implement them.
+        # hgvsc), keyed by which of the 5 implemented codes were actually
+        # evaluated for it - test_cases above often covers only one or two
+        # of the 5 per variant (e.g. MYH7 c.1594T>C is only ever run for
+        # PS3 here), not all 5, so this can't reuse registry.
+        # get_criterion_evidence()'s all-28-codes contract (it requires real
+        # evidence for every implemented code, by design - see registry.py).
+        # Instead the final classification pass below combines whatever was
+        # actually run with the 23 stub codes directly, and lets classify()
+        # itself report the implemented-but-not-run-here codes as
+        # not_evaluated_codes - an honest reflection of this demo's partial
+        # coverage, not a claim that this project doesn't implement them.
         variant_evidence: dict[tuple[str, str], dict[str, object]] = {}
 
         for case in test_cases:
@@ -1138,26 +1296,16 @@ async def main():
                 show(f"  - {m}")
 
         # Final ACMG/AMP classification per variant (classification.classify(),
-        # see acmg_pipeline/classification.py). Combines whichever criteria
-        # were actually run above for that variant with NOT_EVALUATED
-        # placeholders for the stub codes this project doesn't implement
-        # (acmg_pipeline/criteria/stubs.py) - this is a pipeline demo, not a
-        # real curation, so the category shown here is only as complete as
-        # the evidence gathered above.
-        #
-        # stub_evidence_all is a FIXED list of every STUB_CODE, computed
-        # once outside the loop; as of 2026-09-16 that now includes PP1/BS4
-        # (see stubs.py's HANDED_OFF_TO_OTHER_TEAM), which test_cases above
-        # can still produce REAL evidence for via ENGINE_BY_CRITERION. Must
-        # filter out any stub whose code is already in real_by_code per
-        # variant, or classify() sees two CriterionEvidence for the same
-        # code (e.g. real PP1 for RUNX1 c.601C>T plus a stub PP1) and
-        # raises ValueError("duplicate evidence for ...").
+        # see acmg_pipeline/classification.py). Combines whichever of the 5
+        # implemented codes were actually run above for that variant with
+        # NOT_EVALUATED placeholders for the 23 codes this project doesn't
+        # implement (acmg_pipeline/criteria/stubs.py) - this is a pipeline
+        # demo, not a real curation, so the category shown here is only as
+        # complete as the evidence gathered above.
         show(f"\n{'='*70}\n[Final ACMG/AMP classification per variant]\n{'='*70}")
-        stub_evidence_all = stubs_mod.all_stub_evidence()
+        stub_evidence = stubs_mod.all_stub_evidence()
         for (v_gene, v_hgvsc), real_by_code in variant_evidence.items():
-            stubs_for_variant = [e for e in stub_evidence_all if e.code not in real_by_code]
-            full_evidence = list(real_by_code.values()) + stubs_for_variant
+            full_evidence = list(real_by_code.values()) + stub_evidence
             result = classify(full_evidence)
             show(f"\n{v_gene} {v_hgvsc}:")
             met_str = ", ".join(f"{e.code}({e.strength.value})" for e in result.met) or "(none)"

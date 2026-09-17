@@ -1,0 +1,20 @@
+[Clinical narrative and variant findings below are drawn from a real, published, open-access case report (see citation). Reproduced/adapted for BH26 demo purposes under CC BY license. One additional benign "noise" variant (case1-var3, MYH7 p.Ser1491Cys) has been added from a separate real ClinVar entry to create a 3-candidate shortlist; it was not part of the original published case.
+
+VERIFICATION NOTE (2026-09-08): This file was corrected after a prior draft contained fabricated/unverified clinical details (incorrect patient age of 34 with a 6-month history of exertional dyspnea; unverified claims about hypertension history and Fabry disease/amyloidosis exclusion workup). The content below has been re-verified directly against the published full text. Details NOT explicitly confirmed in the retrieved full-text passages have been removed rather than left as unverified claims.]
+
+Citation: Han S, Zhang Y-Y, Geng J (2026). Case Report: A novel MYBPC3 gene variant in a Chinese patient with hypertrophic cardiomyopathy and apical ventricular aneurysm, with a concurrent novel KCNJ5 gene variant. Front Cardiovasc Med 13:1841777. doi:10.3389/fcvm.2026.1841777. Open access, CC BY.
+
+Case 1 — Patient ID: DEMO-CASE1-001 (Chinese patient)
+
+History: The proband was a 63-year-old woman who presented to the outpatient department in July 2025 with a 7-day history of palpitations. She had been admitted to a local hospital seven days earlier due to sudden-onset palpitations. She was subsequently diagnosed with hypertrophic cardiomyopathy (HCM) complicated by a left ventricular apical aneurysm.
+
+[The specific exclusion workup for phenocopies such as Fabry disease and cardiac amyloidosis, and the patient's hypertension status, were described in a prior draft of this note but could not be re-confirmed against the retrieved full-text passages. If this level of clinical detail is needed for the demo, it should be re-verified against the full paper (PMC13345877) before use, rather than assumed.]
+
+Family history: Both of the proband's parents are deceased (one due to cancer, one of natural causes at age 92), with no history of cardiovascular disease reported in either. The proband has no siblings. Her only first-degree relative is her son, who was found to carry only the KCNJ5 c.464G>A variant and did not inherit the MYBPC3 c.278delA variant. His echocardiogram was within normal limits, showing no evidence of myocardial hypertrophy.
+
+Genetic findings: Genetic analysis identified two novel heterozygous variants in the proband:
+1. NM_000256.3(MYBPC3):c.278delA (p.Lys93ArgfsTer3), exon 2
+2. NM_000890.5(KCNJ5):c.464G>A (p.Arg155Gln), exon 2
+(Note: the published paper's own text labels the KCNJ5 variant under transcript "NM_000256.3", which is actually MYBPC3's transcript — an apparent typo in the source paper. The correct KCNJ5 RefSeq transcript, NM_000890.5, is used here instead.)
+
+Clinical impression: HCM with apical ventricular aneurysm. MYBPC3 c.278delA classified Likely Pathogenic (PVS1_VeryStrong + PM2_Moderate); KCNJ5 c.464G>A classified VUS (PM2_Moderate + PP3_Supporting) and considered phenotypically irrelevant to HCM.

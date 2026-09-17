@@ -1,0 +1,296 @@
+{
+  "schema_version": "1.0",
+  "source_version": "BH26-gene-disease-sources-2026-09-16",
+  "retrieved_at": "2026-09-16T00:00:00+09:00",
+  "policy": {
+    "policy_version": "BH26-draft-triage-2026-09-16",
+    "policy_source": "Review-only fastVEP-style triage; gnomAD v4.1.1 LOEUF threshold follows gnomAD guidance, while missense-Z thresholds are legacy prioritization signals and never criterion evidence",
+    "pp2_min_mis_z": 3.09,
+    "bp1_min_p_li": 0.9,
+    "bp1_max_mis_z": 1.0,
+    "bp1_max_pathogenic_missense": 3,
+    "pvs1_min_p_li": 0.9,
+    "pvs1_max_loeuf": 0.45
+  },
+  "groups": [
+    {
+      "gene": "MYBPC3",
+      "condition": "MONDO:0005045",
+      "transcript": "NM_000256.3",
+      "variant_keys": [
+        "GRCh38:11:47351252:CT:C",
+        "GRCh38:11:47335041:C:T",
+        "GRCh38:11:47347665:AC:A",
+        "GRCh38:11:47343571:G:A",
+        "GRCh38:11:47348490:T:C",
+        "GRCh38:11:47350047:C:T",
+        "GRCh38:11:47346297:C:T"
+      ],
+      "validity": [
+        {
+          "gene": "MYBPC3",
+          "condition": "MONDO:0005045",
+          "classification": "Definitive",
+          "source": "ClinGen Gene-Disease Validity CCID:005515",
+          "source_version": "SOP8; classification 2021-10-07",
+          "retrieved_at": "2026-09-16T00:00:00+09:00",
+          "url": "https://search.clinicalgenome.org/CCID:005515"
+        }
+      ],
+      "constraint": {
+        "gene": "MYBPC3",
+        "mis_z": 1.331759692262847,
+        "p_li": 4.971555935274593e-24,
+        "loeuf": 0.7953966438264374,
+        "source": "gnomAD gene constraint API",
+        "source_version": "4.1.1",
+        "retrieved_at": "2026-09-16T00:00:00+09:00",
+        "ensembl_gene_id": "ENSG00000134571",
+        "transcript": "ENST00000545968/NM_000256"
+      },
+      "clinvar_spectrum": {
+        "gene": "MYBPC3",
+        "complete": true,
+        "pathogenic_missense_count": 37,
+        "pathogenic_truncating_count": 940,
+        "benign_missense_count": 35,
+        "source": "NCBI ClinVar ESearch",
+        "source_version": "retrieved 2026-09-16",
+        "retrieved_at": "2026-09-16T00:00:00+09:00",
+        "classification_scope": "VCV has at least one matching clinsig property; gene-wide"
+      }
+    },
+    {
+      "gene": "MYH7",
+      "condition": "MONDO:0005045",
+      "transcript": "NM_000257.4",
+      "variant_keys": [
+        "GRCh38:14:23417200:G:C",
+        "GRCh38:14:23425971:G:A",
+        "GRCh38:14:23420189:C:T"
+      ],
+      "validity": [
+        {
+          "gene": "MYH7",
+          "condition": "MONDO:0005045",
+          "classification": "Definitive",
+          "source": "ClinGen Hereditary Cardiovascular Disease GCEP",
+          "source_version": "classification 2023-07-12",
+          "retrieved_at": "2026-09-16T00:00:00+09:00",
+          "url": "https://search.clinicalgenome.org/kb/genes/MYH7"
+        }
+      ],
+      "constraint": {
+        "gene": "MYH7",
+        "mis_z": 7.378650026979123,
+        "p_li": 6.6431963814459954e-21,
+        "loeuf": 0.662470606603184,
+        "source": "gnomAD gene constraint API",
+        "source_version": "4.1.1",
+        "retrieved_at": "2026-09-16T00:00:00+09:00",
+        "ensembl_gene_id": "ENSG00000092054",
+        "transcript": "ENST00000355349/NM_000257"
+      },
+      "clinvar_spectrum": {
+        "gene": "MYH7",
+        "complete": true,
+        "pathogenic_missense_count": 390,
+        "pathogenic_truncating_count": 30,
+        "benign_missense_count": 21,
+        "source": "NCBI ClinVar ESearch",
+        "source_version": "retrieved 2026-09-16",
+        "retrieved_at": "2026-09-16T00:00:00+09:00",
+        "classification_scope": "VCV has at least one matching clinsig property; gene-wide"
+      }
+    },
+    {
+      "gene": "TNNI3",
+      "condition": "MONDO:0005045",
+      "transcript": "NM_000363.5",
+      "variant_keys": ["GRCh38:19:55156239:G:A"],
+      "validity": [
+        {
+          "gene": "TNNI3",
+          "condition": "MONDO:0005045",
+          "classification": "Definitive",
+          "source": "ClinGen Gene-Disease Validity CCID:006405",
+          "source_version": "SOP7; classification 2017-09-05",
+          "retrieved_at": "2026-09-16T00:00:00+09:00",
+          "url": "https://search.clinicalgenome.org/CCID:006405"
+        }
+      ],
+      "constraint": {
+        "gene": "TNNI3",
+        "mis_z": 1.1903369151977228,
+        "p_li": 0.0000018353269619488458,
+        "loeuf": 1.0331986525542847,
+        "source": "gnomAD gene constraint API",
+        "source_version": "4.1.1",
+        "retrieved_at": "2026-09-16T00:00:00+09:00",
+        "ensembl_gene_id": "ENSG00000129991",
+        "transcript": "ENST00000344887/NM_000363"
+      },
+      "clinvar_spectrum": {
+        "gene": "TNNI3",
+        "complete": true,
+        "pathogenic_missense_count": 57,
+        "pathogenic_truncating_count": 23,
+        "benign_missense_count": 2,
+        "source": "NCBI ClinVar ESearch",
+        "source_version": "retrieved 2026-09-16",
+        "retrieved_at": "2026-09-16T00:00:00+09:00",
+        "classification_scope": "VCV has at least one matching clinsig property; gene-wide"
+      }
+    },
+    {
+      "gene": "DSG2",
+      "condition": "MONDO:0016587",
+      "transcript": "NM_001943.5",
+      "variant_keys": ["GRCh38:18:31536370:T:G"],
+      "validity": [
+        {
+          "gene": "DSG2",
+          "condition": "MONDO:0016587",
+          "classification": "Definitive",
+          "source": "ClinGen Gene-Disease Validity CCID:004704",
+          "source_version": "SOP7; classification 2018-09-14",
+          "retrieved_at": "2026-09-16T00:00:00+09:00",
+          "url": "https://search.clinicalgenome.org/CCID:004704"
+        }
+      ],
+      "constraint": {
+        "gene": "DSG2",
+        "mis_z": 1.046494427628566,
+        "p_li": 1.327097653230229e-8,
+        "loeuf": 0.763108371638846,
+        "source": "gnomAD gene constraint API",
+        "source_version": "4.1.1",
+        "retrieved_at": "2026-09-16T00:00:00+09:00",
+        "ensembl_gene_id": "ENSG00000046604",
+        "transcript": "ENST00000261590/NM_001943"
+      },
+      "clinvar_spectrum": {
+        "gene": "DSG2",
+        "complete": true,
+        "pathogenic_missense_count": 7,
+        "pathogenic_truncating_count": 126,
+        "benign_missense_count": 40,
+        "source": "NCBI ClinVar ESearch",
+        "source_version": "retrieved 2026-09-16",
+        "retrieved_at": "2026-09-16T00:00:00+09:00",
+        "classification_scope": "VCV has at least one matching clinsig property; gene-wide"
+      }
+    },
+    {
+      "gene": "KCNJ5",
+      "condition": "MONDO:0005045",
+      "transcript": "NM_000890.5",
+      "variant_keys": ["GRCh38:11:128911737:G:A"],
+      "validity": [
+        {
+          "gene": "KCNJ5",
+          "condition": "MONDO:0013359",
+          "classification": "Definitive",
+          "source": "ClinGen Gene-Disease Validity CCID:008966",
+          "source_version": "SOP11; classification 2026-01-15",
+          "retrieved_at": "2026-09-16T00:00:00+09:00",
+          "url": "https://search.clinicalgenome.org/CCID:008966"
+        }
+      ],
+      "constraint": {
+        "gene": "KCNJ5",
+        "mis_z": 1.9607228567081343,
+        "p_li": 0.004711518252278818,
+        "loeuf": 0.9635115015302752,
+        "source": "gnomAD gene constraint API",
+        "source_version": "4.1.1",
+        "retrieved_at": "2026-09-16T00:00:00+09:00",
+        "ensembl_gene_id": "ENSG00000120457",
+        "transcript": "ENST00000529694/NM_000890"
+      },
+      "clinvar_spectrum": {
+        "gene": "KCNJ5",
+        "complete": true,
+        "pathogenic_missense_count": 8,
+        "pathogenic_truncating_count": 0,
+        "benign_missense_count": 8,
+        "source": "NCBI ClinVar ESearch",
+        "source_version": "retrieved 2026-09-16",
+        "retrieved_at": "2026-09-16T00:00:00+09:00",
+        "classification_scope": "VCV has at least one matching clinsig property; gene-wide"
+      }
+    },
+    {
+      "gene": "MYBPC3",
+      "condition": "MONDO:0016587",
+      "transcript": "NM_000256.3",
+      "variant_keys": ["GRCh38:11:47343571:G:A"],
+      "validity": [
+        {
+          "gene": "MYBPC3",
+          "condition": "MONDO:0016587",
+          "classification": "Limited",
+          "source": "ClinGen Gene-Disease Validity",
+          "source_version": "classification 2019-08-06",
+          "retrieved_at": "2026-09-16T00:00:00+09:00",
+          "url": "https://search.clinicalgenome.org/kb/genes/MYBPC3"
+        }
+      ],
+      "constraint": {
+        "gene": "MYBPC3",
+        "mis_z": 1.331759692262847,
+        "p_li": 4.971555935274593e-24,
+        "loeuf": 0.7953966438264374,
+        "source": "gnomAD gene constraint API",
+        "source_version": "4.1.1",
+        "retrieved_at": "2026-09-16T00:00:00+09:00"
+      },
+      "clinvar_spectrum": {
+        "gene": "MYBPC3",
+        "complete": true,
+        "pathogenic_missense_count": 37,
+        "pathogenic_truncating_count": 940,
+        "benign_missense_count": 35,
+        "source": "NCBI ClinVar ESearch",
+        "source_version": "retrieved 2026-09-16",
+        "retrieved_at": "2026-09-16T00:00:00+09:00"
+      }
+    },
+    {
+      "gene": "TNNI3",
+      "condition": "MONDO:0016587",
+      "transcript": "NM_000363.5",
+      "variant_keys": ["GRCh38:19:55156239:G:A"],
+      "validity": [
+        {
+          "gene": "TNNI3",
+          "condition": "MONDO:0005045",
+          "classification": "Definitive",
+          "source": "ClinGen Gene-Disease Validity CCID:006405",
+          "source_version": "SOP7; classification 2017-09-05",
+          "retrieved_at": "2026-09-16T00:00:00+09:00",
+          "url": "https://search.clinicalgenome.org/CCID:006405"
+        }
+      ],
+      "constraint": {
+        "gene": "TNNI3",
+        "mis_z": 1.1903369151977228,
+        "p_li": 0.0000018353269619488458,
+        "loeuf": 1.0331986525542847,
+        "source": "gnomAD gene constraint API",
+        "source_version": "4.1.1",
+        "retrieved_at": "2026-09-16T00:00:00+09:00"
+      },
+      "clinvar_spectrum": {
+        "gene": "TNNI3",
+        "complete": true,
+        "pathogenic_missense_count": 57,
+        "pathogenic_truncating_count": 23,
+        "benign_missense_count": 2,
+        "source": "NCBI ClinVar ESearch",
+        "source_version": "retrieved 2026-09-16",
+        "retrieved_at": "2026-09-16T00:00:00+09:00"
+      }
+    }
+  ]
+}

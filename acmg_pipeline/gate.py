@@ -40,6 +40,7 @@ this point. The PVS1 judgment logic itself is not included here.
 """
 
 from __future__ import annotations
+from acmg_pipeline.constants import CriterionStatus
 
 import re
 from dataclasses import dataclass, field
@@ -147,12 +148,6 @@ def match_variant_in_text(variant_str: str, text: str, coordinate_tolerance: int
 # ============================================================================
 # 2. ClinGen ERepo lookup (the variant-matching gate itself)
 # ============================================================================
-
-class CriterionStatus(Enum):
-    MET = "met"
-    NOT_MET = "not_met"
-    UNKNOWN = "unknown"  # the criterion code itself does not exist in ERepo for this variant
-
 
 @dataclass
 class ERepoLookupResult:

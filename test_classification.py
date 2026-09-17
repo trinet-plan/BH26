@@ -28,8 +28,8 @@ check("no overlap between pathogenic/benign lists", not (set(PATHOGENIC_CODES) &
 # handed off to another team on 2026-09-16 - see acmg_pipeline.
 # classification's own comment on IMPLEMENTED_CODES and criteria/stubs.py's
 # HANDED_OFF_TO_OTHER_TEAM.
-check("3 implemented codes", IMPLEMENTED_CODES == {"PS3", "BS3", "PS4"})
-check("25 stub codes", len(stubs.STUB_CODES) == 25)
+check("19 implemented codes", len(IMPLEMENTED_CODES) == 19)
+check("9 stub codes", len(stubs.STUB_CODES) == 9)
 check("implemented + stub codes cover all 28 with no overlap",
       set(stubs.STUB_CODES) | IMPLEMENTED_CODES == set(ALL_ACMG_CODES)
       and not (set(stubs.STUB_CODES) & IMPLEMENTED_CODES))
@@ -115,9 +115,9 @@ check("asking for BS4 when the evidence actually points PP1 -> NOT_MET (not misl
 check("asking for PP1 (the direction that was actually found) -> MET",
       from_aggregated_judgment(agg_pp1, "PP1").status == CriterionStatus.MET)
 
-# not_clear -> NOT_MET, not a crash and not silently MET
+# not_clear -> UNKNOWN, not a crash and not silently MET
 agg_empty = ps4.aggregate_multi_paper_results([])
-check("not_clear aggregate -> NOT_MET", from_aggregated_judgment(agg_empty, "PS4").status == CriterionStatus.NOT_MET)
+check("not_clear aggregate -> UNKNOWN", from_aggregated_judgment(agg_empty, "PS4").status == CriterionStatus.UNKNOWN)
 
 # --- 6. registry.get_criterion_evidence(): full 28-code loop ---
 print("\n[6] registry.get_criterion_evidence() over all 28 codes")
@@ -134,6 +134,6 @@ except ValueError:
     check("an implemented code with no real evidence supplied raises ValueError", True)
 
 full_result = classify(evidence)
-check("classify() accepts the full 28-entry set without error", full_result.not_evaluated_codes == [])
+check("UNKNOWN entries remain not evaluated", set(full_result.not_evaluated_codes) == set(stubs.STUB_CODES))
 
 h.report_and_exit()
