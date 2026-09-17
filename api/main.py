@@ -10,6 +10,7 @@ acmg_pipeline/pipeline_interface.py の run_pipeline() に委譲する。
 
 from __future__ import annotations
 
+import uuid
 from contextlib import AsyncExitStack
 
 from fastapi import BackgroundTasks, FastAPI, HTTPException
@@ -26,6 +27,7 @@ from acmg_pipeline.pipeline_interface import (
 )
 from acmg_pipeline.va_spec_statement import build_variant_statement
 from api.job_store import Job, create_job, delete_job, get_job, mark_failed, mark_running, mark_succeeded
+from api.result_store import save as save_result
 
 app = FastAPI(title="ACMG判定API")
 
@@ -52,9 +54,14 @@ async def _execute_classify_job(job_id: str, record, clinical_note: str, gene: s
             )
         va_spec = build_variant_statement(output, gene=gene, hgvsc=hgvsc, hgvsp=hgvsp)
     except Exception as e:
-        mark_failed(job_id, {"type": type(e).__name__, "message": str(e)})
+        error = {"type": type(e).__name__, "message": str(e)}
+        mark_failed(job_id, error)
+        save_result(endpoint="classify_criteria", variant={"gene": gene, "hgvsc": hgvsc, "hgvsp": hgvsp},
+                    criteria=None, payload=error, status="failed", identifier=job_id)
         return
     mark_succeeded(job_id, va_spec)
+    save_result(endpoint="classify_criteria", variant={"gene": gene, "hgvsc": hgvsc, "hgvsp": hgvsp},
+                criteria=None, payload=va_spec, status="succeeded", identifier=job_id)
 
 
 @app.post("/v1/classify_criteria", status_code=202)
@@ -100,7 +107,8 @@ def _canonicalize_criteria(criteria: list[str]) -> tuple[str, ...]:
     return tuple(code for code in ALL_ACMG_CODES if code in requested)
 
 
-async def _execute_target_criteria_job(job_id: str, record, clinical_note: str, criteria: tuple[str, ...]) -> None:
+async def _execute_target_criteria_job(job_id: str, record, clinical_note: str,
+                                       criteria: tuple[str, ...], variant: dict) -> None:
     mark_running(job_id)
     try:
         async with AsyncExitStack() as stack:
@@ -110,9 +118,14 @@ async def _execute_target_criteria_job(job_id: str, record, clinical_note: str, 
                 mcp=mcp, erepo_client=ERepoClient(),
             )
     except Exception as e:
-        mark_failed(job_id, {"type": type(e).__name__, "message": str(e)})
+        error = {"type": type(e).__name__, "message": str(e)}
+        mark_failed(job_id, error)
+        save_result(endpoint="get_evidence_line_by_target_criteria", variant=variant,
+                    criteria=criteria, payload=error, status="failed", identifier=job_id)
         return
     mark_succeeded(job_id, evidence_lines)
+    save_result(endpoint="get_evidence_line_by_target_criteria", variant=variant,
+                criteria=criteria, payload=evidence_lines, status="succeeded", identifier=job_id)
 
 
 @app.post("/v1/get_evidence_line_by_target_criteria")
@@ -133,13 +146,23 @@ async def submit_evidence_line_by_target_criteria(
 
     if not needs_literature_workflow(criteria):
         evidence_lines = await run_selected_criteria(record, request.clinical_note, criteria)
+        # No job is created for a synchronous answer, so without this the result
+        # exists only in the response body.
+        save_result(
+            endpoint="get_evidence_line_by_target_criteria",
+            variant={"gene": record.info.get("GENE", ""), "hgvsc": record.info.get("HGVSC", ""),
+                     "hgvsp": record.info.get("HGVSP", "")},
+            criteria=criteria, payload=evidence_lines, status="succeeded",
+            identifier=uuid.uuid4().hex,
+        )
         return {"status": "succeeded", "criteria": list(criteria), "evidence_lines": evidence_lines}
 
     gene = record.info.get("GENE", "")
     hgvsc = record.info.get("HGVSC", "")
     hgvsp = record.info.get("HGVSP", "")
     job = create_job(variant={"gene": gene, "hgvsc": hgvsc, "hgvsp": hgvsp, "criteria": list(criteria)})
-    background_tasks.add_task(_execute_target_criteria_job, job.job_id, record, request.clinical_note, criteria)
+    background_tasks.add_task(_execute_target_criteria_job, job.job_id, record,
+                              request.clinical_note, criteria, job.variant)
     return {
         "job_id": job.job_id,
         "status": job.status,
