@@ -219,6 +219,11 @@ criterionでも、呼び出し境界を揃えるため空の `ClinicalNoteExtrac
 上記1〜2の代わりに [`compose.yaml`](compose.yaml) を使ってもよい
 (`docker compose up -d --build` / 停止は `docker compose down`)。
 
+## APIエンドポイント仕様
+
+各エンドポイントのリクエスト/レスポンス形・エラー条件は
+[`doc/api_spec_ja.md`](doc/api_spec_ja.md) を参照してください。
+
 ## APIクライアントの例
 
 APIクライアントの実装例は以下にあります。
