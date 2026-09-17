@@ -54,6 +54,56 @@ summaryに出ない。
 - AR / AD 別の既定値を持つ
 - 既定閾値でのBS1をMETにせず、review必須の別状態として出す
 
+### 1-3. PM2がキュレーター判断と一致しない（未解決、原因は2つ）
+
+`test_automated_criteria_ground_truth.py` の照合で、キュレーターがMETとした15件のうち
+7件をengineが確認できない。**うち5件がPM2**で、原因は別々の2つ。
+
+#### (a) 閾値 `max_af = 0` が厳しすぎる（3件）
+
+```
+case1-var2  curator: MET -> engine: not_met  [highest AF 0.0000232 exceeds cutoff (0)]
+case2-var1  curator: MET -> engine: not_met  [highest AF 0.0000136 exceeds cutoff (0)]
+case3-var1  curator: MET -> engine: not_met  [highest AF 0.0000299 exceeds cutoff (0)]
+```
+
+`config/demo-rules.json` の `PM2.max_af = 0` は、ACMG/AMP 2015の文言
+"Absent from controls" をそのまま実装したもの。しかしgnomAD規模のデータでは、実在する
+希少変異はほぼ必ず数アレル観測される。キュレーターは **AF 1e-5台の変異にPM2を付与**して
+おり、文字どおりのゼロは現行データに対して機能しない。
+
+なお `max_af` に既定値はない（未設定は `UNKNOWN`）。`0` は明示的な設定値であって、
+設定漏れではない。
+
+#### (b) gnomADに登録がない変異が `UNKNOWN` になる（2件）
+
+```
+case1-var1  curator: MET -> engine: unknown  [No reliable population observation]
+case2-var2  curator: MET -> engine: unknown  [No reliable population observation]
+            provider_failures: [{'provider': 'gnomAD', 'reason': 'NO_OBSERVATION'}]
+```
+
+`acmg_pipeline/services/resolve.py` の原則「未登録をAF=0として扱わない」による。
+BA1・BS1（「頻度が高すぎる」を見る）では、未登録から何も言えないのは正しい。
+
+**しかしPM2では、未登録そのものが求めている根拠**である。同じ原則を3基準に一律適用した
+結果、PM2だけ意味が反転している。
+
+区別に必要なのは **その座位のcoverage**。「未登録かつ十分にcallable」なら absent from
+controls だが、「未登録かつcoverage不明」は判断不能。現在のgnomADプロバイダはcoverageを
+取得していない。`usable_observations()` は `AC == 0` の観測に `callable: true` を要求して
+いるが、レコード自体が返らない場合はcallability情報が存在しない。
+
+#### 対応の方向（いずれも未決）
+
+| # | 内容 | 判断の種類 |
+|---|---|---|
+| 1 | `PM2.max_af` に非ゼロの閾値を設定する | 臨床判断。ClinGen SVIはPM2をSupportingへ降格し、VCEPごとに「absent or rare」の具体値を定める |
+| 2 | BS1と同じく `frequency_statistic` / `comparison` を対で持たせる | 設計。ただしPM2で保守的なのは信頼区間の**上限**（「稀少と言い切れるか」は最悪ケースで判断する）で、BS1のFAF（下限）とは逆側 |
+| 3 | gnomAD coverageを取得し、「未登録 + 十分なcoverage」を absent as evidence として扱う | 設計 + プロバイダ拡張。クエリ変更はオフラインキャッシュのキーを変えるため再取得が必要 |
+
+1は3件、3は2件の不一致に対応する。1のほうが影響が大きく、変更も小さい。
+
 ### 2. 現在はstubとして残すcriterion
 
 次の9基準は実判定を行わず、全28本のVA-Spec EvidenceLineには `UNKNOWN` として出力する。
