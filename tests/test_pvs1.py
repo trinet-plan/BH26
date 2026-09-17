@@ -162,6 +162,37 @@ class PVS1DecisionTreeTests(unittest.TestCase):
         self.assertEqual(fallback.status, CriterionStatus.UNKNOWN)
         self.assertEqual(fallback.evaluation_context["disease_match"], "UNKNOWN")
 
+    def test_a_mapped_condition_matches_but_is_reported_as_equivalent(self):
+        """The case is recorded in OMIM and the curation in MONDO. They are the same disease
+        once mapped, and the result says that a mapping was what lined them up."""
+        mapping = {"input_condition": "OMIM:143890",
+                   "normalized_condition": self.condition,
+                   "mapping_type": "equivalent"}
+        input_data = {**self.input, "condition": "OMIM:143890", "condition_mapping": mapping}
+        value = self.evaluate_result(*self.truncating_evidence(), input_data=input_data)
+        self.assertEqual((value.status, value.strength), (CriterionStatus.MET, "very_strong"))
+        self.assertEqual(value.evaluation_context["disease_match"], "EQUIVALENT")
+        self.assertTrue(value.evaluation_context["condition_specific"])
+
+    def test_a_mapping_on_the_record_side_matches_the_same_way(self):
+        items = [self.annotation(), self.transcript(), self.nmd(),
+                 self.mechanism(True, condition="OMIM:143890", condition_mapping={
+                     "input_condition": "OMIM:143890",
+                     "normalized_condition": self.condition,
+                     "mapping_type": "equivalent"})]
+        value = self.evaluate_result(*items)
+        self.assertEqual(value.status, CriterionStatus.MET)
+        self.assertEqual(value.evaluation_context["disease_match"], "EQUIVALENT")
+
+    def test_an_unmapped_identifier_from_another_vocabulary_does_not_match(self):
+        """Without a mapping the two identifiers are different strings, and PVS1 must not
+        read a resemblance into them - it stops and says the mechanism is not for this
+        disease."""
+        input_data = {**self.input, "condition": "OMIM:143890"}
+        value = self.evaluate_result(*self.truncating_evidence(), input_data=input_data)
+        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
+        self.assertEqual(value.evaluation_context["disease_match"], "UNKNOWN")
+
     def test_inheritance_is_normalized_across_vocabularies(self):
         for declared, supplied in (("AR", "autosomal recessive"),
                                    ("autosomal_recessive", "AR"),

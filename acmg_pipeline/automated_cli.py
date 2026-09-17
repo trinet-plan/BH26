@@ -13,6 +13,7 @@ from acmg_pipeline.automated_core.models import CRITERIA, Variant
 from acmg_pipeline.gene_disease import build_assessment_document, build_draft_document
 from acmg_pipeline.automated_output import run_internal
 from acmg_pipeline.providers.clingen_dosage import METHOD as DOSAGE_METHOD, ClinGenDosageProvider
+from acmg_pipeline.providers.mondo import METHOD as MONDO_METHOD, MondoMappingProvider
 from acmg_pipeline.providers.clinvar import (
     VCV, ClinVarComparatorProvider, ClinVarHotspotProvider, ClinVarProvider,
 )
@@ -75,6 +76,9 @@ def main(argv=None):
     online.add_argument("--with-clingen-dosage", action="store_true",
                         help="Derive PVS1's LoF-mechanism gate from ClinGen haploinsufficiency "
                              "scores (automated stand-in for a curated gene_disease record)")
+    online.add_argument("--with-mondo-mapping", action="store_true",
+                        help="Resolve each record's OMIM/Orphanet condition to MONDO so "
+                             "PVS1's disease gate can compare it with curated evidence")
     online.add_argument("--with-mane-transcript", action="store_true",
                         help="Assert PVS1's transcript-relevance gate when the evaluated "
                              "transcript is the gene's MANE Select (automated stand-in)")
@@ -146,6 +150,9 @@ def main(argv=None):
             return 2 if payload["input_errors"] else 0
         if args.command in {"audit-demo", "prepare-demo", "prepare-demo-online"}:
             records = audit_demo(args.input_dir)
+            # Keyed by the identifier as written, because that is what a record carries and
+            # what a curator will look for in the manifest. Only the online command fills it.
+            condition_mappings = {}
             if args.command == "prepare-demo":
                 reference = FastaReference(args.reference)
                 candidates = json.loads(args.identity_evidence.read_text(encoding="utf-8-sig"))
@@ -387,6 +394,37 @@ def main(argv=None):
                         "errors": dosage_errors,
                         "use_restriction": "PVS1_LOF_MECHANISM_GATE_ONLY",
                     })
+                if args.with_mondo_mapping:
+                    # PVS1's disease gate compares identifiers, so a case in OMIM and a
+                    # curation in MONDO have to be resolved to one vocabulary first. The
+                    # original identifier is kept; the mapping travels beside it.
+                    mondo = MondoMappingProvider(external_client)
+                    mondo_errors = []
+                    for record in records:
+                        condition = record.get("condition")
+                        if not condition or condition in condition_mappings:
+                            continue
+                        try:
+                            mapping = mondo.normalize(condition)
+                        except (FetchError, ValueError) as exc:
+                            mondo_errors.append(f"{condition}: {exc}")
+                            continue
+                        if mapping:
+                            condition_mappings[condition] = mapping
+                    resolvable = {record.get("condition") for record in records
+                                  if record.get("condition")}
+                    external_manifest.append({
+                        "provider": mondo.name,
+                        "provider_version": next(
+                            (item["source_version"] for item in condition_mappings.values()
+                             if item.get("source_version")), None),
+                        "method": MONDO_METHOD,
+                        "conditions_queried": len(resolvable),
+                        "evidence": len(condition_mappings),
+                        "unresolved": sorted(resolvable - set(condition_mappings)),
+                        "errors": mondo_errors,
+                        "use_restriction": "DISEASE_MATCH_EQUIVALENCE_ONLY",
+                    })
                 if args.with_mane_transcript:
                     # PVS1's NF01 gate. Only a MANE Select match produces a record; see
                     # providers/mane.py for why a non-match is not NOT_RELEVANT.
@@ -520,6 +558,10 @@ def main(argv=None):
             output.write_text(json.dumps({"schema_version": "1.0", "records": records},
                                          ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
             resolved = evaluation_inputs(records)
+            for record in resolved:
+                mapping = condition_mappings.get(record.get("condition"))
+                if mapping:
+                    record["condition_mapping"] = mapping
             if args.command in {"prepare-demo", "prepare-demo-online"}:
                 (args.output_dir / "variants.json").write_text(
                     json.dumps({"schema_version": "1.0", "records": resolved},

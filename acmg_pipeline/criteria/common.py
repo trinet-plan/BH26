@@ -246,3 +246,22 @@ def normalize_inheritance(value):
         return None
     token = " ".join(value.strip().lower().replace("-", " ").replace("_", " ").split())
     return _INHERITANCE_ALIASES.get(token)
+
+
+def resolved_condition(holder):
+    """The disease a case or record is scoped to, and how that identifier was arrived at.
+
+    A case and a curation can name the same disease in different vocabularies, so comparing
+    the identifiers as written answers only when both happen to use the same one. When a
+    `condition_mapping` is attached, the identifier it resolved to is what the two are
+    compared on, and the mapping type it came from says whether that was an identifier match
+    or an equivalence. Without one, the condition stands for itself.
+
+    Returns (identifier, how) where `how` is "identity", the mapping's own type, or None when
+    no disease is named at all.
+    """
+    mapping = holder.get("condition_mapping")
+    if isinstance(mapping, dict) and mapping.get("normalized_condition"):
+        return mapping["normalized_condition"], mapping.get("mapping_type") or "equivalent"
+    condition = holder.get("condition")
+    return condition, "identity" if condition else None

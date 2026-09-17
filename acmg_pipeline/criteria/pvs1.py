@@ -11,7 +11,8 @@ from copy import deepcopy
 from acmg_pipeline.automated_core.interface import criterion_input
 from acmg_pipeline.automated_core.models import Variant
 from acmg_pipeline.criteria.common import (
-    annotation_context, normalize_inheritance, result as _base_result, reviewed_or_automated,
+    annotation_context, normalize_inheritance, resolved_condition,
+    result as _base_result, reviewed_or_automated,
 )
 from acmg_pipeline.clinical_note import ClinicalNoteExtraction
 from acmg_pipeline.vcf_record import VariantRecord
@@ -148,14 +149,20 @@ def _resolve_mechanism(input_data, services, annotation, context):
     if other_mode and not applicable:
         context["moi_match"] = "MISMATCH"
         return None, other_mode, "moi_mismatch"
-    condition = input_data.get("condition")
+    condition, case_via = resolved_condition(input_data)
     if condition:
-        exact = [item for item in applicable if item.get("condition") == condition]
+        matched = [(item, resolved_condition(item)) for item in applicable]
+        exact = [item for item, (value, _) in matched if value == condition]
         selected = exact or [item for item in applicable if not item.get("condition")]
         scope = "CONDITION_SPECIFIC" if exact else "GENE_LEVEL"
+        # An identifier match on both sides is EXACT; anything that needed a mapping to line
+        # the two up is EQUIVALENT, which is a weaker statement and is reported as one.
+        vias = {case_via, *(how for item, (_, how) in matched if item in exact)}
+        match_level = "EXACT" if vias == {"identity"} else "EQUIVALENT"
     else:
         selected = [item for item in applicable if not item.get("condition")]
         scope = "GENE_LEVEL"
+        match_level = "UNKNOWN"
     if not selected:
         return None, [], "missing"
     # Source precedence: a reviewed assessment outranks a derived signal, so a derived record
@@ -168,7 +175,7 @@ def _resolve_mechanism(input_data, services, annotation, context):
         return None, selected, "conflict"
     context["mechanism_scope"] = scope
     context["condition_specific"] = scope == "CONDITION_SPECIFIC"
-    context["disease_match"] = "EXACT" if scope == "CONDITION_SPECIFIC" else "UNKNOWN"
+    context["disease_match"] = match_level if scope == "CONDITION_SPECIFIC" else "UNKNOWN"
     context["moi_match"] = ("MATCHED" if any(item.get("inheritance") for item in deciding)
                             else "NOT_SCOPED")
     return deciding[0], selected, None
