@@ -24,6 +24,33 @@
 以下の「未対応事項」は、この原則に照らして**まだ人に渡せていない**か、**人に渡す形は
 できているが判断そのものが未了**かを区別して記録する。
 
+## 決定記録: 未承認の疾患別頻度閾値（PM2 / BS1）
+
+**決定日: 2026-09-17。** 疾患別の閾値が curator / VCEP により承認されていない場合、
+公開情報から導出した値を最終的な ACMG/AMP 判定の根拠にしない。実行時には `MET` にせず
+`UNKNOWN` とし、必要ならキュレーター向けの `DRAFT` 候補としてのみ出力する。
+
+- **PM2** は ClinGen SVI の勧告に従い、成立し得ても強度は `PM2_Supporting` とする。
+  公開DBの未登録は、座位coverage・callabilityが確認できる場合だけ absence の根拠になり得る。
+  TogoVar は座位coverageを返さないため、TogoVarからレコードが返らないことは `AF=0` や
+  absence とみなさず `UNKNOWN` とする。
+- **BS1** は、疾患有病率、遺伝形式、浸透率、遺伝的／アレル不均一性から導く
+  maximum credible AF を用いる。公開された計算法やVCEPの閾値は、候補作成・レビューの
+  出典には使えるが、他疾患へそのまま移植しない。
+- `DRAFT` 候補には、計算法、入力値、有病率、遺伝形式、浸透率、最大遺伝子寄与・
+  最大アレル寄与、対象集団、DB/release、AC/AN/AF（BS1では使用統計量と比較演算子）を残す。
+  `policyStatus: "DRAFT"`、レビュー理由、出典URL・版を必須とする。
+- 承認済みの疾患別仕様は、対象疾患・遺伝子・遺伝形式・DB版・例外変異を照合でき、
+  `reviewed_at` を記録したものだけを runtime の `disease_frequency_threshold` として用いる。
+
+公開根拠:
+
+- ClinGen SVI, *Recommendation for Absence/Rarity (PM2)* v1.0 (2020-09-04):
+  <https://clinicalgenome.org/site/assets/files/5182/pm2_-_svi_recommendation_-_approved_sept2020.pdf>
+- Whiffin et al., *Using high-resolution variant frequencies to empower clinical genome
+  interpretation* (2017): <https://pubmed.ncbi.nlm.nih.gov/28518168/>
+- ClinGen Criteria Specification Registry: <https://cspec.clinicalgenome.org/>
+
 ## 現在の外部データ経路
 
 `acmg_pipeline.services.resolve.ProviderEvidenceResolver` が、VCFの座標を起点に次のプロバイダから normalised evidence を組み立てる。VCF INFO は監査用入力であり、版・assembly・transcript・取得元が明示された根拠へ自動変換しない。
