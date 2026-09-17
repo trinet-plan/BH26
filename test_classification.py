@@ -22,14 +22,17 @@ check = h.check
 print("[1] ACMG code list sanity")
 check("28 total codes", len(ALL_ACMG_CODES) == 28)
 check("no overlap between pathogenic/benign lists", not (set(PATHOGENIC_CODES) & set(BENIGN_CODES)))
-# IMPLEMENTED_CODES was {"PS3", "BS3", "PS4", "PP1", "BS4"} through
-# 2026-09-15; PP1/BS4 (still real, tested code in acmg_pipeline/criteria/
-# segregation.py, still exercised directly in section [5] below) were
-# handed off to another team on 2026-09-16 - see acmg_pipeline.
-# classification's own comment on IMPLEMENTED_CODES and criteria/stubs.py's
-# HANDED_OFF_TO_OTHER_TEAM.
-check("19 implemented codes", len(IMPLEMENTED_CODES) == 19)
-check("9 stub codes", len(stubs.STUB_CODES) == 9)
+# IMPLEMENTED_CODES history: {"PS3","BS3","PS4","PP1","BS4"} (5) through
+# 2026-09-15 -> {"PS3","BS3","PS4"} (3) on 2026-09-16 when PP1/BS4/PP4 were
+# handed off to another team -> +16 automated codes (19) once that team's
+# evidence-cli engine was merged in -> +PP1/BS4/PP4 again (22) on
+# 2026-09-17 once acmg_pipeline.criteria.pp1_bs4_pp4_engine connected that
+# same team's ClinGen 2024 PP4+PP1/BS4 evaluator (segregation.py is still
+# real, tested code, still exercised directly in section [5] below, but no
+# longer the thing IMPLEMENTED_CODES credits for PP1/BS4 - pp1_bs4_pp4_
+# engine is).
+check("22 implemented codes", len(IMPLEMENTED_CODES) == 22)
+check("6 stub codes", len(stubs.STUB_CODES) == 6)
 check("implemented + stub codes cover all 28 with no overlap",
       set(stubs.STUB_CODES) | IMPLEMENTED_CODES == set(ALL_ACMG_CODES)
       and not (set(stubs.STUB_CODES) & IMPLEMENTED_CODES))

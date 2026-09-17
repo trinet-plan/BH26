@@ -1,7 +1,8 @@
 """
 stubs.py
-Placeholder entries for the seven ACMG/AMP 2015 codes that remain outside
-the integrated literature and automated-evidence evaluators.
+Placeholder entries for the six ACMG/AMP 2015 codes that remain outside
+every integrated evaluator (literature, automated, and - as of 2026-09-17 -
+the PP1/BS4/PP4 phenotype-segregation engine).
 
 [Why these exist]
   classification.classify() needs a CriterionEvidence for every code it is
@@ -11,22 +12,27 @@ the integrated literature and automated-evidence evaluators.
   which overstates this project's actual coverage. stub_evidence() returns
   an honest NOT_EVALUATED placeholder instead.
 
-[Why seven codes share one file instead of seven near-empty modules]
-  These seven split into two kinds of remaining workflow gap:
-    - PS2, PM3, PM6, BS2, BP2, BP5: literature-adjacent Layer-3 codes, but
-      the evidence for them lives in the PATIENT's own clinical/genetic-
-      testing records (parentage testing, phasing, the patient's own
-      pedigree, a healthy-carrier record) - not in papers. Out of scope for
-      a literature-reading LLM pipeline by design, not by omission.
-    - PP4: a phenotype-specific criterion still awaiting its dedicated
-      implementation.
-  Neither kind needs its own bespoke prompt/schema/finalize() the way
-  ps4.py or segregation.py do - they need exactly one thing, a
-  NOT_EVALUATED marker - so one shared function serves all seven, rather than
-  seven copies of the same four-line stub. Whichever team/person implements a
-  real one later has one obvious interface to match: build a module shaped
-  like ps4.py or segregation.py, then register it in registry.py in place
-  of the stub.
+[Why these six share one file instead of six near-empty modules]
+  PS2, PM3, PM6, BS2, BP2, BP5 are literature-adjacent Layer-3 codes, but
+  the evidence for them lives in the PATIENT's own clinical/genetic-
+  testing records (parentage testing, phasing, the patient's own
+  pedigree, a healthy-carrier record) - not in papers. Out of scope for a
+  literature-reading LLM pipeline by design, not by omission. None needs
+  its own bespoke prompt/schema/finalize() the way ps4.py or segregation.py
+  do - they need exactly one thing, a NOT_EVALUATED marker - so one shared
+  function serves all six, rather than six copies of the same four-line
+  stub. Whichever team/person implements a real one later has one obvious
+  interface to match: build a module shaped like ps4.py or segregation.py,
+  then register it in registry.py in place of the stub.
+
+[PP1/BS4/PP4 are no longer here]
+  They moved to acmg_pipeline.constants.PHENOTYPE_SEGREGATION_CODES /
+  IMPLEMENTED_CODES on 2026-09-17, once acmg_pipeline.criteria.
+  pp1_bs4_pp4_engine connected the real ClinGen 2024 evaluator (pulled in
+  from r-kobayashi's pp4_pp1_bs4 branch). They still come back UNKNOWN for
+  any gene without a curated config/pp4_reference_records.json entry - the
+  same honest-gap behavior stub_evidence() below provides - but that now
+  happens inside pp1_bs4_pp4_engine itself, not here.
 """
 
 from __future__ import annotations
@@ -34,11 +40,9 @@ from __future__ import annotations
 from acmg_pipeline.classification import CriterionEvidence
 from acmg_pipeline.constants import IMPLEMENTED_CODES, STUB_CODES, CriterionStatus
 
-# These six criteria depend primarily on patient/family records. PP4 remains
-# a phenotype-specific workflow not implemented by either integrated engine.
+# These six criteria depend primarily on patient/family records, not
+# literature or automated rule/lookup evidence.
 LITERATURE_ADJACENT_BUT_CLINICAL_RECORD = {"PS2", "PM3", "PM6", "BS2", "BP2", "BP5"}
-LITERATURE_WORKFLOW = {"PP1", "BS4"}
-PHENOTYPE_WORKFLOW = {"PP4"}
 
 
 # CriterionEvidence's `status` field is acmg_pipeline.gate.CriterionStatus,
@@ -63,13 +67,7 @@ def stub_evidence(code: str, note: str = "") -> CriterionEvidence:
             f"implementation ({sorted(IMPLEMENTED_CODES)}) or is not a "
             f"recognized ACMG/AMP 2015 code."
         )
-    reason = (
-        "depends on the patient's own clinical/genetic-testing records, not literature"
-        if code in LITERATURE_ADJACENT_BUT_CLINICAL_RECORD
-        else ("literature workflow not enabled in the current main pipeline"
-              if code in LITERATURE_WORKFLOW
-              else "phenotype-specific criterion not implemented by the integrated evaluators")
-    )
+    reason = "depends on the patient's own clinical/genetic-testing records, not literature"
     return CriterionEvidence(
         code=code,
         status=_NOT_EVALUATED,
