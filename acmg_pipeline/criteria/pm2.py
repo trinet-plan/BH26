@@ -18,7 +18,8 @@ def result(code, input_data, status, summary, **kwargs):
 
 def evaluate(variant: VariantRecord, clinical_note: ClinicalNoteExtraction, services, config):
     input_data = criterion_input(variant, clinical_note)
-    early, context = population_context("PM2", input_data, services, config)
+    early, context = population_context("PM2", input_data, services, config,
+                                        treat_total_absence_as_evidence=True)
     if early:
         return early
     rule, observations, rejected, failures, provenance = context
@@ -37,6 +38,21 @@ def evaluate(variant: VariantRecord, clinical_note: ClinicalNoteExtraction, serv
                       f"The configured PM2 rarity threshold ({rule['max_af']!r}) is not a "
                       f"fraction in [0, 1)",
                       missing=["PM2.max_af"], provenance=provenance)
+    if not observations:
+        # population_context() only reaches us with zero observations because every source
+        # resolved cleanly and reported nothing (NO_OBSERVATION), not because a source could
+        # not be reached - see its own treat_total_absence_as_evidence docstring. Scored as
+        # weak (supporting) evidence of rarity rather than UNKNOWN, since coverage at this
+        # exact locus is not confirmed and an uncovered locus cannot be told apart from a
+        # genuinely absent allele from this signal alone.
+        return result("PM2", input_data, CriterionStatus.MET,
+                      "Every queried population source resolved and reported no record at "
+                      "all for this allele",
+                      strength="supporting", evidence=[],
+                      review=["Locus coverage at this position is not confirmed - total "
+                              "absence from population databases is treated here as weak "
+                              "evidence of rarity, not a confirmed AF observation"],
+                      provenance=provenance)
     maximum = max(number(item["AF"]) for item in observations)
     # A reliable counterexample defeats rarity even if another source is unavailable.
     if maximum > threshold:

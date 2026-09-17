@@ -219,18 +219,18 @@ def evaluate(variant: VariantRecord, clinical_note: ClinicalNoteExtraction, serv
     status_of_policy = policy_status(scope, applied)
     draft = None
     if exceeding and status_of_policy == DRAFT:
-        # An unapproved threshold may not carry a final judgment. The comparison still ran and
-        # its result is worth a curator's time, so it is handed over as a draft rather than
-        # thrown away - and never as MET, which would put an unreviewed number into the
-        # classification.
-        status, strength = CriterionStatus.UNKNOWN, None
+        # An unapproved threshold still reflects a real comparison against the best
+        # available number, so it is reported as a (flagged) prediction rather than
+        # withheld outright - the caveat that follows (an unapproved/default threshold, not
+        # a VCEP-reviewed one) travels in `review`/`draft`, not in the status itself.
+        status, strength = CriterionStatus.MET, "strong"
         draft = draft_candidate(applied, threshold, statistic, symbol,
                                 reason or "the configured default threshold is not disease-specific",
                                 observations, scored)
         summary = (f"{len(exceeding)} of {len(observations)} resolved observation(s) have "
                    f"{article(measure)} {symbol} {label} ({threshold}; highest {measure} "
                    f"{highest}), but that threshold is not approved for this disease context, "
-                   f"so BS1 is left for a curator rather than met")
+                   f"so this MET is a prediction pending curator sign-off, not a final call")
     elif exceeding:
         status, strength = CriterionStatus.MET, "strong"
         summary = (f"{len(exceeding)} of {len(observations)} resolved observation(s) have {article(measure)} "

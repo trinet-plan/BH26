@@ -61,13 +61,16 @@ class ThresholdPolicyTests(unittest.TestCase):
 
     # --- the default threshold ------------------------------------------------------
 
-    def test_an_exceeded_default_threshold_is_not_met(self):
+    def test_an_exceeded_default_threshold_is_a_flagged_prediction(self):
+        """Unapproved does not withhold the call any more (2026-09-17 policy change) - it
+        travels as a MET prediction with the caveat in review_points/provenance instead."""
         value = self.evaluate()
-        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
-        self.assertIsNone(value.strength)
+        self.assertEqual(value.status, CriterionStatus.MET)
+        self.assertEqual(value.strength, "strong")
         self.assertEqual(value.provenance["policy_status"], "DRAFT")
+        self.assertIn("draft_threshold_candidate", value.provenance)
 
-    def test_the_summary_says_why_it_stopped_short_of_met(self):
+    def test_the_summary_says_the_met_is_unapproved(self):
         self.assertIn("not approved for this disease context", self.evaluate().summary)
 
     def test_the_comparison_that_ran_is_handed_over_not_discarded(self):
@@ -113,10 +116,11 @@ class ThresholdPolicyTests(unittest.TestCase):
         self.assertNotIn("draft_threshold_candidate", value.provenance)
 
     def test_a_curated_threshold_may_declare_itself_still_draft(self):
-        """A curator part-way through a specification can mark it, and be honoured."""
+        """A curator part-way through a specification can mark it, and be honoured: it
+        still reaches MET (2026-09-17 policy change), but flagged as a draft prediction."""
         self.curated(policy_status="DRAFT")
         value = self.evaluate()
-        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
+        self.assertEqual(value.status, CriterionStatus.MET)
         self.assertEqual(value.provenance["policy_status"], "DRAFT")
         self.assertIn("draft_threshold_candidate", value.provenance)
 

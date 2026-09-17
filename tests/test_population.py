@@ -49,9 +49,12 @@ class PopulationTests(unittest.TestCase):
         self.assertEqual(value.status, CriterionStatus.MET)
         self.assertEqual(value.evidence_outcome, "PM2_supporting")
 
-    def test_no_record_is_not_absence(self):
+    def test_no_record_is_a_flagged_prediction_not_af_zero(self):
+        """No record at all is not read as a confirmed AF 0, but (2026-09-17 policy change)
+        reaches a flagged supporting-strength MET rather than withholding a call."""
         value = self.evaluate(pm2, self.services([]))
-        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
+        self.assertEqual(value.status, CriterionStatus.MET)
+        self.assertEqual(value.strength, "supporting")
 
     def test_unset_threshold_is_not_the_strictest_threshold(self):
         """An absent max_af used to default to 0 and score PM2 on an unstated policy."""
@@ -262,16 +265,17 @@ class PopulationTests(unittest.TestCase):
                       value.review_points)
 
     def test_bs1_without_a_disease_context_uses_the_default_threshold(self):
-        """The default threshold is not approved for any disease, so an exceedance under it is
-        a draft for a curator, never MET - see doc/external_data_coverage_ja.md, 2026-09-17."""
+        """The default threshold is not approved for any disease, so an exceedance under it
+        reaches MET only as a flagged prediction (2026-09-17 policy change: unapproved no
+        longer withholds the call, it travels in review_points/provenance instead)."""
         value = self.evaluate(bs1, self.services([self.observation(100)]))
-        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
+        self.assertEqual(value.status, CriterionStatus.MET)
         self.assertFellBackToDefault(value, because="no disease context was supplied")
 
     def test_bs1_without_a_curated_threshold_uses_the_default_threshold(self):
         self.input["condition"] = "test:disease"
         value = self.evaluate(bs1, self.services([self.observation(100)]))
-        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
+        self.assertEqual(value.status, CriterionStatus.MET)
         self.assertFellBackToDefault(value, because="no curated maximum credible allele frequency")
 
     def test_bs1_threshold_for_another_disease_does_not_apply_to_this_one(self):
