@@ -13,8 +13,8 @@ import pytest
 os.environ.setdefault("VLLM_BASE_URL", "http://127.0.0.1:8000/v1")
 os.environ.setdefault("VLLM_API_KEY", "test-only")
 
-from acmg.core.models import Variant
-from acmg.services.resolve import ProviderEvidenceResolver, StaticEvidenceResolver
+from acmg_pipeline.automated_core.models import Variant
+from acmg_pipeline.services.resolve import ProviderEvidenceResolver, StaticEvidenceResolver
 from acmg_pipeline.pipeline import _automated_variant, _identity_from_info
 from acmg_pipeline.vcf_record import VariantRecord
 
@@ -92,7 +92,7 @@ def _resolver(**providers) -> ProviderEvidenceResolver:
 
 def test_absent_from_gnomad_contributes_no_population_record(monkeypatch):
     """None means 'not observed', which must never become AF=0."""
-    import acmg.services.resolve as resolve
+    import acmg_pipeline.services.resolve as resolve
 
     class _Absent:
         name = "gnomAD"
@@ -114,7 +114,7 @@ def test_absent_from_gnomad_contributes_no_population_record(monkeypatch):
 
 def test_provider_error_is_recorded_not_silently_empty(monkeypatch):
     """An unreachable provider must be distinguishable from 'no such evidence'."""
-    import acmg.services.resolve as resolve
+    import acmg_pipeline.services.resolve as resolve
 
     class _Broken:
         name = "gnomAD"
@@ -136,7 +136,7 @@ def test_provider_error_is_recorded_not_silently_empty(monkeypatch):
 
 def test_annotation_for_a_different_variant_is_rejected():
     """A transcript HGVS resolving elsewhere must not annotate this variant."""
-    import acmg.services.resolve as resolve
+    import acmg_pipeline.services.resolve as resolve
 
     class _Elsewhere:
         def map_record_with_evidence(self, record):

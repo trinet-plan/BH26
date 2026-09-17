@@ -79,10 +79,10 @@ from acmg_pipeline.criteria import stubs
 from acmg_pipeline.api_input import ApiCaseInput
 from acmg_pipeline.clinical_note import ClinicalNoteExtraction
 from acmg_pipeline.vcf_record import VariantRecord
-from acmg.core.models import CRITERIA as AUTOMATED_CRITERIA
-from acmg.core.models import Variant as AutomatedVariant
-from acmg.services.resolve import ProviderEvidenceResolver
-from acmg.engine import evaluate_record as evaluate_automated_record, make_services
+from acmg_pipeline.automated_core.models import CRITERIA as AUTOMATED_CRITERIA
+from acmg_pipeline.automated_core.models import Variant as AutomatedVariant
+from acmg_pipeline.services.resolve import ProviderEvidenceResolver
+from acmg_pipeline.automated_engine import evaluate_record as evaluate_automated_record, make_services
 
 VA_SPEC_OUTPUT_DIR = Path("va_spec_output")
 VA_SPEC_OUTPUT_DIR.mkdir(exist_ok=True)
@@ -707,7 +707,7 @@ async def judge_variant_from_structured_input(
     case_input: ApiCaseInput,
     mcp: ClientSession,
     erepo_client: ERepoClient,
-    criteria: tuple[str, ...] = ("PS3", "BS3", "PS4", "PP1", "BS4"),
+    criteria: tuple[str, ...] = ("PS3", "BS3", "PS4"),
     vcep_name: str | None = None,
     full_text_cache: dict[str, tuple[str | None, str]] | None = None,
 ) -> dict[str, AggregatedJudgment]:
@@ -737,7 +737,7 @@ async def judge_variant_from_shared_input(
     variant: VariantRecord,
     mcp: ClientSession,
     erepo_client: ERepoClient,
-    criteria: tuple[str, ...] = ("PS3", "BS3", "PS4", "PP1", "BS4"),
+    criteria: tuple[str, ...] = ("PS3", "BS3", "PS4"),
     vcep_name: str | None = None,
     full_text_cache: dict[str, tuple[str | None, str]] | None = None,
 ) -> dict[str, AggregatedJudgment]:
@@ -806,26 +806,19 @@ async def evaluate_variant_evidence_lines(
     variant: VariantRecord,
     clinical_note: ClinicalNoteExtraction,
     *,
+    normalized_evidence: list[dict],
     automated_config: dict,
     mcp: ClientSession,
     erepo_client: ERepoClient,
-    evidence_resolver=None,
     vcep_name: str | None = None,
     full_text_cache: dict[str, tuple[str | None, str]] | None = None,
 ) -> list[dict]:
     """Return exactly one VA-Spec EvidenceLine for each of the 28 ACMG codes.
 
-    Evidence for the 16 automated codes is resolved here rather than passed
-    in: only a provider can attach the evidence_id/source/source_version/
-    retrieved_at that `EvidenceService` requires and the VA-Spec export
-    refuses to omit. `evidence_resolver` defaults to
-    `ProviderEvidenceResolver` over the cache directory named by
-    `automated_config["evidence_cache_dir"]` (default `cache/evidence`);
-    inject `StaticEvidenceResolver` to replay a fixed set offline.
-
-    The VCF INFO column supplies identity and context only - GENE,
+    `normalized_evidence` is explicit caller-supplied evidence.  The VCF
+    INFO column supplies identity and context only - GENE,
     TRANSCRIPT, HGVSC, CLNVARIATIONID here, the rest via
-    `acmg.core.interface.criterion_input`. It is never read as evidence:
+    `acmg_pipeline.automated_core.interface.criterion_input`. It is never read as evidence:
     the demo VCFs' CLNSIG/ACMG_CODES are already-reached conclusions, the
     AM_*/AG_* scores have no calibration entry, and no population
     frequency is present at all. See acmg/services/resolve.py.
@@ -839,14 +832,8 @@ async def evaluate_variant_evidence_lines(
     if not isinstance(automated_config, dict):
         raise TypeError("automated_config must be a dictionary")
 
-    resolver = evidence_resolver or ProviderEvidenceResolver(
-        automated_config.get("evidence_cache_dir", "cache/evidence"),
-        offline=bool(automated_config.get("offline")),
-        ensembl_release=automated_config.get("ensembl_release"),
-    )
-    resolved = resolver.resolve(_identity_from_info(variant), _automated_variant(variant))
     services = make_services(
-        resolved.records,
+        normalized_evidence,
         automated_config.get("population_providers"),
     )
     automated_results = evaluate_automated_record(
@@ -875,7 +862,7 @@ async def evaluate_variant_evidence_lines(
             by_code[code] = build_workflow_evidence_line(
                 code,
                 variant,
-                status="NOT_EVALUATED",
+                status="unknown",
                 description=f"{code} automated evaluation returned no result.",
                 details={"missingInputs": ["automated criterion result"]},
             )
@@ -888,7 +875,7 @@ async def evaluate_variant_evidence_lines(
             by_code[code] = build_workflow_evidence_line(
                 code,
                 variant,
-                status="NOT_EVALUATED",
+                status="unknown",
                 description=f"{code} was not evaluated because no literature was resolved.",
                 details={"missingInputs": ["resolvable literature PMID"]},
             )
@@ -909,7 +896,7 @@ async def evaluate_variant_evidence_lines(
     lines = [by_code[code] for code in ALL_ACMG_CODES]
     ids = [line["id"] for line in lines]
     method_codes = [line["specifiedBy"]["methodType"] for line in lines]
-    if len(lines) != 28 or len(set(ids)) != 28 or method_codes != ALL_ACMG_CODES:
+    if len(lines) != 28 or len(set(ids)) != 28 or tuple(method_codes) != ALL_ACMG_CODES:
         raise RuntimeError("Integrated ACMG output must contain 28 ordered, unique criteria")
     return lines
 

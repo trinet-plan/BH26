@@ -1,0 +1,16 @@
+.venv/
+.git/
+__pycache__/
+*.pyc
+logs/
+va_spec_output/
+democase/
+doc/
+*.drawio
+*.pdf
+*.docx
+*.xlsx
+*.md
+z_tmp.md
+z_vcf.tsv
+test_api_input.py

@@ -10,19 +10,10 @@ from acmg_pipeline.criteria.ps3_bs3 import (
     detect_no_quantitative_evidence,
     PaperContribution, aggregate_multi_paper_results,
 )
+from test_harness import Harness
 
-passed = 0
-failed = 0
-
-
-def check(label, cond):
-    global passed, failed
-    if cond:
-        passed += 1
-        print(f"  OK   {label}")
-    else:
-        failed += 1
-        print(f"  FAIL {label}")
+h = Harness()
+check = h.check
 
 
 minimal_json = {
@@ -373,5 +364,4 @@ check("conflicting papers -> forced to not_clear", conflict_agg.aggregated_direc
 check("a warning hint naming the conflicting PMIDs is generated",
       any("23313350=PS3" in h.message and "88888888=BS3" in h.message for h in conflict_agg.aggregation_hints))
 
-print(f"\n{'='*40}\n{passed} passed, {failed} failed\n{'='*40}")
-sys.exit(1 if failed else 0)
+h.report_and_exit()

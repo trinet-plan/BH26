@@ -1,6 +1,6 @@
 import unittest
 
-from acmg.core.context import apply_context, context_summary, load_context
+from acmg_pipeline.automated_core.context import apply_context, context_summary, load_context
 
 
 VARIANT = {"assembly": "GRCh38", "chrom": "1", "pos": 2, "ref": "C", "alt": "T"}

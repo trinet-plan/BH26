@@ -1,7 +1,7 @@
 import unittest
 from pathlib import Path
 
-from acmg.core.vcf_adapter import inputs_from_vcf, parse_vcf
+from acmg_pipeline.automated_core.vcf_adapter import inputs_from_vcf, parse_vcf
 from acmg_pipeline.clinical_note import ClinicalNoteExtraction
 from acmg_pipeline.vcf_record import ParsedVcf, VariantRecord
 

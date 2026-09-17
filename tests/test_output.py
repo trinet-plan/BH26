@@ -3,8 +3,8 @@ import unittest
 from unittest.mock import patch
 import uuid
 
-from acmg.core.models import CRITERIA
-from acmg.output import load_object, run_internal
+from acmg_pipeline.automated_core.models import CRITERIA
+from acmg_pipeline.automated_output import load_object, run_internal
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -40,7 +40,7 @@ class OutputTests(unittest.TestCase):
         pm2 = next(item for item in results if item["criterion"] == "PM2")
         self.assertEqual(pm2["evidence_outcome"], "PM2_supporting")
         for code in ("PP5", "BP6"):
-            self.assertEqual(next(r for r in results if r["criterion"] == code)["status"], "DEPRECATED")
+            self.assertEqual(next(r for r in results if r["criterion"] == code)["status"], "unknown")
 
     def test_old_run_cannot_be_overwritten(self):
         output = self.output_dir()
@@ -76,7 +76,7 @@ class OutputTests(unittest.TestCase):
             for item in envelope["records"][0]["criterion_assessments"]
             if item["criterion"] in {"PP5", "BP6"}
         }
-        self.assertEqual(deprecated, {"PP5": "DEPRECATED", "BP6": "DEPRECATED"})
+        self.assertEqual(deprecated, {"PP5": "unknown", "BP6": "unknown"})
 
     def test_population_met_fixtures_emit_official_example_shaped_evidence_lines(self):
         output = self.output_dir()
@@ -119,7 +119,7 @@ class OutputTests(unittest.TestCase):
 
     def test_va_spec_failure_leaves_no_partial_run(self):
         output = self.output_dir()
-        with patch("acmg.va_spec.mapper.export_document", side_effect=ValueError("invalid")):
+        with patch("acmg_pipeline.automated_va_spec.export_document", side_effect=ValueError("invalid")):
             with self.assertRaisesRegex(ValueError, "invalid"):
                 run_internal(FIXTURES / "synthetic-prepared.json",
                              FIXTURES / "synthetic-evidence.json",

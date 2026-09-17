@@ -1,8 +1,9 @@
+from acmg_pipeline.constants import CriterionStatus
 import copy
 import unittest
 
-from acmg.core.models import CRITERIA, Status, Variant
-from acmg.engine import evaluate_prepared_record, make_services
+from acmg_pipeline.automated_core.models import CRITERIA, Variant
+from acmg_pipeline.automated_engine import evaluate_prepared_record, make_services
 
 
 class CuratedCriteriaTests(unittest.TestCase):
@@ -25,17 +26,17 @@ class CuratedCriteriaTests(unittest.TestCase):
     def test_all_sixteen_without_evidence(self):
         values = evaluate_prepared_record(self.input, make_services([]), {})
         self.assertEqual([v.criterion for v in values], list(CRITERIA))
-        self.assertEqual(sum(v.status == Status.DEPRECATED for v in values), 2)
-        self.assertTrue(all(v.status in {Status.NOT_EVALUATED, Status.DEPRECATED} for v in values))
+        self.assertEqual(sum(v.status == CriterionStatus.UNKNOWN for v in values), 2)
+        self.assertTrue(all(v.status in {CriterionStatus.UNKNOWN, CriterionStatus.UNKNOWN} for v in values))
 
     def test_mechanism_is_disease_specific(self):
         item = self.item("gene_disease", gene="TEST", missense_mechanism_established=True,
                          spectrum_review_complete=True, low_benign_missense_variation=True,
                          predominantly_truncating=False)
-        self.assertEqual(self.run_rule("PP2", item).status, Status.MET)
-        self.assertEqual(self.run_rule("BP1", item).status, Status.NOT_MET)
+        self.assertEqual(self.run_rule("PP2", item).status, CriterionStatus.MET)
+        self.assertEqual(self.run_rule("BP1", item).status, CriterionStatus.NOT_MET)
         item["condition"] = "test:other-disease"
-        self.assertEqual(self.run_rule("PP2", item).status, Status.NOT_EVALUATED)
+        self.assertEqual(self.run_rule("PP2", item).status, CriterionStatus.UNKNOWN)
 
     def test_mechanism_is_evaluated_without_condition(self):
         input_data = {key: value for key, value in self.input.items() if key != "condition"}
@@ -46,13 +47,13 @@ class CuratedCriteriaTests(unittest.TestCase):
                           predominantly_truncating=False).items() if key != "condition"}
         services = make_services([annotation, item])
         value = evaluate_prepared_record(input_data, services, {}, ["PP2"])[0]
-        self.assertEqual(value.status, Status.MET)
+        self.assertEqual(value.status, CriterionStatus.MET)
         self.assertEqual(value.provenance["assessment_scope"], "gene_level")
-        self.assertEqual(value.provenance["condition_assessment"], "NOT_EVALUATED")
+        self.assertEqual(value.provenance["condition_assessment"], "unknown")
         self.assertTrue(value.review_points)
         # BP1 reads the same record in the opposite direction and stays unmet here.
         bp1 = evaluate_prepared_record(input_data, services, {}, ["BP1"])[0]
-        self.assertEqual(bp1.status, Status.NOT_MET)
+        self.assertEqual(bp1.status, CriterionStatus.NOT_MET)
         self.assertEqual(bp1.review_points, [])
 
     def test_matched_condition_needs_no_review(self):
@@ -60,16 +61,16 @@ class CuratedCriteriaTests(unittest.TestCase):
                          spectrum_review_complete=True, low_benign_missense_variation=True,
                          predominantly_truncating=False)
         value = self.run_rule("PP2", item)
-        self.assertEqual(value.status, Status.MET)
+        self.assertEqual(value.status, CriterionStatus.MET)
         self.assertEqual(value.provenance["condition_assessment"], "MATCHED")
         self.assertEqual(value.review_points, [])
 
     def test_bp1_requires_reviewed_spectrum(self):
         item = self.item("gene_disease", gene="TEST", missense_mechanism_established=False,
                          spectrum_review_complete=True, predominantly_truncating=True)
-        self.assertEqual(self.run_rule("BP1", item).status, Status.MET)
+        self.assertEqual(self.run_rule("BP1", item).status, CriterionStatus.MET)
         del item["spectrum_review_complete"]
-        self.assertEqual(self.run_rule("BP1", item).status, Status.NOT_EVALUATED)
+        self.assertEqual(self.run_rule("BP1", item).status, CriterionStatus.UNKNOWN)
 
     def test_reviewed_vcep_not_applicable_overrides_generic_mechanism(self):
         item = self.item(
@@ -81,8 +82,8 @@ class CuratedCriteriaTests(unittest.TestCase):
         )
         pp2 = self.run_rule("PP2", item)
         bp1 = self.run_rule("BP1", item)
-        self.assertEqual(pp2.status, Status.NOT_APPLICABLE)
-        self.assertEqual(bp1.status, Status.NOT_APPLICABLE)
+        self.assertEqual(pp2.status, CriterionStatus.UNKNOWN)
+        self.assertEqual(bp1.status, CriterionStatus.UNKNOWN)
         self.assertEqual(pp2.provenance["applicability_source"], "ClinGen test VCEP v1")
 
     def region(self, **values):
@@ -103,23 +104,23 @@ class CuratedCriteriaTests(unittest.TestCase):
 
     def test_pm1_requires_a_declared_route(self):
         value = self.run_pm1(self.region(critical_functional_region=True, benign_depletion=True))
-        self.assertEqual(value.status, Status.NOT_EVALUATED)
+        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
         self.assertIn("region_type", value.missing_inputs)
 
     def test_domain_overlap_alone_is_insufficient(self):
         item = self.region(region_type="critical_functional_domain", critical_functional_region=True)
-        self.assertEqual(self.run_pm1(item).status, Status.NOT_EVALUATED)
+        self.assertEqual(self.run_pm1(item).status, CriterionStatus.UNKNOWN)
         item["benign_depletion"] = True
-        self.assertEqual(self.run_pm1(item).status, Status.MET)
+        self.assertEqual(self.run_pm1(item).status, CriterionStatus.MET)
         item["benign_depletion"] = False
-        self.assertEqual(self.run_pm1(item).status, Status.NOT_MET)
+        self.assertEqual(self.run_pm1(item).status, CriterionStatus.NOT_MET)
 
     def test_critical_domain_does_not_require_pathogenic_enrichment(self):
         """A well-established active site stays PM1 even with few reported cases."""
         item = self.region(region_type="critical_functional_domain", critical_functional_region=True,
                            benign_depletion=True, pathogenic_enrichment=False)
         value = self.run_pm1(item)
-        self.assertEqual(value.status, Status.MET)
+        self.assertEqual(value.status, CriterionStatus.MET)
         self.assertEqual(value.provenance["pm1_route"], "critical_functional_domain")
 
     def test_automated_evidence_cannot_claim_critical_domain(self):
@@ -127,7 +128,7 @@ class CuratedCriteriaTests(unittest.TestCase):
                            method="clinvar_local_density", policy_version="PM1-hotspot-test",
                            critical_functional_region=True, benign_depletion=True)
         value = self.run_pm1(item)
-        self.assertEqual(value.status, Status.NOT_EVALUATED)
+        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
         self.assertIn("curated_criticality", value.missing_inputs)
 
     def test_hotspot_route_accepts_automated_policy_evidence(self):
@@ -135,46 +136,46 @@ class CuratedCriteriaTests(unittest.TestCase):
         del item["curator"]
         del item["reviewed_at"]
         value = self.run_pm1(item, self.HOTSPOT_POLICY)
-        self.assertEqual(value.status, Status.MET)
+        self.assertEqual(value.status, CriterionStatus.MET)
         self.assertEqual(value.provenance["assessment_method"], "automated")
 
     def test_hotspot_route_uses_configured_thresholds(self):
         item = self.hotspot(pathogenic_count=3, benign_count=0)
         value = self.run_pm1(item, self.HOTSPOT_POLICY)
-        self.assertEqual(value.status, Status.MET)
+        self.assertEqual(value.status, CriterionStatus.MET)
         self.assertEqual(value.provenance["pm1_route"], "mutational_hotspot")
         self.assertEqual(value.provenance["pathogenic_count"], 3)
 
     def test_hotspot_benign_variation_is_a_real_negative(self):
         item = self.hotspot(pathogenic_count=4, benign_count=1)
-        self.assertEqual(self.run_pm1(item, self.HOTSPOT_POLICY).status, Status.NOT_MET)
+        self.assertEqual(self.run_pm1(item, self.HOTSPOT_POLICY).status, CriterionStatus.NOT_MET)
 
     def test_sparse_pathogenic_reports_are_missing_evidence(self):
         """Few ClinVar reports must not be read as proof that no hotspot exists."""
         item = self.hotspot(pathogenic_count=2, benign_count=0)
         value = self.run_pm1(item, self.HOTSPOT_POLICY)
-        self.assertEqual(value.status, Status.NOT_EVALUATED)
+        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
         self.assertIn("pathogenic_density", value.missing_inputs)
 
     def test_hotspot_requires_versioned_policy(self):
         item = self.hotspot(pathogenic_count=4, benign_count=0)
         value = self.run_pm1(item)
-        self.assertEqual(value.status, Status.NOT_EVALUATED)
+        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
         self.assertIn("PM1.hotspot.policy_version", value.missing_inputs)
         item["policy_version"] = "PM1-hotspot-other"
         value = self.run_pm1(item, self.HOTSPOT_POLICY)
-        self.assertEqual(value.status, Status.NOT_EVALUATED)
+        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
         self.assertIn("policy_version", value.missing_inputs)
 
     def test_hotspot_counts_are_required(self):
         value = self.run_pm1(self.hotspot(mutational_hotspot=True), self.HOTSPOT_POLICY)
-        self.assertEqual(value.status, Status.NOT_EVALUATED)
+        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
         self.assertIn("pathogenic_count", value.missing_inputs)
 
     def test_hotspot_assertion_must_match_its_counts(self):
         item = self.hotspot(pathogenic_count=4, benign_count=1, benign_depletion=True)
         value = self.run_pm1(item, self.HOTSPOT_POLICY)
-        self.assertEqual(value.status, Status.MANUAL_REVIEW)
+        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
         self.assertTrue(value.review_points)
 
     def test_pm1_protein_level_without_condition(self):
@@ -184,20 +185,20 @@ class CuratedCriteriaTests(unittest.TestCase):
                 self.region(region_type="critical_functional_domain", critical_functional_region=True,
                             benign_depletion=True).items() if key != "condition"}
         value = self.run_pm1(item, input_data=input_data, annotation=annotation)
-        self.assertEqual(value.status, Status.MET)
+        self.assertEqual(value.status, CriterionStatus.MET)
         self.assertEqual(value.provenance["assessment_scope"], "protein_level")
-        self.assertEqual(value.provenance["condition_assessment"], "NOT_EVALUATED")
+        self.assertEqual(value.provenance["condition_assessment"], "unknown")
         self.assertTrue(value.review_points)
         item["benign_depletion"] = False
         value = self.run_pm1(item, input_data=input_data, annotation=annotation)
-        self.assertEqual(value.status, Status.NOT_MET)
+        self.assertEqual(value.status, CriterionStatus.NOT_MET)
         self.assertEqual(value.review_points, [])
 
     def test_pm1_records_matched_condition(self):
         item = self.region(region_type="critical_functional_domain", critical_functional_region=True,
                            benign_depletion=True)
         value = self.run_pm1(item)
-        self.assertEqual(value.status, Status.MET)
+        self.assertEqual(value.status, CriterionStatus.MET)
         self.assertEqual(value.provenance["condition_assessment"], "MATCHED")
         self.assertEqual(value.review_points, [])
 
@@ -205,20 +206,20 @@ class CuratedCriteriaTests(unittest.TestCase):
         item = self.region(region_type="critical_functional_domain", critical_functional_region=True,
                            benign_depletion=True, condition="test:other-disease")
         value = self.run_pm1(item)
-        self.assertEqual(value.status, Status.NOT_EVALUATED)
+        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
         self.assertIn("region", value.missing_inputs)
 
     def test_length_repeat_and_missing_function(self):
         self.annotation.update(consequences=["inframe_deletion"], protein_length_change=-1)
         item = self.region(nonfunctional_repeat=False, repetitive=False, functional_importance=True,
                            functional_review_complete=True)
-        self.assertEqual(self.run_rule("PM4", item).status, Status.MET)
-        self.assertEqual(self.run_rule("BP3", item).status, Status.NOT_MET)
+        self.assertEqual(self.run_rule("PM4", item).status, CriterionStatus.MET)
+        self.assertEqual(self.run_rule("BP3", item).status, CriterionStatus.NOT_MET)
         item.update(nonfunctional_repeat=True, repetitive=True, functional_importance=False)
-        self.assertEqual(self.run_rule("PM4", item).status, Status.NOT_MET)
-        self.assertEqual(self.run_rule("BP3", item).status, Status.MET)
+        self.assertEqual(self.run_rule("PM4", item).status, CriterionStatus.NOT_MET)
+        self.assertEqual(self.run_rule("BP3", item).status, CriterionStatus.MET)
         del item["functional_importance"]
-        self.assertEqual(self.run_rule("BP3", item).status, Status.NOT_EVALUATED)
+        self.assertEqual(self.run_rule("BP3", item).status, CriterionStatus.UNKNOWN)
 
     def comparator(self, **values):
         return self.item("comparator", protein_id="NP_TEST.1", protein_start=10, ref_aa="R", alt_aa="W",
@@ -229,18 +230,18 @@ class CuratedCriteriaTests(unittest.TestCase):
 
     def test_same_vs_different_amino_acid(self):
         item = self.comparator()
-        self.assertEqual(self.run_rule("PS1", item).status, Status.MET)
-        self.assertEqual(self.run_rule("PM5", item).status, Status.NOT_EVALUATED)
+        self.assertEqual(self.run_rule("PS1", item).status, CriterionStatus.MET)
+        self.assertEqual(self.run_rule("PM5", item).status, CriterionStatus.UNKNOWN)
         item["alt_aa"] = "Q"
-        self.assertEqual(self.run_rule("PM5", item).status, Status.MET)
+        self.assertEqual(self.run_rule("PM5", item).status, CriterionStatus.MET)
 
     def test_comparator_label_is_not_enough(self):
         item = self.comparator()
         item["independent_evidence"] = False
-        self.assertEqual(self.run_rule("PS1", item).status, Status.MANUAL_REVIEW)
+        self.assertEqual(self.run_rule("PS1", item).status, CriterionStatus.UNKNOWN)
         item["independent_evidence"] = True
         item["comparator_variant"] = self.variant.to_dict()
-        self.assertNotEqual(self.run_rule("PS1", item).status, Status.MET)
+        self.assertNotEqual(self.run_rule("PS1", item).status, CriterionStatus.MET)
 
     def test_ps1_does_not_require_condition(self):
         input_data = {key: value for key, value in self.input.items() if key != "condition"}
@@ -257,17 +258,17 @@ class CuratedCriteriaTests(unittest.TestCase):
                           review_status_eligible=True, splice_effect_checked=True,
                           splice_conflict=False, conditions=["MONDO:0000001"])
         value = evaluate_prepared_record(input_data, make_services([annotation, comparator]), {}, ["PS1"])[0]
-        self.assertEqual(value.status, Status.MET)
+        self.assertEqual(value.status, CriterionStatus.MET)
         self.assertEqual(value.provenance["assessment_scope"], "protein_level")
-        self.assertEqual(value.provenance["condition_assessment"], "NOT_EVALUATED")
+        self.assertEqual(value.provenance["condition_assessment"], "unknown")
         self.assertTrue(value.review_points)
 
     def test_search_absence_requires_completeness(self):
         search = self.item("comparator_search", protein_id="NP_TEST.1", protein_start=10,
                            complete=True, search_scope="residue")
-        self.assertEqual(self.run_rule("PM5", search).status, Status.NOT_MET)
+        self.assertEqual(self.run_rule("PM5", search).status, CriterionStatus.NOT_MET)
         search["complete"] = False
-        self.assertEqual(self.run_rule("PM5", search).status, Status.NOT_EVALUATED)
+        self.assertEqual(self.run_rule("PM5", search).status, CriterionStatus.UNKNOWN)
 
     def test_uncertain_comparator_is_not_a_review_item(self):
         search = self.item("comparator_search", protein_id="NP_TEST.1", protein_start=10,
@@ -275,20 +276,20 @@ class CuratedCriteriaTests(unittest.TestCase):
         item = self.comparator()
         item.update(alt_aa="P", classification="Uncertain significance")
         value = self.run_rule("PM5", search, item)
-        self.assertEqual(value.status, Status.NOT_MET)
+        self.assertEqual(value.status, CriterionStatus.NOT_MET)
         self.assertEqual(value.review_points, [])
         self.assertIn(item, value.evidence)
         item["classification"] = "Likely pathogenic"
-        self.assertEqual(self.run_rule("PM5", search, item).status, Status.MANUAL_REVIEW)
+        self.assertEqual(self.run_rule("PM5", search, item).status, CriterionStatus.UNKNOWN)
 
     def test_pm5_absence_needs_a_residue_scoped_search(self):
         """An exact protein-change search says nothing about other changes at the residue."""
         search = self.item("comparator_search", protein_id="NP_TEST.1", protein_start=10,
                            complete=True, search_scope="exact_protein_change")
         value = self.run_rule("PM5", search)
-        self.assertEqual(value.status, Status.NOT_EVALUATED)
+        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
         self.assertEqual(value.missing_inputs, ["complete_comparator_search"])
-        self.assertEqual(self.run_rule("PS1", search).status, Status.NOT_MET)
+        self.assertEqual(self.run_rule("PS1", search).status, CriterionStatus.NOT_MET)
 
     def test_pm5_is_evaluated_without_condition(self):
         input_data = {key: value for key, value in self.input.items() if key != "condition"}
@@ -297,7 +298,7 @@ class CuratedCriteriaTests(unittest.TestCase):
                   self.item("comparator_search", protein_id="NP_TEST.1", protein_start=10,
                             complete=True, search_scope="residue").items() if key != "condition"}
         value = evaluate_prepared_record(input_data, make_services([annotation, search]), {}, ["PM5"])[0]
-        self.assertEqual(value.status, Status.NOT_MET)
+        self.assertEqual(value.status, CriterionStatus.NOT_MET)
 
     def test_automated_pm5_requires_a_confirmed_residue_match(self):
         input_data = {key: value for key, value in self.input.items() if key != "condition"}
@@ -307,15 +308,15 @@ class CuratedCriteriaTests(unittest.TestCase):
                           review_status_eligible=True, splice_effect_checked=True,
                           splice_conflict=False, conditions=["MONDO:0000001"])
         value = evaluate_prepared_record(input_data, make_services([annotation, comparator]), {}, ["PM5"])[0]
-        self.assertEqual(value.status, Status.MET)
+        self.assertEqual(value.status, CriterionStatus.MET)
         self.assertEqual(value.strength, "moderate")
-        self.assertEqual(value.provenance["condition_assessment"], "NOT_EVALUATED")
+        self.assertEqual(value.provenance["condition_assessment"], "unknown")
         # Without the provider's residue confirmation, and without a complete human review,
         # the same record only raises a review point.
         del comparator["residue_match"]
         del comparator["primary_evidence"]
         value = evaluate_prepared_record(input_data, make_services([annotation, comparator]), {}, ["PM5"])[0]
-        self.assertEqual(value.status, Status.MANUAL_REVIEW)
+        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
 
     def test_bp7_and_rna_contradiction(self):
         self.annotation["consequences"] = ["synonymous_variant"]
@@ -323,9 +324,9 @@ class CuratedCriteriaTests(unittest.TestCase):
                          no_predicted_splice_impact=True, not_conserved=True, contradictory_rna_evidence=False,
                          splice_prediction_evidence="test:splice", calibration_source="test:calibration",
                          conservation_evidence="test:conservation", position_rule_version="test:1")
-        self.assertEqual(self.run_rule("BP7", item).status, Status.MET)
+        self.assertEqual(self.run_rule("BP7", item).status, CriterionStatus.MET)
         item["contradictory_rna_evidence"] = True
-        self.assertEqual(self.run_rule("BP7", item).status, Status.MANUAL_REVIEW)
+        self.assertEqual(self.run_rule("BP7", item).status, CriterionStatus.UNKNOWN)
 
     def test_source_labels_do_not_affect_all_results(self):
         services = make_services([self.annotation])

@@ -3,8 +3,8 @@ import unittest
 import uuid
 from pathlib import Path
 
-from acmg.cli import main
-from acmg.core.models import CRITERIA
+from acmg_pipeline.automated_cli import main
+from acmg_pipeline.automated_core.models import CRITERIA
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -122,16 +122,16 @@ class DemoPipelineTests(unittest.TestCase):
         pm1 = [result for record in results["records"] for result in record["results"]
                if result["criterion"] == "PM1"]
         statuses = {status: sum(result["status"] == status for result in pm1)
-                    for status in ("MET", "NOT_MET", "NOT_EVALUATED")}
+                    for status in ("MET", "NOT_MET", "unknown")}
         # Every demo variant that ClinVar classifies is excluded from its own density, so no
         # record is NOT_MET on the strength of its own submitted classification.
-        self.assertEqual(statuses, {"MET": 2, "NOT_MET": 0, "NOT_EVALUATED": 26})
+        self.assertEqual(statuses, {"MET": 2, "NOT_MET": 0, "unknown": 26})
         # PM5 needs a residue-scoped search; MYH7 p.Arg719 has a pathogenic ClinVar comparator.
         pm5 = [result for record in results["records"] for result in record["results"]
                if result["criterion"] == "PM5"]
         pm5_statuses = {status: sum(result["status"] == status for result in pm5)
-                        for status in ("MET", "NOT_MET", "NOT_APPLICABLE")}
-        self.assertEqual(pm5_statuses, {"MET": 1, "NOT_MET": 17, "NOT_APPLICABLE": 10})
+                        for status in ("MET", "NOT_MET", "unknown")}
+        self.assertEqual(pm5_statuses, {"MET": 1, "NOT_MET": 17, "unknown": 10})
         pm5_met = next(result for result in pm5 if result["status"] == "MET")
         self.assertEqual(pm5_met["evidence_outcome"], "PM5")
         self.assertEqual(pm5_met["provenance"]["assessment_scope"], "protein_level")
@@ -146,7 +146,7 @@ class DemoPipelineTests(unittest.TestCase):
             self.assertEqual(result["provenance"]["benign_count"], 0)
             self.assertGreaterEqual(result["provenance"]["pathogenic_count"], 3)
             # Disease relevance is unresolved without a condition, so it stays a review point.
-            self.assertEqual(result["provenance"]["condition_assessment"], "NOT_EVALUATED")
+            self.assertEqual(result["provenance"]["condition_assessment"], "unknown")
             self.assertTrue(result["review_points"])
 
         # Exercise a real case2 record and the committed gnomAD response with an explicit,
@@ -181,7 +181,7 @@ class DemoPipelineTests(unittest.TestCase):
 
         # case2-var2 is not returned by gnomAD. A missing variant response has no AN or
         # callability evidence, so it must not be silently converted to AF=0.
-        self.assertEqual(by_id["case2:25:1"]["status"], "NOT_EVALUATED")
+        self.assertEqual(by_id["case2:25:1"]["status"], "unknown")
         self.assertIn("population", by_id["case2:25:1"]["missing_inputs"])
 
 

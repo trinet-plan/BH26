@@ -1,10 +1,10 @@
 import unittest
 from pathlib import Path
 
-from acmg.core.identity import reconcile
-from acmg.core.input import audit_demo
-from acmg.providers.http import CachedHttpClient
-from acmg.providers.ensembl import EnsemblIdentityProvider
+from acmg_pipeline.automated_core.identity import reconcile
+from acmg_pipeline.automated_core.input import audit_demo
+from acmg_pipeline.providers.http import CachedHttpClient
+from acmg_pipeline.providers.ensembl import EnsemblIdentityProvider
 
 
 class FakeClient:
@@ -79,7 +79,7 @@ class EnsemblIdentityTests(unittest.TestCase):
 
     def test_inframe_length_change_is_derived_from_changed_peptide(self):
         consequence = {"consequence_terms": ["inframe_deletion"]}
-        self.assertEqual(__import__("acmg.providers.ensembl", fromlist=["_protein_length_change"])
+        self.assertEqual(__import__("acmg_pipeline.providers.ensembl", fromlist=["_protein_length_change"])
                          ._protein_length_change(consequence, "ABC", "-"), -3)
 
     def test_json_wrapped_sequence_is_supported(self):

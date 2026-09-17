@@ -2,9 +2,9 @@ import inspect
 import unittest
 from importlib import import_module
 
-from acmg.core.models import CRITERIA
-from acmg.engine import evaluate_record, make_services
-from acmg.va_spec.mapper import export_document
+from acmg_pipeline.automated_core.models import CRITERIA
+from acmg_pipeline.automated_engine import evaluate_record, make_services
+from acmg_pipeline.automated_va_spec import export_document
 from acmg_pipeline.clinical_note import ClinicalNoteExtraction
 from acmg_pipeline.vcf_record import VariantRecord
 
@@ -32,7 +32,7 @@ class SharedInputInterfaceTests(unittest.TestCase):
     def test_every_criterion_has_the_shared_public_signature(self):
         for code in CRITERIA:
             with self.subTest(code=code):
-                evaluate = import_module(f"acmg.criteria.{code.lower()}").evaluate
+                evaluate = import_module(f"acmg_pipeline.criteria.{code.lower()}").evaluate
                 parameters = list(inspect.signature(evaluate).parameters.values())
                 self.assertEqual([value.name for value in parameters[:2]],
                                  ["variant", "clinical_note"])

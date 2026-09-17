@@ -9,7 +9,7 @@ output stops reaching the shared export.
 The tests here drive the seam in `evaluate_variant_evidence_lines` with both
 halves live at once:
 
-  * evidence-cli (`acmg.engine.evaluate_record`) runs unpatched against real
+  * evidence-cli (`acmg_pipeline.automated_engine.evaluate_record`) runs unpatched against real
     population and computational evidence chosen to make PM2 and PP3 MET;
   * main's literature path runs its real finalize/aggregate/export chain, with
     only the two genuinely external calls replaced - PMID resolution (ERepo)
@@ -31,7 +31,7 @@ from jsonschema import Draft202012Validator
 os.environ.setdefault("VLLM_BASE_URL", "http://127.0.0.1:8000/v1")
 os.environ.setdefault("VLLM_API_KEY", "test-only")
 
-from acmg.services.resolve import StaticEvidenceResolver
+from acmg_pipeline.services.resolve import StaticEvidenceResolver
 from acmg_pipeline.classification import (
     ALL_ACMG_CODES,
     AUTOMATED_CODES,
@@ -168,8 +168,8 @@ def _run_both_stacks() -> list[dict]:
             evaluate_variant_evidence_lines(
                 _variant(),
                 ClinicalNoteExtraction(),
+                normalized_evidence=_normalized_evidence(),
                 automated_config=config,
-                evidence_resolver=StaticEvidenceResolver(_normalized_evidence()),
                 mcp=object(),
                 erepo_client=object(),
                 vcep_name="Cardiomyopathy VCEP",
@@ -180,7 +180,7 @@ def _run_both_stacks() -> list[dict]:
 @pytest.fixture(scope="module")
 def lines_by_code() -> dict[str, dict]:
     lines = _run_both_stacks()
-    assert [line["specifiedBy"]["methodType"] for line in lines] == ALL_ACMG_CODES
+    assert tuple(line["specifiedBy"]["methodType"] for line in lines) == ALL_ACMG_CODES
     return {line["specifiedBy"]["methodType"]: line for line in lines}
 
 
@@ -190,15 +190,15 @@ def _details(line: dict) -> dict:
 
 
 def test_evidence_cli_criteria_are_really_evaluated(lines_by_code):
-    assert _details(lines_by_code["PM2"])["status"] == "MET"
-    assert _details(lines_by_code["PP3"])["status"] == "MET"
+    assert _details(lines_by_code["PM2"])["status"] == "met"
+    assert _details(lines_by_code["PP3"])["status"] == "met"
     assert lines_by_code["PM2"]["directionOfEvidenceProvided"] == "supports"
     assert lines_by_code["PP3"]["directionOfEvidenceProvided"] == "supports"
 
 
 def test_literature_criteria_are_really_evaluated(lines_by_code):
     ps3 = lines_by_code["PS3"]
-    assert _details(ps3)["status"] == "MET"
+    assert _details(ps3)["status"] == "met"
     assert ps3["directionOfEvidenceProvided"] == "supports"
     assert {doc["pmid"] for doc in ps3["reportedIn"]} == set(PMIDS)
     assert len(ps3["hasEvidenceItems"]) == len(PMIDS)
@@ -208,11 +208,11 @@ def test_both_stacks_appear_in_one_document(lines_by_code):
     """The point of the merge: neither side may shadow or duplicate the other."""
     automated_met = {
         code for code in AUTOMATED_CODES
-        if _details(lines_by_code[code])["status"] == "MET"
+        if _details(lines_by_code[code])["status"] == "met"
     }
     literature_met = {
         code for code in LITERATURE_CODES
-        if _details(lines_by_code[code])["status"] == "MET"
+        if _details(lines_by_code[code])["status"] == "met"
     }
     assert automated_met and literature_met
     assert automated_met.isdisjoint(literature_met)
@@ -269,7 +269,7 @@ def test_scored_lines_keep_direction_and_outcome_consistent(lines_by_code):
 
 def test_default_strength_agrees_with_evidence_cli_where_they_overlap():
     """The prefix rule main derives must not drift from evidence-cli's map."""
-    from acmg.criteria.common import DEFAULT_STRENGTH
+    from acmg_pipeline.criteria.common import DEFAULT_STRENGTH
     from acmg_pipeline.export import default_strength
 
     for code, expected in DEFAULT_STRENGTH.items():
@@ -311,4 +311,6 @@ def test_outcome_code_omits_the_default_strength_suffix():
 def test_unimplemented_codes_stay_placeholders(lines_by_code):
     """PS2/PM3/BP2 and the rest belong to neither side and must not be faked."""
     for code in set(ALL_ACMG_CODES) - AUTOMATED_CODES - LITERATURE_CODES:
-        assert _details(lines_by_code[code])["status"] != "MET"
+        assert _details(lines_by_code[code])["status"] != "met"
+
+

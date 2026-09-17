@@ -1,8 +1,8 @@
 import unittest
 
-from acmg.core.models import Variant
-from acmg.providers.dbnsfp import DbnsfpProvider
-from acmg.providers.http import FetchError
+from acmg_pipeline.automated_core.models import Variant
+from acmg_pipeline.providers.dbnsfp import DbnsfpProvider
+from acmg_pipeline.providers.http import FetchError
 
 
 METADATA = {"build_version": "20260901", "src": {"dbnsfp": {"version": "4.8a"}}}

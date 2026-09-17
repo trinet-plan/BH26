@@ -10,7 +10,7 @@ import unittest
 import uuid
 from pathlib import Path
 
-from acmg.output import run_internal
+from acmg_pipeline.automated_output import run_internal
 
 
 ROOT = Path(__file__).resolve().parents[1]

@@ -1,9 +1,9 @@
 import copy
 import unittest
 
-from acmg.core.identity import evaluation_inputs, reconcile
-from acmg.core.models import Variant
-from acmg.core.reference import normalize
+from acmg_pipeline.automated_core.identity import evaluation_inputs, reconcile
+from acmg_pipeline.automated_core.models import Variant
+from acmg_pipeline.automated_core.reference import normalize
 
 
 class MemoryReference:

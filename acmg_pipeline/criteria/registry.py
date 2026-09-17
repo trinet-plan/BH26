@@ -17,7 +17,8 @@ from __future__ import annotations
 
 from typing import Optional
 
-from acmg_pipeline.classification import ALL_ACMG_CODES, IMPLEMENTED_CODES, CriterionEvidence
+from acmg_pipeline.classification import CriterionEvidence
+from acmg_pipeline.constants import ALL_ACMG_CODES, IMPLEMENTED_CODES
 from acmg_pipeline.criteria import stubs
 
 

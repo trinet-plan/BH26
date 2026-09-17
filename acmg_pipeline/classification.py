@@ -39,40 +39,27 @@ strength for met calls) into a single final ACMG/AMP variant classification.
 """
 
 from __future__ import annotations
+from acmg_pipeline.constants import CriterionStatus
 
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Optional
 
 from acmg_pipeline.common import AggregatedJudgment, is_not_clear, strength_tier_from_paper_count
-from acmg_pipeline.gate import CriterionStatus, MatchStatus
+from acmg_pipeline.constants import (
+    ALL_ACMG_CODES,
+    AUTOMATED_CODES,
+    IMPLEMENTED_CODES,
+    LITERATURE_CODES,
+    PATHOGENIC_CODES,
+    BENIGN_CODES,
+    CriterionStatus,
+)
+from acmg_pipeline.gate import MatchStatus
 
 # ============================================================================
 # 1. The full ACMG/AMP 2015 code list
 # ============================================================================
-
-PATHOGENIC_CODES = [
-    "PVS1", "PS1", "PS2", "PS3", "PS4",
-    "PM1", "PM2", "PM3", "PM4", "PM5", "PM6",
-    "PP1", "PP2", "PP3", "PP4", "PP5",
-]
-BENIGN_CODES = [
-    "BA1", "BS1", "BS2", "BS3", "BS4",
-    "BP1", "BP2", "BP3", "BP4", "BP5", "BP6", "BP7",
-]
-ALL_ACMG_CODES = PATHOGENIC_CODES + BENIGN_CODES
-
-# The literature pipeline owns five criteria.  The in-process automated
-# evaluator imported from the evidence-cli work owns another sixteen.
-# Keeping these sets separate prevents a criterion from being emitted once
-# as real evidence and again as a placeholder.
-LITERATURE_CODES = {"PS3", "BS3", "PS4", "PP1", "BS4"}
-AUTOMATED_CODES = {
-    "PVS1", "PS1", "PM1", "PM2", "PM4", "PM5", "PP2", "PP3", "PP5",
-    "BA1", "BS1", "BP1", "BP3", "BP4", "BP6", "BP7",
-}
-IMPLEMENTED_CODES = LITERATURE_CODES | AUTOMATED_CODES
-
 
 class Strength(str, Enum):
     SUPPORTING = "supporting"
@@ -175,7 +162,10 @@ def classify(evidence: list[CriterionEvidence]) -> ClassificationResult:
 
     met = [e for e in by_code.values() if e.status == CriterionStatus.MET]
     not_met = [e for e in by_code.values() if e.status == CriterionStatus.NOT_MET]
-    not_evaluated_codes = sorted(set(ALL_ACMG_CODES) - set(by_code))
+    not_evaluated_codes = sorted(
+        code for code in ALL_ACMG_CODES
+        if code not in by_code or by_code[code].status == CriterionStatus.UNKNOWN
+    )
 
     ba1 = by_code.get("BA1")
     if ba1 is not None and ba1.status == CriterionStatus.MET:
@@ -241,7 +231,9 @@ def from_aggregated_judgment(aggregated: AggregatedJudgment, code: str) -> Crite
     ]
     source = f"llm_pipeline:{','.join(f'PMID{p}' for p in relevant_pmids)}" if relevant_pmids else "llm_pipeline:no_usable_paper"
 
-    if is_not_clear(direction) or direction.value != code:
+    if is_not_clear(direction):
+        return CriterionEvidence(code=code, status=CriterionStatus.UNKNOWN, source=source)
+    if direction.value != code:
         return CriterionEvidence(code=code, status=CriterionStatus.NOT_MET, source=source)
 
     tier = strength_tier_from_paper_count(len(relevant_pmids))

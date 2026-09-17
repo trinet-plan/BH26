@@ -1,10 +1,11 @@
+from acmg_pipeline.constants import CriterionStatus
 import unittest
 from types import SimpleNamespace
 
-from acmg.core.interface import inputs_from_prepared_record
-from acmg.core.models import Status, Variant
-from acmg.criteria import pp3, bp4, pp5, bp6
-from acmg.services.evidence import EvidenceService
+from acmg_pipeline.automated_core.interface import inputs_from_prepared_record
+from acmg_pipeline.automated_core.models import Variant
+from acmg_pipeline.criteria import pp3, bp4, pp5, bp6
+from acmg_pipeline.services.evidence import EvidenceService
 
 
 class ComputationalTests(unittest.TestCase):
@@ -33,7 +34,7 @@ class ComputationalTests(unittest.TestCase):
         return module.evaluate(variant, clinical_note, services, self.config)
 
     def test_calibrated_boundary(self):
-        for score, expected in ((0.799, Status.NOT_MET), (0.8, Status.MET), (0.801, Status.MET)):
+        for score, expected in ((0.799, CriterionStatus.NOT_MET), (0.8, CriterionStatus.MET), (0.801, CriterionStatus.MET)):
             self.prediction["score"] = score
             self.assertEqual(self.run_rule(pp3).status, expected)
         self.prediction["score"] = 0.95
@@ -41,32 +42,32 @@ class ComputationalTests(unittest.TestCase):
 
     def test_other_predictor_cannot_use_threshold(self):
         self.prediction["predictor"] = "AlphaGenome"
-        self.assertEqual(self.run_rule(pp3).status, Status.NOT_EVALUATED)
+        self.assertEqual(self.run_rule(pp3).status, CriterionStatus.UNKNOWN)
 
     def test_non_missense_not_applicable(self):
         self.annotation["consequences"] = ["frameshift_variant"]
-        self.assertEqual(self.run_rule(pp3).status, Status.NOT_APPLICABLE)
+        self.assertEqual(self.run_rule(pp3).status, CriterionStatus.UNKNOWN)
 
     def test_benign_calibration(self):
         self.prediction["score"] = 0.1
-        self.assertEqual(self.run_rule(bp4).status, Status.MET)
-        self.assertEqual(self.run_rule(pp3).status, Status.NOT_MET)
+        self.assertEqual(self.run_rule(bp4).status, CriterionStatus.MET)
+        self.assertEqual(self.run_rule(pp3).status, CriterionStatus.NOT_MET)
         self.annotation["high_confidence_null_or_splice"] = True
-        self.assertEqual(self.run_rule(bp4).status, Status.MANUAL_REVIEW)
+        self.assertEqual(self.run_rule(bp4).status, CriterionStatus.UNKNOWN)
 
     def test_no_calibration_is_not_evaluated(self):
         self.config = {}
-        self.assertEqual(self.run_rule(pp3).status, Status.NOT_EVALUATED)
+        self.assertEqual(self.run_rule(pp3).status, CriterionStatus.UNKNOWN)
 
     def test_explicitly_uncalibrated_source_is_not_scored(self):
         self.prediction["calibration_eligible"] = False
-        self.assertEqual(self.run_rule(pp3).status, Status.NOT_EVALUATED)
+        self.assertEqual(self.run_rule(pp3).status, CriterionStatus.UNKNOWN)
 
     def test_deprecated_independent_of_labels(self):
         self.input["CLNSIG"] = "Pathogenic"
         for module in (pp5, bp6):
             result = self.run_rule(module)
-            self.assertEqual(result.status, Status.DEPRECATED)
+            self.assertEqual(result.status, CriterionStatus.UNKNOWN)
             self.assertIsNone(result.evidence_outcome)
 
 
@@ -116,7 +117,7 @@ class SplicingCalibrationTests(unittest.TestCase):
 
     def test_both_mechanisms_are_reported(self):
         value = self.run_rule(bp4)
-        self.assertEqual(value.status, Status.MET)
+        self.assertEqual(value.status, CriterionStatus.MET)
         self.assertEqual({item["mechanism"] for item in value.provenance["applied_calibrations"]},
                          {"protein", "splicing"})
 
@@ -124,13 +125,13 @@ class SplicingCalibrationTests(unittest.TestCase):
         """A low protein score says nothing about a disrupted splice site."""
         self.splicing["score"] = 0.9
         value = self.run_rule(bp4)
-        self.assertEqual(value.status, Status.NOT_MET)
+        self.assertEqual(value.status, CriterionStatus.NOT_MET)
         self.assertEqual(value.provenance["benign_blocked_by"][0]["predictor"], "SpliceAI")
 
     def test_splicing_alone_can_carry_pp3(self):
         self.splicing["score"] = 0.9
         value = self.run_rule(pp3)
-        self.assertEqual(value.status, Status.MET)
+        self.assertEqual(value.status, CriterionStatus.MET)
         self.assertEqual(value.strength, "supporting")
         self.assertEqual(value.provenance["applied_calibrations"][1]["mechanism"], "splicing")
 
@@ -145,7 +146,7 @@ class SplicingCalibrationTests(unittest.TestCase):
     def test_synonymous_variant_uses_the_splicing_calibration_only(self):
         self.annotation["consequences"] = ["synonymous_variant"]
         value = self.run_rule(bp4)
-        self.assertEqual(value.status, Status.MET)
+        self.assertEqual(value.status, CriterionStatus.MET)
         self.assertEqual([item["predictor"] for item in value.provenance["applied_calibrations"]],
                          ["SpliceAI"])
         # A calibration outside its consequence scope is not a missing predictor.
@@ -154,7 +155,7 @@ class SplicingCalibrationTests(unittest.TestCase):
     def test_unversioned_score_needs_a_declared_assumption(self):
         del self.config["computational"]["calibrations"]["splicing"]["version_assertion"]
         value = self.run_rule(bp4)
-        self.assertEqual(value.status, Status.MET)
+        self.assertEqual(value.status, CriterionStatus.MET)
         # Without the assumption the splicing score is simply not used.
         self.assertEqual([item["predictor"] for item in value.provenance["applied_calibrations"]],
                          ["REVEL"])
@@ -182,3 +183,4 @@ if __name__ == "__main__":
 
 if __name__ == "__main__":
     unittest.main()
+

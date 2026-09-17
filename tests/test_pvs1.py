@@ -1,7 +1,8 @@
+from acmg_pipeline.constants import CriterionStatus
 import unittest
 
-from acmg.core.models import Status, Variant
-from acmg.engine import evaluate_prepared_record, make_services
+from acmg_pipeline.automated_core.models import Variant
+from acmg_pipeline.automated_engine import evaluate_prepared_record, make_services
 
 
 RULES = {"PVS1": {
@@ -78,7 +79,7 @@ class PVS1DecisionTreeTests(unittest.TestCase):
 
     def test_condition_missing_uses_gene_level_mechanism_and_can_be_met(self):
         value = self.evaluate_result(*self.truncating_evidence())
-        self.assertEqual((value.status, value.strength), (Status.MET, "very_strong"))
+        self.assertEqual((value.status, value.strength), (CriterionStatus.MET, "very_strong"))
         self.assertEqual(value.evaluation_context["condition_status"], "NOT_PROVIDED")
         self.assertEqual(value.evaluation_context["mechanism_scope"], "GENE_LEVEL")
         self.assertFalse(value.evaluation_context["condition_specific"])
@@ -93,12 +94,12 @@ class PVS1DecisionTreeTests(unittest.TestCase):
         items = self.truncating_evidence()
         items.append(self.mechanism(False, condition="MONDO:1"))
         value = self.evaluate_result(*items, input_data=input_data)
-        self.assertEqual(value.status, Status.NOT_APPLICABLE)
+        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
         self.assertTrue(value.evaluation_context["condition_specific"])
         self.assertEqual(value.evaluation_context["mechanism_scope"], "CONDITION_SPECIFIC")
 
         fallback = self.evaluate_result(*self.truncating_evidence(), input_data=input_data)
-        self.assertEqual(fallback.status, Status.MET)
+        self.assertEqual(fallback.status, CriterionStatus.MET)
         self.assertEqual(fallback.evaluation_context["condition_status"], "PROVIDED")
         self.assertFalse(fallback.evaluation_context["condition_specific"])
         self.assertEqual(fallback.evaluation_context["mechanism_scope"], "GENE_LEVEL")
@@ -107,50 +108,50 @@ class PVS1DecisionTreeTests(unittest.TestCase):
         input_data = {**self.input, "condition": "MONDO:1"}
         other = self.mechanism(True, condition="MONDO:2")
         value = self.evaluate_result(self.annotation(), other, input_data=input_data)
-        self.assertEqual(value.status, Status.NOT_EVALUATED)
+        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
         self.assertIn("loss-of-function disease mechanism", value.unresolved_requirements)
 
         unknown = self.mechanism(None, condition="MONDO:1")
         value = self.evaluate_result(self.annotation(), unknown, input_data=input_data)
-        self.assertEqual(value.status, Status.NOT_EVALUATED)
+        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
         self.assertIn("lof_mechanism_established", value.missing_inputs)
 
     def test_conflicting_mechanisms_and_gene_mismatch_require_review(self):
         value = self.evaluate_result(self.annotation(), self.mechanism(True), self.mechanism(False))
-        self.assertEqual(value.status, Status.MANUAL_REVIEW)
+        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
         mismatch = self.item("gene_disease", gene="OTHER", lof_mechanism_established=True)
         value = self.evaluate_result(self.annotation(), mismatch)
-        self.assertEqual(value.status, Status.MANUAL_REVIEW)
+        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
 
     def test_rule_set_is_required_for_an_eligible_variant(self):
         value = self.evaluate_result(self.annotation(), config={})
-        self.assertEqual(value.status, Status.NOT_EVALUATED)
+        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
         self.assertEqual(value.missing_inputs, ["PVS1.ruleset"])
 
     def test_transcript_and_exon_relevance_stop_without_negative_inference(self):
         items = [self.annotation(), self.mechanism(), self.transcript("NOT_RELEVANT"), self.nmd()]
-        self.assertEqual(self.evaluate_result(*items).status, Status.NOT_APPLICABLE)
+        self.assertEqual(self.evaluate_result(*items).status, CriterionStatus.UNKNOWN)
         items = [self.annotation(), self.mechanism(), self.transcript(exon_relevance="UNKNOWN"), self.nmd()]
         value = self.evaluate_result(*items)
-        self.assertEqual(value.status, Status.NOT_EVALUATED)
+        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
         self.assertIn("exon_relevance", value.unresolved_requirements)
 
     def test_nmd_escape_critical_region_is_strong(self):
         items = [self.annotation(), self.mechanism(), self.transcript(), self.nmd(False),
                  self.region(critical_region_disrupted=True)]
         value = self.evaluate_result(*items)
-        self.assertEqual((value.status, value.strength), (Status.MET, "strong"))
+        self.assertEqual((value.status, value.strength), (CriterionStatus.MET, "strong"))
 
     def test_nmd_escape_population_and_region_can_make_pvs1_not_applicable(self):
         base = [self.annotation(), self.mechanism(), self.transcript(), self.nmd(False)]
         value = self.evaluate_result(*base, self.region(critical_region_disrupted=False,
                                                        region_biologically_relevant=True),
                                      self.population_lof(True))
-        self.assertEqual(value.status, Status.NOT_APPLICABLE)
+        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
         value = self.evaluate_result(*base, self.region(critical_region_disrupted=False,
                                                        region_biologically_relevant=False),
                                      self.population_lof(False))
-        self.assertEqual(value.status, Status.NOT_APPLICABLE)
+        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
 
     def test_protein_loss_threshold_is_strictly_greater_than_ten_percent(self):
         base = [self.annotation(), self.mechanism(), self.transcript(), self.nmd(False),
@@ -163,14 +164,14 @@ class PVS1DecisionTreeTests(unittest.TestCase):
             *base, self.region(critical_region_disrupted=False,
                                region_biologically_relevant=True,
                                lost_residues=11, total_protein_length=100))
-        self.assertEqual((moderate.status, moderate.strength), (Status.MET, "moderate"))
-        self.assertEqual((strong.status, strong.strength), (Status.MET, "strong"))
+        self.assertEqual((moderate.status, moderate.strength), (CriterionStatus.MET, "moderate"))
+        self.assertEqual((strong.status, strong.strength), (CriterionStatus.MET, "strong"))
 
         invalid = self.evaluate_result(
             *base, self.region(critical_region_disrupted=False,
                                region_biologically_relevant=True,
                                lost_residues=101, total_protein_length=100))
-        self.assertEqual(invalid.status, Status.MANUAL_REVIEW)
+        self.assertEqual(invalid.status, CriterionStatus.UNKNOWN)
 
     def splice(self, outcome="OUT_OF_FRAME_PTC", disrupted=True, rescue=False, **values):
         return self.item("splice_assessment", transcript="NM_TEST.1", splice_outcome=outcome,
@@ -192,11 +193,11 @@ class PVS1DecisionTreeTests(unittest.TestCase):
     def test_splice_rescue_uncertainty_and_frame_conflict_are_distinct(self):
         base = [self.annotation("splice_donor_variant"), self.mechanism()]
         self.assertEqual(self.evaluate_result(*base, self.splice(rescue=True)).status,
-                         Status.NOT_APPLICABLE)
+                         CriterionStatus.UNKNOWN)
         uncertain = self.splice(outcome="UNCERTAIN", disrupted=False)
-        self.assertEqual(self.evaluate_result(*base, uncertain).status, Status.NOT_EVALUATED)
+        self.assertEqual(self.evaluate_result(*base, uncertain).status, CriterionStatus.UNKNOWN)
         conflict = self.splice(outcome="IN_FRAME", disrupted=True)
-        self.assertEqual(self.evaluate_result(*base, conflict).status, Status.MANUAL_REVIEW)
+        self.assertEqual(self.evaluate_result(*base, conflict).status, CriterionStatus.UNKNOWN)
 
     def test_noncanonical_rna_confirmed_splice_lof_is_eligible_and_tracks_use(self):
         rna = self.item("rna_assay", transcript="NM_TEST.1", lof_effect_confirmed=True,
@@ -205,7 +206,7 @@ class PVS1DecisionTreeTests(unittest.TestCase):
         items = [self.annotation("synonymous_variant"), self.mechanism(), rna,
                  self.transcript(), self.nmd()]
         value = self.evaluate_result(*items)
-        self.assertEqual((value.status, value.strength), (Status.MET, "very_strong"))
+        self.assertEqual((value.status, value.strength), (CriterionStatus.MET, "very_strong"))
         used = next(item for item in value.evidence if item["category"] == "rna_assay")
         self.assertEqual(used["used_by"], ["PVS1"])
         self.assertEqual(next(node for node in value.decision_trace
@@ -221,19 +222,19 @@ class PVS1DecisionTreeTests(unittest.TestCase):
         base = [self.annotation("start_lost"), self.mechanism(), self.transcript()]
         supporting = self.evaluate_result(*base, self.initiation(pathogenic=False))
         moderate = self.evaluate_result(*base, self.initiation(pathogenic=True))
-        self.assertEqual((supporting.status, supporting.strength), (Status.MET, "supporting"))
-        self.assertEqual((moderate.status, moderate.strength), (Status.MET, "moderate"))
+        self.assertEqual((supporting.status, supporting.strength), (CriterionStatus.MET, "supporting"))
+        self.assertEqual((moderate.status, moderate.strength), (CriterionStatus.MET, "moderate"))
         self.assertEqual(self.evaluate_result(*base, self.initiation(alternative=True)).status,
-                         Status.NOT_APPLICABLE)
+                         CriterionStatus.UNKNOWN)
         unknown = self.initiation()
         unknown["downstream_in_frame_start"] = None
-        self.assertEqual(self.evaluate_result(*base, unknown).status, Status.NOT_EVALUATED)
+        self.assertEqual(self.evaluate_result(*base, unknown).status, CriterionStatus.UNKNOWN)
 
     def test_other_lof_is_unresolved_but_unrelated_consequence_is_not_applicable(self):
         other_lof = self.evaluate_result(self.annotation("transcript_ablation"))
         unrelated = self.evaluate_result(self.annotation("missense_variant"))
-        self.assertEqual(other_lof.status, Status.NOT_EVALUATED)
-        self.assertEqual(unrelated.status, Status.NOT_APPLICABLE)
+        self.assertEqual(other_lof.status, CriterionStatus.UNKNOWN)
+        self.assertEqual(unrelated.status, CriterionStatus.UNKNOWN)
 
 
 if __name__ == "__main__":

@@ -1,11 +1,12 @@
+from acmg_pipeline.constants import CriterionStatus
 import json
 import unittest
 from pathlib import Path
 
-from acmg.core.models import Status, Variant
-from acmg.engine import evaluate_prepared_record, make_services
-from acmg.gene_disease import build_assessment_document, build_draft_document
-from acmg.providers.gene_disease_draft import GeneDiseaseDraftProvider
+from acmg_pipeline.automated_core.models import Variant
+from acmg_pipeline.automated_engine import evaluate_prepared_record, make_services
+from acmg_pipeline.gene_disease import build_assessment_document, build_draft_document
+from acmg_pipeline.providers.gene_disease_draft import GeneDiseaseDraftProvider
 
 
 POLICY = {
@@ -92,7 +93,7 @@ class GeneDiseaseDraftProviderTests(unittest.TestCase):
             {},
             ["PP2"],
         )[0]
-        self.assertEqual(value.status, Status.NOT_EVALUATED)
+        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
         self.assertIn("gene_disease", value.missing_inputs)
 
     def test_incomplete_spectrum_is_not_read_as_absence(self):
@@ -219,9 +220,9 @@ class GeneDiseaseDraftProviderTests(unittest.TestCase):
             "TNNI3", "NM_000363.5", Variant("GRCh38", "19", 55156239, "G", "A"),
             "MONDO:0016587", "PP2",
         )
-        self.assertEqual(myh7.status, Status.NOT_APPLICABLE)
-        self.assertEqual(tnni3_hcm.status, Status.MET)
-        self.assertEqual(tnni3_arvc.status, Status.NOT_APPLICABLE)
+        self.assertEqual(myh7.status, CriterionStatus.UNKNOWN)
+        self.assertEqual(tnni3_hcm.status, CriterionStatus.MET)
+        self.assertEqual(tnni3_arvc.status, CriterionStatus.UNKNOWN)
 
 
 if __name__ == "__main__":

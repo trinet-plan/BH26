@@ -92,8 +92,8 @@ from typing import Any, Optional
 
 from jsonschema import Draft202012Validator, FormatChecker
 
-from acmg.criteria.common import DEFAULT_STRENGTH
-from acmg.va_spec.mapper import OUTCOME_PATTERN, output_schema
+from acmg_pipeline.criteria.common import DEFAULT_STRENGTH
+from acmg_pipeline.automated_va_spec import OUTCOME_PATTERN, output_schema
 
 from ga4gh.core.models import Coding, Extension, MappableConcept
 from ga4gh.va_spec.base.core import Agent, Contribution, Direction, Document, EvidenceLine, Method
@@ -103,7 +103,7 @@ from acmg_pipeline.common import (
     AggregatedJudgment, CuratorHint, MatchStatus, PaperContribution,
     is_not_clear, strength_tier_from_paper_count,
 )
-from acmg_pipeline.classification import IMPLEMENTED_CODES
+from acmg_pipeline.constants import IMPLEMENTED_CODES, CriterionStatus
 from acmg_pipeline.criteria import curator_info, reference_links
 from acmg_pipeline.vcf_record import VariantRecord
 
@@ -206,7 +206,7 @@ def _integrated_line_schema() -> dict:
         emitting one would assert a judgment that was never made.
 
     So the schema file itself is NOT edited - its sha256 is recorded as
-    provenance by acmg.va_spec.mapper.output_schema_sha256() and travels
+    provenance by acmg_pipeline.automated_va_spec.output_schema_sha256() and travels
     inside audit envelopes; changing it would silently invalidate those.
     Instead this derives an in-memory superset: the same property schemas,
     plus the two literature-only fields, with `evidenceOutcome` demoted
@@ -273,7 +273,7 @@ def validate_integrated_line(line: dict, criterion: str) -> dict:
     """Validate one line of the integrated 28-line document. Applied to ALL 28.
 
     Scored lines (those carrying an evidenceOutcome) get the same schema
-    and ACMG semantic checks that acmg.va_spec.mapper.validate_1_0_1()
+    and ACMG semantic checks that acmg_pipeline.automated_va_spec.validate_1_0_1()
     applies to evidence-cli's output; workflow lines get the schema checks
     minus the evidenceOutcome requirement. Raises ValueError on the first
     problem, matching validate_1_0_1()'s behaviour.
@@ -424,9 +424,9 @@ def build_evidence_line(
     strength, outcome, strength_disclosure = _strength_blocks(direction, len(relevant_pmids))
     hints_ext = _hints_extension(aggregated.aggregation_hints)
     status = (
-        "MANUAL_REVIEW" if is_not_clear(direction)
-        else "MET" if direction.value == criterion
-        else "NOT_MET"
+        CriterionStatus.UNKNOWN.value if is_not_clear(direction)
+        else CriterionStatus.MET.value if direction.value == criterion
+        else CriterionStatus.NOT_MET.value
     )
     assessment_ext = Extension(
         name="bh26AssessmentDetails",
@@ -586,11 +586,10 @@ def build_workflow_evidence_line(
 
 def build_automated_evidence_line(result, variant: VariantRecord) -> dict:
     """Map one evidence-cli result and attach main's curator-reference extensions."""
-    from acmg.core.models import Status
-    from acmg.va_spec.mapper import assessment_details, to_evidence_line, validate_1_0_1
+    from acmg_pipeline.automated_va_spec import assessment_details, to_evidence_line, validate_1_0_1
 
-    status = Status(result.status)
-    if status in {Status.MET, Status.NOT_MET}:
+    status = CriterionStatus(result.status)
+    if status in {CriterionStatus.MET, CriterionStatus.NOT_MET}:
         line = to_evidence_line(result)
         additions = [e.model_dump(mode="json", exclude_none=True)
                      for e in build_reference_extensions(result.criterion, variant)]
@@ -680,7 +679,7 @@ def build_stub_evidence_line(code: str, variant: VariantRecord) -> dict:
     return build_workflow_evidence_line(
         code,
         variant,
-        status="NOT_EVALUATED",
+        status=CriterionStatus.UNKNOWN.value,
         description=(
             f"{code} is not evaluated by this integrated pipeline. No judgment was "
             "made; any referenceLink or curatorInfo extension is an auxiliary "

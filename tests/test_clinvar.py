@@ -1,7 +1,7 @@
 import unittest
 
-from acmg.core.models import Variant
-from acmg.providers.clinvar import (
+from acmg_pipeline.automated_core.models import Variant
+from acmg_pipeline.providers.clinvar import (
     ClinVarComparatorProvider, ClinVarHotspotProvider, ClinVarProvider,
 )
 

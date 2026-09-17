@@ -5,10 +5,12 @@ Demonstrates acmg_pipeline.pipeline.classify_variant_from_structured_input():
 builds an ApiCaseInput the way a real API caller would - a plain dict with
 "vcf"/"clinical_note" keys, exactly what json.loads(request_body) would
 produce, never a file (ApiCaseInput.from_json_file() is a demo-fixture
-convenience only, not the production path - see api_input.py) - runs the 5
-implemented literature criteria, fills the other 23 with stubs.stub_evidence()
-(their real logic is another team member's responsibility - see acmg_
-pipeline/criteria/stubs.py), and classifies the result.
+convenience only, not the production path - see api_input.py) - runs the
+implemented literature criteria (PS3/BS3/PS4 as of 2026-09-16 - PP1/BS4
+were dropped from the default scope on that date, see acmg_pipeline.
+classification.IMPLEMENTED_CODES), fills the other 25 with stubs.
+stub_evidence() (their real logic is another team member's responsibility
+- see acmg_pipeline/criteria/stubs.py), and classifies the result.
 
 Two real democase scenarios, chosen to exercise both branches of judge_
 variant_from_structured_input()'s ERepo lookup:

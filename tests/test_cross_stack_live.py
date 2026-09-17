@@ -37,7 +37,7 @@ pytestmark = pytest.mark.skipif(
     reason="live LLM/network test; set ACMG_LIVE_LLM=1 to run",
 )
 
-from acmg.services.resolve import StaticEvidenceResolver  # noqa: E402
+from acmg_pipeline.services.resolve import StaticEvidenceResolver  # noqa: E402
 from test_cross_stack_integration import (  # noqa: E402  (after the skip guard)
     GENE,
     HGVSC,

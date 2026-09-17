@@ -11,7 +11,7 @@ from jsonschema import Draft202012Validator
 os.environ.setdefault("VLLM_BASE_URL", "http://127.0.0.1:8000/v1")
 os.environ.setdefault("VLLM_API_KEY", "test-only")
 
-from acmg.services.resolve import StaticEvidenceResolver
+from acmg_pipeline.services.resolve import StaticEvidenceResolver
 from acmg_pipeline.classification import ALL_ACMG_CODES
 from acmg_pipeline.clinical_note import ClinicalNoteExtraction
 from acmg_pipeline.common import MatchStatus, PaperContribution, VariantMatchingResult
@@ -51,14 +51,14 @@ def test_integrated_entrypoint_returns_one_ordered_line_per_acmg_code():
                 variant,
                 clinical_note,
                 automated_config=config,
-                evidence_resolver=StaticEvidenceResolver([]),
+                normalized_evidence=[],
                 mcp=object(),
                 erepo_client=object(),
             )
         )
 
     assert len(lines) == 28
-    assert [line["specifiedBy"]["methodType"] for line in lines] == ALL_ACMG_CODES
+    assert tuple(line["specifiedBy"]["methodType"] for line in lines) == ALL_ACMG_CODES
     assert len({line["id"] for line in lines}) == 28
 
     schema_validator = Draft202012Validator(EvidenceLine.model_json_schema())
@@ -79,7 +79,7 @@ def test_integrated_entrypoint_requires_shared_input_classes():
                 {},
                 ClinicalNoteExtraction(),
                 automated_config={},
-                evidence_resolver=StaticEvidenceResolver([]),
+                normalized_evidence=[],
                 mcp=object(),
                 erepo_client=object(),
             )
@@ -135,7 +135,7 @@ def test_reference_lookup_failure_does_not_remove_criterion_line():
         from acmg_pipeline.export import build_workflow_evidence_line
 
         line = build_workflow_evidence_line(
-            "PM1", variant, status="MANUAL_REVIEW", description="Review required."
+            "PM1", variant, status="unknown", description="Review required."
         )
 
     assert line["specifiedBy"]["methodType"] == "PM1"

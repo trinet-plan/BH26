@@ -1,8 +1,9 @@
+from acmg_pipeline.constants import CriterionStatus
 import unittest
 from copy import deepcopy
 
-from acmg.core.models import CriterionResult, Status
-from acmg.va_spec.mapper import (
+from acmg_pipeline.automated_core.models import CriterionResult
+from acmg_pipeline.automated_va_spec import (
     SCHEMA_ID,
     export_document,
     to_evidence_line,
@@ -31,7 +32,7 @@ EVIDENCE = [{
 
 class VaSpecTests(unittest.TestCase):
     def test_met_is_validated_by_reference_model(self):
-        result = CriterionResult("PM2", Status.MET, VARIANT, "rare", "supporting", "supports",
+        result = CriterionResult("PM2", CriterionStatus.MET, VARIANT, "rare", "supporting", "supports",
                                  "PM2_supporting", evidence=EVIDENCE)
         line = to_evidence_line(result)
         validate_1_0_1(line, "PM2")
@@ -50,7 +51,7 @@ class VaSpecTests(unittest.TestCase):
         self.assertEqual(study["specifiedBy"]["type"], "Method")
 
     def test_not_met_maps_to_machine_readable_neutral(self):
-        result = CriterionResult("PM2", Status.NOT_MET, VARIANT, "not rare", None, "none",
+        result = CriterionResult("PM2", CriterionStatus.NOT_MET, VARIANT, "not rare", None, "none",
                                  "PM2_not_met", evidence=EVIDENCE)
         line = to_evidence_line(result)
         self.assertEqual(line["directionOfEvidenceProvided"], "neutral")
@@ -58,21 +59,21 @@ class VaSpecTests(unittest.TestCase):
         validate_1_0_1(line, "PM2")
 
     def test_workflow_statuses_are_not_exported(self):
-        for code, status in (("PVS1", Status.MANUAL_REVIEW), ("PP5", Status.DEPRECATED),
-                             ("BP6", Status.DEPRECATED), ("PM1", Status.NOT_EVALUATED)):
+        for code, status in (("PVS1", CriterionStatus.UNKNOWN), ("PP5", CriterionStatus.UNKNOWN),
+                             ("BP6", CriterionStatus.UNKNOWN), ("PM1", CriterionStatus.UNKNOWN)):
             result = CriterionResult(code, status, VARIANT, "workflow state")
             self.assertIsNone(to_evidence_line(result))
 
     def test_all_supported_criteria_map(self):
-        from acmg.core.models import CRITERIA
-        from acmg.criteria.common import DEFAULT_STRENGTH
+        from acmg_pipeline.automated_core.models import CRITERIA
+        from acmg_pipeline.criteria.common import DEFAULT_STRENGTH
 
         for code in CRITERIA:
             if code in {"PVS1", "PP5", "BP6"}:
                 continue
             strength = DEFAULT_STRENGTH[code]
             outcome = code
-            result = CriterionResult(code, Status.MET, VARIANT, "met", strength,
+            result = CriterionResult(code, CriterionStatus.MET, VARIANT, "met", strength,
                                      "disputes" if code.startswith("B") else "supports", outcome,
                                      evidence=EVIDENCE)
             with self.subTest(code=code):
@@ -86,7 +87,7 @@ class VaSpecTests(unittest.TestCase):
             "supporting": "PVS1_supporting",
         }
         for strength, outcome in expected.items():
-            value = CriterionResult("PVS1", Status.MET, VARIANT, "met", strength,
+            value = CriterionResult("PVS1", CriterionStatus.MET, VARIANT, "met", strength,
                                     "supports", outcome, evidence=EVIDENCE)
             with self.subTest(strength=strength):
                 line = to_evidence_line(value)
@@ -101,7 +102,7 @@ class VaSpecTests(unittest.TestCase):
         self.assertTrue(document["validated_by"]["audit_envelope_schema_sha256"])
 
     def test_1_0_1_contract_rejects_newer_gks_discriminator_and_mismatched_method(self):
-        result = CriterionResult("PM2", Status.NOT_MET, VARIANT, "not rare", None, "none",
+        result = CriterionResult("PM2", CriterionStatus.NOT_MET, VARIANT, "not rare", None, "none",
                                  "PM2_not_met", evidence=EVIDENCE)
         line = to_evidence_line(result)
         invalid = deepcopy(line)
@@ -114,16 +115,16 @@ class VaSpecTests(unittest.TestCase):
             validate_1_0_1(invalid, "PM2")
 
     def test_referenced_evidence_id_conflict_is_rejected(self):
-        first = CriterionResult("PM2", Status.NOT_MET, VARIANT, "a", None, "none", "PM2_not_met",
+        first = CriterionResult("PM2", CriterionStatus.NOT_MET, VARIANT, "a", None, "none", "PM2_not_met",
                                 evidence=[{"evidence_id": "test:x", "value": 1}]).to_dict()
-        second = CriterionResult("BA1", Status.NOT_MET, VARIANT, "b", None, "none", "BA1_not_met",
+        second = CriterionResult("BA1", CriterionStatus.NOT_MET, VARIANT, "b", None, "none", "BA1_not_met",
                                  evidence=[{"evidence_id": "test:x", "value": 2}]).to_dict()
         with self.assertRaisesRegex(ValueError, "Conflicting evidence"):
             export_document([{"record_id": "test:1", "variant": VARIANT,
                               "results": [first, second]}])
 
     def test_envelope_resolves_iri_to_structured_study_result(self):
-        result = CriterionResult("PM2", Status.NOT_MET, VARIANT, "not rare", None, "none",
+        result = CriterionResult("PM2", CriterionStatus.NOT_MET, VARIANT, "not rare", None, "none",
                                  "PM2_not_met", evidence=EVIDENCE).to_dict()
         document = export_document([{
             "record_id": "test:study-result", "variant": VARIANT, "results": [result],
@@ -143,16 +144,16 @@ class VaSpecTests(unittest.TestCase):
         self.assertEqual(observations["AC"], 1)
         self.assertEqual(observations["AN"], 100000)
         self.assertEqual(len(evidence_hash), 64)
-        self.assertEqual(wrapped["assessment_details"]["status"], "NOT_MET")
+        self.assertEqual(wrapped["assessment_details"]["status"], "not_met")
         self.assertEqual(wrapped["assessment_details"]["evidenceItemIds"], [identifier])
         extension = wrapped["evidence_line"]["extensions"][0]
         self.assertEqual(extension["name"], "bh26AssessmentDetails")
-        self.assertEqual(extension["value"]["status"], "NOT_MET")
+        self.assertEqual(extension["value"]["status"], "not_met")
         self.assertEqual(extension["value"]["evidenceItemIds"], [identifier])
 
     def test_pvs1_assessment_details_keep_decision_trace(self):
         result = CriterionResult(
-            "PVS1", Status.MET, VARIANT, "NMD expected", "very_strong", "supports", "PVS1",
+            "PVS1", CriterionStatus.MET, VARIANT, "NMD expected", "very_strong", "supports", "PVS1",
             evidence=EVIDENCE,
             evaluation_context={"gene": "TEST", "condition_status": "NOT_PROVIDED"},
             decision_trace=[{"node_id": "NF02", "result": "PASS", "value": True}],
@@ -176,7 +177,7 @@ class VaSpecTests(unittest.TestCase):
             "variant_key": "GRCh38:1:2:C:T", "transcript": "NM_TEST.1",
         }]
         result = CriterionResult(
-            "PM1", Status.NOT_EVALUATED, VARIANT, "Reviewed region unavailable",
+            "PM1", CriterionStatus.UNKNOWN, VARIANT, "Reviewed region unavailable",
             evidence=evidence, missing_inputs=["region"],
             review_points=["Curate a disease-relevant functional region"],
         ).to_dict()
@@ -185,14 +186,14 @@ class VaSpecTests(unittest.TestCase):
         }])["records"][0]
         self.assertEqual(record["evidence_lines"], [])
         assessment = record["criterion_assessments"][0]
-        self.assertEqual(assessment["status"], "NOT_EVALUATED")
+        self.assertEqual(assessment["status"], "unknown")
         self.assertEqual(assessment["missingInputs"], ["region"])
         self.assertEqual(assessment["reviewPoints"],
                          ["Curate a disease-relevant functional region"])
         self.assertIn(evidence[0]["evidence_id"], record["referenced_evidence"])
 
     def test_audit_envelope_rejects_an_unresolved_evidence_reference(self):
-        result = CriterionResult("PM2", Status.NOT_MET, VARIANT, "not rare", None, "none",
+        result = CriterionResult("PM2", CriterionStatus.NOT_MET, VARIANT, "not rare", None, "none",
                                  "PM2_not_met", evidence=EVIDENCE).to_dict()
         document = export_document([{
             "record_id": "test:broken-reference", "variant": VARIANT, "results": [result],

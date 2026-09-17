@@ -1,7 +1,7 @@
 import unittest
 
-from acmg.core.models import Variant
-from acmg.providers.gnomad import GnomadProvider
+from acmg_pipeline.automated_core.models import Variant
+from acmg_pipeline.providers.gnomad import GnomadProvider
 
 
 class Client:

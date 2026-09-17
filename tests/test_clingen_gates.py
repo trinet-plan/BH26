@@ -12,7 +12,7 @@ import unittest
 import uuid
 from pathlib import Path
 
-from acmg.output import run_internal
+from acmg_pipeline.automated_output import run_internal
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -49,25 +49,25 @@ class ClinGenGateTests(unittest.TestCase):
     def test_each_gate_opens_for_its_consequence(self):
         for record_id, (criterion, _) in GATES.items():
             result = self.by_record[record_id][criterion]
-            self.assertNotEqual(result["status"], "NOT_APPLICABLE",
+            self.assertNotEqual(result["status"], "unknown",
                                 f"{criterion} should apply to {record_id}")
             # No curated evidence is supplied, so an opened gate stops here.
-            self.assertEqual(result["status"], "NOT_EVALUATED")
+            self.assertEqual(result["status"], "unknown")
             self.assertTrue(result["missing_inputs"])
 
     def test_an_in_frame_deletion_opens_both_length_and_repeat_criteria(self):
         results = self.by_record["clingen:pm4-inframe-del"]
         for criterion in ("PM4", "BP3"):
-            self.assertEqual(results[criterion]["status"], "NOT_EVALUATED")
+            self.assertEqual(results[criterion]["status"], "unknown")
             self.assertEqual(results[criterion]["missing_inputs"], ["region"])
-        self.assertEqual(results["PVS1"]["status"], "NOT_APPLICABLE")
+        self.assertEqual(results["PVS1"]["status"], "unknown")
 
     def test_gates_stay_closed_for_other_consequences(self):
         for record_id, (criterion, _) in GATES.items():
             for other in CONSEQUENCE_GATED:
                 if other == criterion or (criterion == "PM4" and other == "BP3"):
                     continue
-                self.assertEqual(self.by_record[record_id][other]["status"], "NOT_APPLICABLE",
+                self.assertEqual(self.by_record[record_id][other]["status"], "unknown",
                                  f"{other} should not apply to {record_id}")
 
     def test_loss_of_function_gate_covers_splice_and_frameshift(self):

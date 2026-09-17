@@ -30,15 +30,15 @@ the integrated literature and automated-evidence evaluators.
 """
 
 from __future__ import annotations
+from acmg_pipeline.constants import CriterionStatus
 
-from acmg_pipeline.classification import ALL_ACMG_CODES, IMPLEMENTED_CODES, CriterionEvidence
-from acmg_pipeline.gate import CriterionStatus
-
-STUB_CODES = [code for code in ALL_ACMG_CODES if code not in IMPLEMENTED_CODES]
+from acmg_pipeline.classification import CriterionEvidence
+from acmg_pipeline.constants import IMPLEMENTED_CODES, STUB_CODES, CriterionStatus
 
 # These six criteria depend primarily on patient/family records. PP4 remains
 # a phenotype-specific workflow not implemented by either integrated engine.
 LITERATURE_ADJACENT_BUT_CLINICAL_RECORD = {"PS2", "PM3", "PM6", "BS2", "BP2", "BP5"}
+LITERATURE_WORKFLOW = {"PP1", "BS4"}
 PHENOTYPE_WORKFLOW = {"PP4"}
 
 
@@ -67,7 +67,9 @@ def stub_evidence(code: str, note: str = "") -> CriterionEvidence:
     reason = (
         "depends on the patient's own clinical/genetic-testing records, not literature"
         if code in LITERATURE_ADJACENT_BUT_CLINICAL_RECORD
-        else "phenotype-specific criterion not implemented by the integrated evaluators"
+        else ("literature workflow not enabled in the current main pipeline"
+              if code in LITERATURE_WORKFLOW
+              else "phenotype-specific criterion not implemented by the integrated evaluators")
     )
     return CriterionEvidence(
         code=code,
@@ -78,4 +80,4 @@ def stub_evidence(code: str, note: str = "") -> CriterionEvidence:
 
 def all_stub_evidence() -> list[CriterionEvidence]:
     """Convenience: a NOT_EVALUATED CriterionEvidence for every stub code at once."""
-    return [stub_evidence(code) for code in STUB_CODES]
+    return [stub_evidence(code) for code in sorted(STUB_CODES)]

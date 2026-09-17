@@ -1,8 +1,9 @@
+from acmg_pipeline.constants import CriterionStatus
 import unittest
 from pathlib import Path
 
-from acmg.core.input import audit_demo, read_xlsx_rows
-from acmg.core.models import CRITERIA, CriterionResult, Status, Variant
+from acmg_pipeline.automated_core.input import audit_demo, read_xlsx_rows
+from acmg_pipeline.automated_core.models import CRITERIA, CriterionResult, Variant
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -67,10 +68,10 @@ class DomainTests(unittest.TestCase):
         self.assertEqual(len(CRITERIA), 16)
         for code in ("PP5", "BP6"):
             with self.assertRaises(ValueError):
-                CriterionResult(code, Status.MET, {}, "invalid")
+                CriterionResult(code, CriterionStatus.MET, {}, "invalid")
         with self.assertRaises(ValueError):
-            CriterionResult("PVS1", Status.MET, {}, "invalid")
-        value = CriterionResult("PVS1", Status.MET, {}, "valid", "very_strong")
+            CriterionResult("PVS1", CriterionStatus.MET, {}, "invalid")
+        value = CriterionResult("PVS1", CriterionStatus.MET, {}, "valid", "very_strong")
         self.assertEqual(value.strength, "very_strong")
 
 

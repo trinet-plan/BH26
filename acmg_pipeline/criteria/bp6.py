@@ -1,0 +1,11 @@
+from acmg_pipeline.constants import CriterionStatus
+from acmg_pipeline.automated_core.interface import criterion_input
+from acmg_pipeline.criteria.common import result
+from acmg_pipeline.clinical_note import ClinicalNoteExtraction
+from acmg_pipeline.vcf_record import VariantRecord
+
+
+def evaluate(variant: VariantRecord, clinical_note: ClinicalNoteExtraction, services, config):
+    input_data = criterion_input(variant, clinical_note)
+    return result("BP6", input_data, CriterionStatus.UNKNOWN,
+                  "ClinGen General policy: retrieve primary evidence instead of scoring external assertions")

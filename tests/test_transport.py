@@ -4,9 +4,9 @@ from pathlib import Path
 import unittest
 from unittest.mock import patch
 
-from acmg.providers.http import CachedHttpClient, FetchError
-from acmg.providers.vep import VepProvider
-from acmg.core.models import Variant
+from acmg_pipeline.providers.http import CachedHttpClient, FetchError
+from acmg_pipeline.providers.vep import VepProvider
+from acmg_pipeline.automated_core.models import Variant
 
 
 class MemoryCache:
