@@ -51,6 +51,7 @@ from acmg_pipeline.constants import (
     AUTOMATED_CODES,
     IMPLEMENTED_CODES,
     LITERATURE_CODES,
+    PHENOTYPE_SEGREGATION_CODES,
     PATHOGENIC_CODES,
     BENIGN_CODES,
     CriterionStatus,

@@ -71,11 +71,13 @@ from acmg_pipeline.classification import (
     AUTOMATED_CODES,
     IMPLEMENTED_CODES,
     LITERATURE_CODES,
+    PHENOTYPE_SEGREGATION_CODES,
     ClassificationResult,
     classify,
     from_aggregated_judgment,
 )
 from acmg_pipeline.criteria import stubs
+from acmg_pipeline.criteria import pp1_bs4_pp4_engine
 from acmg_pipeline.api_input import ApiCaseInput
 from acmg_pipeline.clinical_note import ClinicalNoteExtraction
 from acmg_pipeline.inputs import empty_clinical_note
@@ -934,6 +936,12 @@ async def evaluate_variant_evidence_lines(
                 variant=variant,
             )
 
+    phenotype_segregation_results = pp1_bs4_pp4_engine.evaluate(variant, clinical_note, automated_config)
+    for code in PHENOTYPE_SEGREGATION_CODES:
+        by_code[code] = pp1_bs4_pp4_engine.build_evidence_line(
+            code, phenotype_segregation_results[code], variant,
+        )
+
     for code in ALL_ACMG_CODES:
         if code not in IMPLEMENTED_CODES:
             by_code[code] = build_stub_evidence_line(code, variant)
@@ -983,6 +991,9 @@ async def evaluate_selected_criteria(
     requested = set(criteria)
     automated_subset = tuple(code for code in ALL_ACMG_CODES if code in requested and code in AUTOMATED_CODES)
     literature_subset = tuple(code for code in ALL_ACMG_CODES if code in requested and code in LITERATURE_CODES)
+    phenotype_segregation_subset = tuple(
+        code for code in ALL_ACMG_CODES if code in requested and code in PHENOTYPE_SEGREGATION_CODES
+    )
     stub_subset = [code for code in criteria if code not in IMPLEMENTED_CODES]
 
     if literature_subset and (mcp is None or erepo_client is None):
@@ -1035,6 +1046,13 @@ async def evaluate_selected_criteria(
                 by_code[code] = build_evidence_line(
                     aggregated, gene, hgvsc, code, vcep_name=vcep_name, variant=variant,
                 )
+
+    if phenotype_segregation_subset:
+        phenotype_segregation_results = pp1_bs4_pp4_engine.evaluate(variant, clinical_note, automated_config)
+        for code in phenotype_segregation_subset:
+            by_code[code] = pp1_bs4_pp4_engine.build_evidence_line(
+                code, phenotype_segregation_results[code], variant,
+            )
 
     for code in stub_subset:
         by_code[code] = build_stub_evidence_line(code, variant)
