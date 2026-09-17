@@ -8,7 +8,7 @@ import re
 from datetime import datetime, timezone
 from pathlib import Path
 
-from acmg import __version__
+from acmg_pipeline import __version__
 from acmg_pipeline.automated_core.context import apply_context, context_summary, load_context
 from acmg_pipeline.automated_core.input import sha256_file
 from acmg_pipeline.automated_core.interface import inputs_from_prepared_record
