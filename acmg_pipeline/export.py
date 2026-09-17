@@ -602,7 +602,12 @@ def build_workflow_evidence_line(
 
 def build_automated_evidence_line(result, variant: VariantRecord) -> dict:
     """Map one evidence-cli result and attach main's curator-reference extensions."""
-    from acmg_pipeline.automated_va_spec import assessment_details, to_evidence_line, validate_1_0_1
+    from acmg_pipeline.automated_va_spec import (
+        _curator_hints_from_result,
+        assessment_details,
+        to_evidence_line,
+        validate_1_0_1,
+    )
 
     status = CriterionStatus(result.status)
     if status in {CriterionStatus.MET, CriterionStatus.NOT_MET}:
@@ -625,7 +630,7 @@ def build_automated_evidence_line(result, variant: VariantRecord) -> dict:
 
     details = assessment_details(result)
     summary = result.summary or f"{result.criterion} was not scored ({status.value})."
-    return build_workflow_evidence_line(
+    line = build_workflow_evidence_line(
         result.criterion,
         variant,
         status=status.value,
@@ -633,6 +638,13 @@ def build_automated_evidence_line(result, variant: VariantRecord) -> dict:
         details={key: value for key, value in details.items()
                  if key not in {"criterion", "status", "summary"}},
     )
+    curator_hints = _curator_hints_from_result(result)
+    if curator_hints:
+        line.setdefault("extensions", []).append({
+            "name": "curatorHints",
+            "value": curator_hints,
+        })
+    return validate_integrated_line(line, result.criterion)
 
 
 def build_stub_evidence_line(code: str, variant: VariantRecord) -> dict:

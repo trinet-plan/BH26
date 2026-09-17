@@ -239,16 +239,25 @@ def assessment_details(result):
         "direction": result.direction,
         "evidenceOutcome": result.evidence_outcome,
         "missingInputs": result.missing_inputs,
-        "reviewPoints": result.review_points,
-        "conflictFlags": result.conflict_flags,
         "evaluationContext": result.evaluation_context,
         "decisionTrace": result.decision_trace,
         "rulesUsed": result.rules_used,
-        "warnings": result.warnings,
         "unresolvedRequirements": result.unresolved_requirements,
     }
     value.update({key: field_value for key, field_value in optional.items() if field_value})
     return value
+
+
+def _curator_hints_from_result(result):
+    """Map automated-engine review messages to the shared curatorHints shape."""
+    hints = []
+    for message in result.conflict_flags:
+        hints.append({"severity": "warning", "category": "conflict", "message": message})
+    for message in result.review_points:
+        hints.append({"severity": "caution", "category": "review", "message": message})
+    for message in result.warnings:
+        hints.append({"severity": "warning", "category": "warning", "message": message})
+    return hints
 
 
 @lru_cache(maxsize=1)
@@ -346,6 +355,11 @@ def to_evidence_line(result):
     if direction not in {"supports", "disputes", "neutral"}:
         raise ValueError(f"Invalid VA-Spec direction for {result.criterion}")
     method_type = METHOD_TYPES[result.criterion]
+    extensions = [{"name": "bh26AssessmentDetails",
+                   "value": assessment_details(result)}]
+    curator_hints = _curator_hints_from_result(result)
+    if curator_hints:
+        extensions.append({"name": "curatorHints", "value": curator_hints})
     payload = {
         "type": "EvidenceLine",
         "id": stable_urn(
@@ -354,8 +368,7 @@ def to_evidence_line(result):
         ),
         "name": f"{result.criterion} assessment for {result.variant['assembly']}:{result.variant['chrom']}:{result.variant['pos']}:{result.variant['ref']}:{result.variant['alt']}",
         "description": result.summary,
-        "extensions": [{"name": "bh26AssessmentDetails",
-                        "value": assessment_details(result)}],
+        "extensions": extensions,
         "specifiedBy": {
             "type": "Method",
             "name": "ACMG/AMP 2015 with ClinGen General Guidance",
