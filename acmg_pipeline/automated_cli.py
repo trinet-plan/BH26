@@ -17,6 +17,9 @@ from acmg_pipeline.providers.gene2phenotype import (
     METHOD as G2P_METHOD, Gene2PhenotypeProvider,
 )
 from acmg_pipeline.providers.mondo import METHOD as MONDO_METHOD, MondoMappingProvider
+from acmg_pipeline.providers.mondo_hierarchy import (
+    METHOD as MONDO_TREE_METHOD, MondoHierarchyProvider,
+)
 from acmg_pipeline.providers.clinvar import (
     VCV, ClinVarComparatorProvider, ClinVarHotspotProvider, ClinVarProvider,
 )
@@ -85,6 +88,10 @@ def main(argv=None):
     online.add_argument("--with-mondo-mapping", action="store_true",
                         help="Resolve each record's OMIM/Orphanet condition to MONDO so "
                              "PVS1's disease gate can compare it with curated evidence")
+    online.add_argument("--with-mondo-hierarchy", action="store_true",
+                        help="Look up MONDO ancestry so a mechanism curated for a parent or "
+                             "child disease reaches a curator instead of being reported as "
+                             "no mechanism at all")
     online.add_argument("--with-mane-transcript", action="store_true",
                         help="Assert PVS1's transcript-relevance gate when the evaluated "
                              "transcript is the gene's MANE Select (automated stand-in)")
@@ -159,6 +166,7 @@ def main(argv=None):
             # Keyed by the identifier as written, because that is what a record carries and
             # what a curator will look for in the manifest. Only the online command fills it.
             condition_mappings = {}
+            condition_ancestry = {}
             if args.command == "prepare-demo":
                 reference = FastaReference(args.reference)
                 candidates = json.loads(args.identity_evidence.read_text(encoding="utf-8-sig"))
@@ -458,6 +466,38 @@ def main(argv=None):
                         "errors": mondo_errors,
                         "use_restriction": "DISEASE_MATCH_EQUIVALENCE_ONLY",
                     })
+                if args.with_mondo_hierarchy:
+                    # Ancestry is asked of both sides, because the case can be the broader
+                    # term or the narrower one and the gate has to recognise either.
+                    tree = MondoHierarchyProvider(external_client)
+                    tree_errors = []
+                    wanted = {item["normalized_condition"]
+                              for item in condition_mappings.values()}
+                    wanted.update(item["condition"] for item in evidence
+                                  if item.get("category") == "gene_disease"
+                                  and str(item.get("condition", "")).startswith("MONDO:"))
+                    for term in sorted(wanted):
+                        try:
+                            ancestry = tree.ancestors(term)
+                        except (FetchError, ValueError, KeyError) as exc:
+                            tree_errors.append(f"{term}: {exc}")
+                            continue
+                        if ancestry:
+                            condition_ancestry[term] = ancestry["ancestors"]
+                    for item in evidence:
+                        if item.get("category") == "gene_disease":
+                            found = condition_ancestry.get(item.get("condition"))
+                            if found:
+                                item["condition_ancestors"] = found
+                    external_manifest.append({
+                        "provider": tree.name, "provider_version": None,
+                        "method": MONDO_TREE_METHOD,
+                        "conditions_queried": len(wanted),
+                        "evidence": len(condition_ancestry),
+                        "unresolved": sorted(wanted - set(condition_ancestry)),
+                        "errors": tree_errors,
+                        "use_restriction": "DISEASE_MATCH_RELATEDNESS_ONLY",
+                    })
                 if args.with_mane_transcript:
                     # PVS1's NF01 gate. Only a MANE Select match produces a record; see
                     # providers/mane.py for why a non-match is not NOT_RELEVANT.
@@ -595,6 +635,11 @@ def main(argv=None):
                 mapping = condition_mappings.get(record.get("condition"))
                 if mapping:
                     record["condition_mapping"] = mapping
+                # Ancestry is keyed by the MONDO term, which is what the mapping resolved to.
+                term = (mapping or {}).get("normalized_condition") or record.get("condition")
+                ancestors = condition_ancestry.get(term)
+                if ancestors:
+                    record["condition_ancestors"] = ancestors
             if args.command in {"prepare-demo", "prepare-demo-online"}:
                 (args.output_dir / "variants.json").write_text(
                     json.dumps({"schema_version": "1.0", "records": resolved},

@@ -11,7 +11,7 @@ from copy import deepcopy
 from acmg_pipeline.automated_core.interface import criterion_input
 from acmg_pipeline.automated_core.models import Variant
 from acmg_pipeline.criteria.common import (
-    annotation_context, normalize_inheritance, resolved_condition,
+    annotation_context, normalize_inheritance, ontology_related, resolved_condition,
     result as _base_result, reviewed_or_automated,
 )
 from acmg_pipeline.clinical_note import ClinicalNoteExtraction
@@ -188,6 +188,15 @@ def _resolve_mechanism(input_data, services, annotation, context, precedence=())
     if condition:
         matched = [(item, resolved_condition(item)) for item in applicable]
         exact = [item for item, (value, _) in matched if value == condition]
+        if not exact:
+            # A curation for a parent or a child disease is on file. It is not this disease,
+            # so it cannot decide the mechanism, but reporting "no mechanism" would send a
+            # curator hunting for evidence that is sitting under the neighbouring term.
+            related = [item for item, (value, _) in matched
+                       if ontology_related(input_data, condition, item, value)]
+            if related:
+                context["disease_match"] = "PARENT_CHILD"
+                return None, related, "parent_child"
         selected = exact or [item for item in applicable if not item.get("condition")]
         scope = "CONDITION_SPECIFIC" if exact else "GENE_LEVEL"
         # An identifier match on both sides is EXACT; anything that needed a mapping to line
@@ -579,12 +588,12 @@ def _preliminary_assessment(input_data, services, annotation, variant_type, stat
 
 
 def _not_evaluated(input_data, services, annotation, variant_type, state, rna, node, summary,
-                   missing, *, evidence=()):
+                   missing, *, evidence=(), review=()):
     """Stop short of a PVS1 verdict, keeping the variant-level work that is still valid."""
     state["trace"].append(node)
     return _finish(
         input_data, state, CriterionStatus.UNKNOWN, summary, missing=[missing],
-        extra_evidence=evidence,
+        extra_evidence=evidence, review=review,
         provenance={"preliminary_assessment": _preliminary_assessment(
             input_data, services, annotation, variant_type, state, rna)})
 
@@ -688,6 +697,15 @@ def _evaluate_input(input_data, services, config):
         return _finish(input_data, state, CriterionStatus.UNKNOWN,
                        "Conflicting LoF mechanism assessments",
                        review=["Resolve LoF mechanism assessments"], extra_evidence=mechanism_records)
+    if mechanism_issue == "parent_child":
+        return _not_evaluated(
+            input_data, services, annotation, variant_type, state, confirmed_rna,
+            _node("D01", "disease_match", "MANUAL_REVIEW", "PARENT_CHILD", mechanism_records),
+            f"The available loss-of-function mechanism evidence is curated for a disease "
+            f"related to {input_data['condition']!r} in MONDO, but not for it",
+            "disease-specific loss-of-function mechanism",
+            evidence=mechanism_records,
+            review=["Decide whether the related disease's mechanism applies to this one"])
     if mechanism_issue == "moi_mismatch":
         modes = sorted({str(item.get("inheritance")) for item in mechanism_records})
         raw = input_data.get("inheritance")

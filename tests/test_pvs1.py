@@ -208,6 +208,57 @@ class PVS1DecisionTreeTests(unittest.TestCase):
                                  "autosomal_recessive")
                 self.assertEqual(value.evaluation_context["moi_match"], "MATCHED")
 
+    def test_a_parent_disease_curation_is_handed_to_a_curator_not_used(self):
+        """The case names a subtype and the curation names the disease above it. That is a
+        reason to ask a person, never a reason to decide: the same gene can lose function in
+        one subtype and gain it in another."""
+        input_data = {**self.input, "condition": "MONDO:0007268",
+                      "condition_ancestors": ["MONDO:0005045", "MONDO:0004994"]}
+        items = [self.annotation(), self.transcript(), self.nmd(),
+                 self.mechanism(True, condition="MONDO:0005045")]
+        value = self.evaluate_result(*items, input_data=input_data)
+        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
+        self.assertIsNone(value.strength)
+        self.assertEqual(value.evaluation_context["disease_match"], "PARENT_CHILD")
+        self.assertEqual(value.evaluation_context["applicability"], "MANUAL_REVIEW")
+        self.assertEqual(
+            {node["node_id"]: node["result"] for node in value.decision_trace},
+            {"C01": "PASS", "D01": "MANUAL_REVIEW"})
+        self.assertTrue(value.review_points)
+        # The related curation is attached, and the variant-level work is kept.
+        self.assertIn("MONDO:0005045", {item.get("condition") for item in value.evidence})
+        self.assertEqual(value.provenance["preliminary_assessment"]["candidate_strength"],
+                         "very_strong")
+
+    def test_a_subtype_curation_is_related_in_the_other_direction_too(self):
+        """The case names the disease and the curation names a subtype of it. The ancestry
+        sits on the record here rather than on the case."""
+        input_data = {**self.input, "condition": "MONDO:0005045"}
+        items = [self.annotation(), self.transcript(), self.nmd(),
+                 self.mechanism(True, condition="MONDO:0007268",
+                                condition_ancestors=["MONDO:0005045"])]
+        value = self.evaluate_result(*items, input_data=input_data)
+        self.assertEqual(value.evaluation_context["disease_match"], "PARENT_CHILD")
+        self.assertEqual(value.evaluation_context["applicability"], "MANUAL_REVIEW")
+
+    def test_an_exact_match_is_never_downgraded_to_a_relation(self):
+        input_data = {**self.input, "condition": "MONDO:0005045",
+                      "condition_ancestors": ["MONDO:0004994"]}
+        items = [self.annotation(), self.transcript(), self.nmd(),
+                 self.mechanism(True, condition="MONDO:0005045")]
+        value = self.evaluate_result(*items, input_data=input_data)
+        self.assertEqual(value.status, CriterionStatus.MET)
+        self.assertEqual(value.evaluation_context["disease_match"], "EXACT")
+
+    def test_unrelated_diseases_stay_unrelated(self):
+        input_data = {**self.input, "condition": "MONDO:0007268",
+                      "condition_ancestors": ["MONDO:0005045"]}
+        items = [self.annotation(), self.transcript(), self.nmd(),
+                 self.mechanism(True, condition="MONDO:0009861")]
+        value = self.evaluate_result(*items, input_data=input_data)
+        self.assertEqual(value.evaluation_context["disease_match"], "UNKNOWN")
+        self.assertEqual(value.evaluation_context["applicability"], "NOT_EVALUATED")
+
     def test_an_unqualified_x_linked_mode_is_compatible_with_either_qualification(self):
         """A source that records "X-linked" without saying which zygosity is affected has
         not contradicted a case assessed as X-linked recessive. ACMG asks for compatible

@@ -18,6 +18,9 @@ CONTEXT_FIELDS = (
     # rather than curated, so it is attached by the provider layer and travels beside the
     # original identifier instead of replacing it.
     "condition_mapping",
+    # The MONDO terms the condition sits under, so a curation for a neighbouring disease can
+    # be told from one for an unrelated disease. Derived, like the mapping beside it.
+    "condition_ancestors",
     "inheritance",
     "disease_frequency_threshold",
     "ba1_exception_assessment",

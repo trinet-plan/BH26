@@ -265,3 +265,24 @@ def resolved_condition(holder):
         return mapping["normalized_condition"], mapping.get("mapping_type") or "equivalent"
     condition = holder.get("condition")
     return condition, "identity" if condition else None
+
+
+def condition_ancestors(holder):
+    """The MONDO terms this holder's disease sits under, as far as they were resolved."""
+    value = holder.get("condition_ancestors")
+    if isinstance(value, dict):
+        value = value.get("ancestors")
+    return set(value) if isinstance(value, (list, set, tuple)) else set()
+
+
+def ontology_related(case, case_condition, record, record_condition):
+    """Whether two diseases are parent and child in MONDO, in either direction.
+
+    Deliberately not equivalence. The same gene can lose function in one subtype and gain it
+    in another, and subtypes can differ in inheritance mode, so this says only that the two
+    terms are on one path - which is a reason to ask a curator, never a reason to decide.
+    """
+    if not case_condition or not record_condition or case_condition == record_condition:
+        return False
+    return (record_condition in condition_ancestors(case)
+            or case_condition in condition_ancestors(record))
