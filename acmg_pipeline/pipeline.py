@@ -908,6 +908,101 @@ async def evaluate_variant_evidence_lines(
     return lines
 
 
+async def evaluate_selected_criteria(
+    variant: VariantRecord,
+    clinical_note: ClinicalNoteExtraction,
+    criteria: tuple[str, ...],
+    *,
+    automated_config: dict,
+    mcp: ClientSession | None = None,
+    erepo_client: ERepoClient | None = None,
+    evidence_resolver=None,
+    vcep_name: str | None = None,
+    full_text_cache: dict[str, tuple[str | None, str]] | None = None,
+) -> dict[str, dict]:
+    """Return one VA-Spec EvidenceLine per requested code only.
+
+    Unlike evaluate_variant_evidence_lines() (always all 28), this only runs
+    the automated and/or literature machinery actually needed for `criteria`
+    - a stub-only or automated-only request never touches PubMed/the LLM,
+    and mcp/erepo_client may be left None in that case. Raises ValueError up
+    front if `criteria` needs LITERATURE_CODES but mcp/erepo_client weren't
+    given, so a caller's sync/async routing mistake fails loudly instead of
+    silently returning UNKNOWN literature lines.
+    """
+    if not isinstance(variant, VariantRecord):
+        raise TypeError("variant must be acmg_pipeline.vcf_record.VariantRecord")
+    if not isinstance(clinical_note, ClinicalNoteExtraction):
+        raise TypeError("clinical_note must be acmg_pipeline.clinical_note.ClinicalNoteExtraction")
+    if not isinstance(automated_config, dict):
+        raise TypeError("automated_config must be a dictionary")
+
+    unknown = [code for code in criteria if code not in ALL_ACMG_CODES]
+    if unknown:
+        raise ValueError(f"Unrecognized ACMG code(s): {unknown}")
+
+    requested = set(criteria)
+    automated_subset = tuple(code for code in ALL_ACMG_CODES if code in requested and code in AUTOMATED_CODES)
+    literature_subset = tuple(code for code in ALL_ACMG_CODES if code in requested and code in LITERATURE_CODES)
+    stub_subset = [code for code in criteria if code not in IMPLEMENTED_CODES]
+
+    if literature_subset and (mcp is None or erepo_client is None):
+        raise ValueError(
+            f"criteria {literature_subset} require the literature workflow "
+            "(mcp + erepo_client), but none were provided"
+        )
+
+    by_code: dict[str, dict] = {}
+
+    if automated_subset:
+        resolver = evidence_resolver or ProviderEvidenceResolver(
+            automated_config.get("evidence_cache_dir", "cache/evidence"),
+            offline=bool(automated_config.get("offline")),
+            ensembl_release=automated_config.get("ensembl_release"),
+        )
+        resolved = resolver.resolve(_identity_from_info(variant), _automated_variant(variant))
+        services = make_services(resolved.records, automated_config.get("population_providers"))
+        automated_results = evaluate_automated_record(
+            variant, clinical_note, services, automated_config, criteria=automated_subset,
+        )
+        automated_by_code = {result.criterion: result for result in automated_results}
+        for code in automated_subset:
+            result = automated_by_code.get(code)
+            if result is None:
+                by_code[code] = build_workflow_evidence_line(
+                    code, variant, status="unknown",
+                    description=f"{code} automated evaluation returned no result.",
+                    details={"missingInputs": ["automated criterion result"]},
+                )
+            else:
+                by_code[code] = build_automated_evidence_line(result, variant)
+
+    if literature_subset:
+        literature_results = await judge_variant_from_shared_input(
+            variant, mcp, erepo_client, criteria=literature_subset,
+            vcep_name=vcep_name, full_text_cache=full_text_cache,
+        )
+        gene = str(variant.info.get("GENE", ""))
+        hgvsc = str(variant.info.get("HGVSC", ""))
+        for code in literature_subset:
+            aggregated = literature_results.get(code)
+            if aggregated is None:
+                by_code[code] = build_workflow_evidence_line(
+                    code, variant, status="unknown",
+                    description=f"{code} was not evaluated because no literature was resolved.",
+                    details={"missingInputs": ["resolvable literature PMID"]},
+                )
+            else:
+                by_code[code] = build_evidence_line(
+                    aggregated, gene, hgvsc, code, vcep_name=vcep_name, variant=variant,
+                )
+
+    for code in stub_subset:
+        by_code[code] = build_stub_evidence_line(code, variant)
+
+    return {code: by_code[code] for code in criteria}
+
+
 # ---------------------------------------------------------------------------
 # Full 28-code classification from structured input
 # ---------------------------------------------------------------------------
