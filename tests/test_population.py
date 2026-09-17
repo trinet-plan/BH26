@@ -119,6 +119,89 @@ class PopulationTests(unittest.TestCase):
         self.assertEqual(value.status, CriterionStatus.MET)
         self.assertEqual(value.provenance["disease_frequency_threshold"]["max_credible_af"], 0.001)
 
+    # BS1's maximum credible frequency is a per-disease policy, so it is reached through a
+    # chain of gates before any observation is compared. Each gate is a different job for a
+    # curator - supply a disease, retarget a threshold, record its provenance, fix a bad
+    # value - and reporting them apart is the whole point of the chain, so each is pinned.
+    THRESHOLD = {"condition": "test:disease", "inheritance": "autosomal_dominant",
+                 "max_credible_af": 0.001, "source": "test", "source_version": "1",
+                 "reviewed_at": "2026-09-14"}
+
+    def with_threshold(self, **overrides):
+        """Prepare a record whose curated threshold differs from THRESHOLD in one way."""
+        threshold = {**self.THRESHOLD, **overrides}
+        for key, value in list(threshold.items()):
+            if value is None:
+                del threshold[key]
+        self.input.update({"condition": "test:disease", "inheritance": "autosomal_dominant",
+                           "disease_frequency_threshold": threshold})
+
+    def test_bs1_without_a_disease_context_names_the_condition(self):
+        value = self.evaluate(bs1, self.services([self.observation(100)]))
+        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
+        self.assertEqual(value.missing_inputs, ["condition"])
+
+    def test_bs1_without_a_curated_threshold_asks_for_one(self):
+        self.input["condition"] = "test:disease"
+        value = self.evaluate(bs1, self.services([self.observation(100)]))
+        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
+        self.assertEqual(value.missing_inputs, ["disease_frequency_threshold"])
+
+    def test_bs1_threshold_for_another_disease_is_not_missing_evidence(self):
+        """The threshold exists; it is aimed at the wrong disease, so it is a review point."""
+        self.with_threshold(condition="test:other-disease")
+        value = self.evaluate(bs1, self.services([self.observation(100)]))
+        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
+        self.assertEqual(value.missing_inputs, [])
+        self.assertTrue(value.review_points)
+        self.assertIn("test:other-disease", value.summary)
+
+    def test_bs1_rejects_a_threshold_outside_zero_to_one(self):
+        for bad in (5, 0, -0.1, "high"):
+            with self.subTest(max_credible_af=bad):
+                self.with_threshold(max_credible_af=bad)
+                value = self.evaluate(bs1, self.services([self.observation(100)]))
+                self.assertEqual(value.status, CriterionStatus.UNKNOWN)
+                self.assertEqual(value.missing_inputs,
+                                 ["disease_frequency_threshold.max_credible_af"])
+
+    def test_bs1_names_only_the_provenance_fields_actually_absent(self):
+        self.with_threshold(source=None, reviewed_at=None)
+        value = self.evaluate(bs1, self.services([self.observation(100)]))
+        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
+        self.assertEqual(value.missing_inputs, ["disease_frequency_threshold.source",
+                                                "disease_frequency_threshold.reviewed_at"])
+
+    def test_bs1_will_not_apply_a_threshold_from_another_inheritance_mode(self):
+        self.with_threshold(inheritance="autosomal_recessive")
+        self.input["inheritance"] = "autosomal_dominant"
+        value = self.evaluate(bs1, self.services([self.observation(100)]))
+        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
+        self.assertTrue(value.review_points)
+
+    def test_bs1_stops_on_an_unconfigured_population_policy(self):
+        """A disease threshold does not substitute for the population quality policy."""
+        self.with_threshold()
+        del self.config["BS1"]["minimum_an"]
+        value = self.evaluate(bs1, self.services([self.observation(100)]))
+        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
+        self.assertEqual(value.missing_inputs, ["BS1.minimum_an"])
+
+    def test_bs1_below_threshold_with_every_source_resolved_is_not_met(self):
+        self.with_threshold()
+        value = self.evaluate(bs1, self.services([self.observation(1)]))
+        self.assertEqual(value.status, CriterionStatus.NOT_MET)
+        self.assertIsNone(value.strength)
+
+    def test_bs1_below_threshold_with_an_unreachable_source_stays_unknown(self):
+        """An incomplete search is not evidence that no population exceeds the threshold."""
+        self.with_threshold()
+        # A second provider that holds nothing for this variant is recorded as a failure
+        # (NO_OBSERVATION), which is what an unreachable source looks like to BS1.
+        value = self.evaluate(bs1, self.services([self.observation(1)], []))
+        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
+        self.assertIn("complete_population_evidence", value.missing_inputs)
+
     def test_bs1_threshold_is_policy_not_an_evidence_item(self):
         """Every exported evidence item needs an IRI; the threshold has none, so it stays out."""
         self.input.update({"condition": "test:disease", "inheritance": "autosomal_dominant",
