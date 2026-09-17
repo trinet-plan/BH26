@@ -68,6 +68,7 @@ def _base_context(input_data, gene=None):
         # and neither is available here, so anything short of an identifier match stays
         # UNKNOWN instead of being upgraded on a resemblance.
         "disease_match": "UNKNOWN",
+        "mechanism_source": None,
         "inheritance": normalize_inheritance(input_data.get("inheritance")),
         "moi_match": "UNKNOWN",
         "applicability": "NOT_EVALUATED",
@@ -91,6 +92,10 @@ def _rules(config):
             not isinstance(item, dict) or not item.get("id") for item in sources):
         return None
     if isinstance(threshold, bool) or not isinstance(threshold, (int, float)) or not 0 < threshold <= 1:
+        return None
+    precedence = rules.get("mechanism_source_precedence", [])
+    if not isinstance(precedence, list) or any(
+            not isinstance(item, str) or not item for item in precedence):
         return None
     return policy
 
@@ -152,7 +157,22 @@ def _moi_applicable(record, inheritance):
     return mode is not None and _moi_compatible(mode, inheritance)
 
 
-def _resolve_mechanism(input_data, services, annotation, context):
+def _mechanism_rank(record, precedence):
+    """Where a mechanism record sits in the source order ACMG lays out.
+
+    A reviewed assessment outranks every derived one, whatever produced it. Among derived
+    records the configured order decides, because "which source wins" is policy that a result
+    has to be able to name, not a fact about this code - it is recorded in the rule set and
+    travels into the provenance with everything else. A derived record from a source the
+    policy does not rank sits below every source it does, rather than above them by accident.
+    """
+    if record.get("assessment_method") != "automated":
+        return 0
+    method = record.get("method")
+    return 1 + (precedence.index(method) if method in precedence else len(precedence))
+
+
+def _resolve_mechanism(input_data, services, annotation, context, precedence=()):
     records = _candidates("gene_disease", input_data, services, annotation["transcript"])
     gene = annotation.get("gene")
     gene_records = [item for item in records if item.get("gene") == gene]
@@ -180,17 +200,21 @@ def _resolve_mechanism(input_data, services, annotation, context):
         match_level = "UNKNOWN"
     if not selected:
         return None, [], "missing"
-    # Source precedence: a reviewed assessment outranks a derived signal, so a derived record
-    # that disagrees with one is superseded by it rather than in conflict with it. Both stay
-    # in the evidence, because a curator should see that the two disagreed and on what.
-    reviewed = [item for item in selected if item.get("assessment_method") != "automated"]
-    deciding = reviewed or selected
+    # Source precedence: a record that disagrees with a higher-ranked one is superseded by
+    # it rather than in conflict with it, so only records at the best rank present decide.
+    # Every record stays in the evidence, because a curator should see that they disagreed
+    # and which source the answer came from. Two records at the same rank that disagree are a
+    # genuine conflict, and still reported as one.
+    ranks = {id(item): _mechanism_rank(item, list(precedence)) for item in selected}
+    best = min(ranks.values())
+    deciding = [item for item in selected if ranks[id(item)] == best]
     values = {item.get("lof_mechanism_established") for item in deciding}
     if len(values) > 1:
         return None, selected, "conflict"
     context["mechanism_scope"] = scope
     context["condition_specific"] = scope == "CONDITION_SPECIFIC"
     context["disease_match"] = match_level if scope == "CONDITION_SPECIFIC" else "UNKNOWN"
+    context["mechanism_source"] = deciding[0].get("source")
     context["moi_match"] = ("MATCHED" if any(item.get("inheritance") for item in deciding)
                             else "NOT_SCOPED")
     return deciding[0], selected, None
@@ -650,7 +674,8 @@ def _evaluate_input(input_data, services, config):
             "condition")
 
     mechanism, mechanism_records, mechanism_issue = _resolve_mechanism(
-        input_data, services, annotation, context)
+        input_data, services, annotation, context,
+        policy["rules"].get("mechanism_source_precedence", []))
     if mechanism_issue == "gene_mismatch":
         state["trace"].append(_node(
             "G01", "lof_mechanism_available", "MANUAL_REVIEW", evidence=mechanism_records))

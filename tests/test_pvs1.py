@@ -15,7 +15,8 @@ RULES = {"PVS1": {
             {"id": "clingen_splicing_2023", "pmid": "37352859"},
         ],
     },
-    "rules": {"protein_loss_threshold": 0.10},
+    "rules": {"protein_loss_threshold": 0.10,
+              "mechanism_source_precedence": ["better_source", "worse_source"]},
 }}
 
 
@@ -262,6 +263,54 @@ class PVS1DecisionTreeTests(unittest.TestCase):
         value = self.evaluate_result(*items, input_data=input_data)
         self.assertEqual(value.status, CriterionStatus.UNKNOWN)
         self.assertEqual(value.evaluation_context["moi_match"], "MISMATCH")
+
+    def derived(self, established, method, **values):
+        """A mechanism record from an automated source, as a provider emits one."""
+        values.setdefault("condition", self.condition)
+        return self.item("gene_disease", gene="TEST", lof_mechanism_established=established,
+                         assessment_method="automated", method=method,
+                         policy_version="1", source=method, **values)
+
+    def test_the_higher_ranked_source_decides_and_the_other_stays_visible(self):
+        items = [self.annotation(), self.transcript(), self.nmd(),
+                 self.derived(True, "better_source"), self.derived(False, "worse_source")]
+        value = self.evaluate_result(*items)
+        self.assertEqual(value.status, CriterionStatus.MET)
+        self.assertEqual(value.evaluation_context["mechanism_source"], "better_source")
+        self.assertNotIn("Conflicting", value.summary)
+        self.assertEqual({item.get("method") for item in value.evidence
+                          if item["category"] == "gene_disease"},
+                         {"better_source", "worse_source"})
+
+    def test_a_reviewed_record_outranks_every_derived_source(self):
+        items = [self.annotation(), self.transcript(), self.nmd(),
+                 self.derived(False, "better_source"), self.mechanism(True)]
+        value = self.evaluate_result(*items)
+        self.assertEqual(value.status, CriterionStatus.MET)
+        self.assertEqual(value.evaluation_context["mechanism_source"], "synthetic")
+
+    def test_an_unranked_source_sits_below_every_ranked_one(self):
+        """Not knowing where a source belongs must not promote it above the ones we placed."""
+        items = [self.annotation(), self.transcript(), self.nmd(),
+                 self.derived(True, "worse_source"), self.derived(False, "unlisted_source")]
+        value = self.evaluate_result(*items)
+        self.assertEqual(value.status, CriterionStatus.MET)
+        self.assertEqual(value.evaluation_context["mechanism_source"], "worse_source")
+
+    def test_two_records_of_equal_rank_are_still_a_conflict(self):
+        items = [self.annotation(), self.transcript(), self.nmd(),
+                 self.derived(True, "worse_source", evidence_id="a"),
+                 self.derived(False, "worse_source", evidence_id="b")]
+        value = self.evaluate_result(*items)
+        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
+        self.assertIn("Conflicting", value.summary)
+
+    def test_a_non_list_precedence_is_a_rejected_rule_set(self):
+        config = {"PVS1": {**RULES["PVS1"], "rules": {
+            "protein_loss_threshold": 0.10, "mechanism_source_precedence": "better_source"}}}
+        value = self.evaluate_result(*self.truncating_evidence(), config=config)
+        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
+        self.assertIn("PVS1.ruleset", value.missing_inputs)
 
     def test_conflicting_mechanisms_and_gene_mismatch_require_review(self):
         value = self.evaluate_result(self.annotation(), self.mechanism(True), self.mechanism(False))

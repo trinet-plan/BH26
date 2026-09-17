@@ -70,11 +70,15 @@
       ]
     },
     "rules": {
-      "protein_loss_threshold": 0.1
+      "protein_loss_threshold": 0.1,
+      "mechanism_source_precedence": [
+        "gene2phenotype_molecular_mechanism",
+        "clingen_dosage_haploinsufficiency"
+      ]
     },
     "implementation": {
-      "condition_required": false,
-      "missing_condition_behavior": "use_gene_level_context",
+      "condition_required": true,
+      "missing_condition_behavior": "not_evaluated_with_preliminary_assessment",
       "cnv_sv_supported": false
     }
   },
