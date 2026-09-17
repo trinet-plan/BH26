@@ -22,6 +22,9 @@ from acmg_pipeline.providers.mane import METHOD as MANE_METHOD, ManeTranscriptPr
 from acmg_pipeline.providers.initiation import (
     METHOD as INITIATION_METHOD, START_LOST, InitiationProvider,
 )
+from acmg_pipeline.providers.upstream_pathogenic import (
+    METHOD as UPSTREAM_METHOD, UpstreamPathogenicProvider,
+)
 from acmg_pipeline.providers.protein_region import (
     METHOD as REGION_METHOD, ProteinRegionProvider,
 )
@@ -486,6 +489,31 @@ def main(argv=None):
                         "method": INITIATION_METHOD,
                         "evidence": len(init_records), "errors": init_errors,
                         "use_restriction": "PVS1_DOWNSTREAM_START_ONLY",
+                    })
+                    # PVS1's IC03 gate, bounded by the codon IC02 found.
+                    upstream = UpstreamPathogenicProvider(external_client, args.clinvar_release)
+                    # Merged into the record IC02 built: PVS1 reads two
+                    # initiation_assessment records as a conflict.
+                    answered, up_errors = 0, []
+                    for record in init_records:
+                        codon = record.get("downstream_start_codon")
+                        if not codon:
+                            continue
+                        try:
+                            fields = upstream.get_upstream_evidence(
+                                variants[record["variant_key"]], record["gene"],
+                                record["transcript"], codon)
+                        except (FetchError, ValueError) as exc:
+                            up_errors.append(f"{record['gene']}: {exc}")
+                            continue
+                        if fields:
+                            record.update(fields)
+                            answered += 1
+                    external_manifest.append({
+                        "provider": upstream.name, "provider_version": args.clinvar_release,
+                        "method": UPSTREAM_METHOD,
+                        "evidence": answered, "errors": up_errors,
+                        "use_restriction": "PVS1_UPSTREAM_PATHOGENIC_ONLY",
                     })
             args.output_dir.mkdir(parents=True, exist_ok=False)
             output = args.output_dir / "audit.json"

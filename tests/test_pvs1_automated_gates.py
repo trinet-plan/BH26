@@ -265,6 +265,53 @@ class Pvs1AutomatedGateTests(unittest.TestCase):
                 self.assertEqual(result.strength, strength)
                 self.assertEqual(self.nodes(result)["IC03"], "PASS")
 
+    def initiation_with_upstream(self, upstream=True, **overrides):
+        """IC02's record with IC03's answer merged in, as the CLI assembles it."""
+        from tests.test_upstream_pathogenic import FakeClient as ClinVarClient, document
+        from acmg_pipeline.providers.upstream_pathogenic import UpstreamPathogenicProvider
+        records = self.initiation()
+        codon = records[0]["downstream_start_codon"]
+        change = f"R{codon - 1}W" if upstream else f"L{codon + 5}P"
+        reports = [document(1, change, gene=GENE)]
+        fields = UpstreamPathogenicProvider(
+            ClinVarClient(reports), "2026-09-15").get_upstream_evidence(
+                self.variant, GENE, TRANSCRIPT, codon)
+        records[0].update(fields)
+        records[0].update(overrides)
+        return records
+
+    def test_both_derived_answers_live_on_one_initiation_record(self):
+        """PVS1 selects one initiation_assessment and reads two as a conflict, so IC03 is
+        merged into IC02's record rather than emitted beside it."""
+        records = self.initiation_with_upstream()
+        self.assertEqual(len(records), 1)
+        self.assertIs(records[0]["downstream_in_frame_start"], True)
+        self.assertIs(records[0]["upstream_pathogenic_evidence"], True)
+        result = self.evaluate(self.dosage(), self.mane(exon="1/2"), records,
+                               consequence_term="start_lost")
+        self.assertNotIn("Conflicting", result.summary)
+
+    def test_the_derived_answers_carry_the_path_to_ic03(self):
+        """Only IC01 is left, and it is the judgment - the two derivable gates are done."""
+        result = self.evaluate(self.dosage(), self.mane(exon="1/2"),
+                               self.initiation_with_upstream(),
+                               consequence_term="start_lost")
+        self.assertEqual(self.nodes(result)["IC01"], "UNKNOWN")
+        self.assertEqual(result.missing_inputs, ["intact_alternative_transcript"])
+
+    def test_with_ic01_supplied_the_derived_answers_reach_met(self):
+        for upstream, strength in ((True, "moderate"), (False, "supporting")):
+            with self.subTest(upstream_pathogenic_evidence=upstream):
+                records = self.initiation_with_upstream(
+                    upstream=upstream, intact_alternative_transcript=False,
+                    curator="test", reviewed_at="2026-09-17")
+                result = self.evaluate(self.dosage(), self.mane(exon="1/2"), records,
+                                       consequence_term="start_lost")
+                self.assertEqual(result.status, CriterionStatus.MET)
+                self.assertEqual(result.strength, strength)
+                self.assertEqual(self.nodes(result)["IC02"], "PASS")
+                self.assertEqual(self.nodes(result)["IC03"], "PASS")
+
     def test_automated_records_are_marked_as_such_in_the_evidence(self):
         """A curator reading the result has to see which gates were answered by derivation."""
         result = self.evaluate(self.dosage(), self.mane(exon="2/34"), self.nmd())
