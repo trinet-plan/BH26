@@ -78,6 +78,7 @@ from acmg_pipeline.classification import (
 from acmg_pipeline.criteria import stubs
 from acmg_pipeline.api_input import ApiCaseInput
 from acmg_pipeline.clinical_note import ClinicalNoteExtraction
+from acmg_pipeline.inputs import empty_clinical_note
 from acmg_pipeline.vcf_record import VariantRecord
 from acmg_pipeline.automated_core.models import CRITERIA as AUTOMATED_CRITERIA
 from acmg_pipeline.automated_core.models import Variant as AutomatedVariant
@@ -471,7 +472,22 @@ async def judge_single_paper(
         )
         return PaperContribution(pmid=pmid, result=result)
 
-    prompt = engine.build_prompt(gene, hgvsc, hgvsp, equivalents, full_text)
+    # engine.build_prompt() takes (variant, clinical_note, full_text) as of
+    # h.muroda's 2026-09-16 "unify criterion input interfaces" refactor
+    # (ps3_bs3.py/ps4.py/segregation.py all match this now) - this function
+    # only has the already-flattened gene/hgvsc/hgvsp/equivalents (its own
+    # signature predates that refactor and several callers, e.g.
+    # run_validation_64.py, only ever have those flat values, not a real
+    # VariantRecord/ClinicalNoteExtraction), so a minimal VariantRecord is
+    # reconstructed here rather than threading a real one through every
+    # caller. EQUIVALENTS is stored in INFO because variant_identity()
+    # (which every build_prompt() calls) reads it from there - without it,
+    # protein-equivalent notation matching within a paper would be lost.
+    variant = VariantRecord(
+        chrom="", pos=1, id="", ref="", alt="", qual="", filter="",
+        info={"GENE": gene, "HGVSC": hgvsc, "HGVSP": hgvsp, "EQUIVALENTS": equivalents},
+    )
+    prompt = engine.build_prompt(variant, empty_clinical_note(), full_text)
     log(f"--- Prompt (first 1000 chars) ---\n{prompt[:1000]}")
 
     try:

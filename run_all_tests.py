@@ -28,6 +28,7 @@ TEST_FILES = [
     "test_ps3_bs3_ps4_gate_full.py",
     "test_classification.py",
     "test_full_criteria_ground_truth.py",
+    "test_automated_criteria_ground_truth.py",
 ]
 
 
