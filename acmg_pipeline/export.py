@@ -194,16 +194,30 @@ def evidence_line_id(code: str, gene: str, safe_hgvsc: str) -> str:
 def _integrated_line_schema() -> dict:
     """The 1.0.1 output schema, widened to the fields the integrated document uses.
 
-    `acmg/va_spec/schemas/acmg-evidence-line-1.0.1-output.json` describes
+    `acmg_pipeline/schemas/acmg-evidence-line-1.0.1-output.json` describes
     exactly what evidence-cli emits for a scored criterion, so applying it
     verbatim to all 28 lines is impossible in two ways:
 
       * it is `additionalProperties: false` and lists neither `reportedIn`
         nor `contributions`, both of which the literature lines carry
         (PMIDs of the papers judged, and the LLM agent's contribution);
-      * it requires `evidenceOutcome`, which a workflow line
-        (NOT_EVALUATED / MANUAL_REVIEW / NOT_APPLICABLE) must not have -
-        emitting one would assert a judgment that was never made.
+      * it requires `evidenceOutcome`, which a workflow line must not have -
+        emitting one would assert a judgment that was never made.  Such a
+        line is any result that is neither MET nor NOT_MET; see
+        build_automated_evidence_line(), which routes those to
+        build_workflow_evidence_line() instead.
+
+    [Vocabulary note - corrected 2026-09-17]
+      Before the evidence-cli merge (c5b303f) this said the workflow states
+      were NOT_EVALUATED / MANUAL_REVIEW / NOT_APPLICABLE, which was the
+      six-value `acmg.core.models.Status` enum of the standalone package.
+      That enum no longer exists: the merge folded it into the three-value
+      `acmg_pipeline.constants.CriterionStatus` (met / not_met / unknown),
+      so a workflow line now always carries status "unknown" and those
+      three names are never emitted.  VA-Spec documents under
+      va_spec_output/ that still show them predate the merge.  A criterion
+      that is inapplicable rather than merely undecided is marked inside
+      provenance instead - see acmg_pipeline.criteria.common.NOT_APPLICABLE.
 
     So the schema file itself is NOT edited - its sha256 is recorded as
     provenance by acmg_pipeline.automated_va_spec.output_schema_sha256() and travels
