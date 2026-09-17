@@ -10,6 +10,8 @@ NOT_EVALUATEDとして保持し、1変異につき全28基準のVA-Spec Evidence
 
 外部データの現在の取得経路、未対応・review待ちの情報、TogoVarへ置換する場合の
 境界は [`doc/external_data_coverage_ja.md`](doc/external_data_coverage_ja.md) に分けて整理しています。
+公開済みClinGen/VCEP仕様から転記したBS1のレビュー用DRAFTは
+[`config/bs1_thresholds_draft.json`](config/bs1_thresholds_draft.json) にあります。DRAFTは実行時の閾値ではありません。
 
 ## ディレクトリ構成
 
@@ -194,26 +196,6 @@ criterionでも、呼び出し境界を揃えるため空の `ClinicalNoteExtrac
     自動判定/未実装の基準のみなら同期で即座に結果が返る(`jq`でdemoケースの
     JSONに`criteria`を足して投げる)。
 
-### 判定結果をファイルに残す
-
-ジョブはプロセス内メモリにしか残らず(`api/job_store.py`)、同期応答に至っては
-どこにも保存されない。`ACMG_API_OUTPUT_DIR` にディレクトリを指定すると、
-完了した判定が1件1ファイルのJSONとして書き出される。未指定なら何も書かない。
-
-````bash
-docker run -d --name acmg-api -p 8000:8000 \
-  -e ACMG_API_OUTPUT_DIR=/data/results \
-  -v "$PWD/api_results:/data/results" \
-  acmg-api:v1
-```
-
-ファイル名は `<完了時刻>-<gene>-<hgvsc>-<endpoint>-<id>.json`。中身は判定結果
-(`result`)に加えて、どのリクエストが生んだものかを示す `variant` / `criteria` /
-`endpoint` / `status` / `finished_at` を持つ。失敗したジョブも `status: "failed"`
-として残る。
-
-書き込みに失敗してもリクエスト自体は成功する(判定結果は返る)。失敗は
-サーバーログに `Could not write API result` として出る。
 
     ```bash
     curl -s -X POST http://localhost:8000/v1/get_evidence_line_by_target_criteria \
@@ -242,6 +224,27 @@ docker run -d --name acmg-api -p 8000:8000 \
 
 上記1〜2の代わりに [`compose.yaml`](compose.yaml) を使ってもよい
 (`docker compose up -d --build` / 停止は `docker compose down`)。
+
+### 判定結果をファイルに残す
+
+ジョブはプロセス内メモリにしか残らず(`api/job_store.py`)、同期応答に至っては
+どこにも保存されない。`ACMG_API_OUTPUT_DIR` にディレクトリを指定すると、
+完了した判定が1件1ファイルのJSONとして書き出される。未指定なら何も書かない。
+
+````bash
+docker run -d --name acmg-api -p 8000:8000 \
+  -e ACMG_API_OUTPUT_DIR=/data/results \
+  -v "$PWD/api_results:/data/results" \
+  acmg-api:v1
+```
+
+ファイル名は `<完了時刻>-<gene>-<hgvsc>-<endpoint>-<id>.json`。中身は判定結果
+(`result`)に加えて、どのリクエストが生んだものかを示す `variant` / `criteria` /
+`endpoint` / `status` / `finished_at` を持つ。失敗したジョブも `status: "failed"`
+として残る。
+
+書き込みに失敗してもリクエスト自体は成功する(判定結果は返る)。失敗は
+サーバーログに `Could not write API result` として出る。
 
 ## APIエンドポイント仕様
 
