@@ -1,0 +1,8 @@
+# doc/docker_api_deployment_plan_v1_ja.md 8章。v1(BackgroundTasks構成)では
+# apiサービス単体で完結させる(タスクキュー導入時にredis/worker等を追加する想定)。
+services:
+  api:
+    build: .
+    container_name: acmg-api
+    ports:
+      - "8000:8000"

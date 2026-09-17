@@ -1,4 +1,30 @@
-"""Shared structured clinical-note types used at criterion boundaries."""
+"""
+clinical_note.py
+Classes for the structured data extracted from the free-text
+"clinical_note" field of a democase/case*_api_input_*.json file: proband
+phenotype/genotype, family history (relatives), and de novo (trio) data.
+
+Extraction itself is done elsewhere via an LLM - this module only defines
+the shape that LLM output is parsed into (ClinicalNoteExtraction.from_json).
+Every field not directly stated in the note should come back None/empty
+rather than guessed.
+
+[Caveat: hpo_id, variant_status and zygosity are unverified]
+  hpo_id (e.g. "HP:0001639") and zygosity/variant_status are whatever the
+  LLM reports, taken at face value from the note's own wording - none of
+  these are cross-checked against the real HPO ontology or any variant
+  database; `label` and the free-text fields are the only ones directly
+  grounded in the source text.
+
+[Where this fits]
+  The `de_novo` section (father/mother variant_status + phenotype +
+  paternity/maternity confirmation) is exactly the data PS2 ("de novo,
+  both parents confirmed, no family history of disease") and PM6 ("assumed
+  de novo, parentage not confirmed") need - both are currently Layer-3
+  "Evidence Gap / Manual Review Required" codes for this project (see
+  CLAUDE.md's table), not yet automated; this module only extracts the raw
+  fields, it doesn't itself decide PS2/PM6.
+"""
 
 from __future__ import annotations
 
@@ -9,7 +35,7 @@ from typing import Optional
 @dataclass
 class ClinicalFeature:
     label: str
-    hpo_id: Optional[str] = None
+    hpo_id: Optional[str] = None  # e.g. "HP:0001639"; None if not confidently known
 
     @staticmethod
     def from_json(data: dict) -> "ClinicalFeature":
@@ -36,7 +62,7 @@ class ProbandPhenotype:
 @dataclass
 class ProbandGenotype:
     variant_status: Optional[bool] = None
-    zygosity: Optional[str] = None
+    zygosity: Optional[str] = None  # e.g. "heterozygous", "homozygous", "compound_heterozygous"
 
     @staticmethod
     def from_json(data: dict) -> "ProbandGenotype":
@@ -58,7 +84,7 @@ class Proband:
 
 @dataclass
 class Relative:
-    relationship: str
+    relationship: str  # e.g. "father", "mother", "son", "sibling", as stated in the note
     biological_relationship_confirmed: Optional[bool] = None
     affected_status: Optional[bool] = None
     clinical_features: list[ClinicalFeature] = field(default_factory=list)
@@ -83,7 +109,7 @@ class Relative:
 
 @dataclass
 class Family:
-    inheritance_pattern: Optional[str] = None
+    inheritance_pattern: Optional[str] = None  # e.g. "autosomal dominant", "de novo", as stated/inferred in the note
     family_history_status: Optional[bool] = None
     relatives: list[Relative] = field(default_factory=list)
 

@@ -28,23 +28,16 @@ from acmg_pipeline.gate import (
     check_approved_assay, AssayApplicability,
     run_gate, GateMode,
 )
+from test_harness import Harness
 
 # References the CSV placed alongside this test file (no absolute-path dependency)
 CORRECTED_CSV = str(Path(__file__).resolve().parent / "clingen_vci_pubmed_fulltext_dedup_pmid_CORRECTED.csv")
 
-passed = 0
-failed = 0
-failures: list[str] = []
-
-
-def check(label, cond):
-    global passed, failed
-    if cond:
-        passed += 1
-    else:
-        failed += 1
-        failures.append(label)
-        print(f"  FAIL {label}")
+# verbose=False: with 151 checks here, printing "OK" for every pass is too
+# noisy to be useful - only FAILs print inline, with the full list repeated
+# in the final summary (see report_and_exit(list_failures=True) below).
+h = Harness(verbose=False)
+check = h.check
 
 
 def base_code(code: str) -> str:
@@ -211,9 +204,4 @@ for vcep, gene, desc, criterion, expected in real_cases:
 
 
 # ============================================================================
-print(f"\n{'='*50}\n{passed} passed, {failed} failed (total {passed + failed})\n{'='*50}")
-if failures:
-    print("Failed cases:")
-    for f_ in failures:
-        print(f"  - {f_}")
-sys.exit(1 if failed else 0)
+h.report_and_exit(width=50, show_total=True, list_failures=True)

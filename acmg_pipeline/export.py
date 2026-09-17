@@ -96,8 +96,35 @@ from acmg_pipeline.common import (
     AggregatedJudgment, CuratorHint, MatchStatus, PaperContribution,
     is_not_clear, strength_tier_from_paper_count,
 )
-from acmg_pipeline.inputs import variant_identity
+from acmg_pipeline.classification import IMPLEMENTED_CODES
+from acmg_pipeline.criteria import curator_info, reference_links
 from acmg_pipeline.vcf_record import VariantRecord
+
+# Codes whose stub EvidenceLine also gets a `curatorInfo` extension (see
+# build_stub_evidence_line()), and which acmg_pipeline.criteria.curator_info
+# function supplies it - the doc's ask for these goes beyond "show a page"
+# (reference_links.py) into "check hotspot/nearby benign variants" or
+# "check if previously reported", which needs the page's actual content
+# fetched, not just a link to it.
+#
+# PP1 is ABSENT here even though curator_info.clinvar_report_context()
+# covers it too (doc: "use AI to check if segregation previously reported
+# (clinvar)"). Historically (through 2026-09-15) this was a hard
+# requirement: PP1 was in IMPLEMENTED_CODES (this project's own literature
+# judgment via build_evidence_line()), so build_stub_evidence_line() would
+# have refused to run for it (see that function's IMPLEMENTED_CODES
+# guard). As of the 2026-09-16 handoff (see acmg_pipeline.classification.
+# IMPLEMENTED_CODES and criteria/stubs.py's HANDED_OFF_TO_OTHER_TEAM), PP1
+# is a stub code again and that guard no longer blocks it - wiring
+# "PP1": curator_info.clinvar_report_context into this dict (mirroring
+# PM3, same underlying function) is now a legitimate option, just not
+# done here since it wasn't part of the IMPLEMENTED_CODES scope-change
+# itself; left as a genuine follow-up, not a blocked one.
+_CODE_CURATOR_INFO_FETCHERS = {
+    "PM1": curator_info.uniprot_domain_context,
+    "PM5": curator_info.uniprot_domain_context,
+    "PM3": curator_info.clinvar_report_context,
+}
 
 PIPELINE_AGENT = Agent(
     id="acmg-literature-llm-pipeline",
@@ -209,7 +236,8 @@ def build_paper_evidence_line(contribution: PaperContribution, criterion: str, i
 
 def build_evidence_line(
     aggregated: AggregatedJudgment,
-    variant: VariantRecord,
+    gene: str,
+    hgvsc: str,
     criterion: str,
     vcep_name: Optional[str] = None,
 ) -> dict:
@@ -220,7 +248,6 @@ def build_evidence_line(
     schema-validated ga4gh.va_spec.base.core.EvidenceLine instance - not a
     hand-built dict).
     """
-    gene, hgvsc, _, _ = variant_identity(variant)
     direction = aggregated.aggregated_direction
     all_pmids = [c.pmid for c in aggregated.contributions]
     relevant_pmids = [
@@ -262,6 +289,144 @@ def build_evidence_line(
             activityType="automated evidence evaluation",
             date=datetime.now(timezone.utc),
         )],
+        extensions=extensions,
+    )
+    return evidence_line.model_dump(mode="json", exclude_none=True)
+
+
+def _serialize_curator_info(ctx) -> Optional[dict]:
+    """
+    Plain-dict serialization for whichever acmg_pipeline.criteria.
+    curator_info context type `ctx` is (UniprotDomainContext for PM1/PM5,
+    ClinVarReportContext for PM3) - not ctx.__dict__ directly, since both
+    contain lists of nested dataclasses that Extension.value (must be
+    JSON-serializable) can't hold as-is. Returns None if `ctx` itself is
+    None (the fetcher found nothing - e.g. no VariationID resolved, or a
+    network error - see each fetcher's own docstring for when that
+    happens) - same "no data means no extension" convention as
+    reference_url_for_criterion() returning None upstream of this.
+    """
+    if ctx is None:
+        return None
+    if isinstance(ctx, curator_info.UniprotDomainContext):
+        return {
+            "uniprotAccession": ctx.accession,
+            "proteinPosition": ctx.position,
+            "coveringDomains": [
+                {"type": d.feature_type, "start": d.start, "end": d.end, "description": d.description}
+                for d in ctx.covering_domains
+            ],
+            "nearbyVariants": [
+                {"position": v.position, "description": v.description}
+                for v in ctx.nearby_variants
+            ],
+        }
+    if isinstance(ctx, curator_info.ClinVarReportContext):
+        return {
+            "clinvarVariationId": ctx.variation_id,
+            "segregationMentions": [
+                {"text": m.text, "matchedKeyword": m.matched_keyword} for m in ctx.segregation_mentions
+            ],
+            "transMentions": [
+                {"text": m.text, "matchedKeyword": m.matched_keyword} for m in ctx.trans_mentions
+            ],
+        }
+    raise TypeError(f"no curatorInfo serialization defined for {type(ctx).__name__}")
+
+
+def build_stub_evidence_line(code: str, variant: VariantRecord) -> Optional[dict]:
+    """
+    A minimal EvidenceLine for one of the 25 codes this project doesn't
+    implement (PP1/BS4/PP4 handed off to another team, or a Layer-1 code -
+    see acmg_pipeline/criteria/stubs.py) - NOT a judgment. Carries a
+    `referenceLink` extension (see
+    acmg_pipeline.criteria.reference_links, built from doc/recs for expert
+    board.docx's per-criterion "what to show the curator" asks) so a
+    curator or another team's tool has a direct link to check, with no
+    evidenceOutcome/strengthOfEvidenceProvided/contributions claiming a
+    judgment this pipeline never made. PM1/PM5 additionally get a
+    `curatorInfo` extension (see acmg_pipeline.criteria.curator_info) -
+    structured UniProt domain/nearby-variant FACTS, still not a hotspot/
+    benign-nearby verdict.
+
+    [Why `extensions`, not `reportedIn` - decided 2026-09-16, don't "fix"
+     this without re-reading]
+      `Document` (what EvidenceLine.reportedIn holds) validates fine with
+      only `urls` set, no `pmid` required - confirmed against the real
+      ga4gh.va_spec Pydantic model - so reportedIn=[Document(urls=[url])]
+      was considered as a more spec-native alternative to a custom
+      extension. Deliberately NOT used: `reportedIn` means "the source this
+      evidence was reported in" - using it for a gnomAD/ClinVar/UniProt/
+      AutoPVS1 page this pipeline never actually read or evaluated would
+      overstate this line's own claim (the whole point of this function is
+      that NO evaluation happened). `extensions` correctly marks the link
+      as auxiliary/navigational, matching this function's own "NOT a
+      judgment" framing above.
+
+    `directionOfEvidenceProvided` is a required VA-Spec EvidenceLine field
+    (confirmed against the real ga4gh.va_spec Pydantic model - omitting it
+    raises a validation error) with no "not evaluated" option in Direction
+    (supports/neutral/disputes only - see ga4gh.va_spec.base.core.Direction);
+    NEUTRAL is used here, same as this module's own _direction_of_evidence()
+    does for a not_clear literature judgment - but unlike that case, nothing
+    was actually evaluated here, so `description` says so explicitly rather
+    than leaving NEUTRAL to imply "assessed as neutral evidence".
+
+    Returns None (build nothing) if this module has no reference URL for
+    `code` at all (see reference_links.CODES_WITH_REFERENCE_URL) rather
+    than emitting a placeholder EvidenceLine with no useful content in it - the
+    per-variant EvidenceLine list should only ever contain codes where this
+    project actually has something (a real judgment OR a reference link)
+    to say about that variant.
+
+    Raises ValueError for `code` in IMPLEMENTED_CODES (PS3/BS3/PS4 as of
+    2026-09-16 - none of which has a doc/recs-for-expert-board.docx
+    reference URL, so this guard is not reachable via reference_links.
+    CODES_WITH_REFERENCE_URL today, but is kept as a defensive check
+    against IMPLEMENTED_CODES changing again) - that code has a REAL
+    judgment via build_evidence_line(), and
+    a stub line here would collide on the exact same EvidenceLine id
+    (both build f"evline:{gene}_{safe_hgvsc}_{code}"), silently shadowing
+    real evidence with a placeholder if a caller ever included both. The
+    caller is responsible for only invoking this for codes it has no real
+    AggregatedJudgment for - see acmg_pipeline.pipeline.classify_variant_
+    from_structured_input() once it's wired to call this function.
+    """
+    if code in IMPLEMENTED_CODES:
+        raise ValueError(
+            f"{code!r} is an implemented code (has a real judgment via "
+            "build_evidence_line()) - build_stub_evidence_line() is only for "
+            "codes this project has no real evidence for."
+        )
+    url = reference_links.reference_url_for_criterion(code, variant)
+    if url is None:
+        return None
+    gene = variant.info.get("GENE", "")
+    hgvsc = variant.info.get("HGVSC", "")
+    safe_hgvsc = hgvsc.replace(">", "_").replace(".", "_").replace("+", "p").replace("-", "m")
+
+    extensions = [Extension(name="referenceLink", value=url)]
+    fetcher = _CODE_CURATOR_INFO_FETCHERS.get(code)
+    if fetcher is not None:
+        ctx = fetcher(variant)
+        info_value = _serialize_curator_info(ctx)
+        if info_value is not None:
+            extensions.append(Extension(name="curatorInfo", value=info_value))
+
+    evidence_line = EvidenceLine(
+        id=f"evline:{gene}_{safe_hgvsc}_{code}",
+        directionOfEvidenceProvided=Direction.NEUTRAL,
+        description=(
+            f"{code} is not evaluated by this pipeline (see acmg_pipeline/criteria/"
+            "stubs.py - a Layer-1 automated-evidence code or PP4, both other-team/"
+            "not-yet-implemented responsibilities here). No judgment was made; the "
+            "reference link (and, for PM1/PM3/PM5, the curatorInfo extension) below "
+            "are navigation/information aids only."
+        ),
+        specifiedBy=Method(
+            methodType=code,
+            name=f"{code}: reference link only, no automated judgment by this pipeline",
+        ),
         extensions=extensions,
     )
     return evidence_line.model_dump(mode="json", exclude_none=True)

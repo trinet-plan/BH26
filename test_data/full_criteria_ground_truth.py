@@ -1,19 +1,24 @@
 """
 test_data/full_criteria_ground_truth.py
 
-A ground-truth test dataset spanning ALL 28 ACMG/AMP 2015 codes (not just the
-5 this project implements a judgment engine for). This is DATA ONLY - no
-judgment logic lives here. It exists for two purposes:
+A ground-truth test dataset spanning ALL 28 ACMG/AMP 2015 codes (not just
+the 3 this project implements a judgment engine for as of 2026-09-16 -
+PS3/BS3/PS4, see acmg_pipeline.classification.IMPLEMENTED_CODES; PP1/BS4
+were handed off to another team that day too, alongside PP4 and the
+Layer-1 codes - see acmg_pipeline/criteria/stubs.py's
+HANDED_OFF_TO_OTHER_TEAM). This is DATA ONLY - no judgment logic lives
+here. It exists for two purposes:
 
   1. A validation fixture for whoever implements the 16 Layer-1
-     (automated/rule-based) codes and PP4 (see acmg_pipeline/criteria/
-     stubs.py's AUTOMATED_RULE_BASED_OTHER_TEAM and design doc section
-     15-13) - real (gene, hgvsc, criterion) -> met/not_met/strength triples
-     to check a new implementation against.
+     (automated/rule-based) codes, PP4, and PP1/BS4 (see acmg_pipeline/
+     criteria/stubs.py's AUTOMATED_RULE_BASED_OTHER_TEAM/
+     HANDED_OFF_TO_OTHER_TEAM and design doc section 15-13) - real
+     (gene, hgvsc, criterion) -> met/not_met/strength triples to check a
+     new implementation against.
   2. Test data for acmg_pipeline.classification.classify() itself, to see
      how the full 28-code picture compares against each variant's real,
      already-known overall classification (see test_full_criteria_ground_
-     truth.py) - useful even though this project only ever supplies 5 of
+     truth.py) - useful even though this project only ever supplies 3 of
      the 28 codes' worth of real evidence today.
 
 [Data sources]

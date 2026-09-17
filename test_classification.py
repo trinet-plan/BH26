@@ -10,31 +10,26 @@ from acmg_pipeline.classification import (
 )
 from acmg_pipeline.criteria.registry import is_implemented, get_criterion_evidence
 from acmg_pipeline.criteria import stubs
-from acmg_pipeline.clinical_note import ClinicalNoteExtraction
 from acmg_pipeline.common import MatchStatus, VariantMatchingResult, PaperContribution
 from acmg_pipeline.criteria import ps4, segregation as seg
-from acmg_pipeline.vcf_record import VariantRecord
+from test_harness import Harness
 
-passed = 0
-failed = 0
-
-
-def check(label, cond):
-    global passed, failed
-    if cond:
-        passed += 1
-        print(f"  OK   {label}")
-    else:
-        failed += 1
-        print(f"  FAIL {label}")
+h = Harness()
+check = h.check
 
 
 # --- 1. Code list sanity ---
 print("[1] ACMG code list sanity")
 check("28 total codes", len(ALL_ACMG_CODES) == 28)
 check("no overlap between pathogenic/benign lists", not (set(PATHOGENIC_CODES) & set(BENIGN_CODES)))
-check("5 implemented codes", IMPLEMENTED_CODES == {"PS3", "BS3", "PS4", "PP1", "BS4"})
-check("23 stub codes", len(stubs.STUB_CODES) == 23)
+# IMPLEMENTED_CODES was {"PS3", "BS3", "PS4", "PP1", "BS4"} through
+# 2026-09-15; PP1/BS4 (still real, tested code in acmg_pipeline/criteria/
+# segregation.py, still exercised directly in section [5] below) were
+# handed off to another team on 2026-09-16 - see acmg_pipeline.
+# classification's own comment on IMPLEMENTED_CODES and criteria/stubs.py's
+# HANDED_OFF_TO_OTHER_TEAM.
+check("3 implemented codes", IMPLEMENTED_CODES == {"PS3", "BS3", "PS4"})
+check("25 stub codes", len(stubs.STUB_CODES) == 25)
 check("implemented + stub codes cover all 28 with no overlap",
       set(stubs.STUB_CODES) | IMPLEMENTED_CODES == set(ALL_ACMG_CODES)
       and not (set(stubs.STUB_CODES) & IMPLEMENTED_CODES))
@@ -86,6 +81,11 @@ except ValueError:
     check("duplicate PS3 raises ValueError", True)
 
 # --- 5. from_aggregated_judgment(): real per-paper data -> CriterionEvidence ---
+# PP1/BS4 (via segregation.py) are exercised here as a generic test of
+# from_aggregated_judgment()'s direction-matching logic, independent of
+# IMPLEMENTED_CODES - segregation.py is still real, working, previously-
+# validated code (see acmg_pipeline.pipeline.ENGINE_BY_CRITERION), even
+# though PP1/BS4 are no longer in IMPLEMENTED_CODES as of 2026-09-16.
 print("\n[5] from_aggregated_judgment() (using PS4/PP1 schemas with realistic fixture data)")
 
 j_ps4 = ps4.PS4Judgment(
@@ -122,18 +122,13 @@ check("not_clear aggregate -> NOT_MET", from_aggregated_judgment(agg_empty, "PS4
 # --- 6. registry.get_criterion_evidence(): full 28-code loop ---
 print("\n[6] registry.get_criterion_evidence() over all 28 codes")
 fakes = {code: CriterionEvidence(code, CriterionStatus.MET, Strength.SUPPORTING) for code in IMPLEMENTED_CODES}
-shared_variant = VariantRecord("", 0, "", "", "", "", "", {"GENE": "TEST", "HGVSC": "c.1A>G"})
-shared_clinical_note = ClinicalNoteExtraction()
-evidence = [
-    get_criterion_evidence(code, shared_variant, shared_clinical_note, fakes.get(code))
-    for code in ALL_ACMG_CODES
-]
+evidence = [get_criterion_evidence(code, fakes.get(code)) for code in ALL_ACMG_CODES]
 check("produces exactly 28 CriterionEvidence entries", len(evidence) == 28)
 check("implemented codes come through unchanged", all(e.status == CriterionStatus.MET for e in evidence if e.code in IMPLEMENTED_CODES))
 check("stub codes come through as UNKNOWN/not-evaluated", all(e.status == CriterionStatus.UNKNOWN for e in evidence if e.code in stubs.STUB_CODES))
 
 try:
-    get_criterion_evidence("PS3", shared_variant, shared_clinical_note, None)
+    get_criterion_evidence("PS3", None)
     check("an implemented code with no real evidence supplied raises ValueError", False)
 except ValueError:
     check("an implemented code with no real evidence supplied raises ValueError", True)
@@ -141,5 +136,4 @@ except ValueError:
 full_result = classify(evidence)
 check("classify() accepts the full 28-entry set without error", full_result.not_evaluated_codes == [])
 
-print(f"\n{'='*40}\n{passed} passed, {failed} failed\n{'='*40}")
-sys.exit(1 if failed else 0)
+h.report_and_exit()

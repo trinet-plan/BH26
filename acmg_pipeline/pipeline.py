@@ -55,16 +55,15 @@ from acmg_pipeline.criteria import ps3_bs3 as ps3bs3_mod
 from acmg_pipeline.criteria import ps4 as ps4_mod
 from acmg_pipeline.criteria import segregation as seg_mod
 from acmg_pipeline.criteria import stubs as stubs_mod
-from acmg_pipeline.clinical_note import ClinicalNoteExtraction
 from acmg_pipeline.common import (
     PaperContribution, AggregatedJudgment, FinalResult, CuratorHint,
     MatchStatus, VariantMatchingResult,
 )
-from acmg_pipeline.inputs import variant_identity
-from acmg_pipeline.vcf_record import VariantRecord
-from acmg_pipeline.gate import ERepoClient
+from acmg_pipeline.gate import ERepoClient, _protein_equivalents
 from acmg_pipeline.export import build_evidence_line
-from acmg_pipeline.classification import classify, from_aggregated_judgment
+from acmg_pipeline.classification import ALL_ACMG_CODES, IMPLEMENTED_CODES, ClassificationResult, classify, from_aggregated_judgment
+from acmg_pipeline.criteria import stubs
+from acmg_pipeline.api_input import ApiCaseInput
 
 VA_SPEC_OUTPUT_DIR = Path("va_spec_output")
 VA_SPEC_OUTPUT_DIR.mkdir(exist_ok=True)
@@ -233,12 +232,36 @@ async def call_tool_safe(mcp: ClientSession, name: str, arguments: dict):
 # Fetching full text via PubMed MCP
 # ---------------------------------------------------------------------------
 
-async def fetch_full_text(mcp: ClientSession, pmid: str) -> tuple[str | None, str]:
+async def fetch_full_text(
+    mcp: ClientSession, pmid: str, cache: dict[str, tuple[str | None, str]] | None = None,
+) -> tuple[str | None, str]:
     """
     Fetches the full text for a PMID. Returns None with an explanatory note
     if the article is not in PMC. As noted in design doc section 2-3, only
     about 20% of articles are in PMC, so this branch is mandatory.
+
+    `cache`, when passed, is checked first and populated on the way out -
+    added 2026-09-16 so that testing a single variant against all 5
+    implemented criteria (test_case_ground_truth.md's 227-pair validation
+    run) doesn't re-fetch the same PMID's full text from PubMed MCP once
+    per criterion. The caller owns the cache's lifetime: pass a fresh dict
+    per variant (not a single dict for the whole run) so a variant's PMIDs
+    don't linger in memory or get reused for an unrelated variant that
+    happens to cite the same paper.
     """
+    if cache is not None and pmid in cache:
+        cached_text, cached_note = cache[pmid]
+        return cached_text, f"{cached_note} [full_text_cache hit - no PubMed MCP call made]"
+
+    result = await _fetch_full_text_uncached(mcp, pmid)
+    if cache is not None:
+        cache[pmid] = result
+    return result
+
+
+async def _fetch_full_text_uncached(mcp: ClientSession, pmid: str) -> tuple[str | None, str]:
+    unavailable_reason = None
+
     convert_result = await call_tool_safe(mcp, "convert_article_ids", {"ids": [pmid], "id_type": "pmid"})
     convert_text = "\n".join(getattr(b, "text", str(b)) for b in convert_result.content)
     try:
@@ -248,16 +271,17 @@ async def fetch_full_text(mcp: ClientSession, pmid: str) -> tuple[str | None, st
         pmcid = None
 
     if not pmcid:
-        return None, f"PMID:{pmid} is not in PMC (no PMCID). Judgment should fall back to abstract-only or be marked insufficient_data."
-
-    ft_result = await call_tool_safe(mcp, "get_full_text_article", {"pmc_ids": [pmcid]})
-    ft_text = "\n".join(getattr(b, "text", str(b)) for b in ft_result.content)
-    try:
-        ft_data = json.loads(ft_text)
-        article = ft_data["articles"][0]
-        full_text = article.get("full_text", "")
-        doi = article.get("doi", "")
-        if not full_text:
+        unavailable_reason = f"PMID:{pmid} is not in PMC (no PMCID)."
+    else:
+        ft_result = await call_tool_safe(mcp, "get_full_text_article", {"pmc_ids": [pmcid]})
+        ft_text = "\n".join(getattr(b, "text", str(b)) for b in ft_result.content)
+        try:
+            ft_data = json.loads(ft_text)
+            article = ft_data["articles"][0]
+            full_text = article.get("full_text", "")
+            doi = article.get("doi", "")
+            if full_text:
+                return full_text, f"Fetched from PubMed. PMCID={pmcid}, DOI={doi}"
             # Real bug found 2026-09-15 running the democase variants: the
             # PubMed MCP server can return a 200-ish "articles" record for a
             # PMCID with an empty/missing full_text field (e.g. PMID:8282798,
@@ -269,11 +293,59 @@ async def fetch_full_text(mcp: ClientSession, pmid: str) -> tuple[str | None, st
             # text to work with ("Please provide the full text..."), which
             # broke JSON parsing and looked like a flaky LLM failure rather
             # than the real cause (no text was ever sent). Treat this the
-            # same as "not in PMC" so it's skipped instead of prompted.
-            return None, f"PMID:{pmid} has a PMCID ({pmcid}) but no full_text came back from PubMed MCP (empty article body). Judgment should fall back to abstract-only or be marked insufficient_data."
-        return full_text, f"Fetched from PubMed. PMCID={pmcid}, DOI={doi}"
+            # same as "not in PMC" so it falls through to the abstract
+            # fallback below instead of being prompted with blank text.
+            unavailable_reason = f"PMID:{pmid} has a PMCID ({pmcid}) but no full_text came back from PubMed MCP (empty article body)."
+        except (json.JSONDecodeError, KeyError, IndexError) as e:
+            unavailable_reason = f"Failed to parse the full-text fetch result for PMID:{pmid}: {e}"
+
+    # Abstract fallback, added 2026-09-16: PMC full text is only available
+    # for ~20% of PMIDs (design doc section 2-3) - before this fallback
+    # existed, the other ~80% contributed literally nothing, even when
+    # get_article_metadata's abstract directly discusses the target variant
+    # (confirmed against real data: PMID:17351073, cited for MYH7 c.1594T>C's
+    # PP1 evidence, was skipped as "not in PMC" in every run to date, but its
+    # abstract explicitly reports the S532P mutant's force-generation data -
+    # exactly the kind of PS3-relevant finding this pipeline was missing).
+    # The `[ABSTRACT ONLY ...]` marker is prepended to the text itself
+    # (rather than added as a separate return value) so every build_prompt()
+    # caller sees the caveat with no signature change anywhere downstream -
+    # a real fingerprint of what evidence quality this judgment rests on.
+    abstract, abstract_note = await _fetch_abstract(mcp, pmid)
+    if abstract:
+        marked_text = (
+            "[ABSTRACT ONLY - full text was not available for this paper; the excerpt "
+            "below is the PubMed abstract, not the full article. Numeric details, "
+            "specific experiment counts, and per-family/per-patient data that would "
+            "normally only appear in the full text may be absent. Judge accordingly - "
+            "prefer not_clear over inferring specifics the abstract doesn't state.]\n\n"
+            + abstract
+        )
+        return marked_text, f"{unavailable_reason} {abstract_note}"
+
+    return None, f"{unavailable_reason} Abstract fallback also unavailable ({abstract_note}). Judgment marked insufficient_data."
+
+
+async def _fetch_abstract(mcp: ClientSession, pmid: str) -> tuple[str | None, str]:
+    """
+    Fetches just the title/abstract via get_article_metadata() - used by
+    _fetch_full_text_uncached() when PMC full text isn't available. Returns
+    (abstract, note); abstract is None (with an explanatory note) if
+    get_article_metadata has no abstract for this PMID either (e.g. a very
+    old record, or a non-journal source).
+    """
+    try:
+        result = await call_tool_safe(mcp, "get_article_metadata", {"pmids": [pmid]})
+        text = "\n".join(getattr(b, "text", str(b)) for b in result.content)
+        data = json.loads(text)
+        article = data["articles"][0]
+        abstract = article.get("abstract")
     except (json.JSONDecodeError, KeyError, IndexError) as e:
-        return None, f"Failed to parse the full-text fetch result: {e}"
+        return None, f"get_article_metadata failed to parse for PMID:{pmid}: {e}"
+
+    if not abstract:
+        return None, f"get_article_metadata returned no abstract for PMID:{pmid}."
+    return abstract, "Using the PubMed abstract instead (via get_article_metadata)."
 
 
 # ---------------------------------------------------------------------------
@@ -347,14 +419,17 @@ async def judge_single_paper(
     engine: JudgmentEngine,
     mcp: ClientSession,
     pmid: str,
-    variant: VariantRecord,
-    clinical_note: ClinicalNoteExtraction,
+    gene: str,
+    hgvsc: str,
+    hgvsp: str,
+    equivalents: list[str],
     vcep_name: str | None,
     criterion: str,
+    full_text_cache: dict[str, tuple[str | None, str]] | None = None,
 ) -> PaperContribution | None:
     show(f"\n--- PMID:{pmid} ---")
 
-    full_text, note = await fetch_full_text(mcp, pmid)
+    full_text, note = await fetch_full_text(mcp, pmid, cache=full_text_cache)
     show(f"[Full text] {note}")
     if not full_text:
         show(f"  -> Full text unavailable; PMID:{pmid} contributes no evidence (skipping the LLM call)")
@@ -377,7 +452,7 @@ async def judge_single_paper(
         )
         return PaperContribution(pmid=pmid, result=result)
 
-    prompt = engine.build_prompt(variant, clinical_note, full_text)
+    prompt = engine.build_prompt(gene, hgvsc, hgvsp, equivalents, full_text)
     log(f"--- Prompt (first 1000 chars) ---\n{prompt[:1000]}")
 
     try:
@@ -397,7 +472,6 @@ async def judge_single_paper(
         show(f"     Raw JSON (first 500 chars): {json.dumps(raw_json, ensure_ascii=False)[:500]}")
         return None
 
-    gene, _, _, _ = variant_identity(variant)
     result = engine.finalize(judgment, gene=gene, vcep_name=vcep_name, criterion=criterion, pmid=pmid)
 
     show(f"LLM's raw judgment: direction = {judgment.overall_evidence.direction.value}")
@@ -414,11 +488,14 @@ async def judge_variant(
     engine: JudgmentEngine,
     mcp: ClientSession,
     pmids: list[str],
-    variant: VariantRecord,
-    clinical_note: ClinicalNoteExtraction,
+    gene: str,
+    hgvsc: str,
+    hgvsp: str,
+    equivalents: list[str],
     vcep_name: str | None,
     criterion: str,
     ground_truth: str | None = None,
+    full_text_cache: dict[str, tuple[str | None, str]] | None = None,
 ) -> AggregatedJudgment:
     """
     Judges a variant using ALL of the given PMIDs (not just the first one),
@@ -430,6 +507,20 @@ async def judge_variant(
     PP1/BS4 - see ENGINE_BY_CRITERION) - everything else about this
     function is identical across all three.
 
+    `full_text_cache`, when passed, is forwarded to fetch_full_text() via
+    judge_single_paper() - added 2026-09-16 for the 227-pair validation run
+    (test_case_ground_truth.md) where the same variant is judged once per
+    implemented criterion it has ground truth for (up to 5x), each call
+    citing the same PMIDs. Any object satisfying the dict protocol (`in`,
+    `[...]`, `[...] = ...`) works here - a plain dict for simple ad hoc
+    reuse across a handful of judge_variant() calls, or (preferred for a
+    real batch run) acmg_pipeline.fulltext_cache.DiskBackedFullTextCache
+    passed as ONE instance for the WHOLE run: since a paper's full text
+    never changes, sharing it across variants (not just within one) and
+    across separate runs of the script is strictly better, not a risk -
+    see that module's docstring for why a per-variant-only cache still
+    left cross-variant and cross-run reuse on the table.
+
     Returns the AggregatedJudgment itself (not just its direction), so the
     caller can both score it against ground_truth (see score_direction())
     and build a VA-Spec EvidenceLine from it (see va_spec_export.py) -
@@ -438,13 +529,13 @@ async def judge_variant(
     there is no separate early-return branch here for "no paper yielded
     usable output".
     """
-    gene, hgvsc, hgvsp, _ = variant_identity(variant)
     show(f"\n{'='*70}\n[{engine.name}] {gene} {hgvsc} ({hgvsp}) - {len(pmids)} paper(s): {', '.join(pmids)}\n{'='*70}")
 
     contributions = []
     for pmid in pmids:
         contribution = await judge_single_paper(
-            engine, mcp, pmid, variant, clinical_note, vcep_name, criterion,
+            engine, mcp, pmid, gene, hgvsc, hgvsp, equivalents, vcep_name, criterion,
+            full_text_cache=full_text_cache,
         )
         if contribution is not None:
             contributions.append(contribution)
@@ -459,6 +550,260 @@ async def judge_variant(
         show(f"\n[Scoring] Ground truth: {ground_truth} / Adopted judgment: {aggregated.aggregated_direction.value}")
 
     return aggregated
+
+
+# ---------------------------------------------------------------------------
+# Driving the literature criteria from structured API-shaped input
+# ---------------------------------------------------------------------------
+#
+# Added 2026-09-16: the first wiring between acmg_pipeline.api_input.
+# ApiCaseInput (this project's real input contract, built from a plain dict
+# - e.g. an HTTP request body already run through json.loads(), never a
+# file - see api_input.py's own from_dict()/from_json_file() split) and the
+# existing literature JudgmentEngines. Takes VariantRecord directly (via
+# case_input.parse_vcf().record) rather than a separate wrapper class, per
+# the user's direction (2026-09-16): a criterion's input is one of the
+# pulled-in entity classes (VariantRecord / ClinicalNoteExtraction), not a
+# new parallel dataclass, so a later new VCF INFO key or clinical_note
+# field needs no call-site signature change here.
+#
+# Only drives PS3/BS3/PS4/PP1/BS4 (ENGINE_BY_CRITERION) - the literature
+# path. It does NOT touch case_input.clinical_note at all: none of these 5
+# codes' literature path needs it (see test_case_ground_truth.md's
+# criterion-input-group design). The clinical-note-only paths (PP1/BS4's
+# alternative "patient's own family" route via acmg_pipeline.criteria.
+# segregation.from_clinical_note_family(), and PS2/PM6's de-novo rule) are
+# separate, not-yet-wired call sites - this function covers literature
+# only.
+#
+# PMIDs come from ERepoClient first; when ERepo has zero citations for this
+# variant (e.g. it's genuinely novel/unregistered - the gap raised by the
+# user 2026-09-16, "PMIDありきの実装を変更しないといけない"), fall back to
+# search_candidate_pmids() below, a live PubMed search. See that function's
+# docstring for the query strategy and its real-data validation.
+
+async def search_candidate_pmids(
+    mcp: ClientSession, gene: str, hgvsp: str | None = None, disease: str | None = None,
+    max_results: int = 10,
+) -> list[str]:
+    """
+    Live PubMed search fallback for when ERepo has no curated citations at
+    all for a variant. Tries several query strategies, in order, stopping
+    once max_results candidates are collected - validated 2026-09-16
+    against real cases in this project's own demo data:
+
+      - "<gene> AND <protein change>" (e.g. "MYH7 AND Arg719Trp") works
+        well for missense variants - 5/5 real hits for a known MYH7
+        variant, including PMIDs already in this project's own ERepo-
+        sourced ground truth.
+      - Exact HGVS c./p. notation (e.g. "MYBPC3 AND c.278delA",
+        "MYBPC3 AND Lys93Argfs") returns ZERO results even for a variant
+        whose own source paper is indexed in PubMed - confirmed
+        empirically, not assumed. PubMed's indexing does not reliably
+        match this notation as literal text.
+      - "<gene>[Title] AND <disease, keywords>" works well as a fallback,
+        especially for indel/frameshift variants where the protein-change
+        query above doesn't apply well - found the exact real source paper
+        for MYBPC3 c.278delA (democase Case 1) via "MYBPC3[Title] AND
+        hypertrophic cardiomyopathy AND apical aneurysm" -> PMID 42428486,
+        the correct paper.
+      - A last-resort "<gene> AND novel variant" query, if the above
+        didn't find enough.
+
+    Results are CANDIDATES, not confirmed citations - unlike ERepo's
+    evidenceLinks (a VCEP already verified these papers discuss the
+    variant), a search hit is not guaranteed relevant until judge_single_
+    paper()'s own variant-matching/not_clear handling checks it against
+    the actual text. That's an acceptable tradeoff: the alternative is
+    finding nothing at all for a variant ERepo has never curated.
+    """
+    queries: list[str] = []
+    if hgvsp and hgvsp != "N/A":
+        aa_change = hgvsp.strip().removeprefix("p.").strip("()")
+        if aa_change:
+            queries.append(f"{gene} AND {aa_change}")
+    if disease:
+        queries.append(f"{gene}[Title] AND {disease.replace('_', ' ')}")
+    queries.append(f"{gene} AND novel variant")
+
+    seen: list[str] = []
+    for query in queries:
+        if len(seen) >= max_results:
+            break
+        try:
+            result = await call_tool_safe(mcp, "search_articles", {"query": query, "max_results": max_results})
+            text = "\n".join(getattr(b, "text", str(b)) for b in result.content)
+            data = json.loads(text)
+        except Exception as e:
+            show(f"  [PubMed search] query {query!r} failed: {e}")
+            continue
+        for pmid in data.get("pmids", []):
+            if pmid not in seen:
+                seen.append(pmid)
+    return seen[:max_results]
+
+
+async def resolve_pmids_for_variant(
+    mcp: ClientSession, erepo_client: ERepoClient, gene: str, hgvsc: str,
+    hgvsp: str | None = None, disease: str | None = None,
+) -> tuple[list[str], str]:
+    """
+    The single, shared "how do we get PMIDs for this variant" resolver:
+    ERepo's curated evidenceLinks first, a live PubMed search (search_
+    candidate_pmids() above) only when ERepo has nothing. Returns
+    (pmids, source) where source is "erepo" or "pubmed_search" - an empty
+    pmids list means neither source found anything at all.
+
+    Extracted 2026-09-16 so every caller shares one resolution path rather
+    than each hand-rolling its own ERepo-only lookup: run_validation_64.py
+    used to call erepo_client.lookup() directly and never got the search
+    fallback judge_variant_from_structured_input() (below) already had,
+    silently skipping the exact variants (e.g. MYBPC3 c.1000G>A, DSG2
+    c.1592T>G - no ERepo record at all) that most needed it. Per the
+    user's explicit direction (2026-09-16): no caller should reference
+    ERepo directly anymore - always go through this function instead, so
+    a future change to the resolution strategy (e.g. a better search query,
+    or a third PMID source) only needs to happen in one place.
+    """
+    erepo_result = erepo_client.lookup(gene, hgvsc)
+    pmids = erepo_result.evidence_pmids
+    show(f"\n[ERepo] {gene} {hgvsc}: found_in_erepo={erepo_result.found_in_erepo}, evidence_pmids={pmids}")
+    if pmids:
+        return pmids, "erepo"
+
+    show("  -> No evidence PMIDs from ERepo; falling back to a live PubMed search "
+         "(this variant has no curated citations, e.g. it may be novel/unregistered)")
+    pmids = await search_candidate_pmids(mcp, gene, hgvsp, disease)
+    show(f"[PubMed search] candidate PMIDs: {pmids}")
+    if pmids:
+        show("  [caution] These PMIDs came from a live PubMed search, not a VCEP-curated "
+             "citation list - unlike ERepo's evidenceLinks, a search hit is not confirmed to "
+             "actually discuss this variant until the per-paper judgment checks it.")
+    else:
+        show("  -> PubMed search also found nothing; this variant cannot be evaluated by the literature path at all")
+    return pmids, "pubmed_search"
+
+
+async def judge_variant_from_structured_input(
+    case_input: ApiCaseInput,
+    mcp: ClientSession,
+    erepo_client: ERepoClient,
+    criteria: tuple[str, ...] = ("PS3", "BS3", "PS4"),
+    vcep_name: str | None = None,
+    full_text_cache: dict[str, tuple[str | None, str]] | None = None,
+) -> dict[str, AggregatedJudgment]:
+    """
+    Parses `case_input`'s embedded VCF (exactly 1 variant, per ApiCaseInput's
+    own contract) and runs judge_variant() once per requested literature
+    criterion (default: this project's own current scope, PS3/BS3/PS4 -
+    PP1/BS4 were dropped from the default 2026-09-16 when their judgment
+    logic was handed off to another team; ENGINE_BY_CRITERION below still
+    maps them to segregation.py, so passing criteria=(...,"PP1","BS4") still
+    works, it's just no longer what a caller gets without asking), using
+    resolve_pmids_for_variant() above (ERepo first, live
+    PubMed search fallback) to find citing PMIDs. Returns {criterion:
+    AggregatedJudgment}; a criterion is omitted from the result (not given a
+    not_clear placeholder) only when neither PMID source found anything for
+    this variant at all, in which case the whole result dict is empty and
+    the caller should treat this variant as "nothing this pipeline could
+    evaluate".
+    """
+    variant = case_input.parse_vcf().record
+    gene = variant.info.get("GENE", "")
+    hgvsc = variant.info.get("HGVSC", "")
+    hgvsp = variant.info.get("HGVSP", "N/A")
+    equivalents = list(_protein_equivalents(hgvsp)) if hgvsp and hgvsp != "N/A" else [hgvsc]
+
+    disease = variant.info.get("DISEASE_ASSOCIATION")
+    pmids, _pmid_source = await resolve_pmids_for_variant(mcp, erepo_client, gene, hgvsc, hgvsp, disease)
+    if not pmids:
+        return {}
+
+    results: dict[str, AggregatedJudgment] = {}
+    for criterion in criteria:
+        engine = ENGINE_BY_CRITERION[criterion]
+        results[criterion] = await judge_variant(
+            engine, mcp, pmids=pmids, gene=gene, hgvsc=hgvsc, hgvsp=hgvsp,
+            equivalents=equivalents, vcep_name=vcep_name, criterion=criterion,
+            full_text_cache=full_text_cache,
+        )
+    return results
+
+
+# ---------------------------------------------------------------------------
+# Full 28-code classification from structured input
+# ---------------------------------------------------------------------------
+#
+# Added 2026-09-16, per the user's decision that criteria this project
+# doesn't implement (the 16 Layer-1 automated/rule-based codes, the 6
+# clinical-record-only codes PS2/PM3/PM6/BS2/BP2/BP5, and - per a further
+# 2026-09-16 decision, see acmg_pipeline/criteria/stubs.py's
+# HANDED_OFF_TO_OTHER_TEAM - PP1/BS4/PP4) stay stubbed - their real
+# judgment logic is another team member's responsibility (see
+# acmg_pipeline/criteria/stubs.py). This function is the single entry point
+# that produces a COMPLETE 28-code picture for one variant: real LLM
+# literature judgment for the (now 3: PS3/BS3/PS4) codes this project
+# implements, honest NOT_EVALUATED stubs for the other 25, combined via
+# classification.classify() exactly the same way test_full_criteria_
+# ground_truth.py already does for the ground-truth dataset.
+#
+# Execution order (cheapest-first, matching classification.classify()'s own
+# BA1-short-circuit philosophy): stub lookups are instant, so in practice
+# they're computed after the (comparatively expensive) literature judgment
+# here - there's nothing today for a stub to short-circuit, since this
+# project doesn't compute the Layer-1 values (gnomAD AF, ClinVar assertions,
+# etc.) that would make e.g. a BA1 short-circuit meaningful. Once another
+# team's real Layer-1/PP1/BS4/PP4 modules exist, swap their real
+# CriterionEvidence in place of stubs.stub_evidence(code) below - registry.
+# get_criterion_evidence() already supports exactly that swap without any
+# other change here.
+
+async def classify_variant_from_structured_input(
+    case_input: ApiCaseInput,
+    mcp: ClientSession,
+    erepo_client: ERepoClient,
+    vcep_name: str | None = None,
+    full_text_cache: dict[str, tuple[str | None, str]] | None = None,
+) -> ClassificationResult:
+    literature_results = await judge_variant_from_structured_input(
+        case_input, mcp, erepo_client, vcep_name=vcep_name, full_text_cache=full_text_cache,
+    )
+    # Note: judge_variant_from_structured_input()'s default `criteria` is
+    # IMPLEMENTED_CODES's 3 codes (PS3/BS3/PS4) - PP1/BS4 (still real,
+    # working code in criteria/segregation.py, still reachable via
+    # ENGINE_BY_CRITERION) are no longer requested by default here, so they
+    # fall into the stub loop below along with the other 24 non-implemented
+    # codes, per the 2026-09-16 handoff decision.
+
+    evidence = [
+        from_aggregated_judgment(aggregated, code)
+        for code, aggregated in literature_results.items()
+    ]
+    evaluated_codes = set(literature_results)
+    for code in ALL_ACMG_CODES:
+        if code in evaluated_codes:
+            continue
+        if code in IMPLEMENTED_CODES:
+            # Implemented by this project, but not evaluated for this
+            # particular variant (e.g. ERepo had zero PMIDs at all, so
+            # judge_variant_from_structured_input() returned {} - see its
+            # own docstring). Distinct from "not our team's job" (the stub
+            # branch below): this is "should have been run, wasn't", so
+            # classify()'s not_evaluated_codes correctly flags it rather
+            # than silently treating it as a stub.
+            continue
+        evidence.append(stubs.stub_evidence(code))
+
+    result = classify(evidence)
+    show(f"\n{'='*70}\n[Classification]\n{'='*70}")
+    show(f"category = {result.category.value} (score={result.score}"
+         f"{', BA1 override' if result.ba1_override else ''})")
+    show(f"  met: {', '.join(f'{e.code}({e.strength.value})' for e in result.met) or '(none)'}")
+    show(f"  not_met: {', '.join(e.code for e in result.not_met) or '(none)'}")
+    if result.not_evaluated_codes:
+        show(f"  not_evaluated (implemented but not run for this variant): "
+             f"{', '.join(c for c in result.not_evaluated_codes if c in IMPLEMENTED_CODES) or '(none)'}")
+    return result
 
 
 def parse_ground_truth(ground_truth: str) -> tuple[str, bool]:
@@ -721,43 +1066,29 @@ async def main():
         tally = {"match": 0, "mismatch": 0, "reserved": 0}
         mismatches = []
         # Accumulates this run's real CriterionEvidence per variant (gene,
-        # hgvsc), keyed by which of the 5 implemented codes were actually
-        # evaluated for it - test_cases above often covers only one or two
-        # of the 5 per variant (e.g. MYH7 c.1594T>C is only ever run for
-        # PS3 here), not all 5, so this can't reuse registry.
-        # get_criterion_evidence()'s all-28-codes contract (it requires real
-        # evidence for every implemented code, by design - see registry.py).
-        # Instead the final classification pass below combines whatever was
-        # actually run with the 23 stub codes directly, and lets classify()
-        # itself report the implemented-but-not-run-here codes as
-        # not_evaluated_codes - an honest reflection of this demo's partial
-        # coverage, not a claim that this project doesn't implement them.
+        # hgvsc), keyed by which criterion was actually evaluated for it -
+        # test_cases above still exercises 5 criteria total (PS3/BS3/PS4,
+        # plus PP1/BS4 via ENGINE_BY_CRITERION -> segregation.py, still
+        # real working code even though PP1/BS4 left IMPLEMENTED_CODES on
+        # 2026-09-16 - see classification.py), and often only one or two
+        # of those 5 per variant (e.g. MYH7 c.1594T>C is only ever run for
+        # PS3 here), so this can't reuse registry.get_criterion_evidence()'s
+        # all-28-codes contract (it requires real evidence for every
+        # IMPLEMENTED_CODES code, by design - see registry.py, and PP1/BS4
+        # no longer satisfy that). Instead the final classification pass
+        # below combines whatever was actually run with the stub codes
+        # directly (skipping any stub whose code already has real evidence
+        # here - PP1/BS4 are stub codes now too, so without that skip
+        # classify() would see two CriterionEvidence for the same code and
+        # raise; see the stubs_for_variant filter below), and lets
+        # classify() itself report the implemented-but-not-run-here codes
+        # as not_evaluated_codes - an honest reflection of this demo's
+        # partial coverage, not a claim that this project doesn't
+        # implement them.
         variant_evidence: dict[tuple[str, str], dict[str, object]] = {}
-        shared_inputs: dict[
-            tuple[str, str], tuple[VariantRecord, ClinicalNoteExtraction]
-        ] = {}
 
         for case in test_cases:
             gene, hgvsc = case["gene"], case["hgvsc"]
-            variant = VariantRecord(
-                chrom="",
-                pos=0,
-                id="",
-                ref="",
-                alt="",
-                qual="",
-                filter="",
-                info={
-                    "GENE": gene,
-                    "HGVSC": hgvsc,
-                    "HGVSP": case["hgvsp"],
-                    "EQUIVALENTS": case["equivalents"],
-                },
-            )
-            # These regression cases are literature-only and have no
-            # patient note. The shared interface still carries an explicit
-            # empty extraction so every criterion receives the same inputs.
-            clinical_note = ClinicalNoteExtraction()
             engine = ENGINE_BY_CRITERION[case["criterion"]]
             erepo_result = erepo_client.lookup(gene, hgvsc)
             pmids = erepo_result.evidence_pmids
@@ -767,24 +1098,14 @@ async def main():
                 show("  -> No evidence PMIDs from ERepo; skipping this variant")
                 continue
 
-            aggregated = await judge_variant(
-                engine,
-                mcp,
-                pmids=pmids,
-                variant=variant,
-                clinical_note=clinical_note,
-                vcep_name=case["vcep_name"],
-                criterion=case["criterion"],
-                ground_truth=case.get("ground_truth"),
-            )
+            aggregated = await judge_variant(engine, mcp, pmids=pmids, **case)
             direction = aggregated.aggregated_direction
 
             criterion_evidence = from_aggregated_judgment(aggregated, case["criterion"])
             variant_evidence.setdefault((gene, hgvsc), {})[case["criterion"]] = criterion_evidence
-            shared_inputs[(gene, hgvsc)] = (variant, clinical_note)
 
             evidence_line = build_evidence_line(
-                aggregated, variant=variant,
+                aggregated, gene=gene, hgvsc=hgvsc,
                 criterion=case["criterion"], vcep_name=case.get("vcep_name"),
             )
             out_path = VA_SPEC_OUTPUT_DIR / f"{evidence_line['id'].replace('evline:', '')}.json"
@@ -817,17 +1138,26 @@ async def main():
                 show(f"  - {m}")
 
         # Final ACMG/AMP classification per variant (classification.classify(),
-        # see acmg_pipeline/classification.py). Combines whichever of the 5
-        # implemented codes were actually run above for that variant with
-        # NOT_EVALUATED placeholders for the 23 codes this project doesn't
-        # implement (acmg_pipeline/criteria/stubs.py) - this is a pipeline
-        # demo, not a real curation, so the category shown here is only as
-        # complete as the evidence gathered above.
+        # see acmg_pipeline/classification.py). Combines whichever criteria
+        # were actually run above for that variant with NOT_EVALUATED
+        # placeholders for the stub codes this project doesn't implement
+        # (acmg_pipeline/criteria/stubs.py) - this is a pipeline demo, not a
+        # real curation, so the category shown here is only as complete as
+        # the evidence gathered above.
+        #
+        # stub_evidence_all is a FIXED list of every STUB_CODE, computed
+        # once outside the loop; as of 2026-09-16 that now includes PP1/BS4
+        # (see stubs.py's HANDED_OFF_TO_OTHER_TEAM), which test_cases above
+        # can still produce REAL evidence for via ENGINE_BY_CRITERION. Must
+        # filter out any stub whose code is already in real_by_code per
+        # variant, or classify() sees two CriterionEvidence for the same
+        # code (e.g. real PP1 for RUNX1 c.601C>T plus a stub PP1) and
+        # raises ValueError("duplicate evidence for ...").
         show(f"\n{'='*70}\n[Final ACMG/AMP classification per variant]\n{'='*70}")
+        stub_evidence_all = stubs_mod.all_stub_evidence()
         for (v_gene, v_hgvsc), real_by_code in variant_evidence.items():
-            variant, clinical_note = shared_inputs[(v_gene, v_hgvsc)]
-            stub_evidence = stubs_mod.all_stub_evidence(variant, clinical_note)
-            full_evidence = list(real_by_code.values()) + stub_evidence
+            stubs_for_variant = [e for e in stub_evidence_all if e.code not in real_by_code]
+            full_evidence = list(real_by_code.values()) + stubs_for_variant
             result = classify(full_evidence)
             show(f"\n{v_gene} {v_hgvsc}:")
             met_str = ", ".join(f"{e.code}({e.strength.value})" for e in result.met) or "(none)"

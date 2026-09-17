@@ -9,19 +9,10 @@ from acmg_pipeline.gate import (
     check_approved_assay, AssayApplicability,
     run_gate, GateMode,
 )
+from test_harness import Harness
 
-passed = 0
-failed = 0
-
-
-def check(label, cond):
-    global passed, failed
-    if cond:
-        passed += 1
-        print(f"  OK   {label}")
-    else:
-        failed += 1
-        print(f"  FAIL {label}")
+h = Harness()
+check = h.check
 
 
 # --- 1. Variant matching (the MT-ND6 off-by-one-coordinate case, section 6-2) ---
@@ -130,5 +121,4 @@ lookup_multi = multi_client.lookup("RUNX1", "c.601C>T")
 check("all 4 real PMIDs are extracted from evidenceLinks",
       lookup_multi.evidence_pmids == ["20549580", "10508512", "28513614", "19387465"])
 
-print(f"\n{'='*40}\n{passed} passed, {failed} failed\n{'='*40}")
-sys.exit(1 if failed else 0)
+h.report_and_exit()
