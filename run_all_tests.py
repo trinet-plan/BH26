@@ -29,6 +29,7 @@ TEST_FILES = [
     "test_classification.py",
     "test_full_criteria_ground_truth.py",
     "test_automated_criteria_ground_truth.py",
+    "test_pp4_pp1_bs4.py",
 ]
 
 

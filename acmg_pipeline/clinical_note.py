@@ -168,11 +168,17 @@ def extract_clinical_note(text: str) -> ClinicalNoteExtraction:
     """Boundary for the clinical-note extraction component.
 
     The public API intentionally accepts the main project's original free-text
-    ``clinical_note`` field.  Until the dedicated extractor supplied by the
-    clinical-note workstream is connected here, do not infer clinical facts
-    from prose: return an empty extraction and let dependent criteria be
-    reported as UNKNOWN.
+    ``clinical_note`` field. Delegates to acmg_pipeline.clinical_extraction's
+    real LLM-based extractor (pulled into main 2026-09-17, from the
+    clinical-note workstream's pp4_pp1_bs4 branch) - imported lazily, inside
+    this function, rather than at module level: clinical_extraction.py raises
+    RuntimeError at import time if VLLM_BASE_URL/VLLM_API_KEY aren't
+    configured, and this module (clinical_note.py) is imported broadly enough
+    (by segregation.py, pipeline.py, every criterion module, ...) that forcing
+    that requirement onto every one of those imports would be a real
+    regression for any caller that never actually needs to extract a note.
     """
     if not isinstance(text, str):
         raise TypeError("clinical_note must be a string")
-    return ClinicalNoteExtraction()
+    from acmg_pipeline.clinical_extraction import extract_clinical_note as _extract
+    return _extract(text)
