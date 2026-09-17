@@ -1,7 +1,7 @@
 """
 va_spec_statement.py
 doc/docker_api_deployment_plan_v1_ja.md 5章の変換ロジック。
-PipelineOutput(pipeline_interface.py)から、GET /v1/variant/{job_id} が返す
+PipelineOutput(pipeline_interface.py)から、GET /v1/classify_criteria/{job_id} が返す
 va_specフィールドの中身(1つのJSON文書)を組み立てる。
 
 acmg_pipeline/export.py が最初hand-builtなdict -> 後に実ga4gh.va_specモデルへ
