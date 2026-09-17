@@ -389,9 +389,21 @@ def main(argv=None):
                             continue
                         seen.add(key)
                         try:
+                            # The exon also answers NF03 - see providers/mane.py. It is
+                            # looked up only when this run is deriving NMD anyway, so no
+                            # extra VEP request is made for a run that is not.
+                            exon = None
+                            if args.with_nmd_prediction:
+                                exon = NmdPredictionProvider(
+                                    external_client,
+                                    args.ensembl_release or provider.release,
+                                ).exon_on_transcript(
+                                    annotation.get("gene"), annotation.get("transcript"),
+                                    annotation.get("hgvsc"))
                             mane_records.extend(mane.get_transcript_assessment(
                                 variants[annotation["variant_key"]],
-                                annotation.get("gene"), annotation.get("transcript")))
+                                annotation.get("gene"), annotation.get("transcript"),
+                                exon=exon))
                         except (FetchError, ValueError) as exc:
                             mane_errors.append(f"{annotation.get('gene')}: {exc}")
                     evidence.extend(mane_records)

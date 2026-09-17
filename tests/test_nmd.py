@@ -131,6 +131,33 @@ class NmdPredictionTests(unittest.TestCase):
         self.assertNotIn("curator", record)
         self.assertTrue(reviewed_or_automated(record))
 
+    def exon(self, consequences, gene="MYBPC3", transcript="NM_000256.3",
+             hgvsc="NM_000256.3:c.278delA"):
+        provider = NmdPredictionProvider(FakeClient(consequences), "116")
+        return provider.exon_on_transcript(gene, transcript, hgvsc)
+
+    def test_the_exon_helper_reports_where_vep_placed_the_variant(self):
+        """The MANE provider needs this for NF03; sharing it keeps one VEP request."""
+        self.assertEqual(self.exon([consequence(exon="2/34")]), "2/34")
+
+    def test_the_exon_helper_answers_for_the_last_exons_too(self):
+        """NF03 asks whether the exon is in the transcript, which the NMD boundary does not
+        affect - the prediction stays silent there, the exon does not have to."""
+        self.assertEqual(self.exon([consequence(exon="34/34")]), "34/34")
+        self.assertEqual(self.predict([consequence(exon="34/34")]), [])
+
+    def test_the_exon_helper_stays_silent_when_transcripts_disagree(self):
+        self.assertIsNone(self.exon([
+            consequence(exon="2/34", mane_select=None),
+            consequence(transcript_id="ENST2", exon="9/27", mane_select=None),
+        ]))
+        self.assertIsNone(self.exon([]))
+
+    def test_the_exon_helper_needs_its_inputs(self):
+        self.assertIsNone(self.exon([consequence()], gene=""))
+        self.assertIsNone(self.exon([consequence()], transcript=""))
+        self.assertIsNone(self.exon([consequence()], hgvsc=""))
+
     def test_a_release_is_required(self):
         with self.assertRaises(ValueError):
             NmdPredictionProvider(FakeClient([]), "")

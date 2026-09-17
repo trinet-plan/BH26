@@ -84,11 +84,23 @@ class ManeTests(unittest.TestCase):
         self.assertEqual(self.assess(rows, "", "NM_000256.3"), [])
         self.assertEqual(self.assess(rows, "MYBPC3", ""), [])
 
-    def test_exon_relevance_is_not_invented(self):
-        """NF03 asks a question the MANE pick does not answer, so it keeps stopping there."""
+    def test_an_exon_numbered_on_this_transcript_answers_nf03(self):
+        """Once relevance is asserted of the transcript, an exon VEP can number *on that
+        transcript* is in it by construction - no further source decides NF03."""
+        provider, _ = self.provider([("MYBPC3", "NM_000256.3", "MANE Select")])
+        record = provider.get_transcript_assessment(
+            self.variant, "MYBPC3", "NM_000256.3", exon="2/34")[0]
+        self.assertEqual(record["exon_relevance"], "RELEVANT")
+        self.assertEqual(record["affected_exon"], "2/34")
+
+    def test_without_an_exon_nf03_stays_unresolved_rather_than_denied(self):
+        """The converse is never claimed: no exon number does not mean the exon is absent,
+        which PVS1 would read as NOT_RELEVANT and call the criterion inapplicable."""
         record = self.assess([("MYBPC3", "NM_000256.3", "MANE Select")],
                              "MYBPC3", "NM_000256.3")[0]
+        self.assertEqual(record["relevance"], "RELEVANT")
         self.assertNotIn("exon_relevance", record)
+        self.assertNotIn("affected_exon", record)
 
     def test_the_record_declares_itself_automated(self):
         record = self.assess([("MYBPC3", "NM_000256.3", "MANE Select")],

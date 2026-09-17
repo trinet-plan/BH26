@@ -64,6 +64,30 @@ class NmdPredictionProvider:
         self.client = client
         self.release = release
 
+    def exon_on_transcript(self, gene, transcript, hgvsc):
+        """The exon this variant falls in, as VEP numbers it on `transcript`.
+
+        Shared with the MANE provider, which needs it for PVS1's NF03 gate: an exon that VEP
+        can number on a transcript is by construction present in that transcript. Returns
+        None when no single consequence settles it - the same silence the NMD prediction
+        keeps in that case.
+        """
+        if not (gene and transcript and hgvsc):
+            return None
+        _response, candidates = self._consequences(hgvsc, gene)
+        chosen = self._for_transcript(candidates, transcript)
+        if not chosen:
+            return None
+        exons = {item.get("exon") for item in chosen}
+        return exons.pop() if len(exons) == 1 else None
+
+    @staticmethod
+    def _for_transcript(candidates, transcript):
+        """The consequences VEP ties to `transcript` via MANE Select, else all of them."""
+        preferred = [item for item in candidates
+                     if (item.get("mane_select") or "").split(".")[0] == transcript.split(".")[0]]
+        return preferred or candidates
+
     def _consequences(self, hgvsc, gene):
         url = ("https://rest.ensembl.org/vep/human/hgvs/"
                f"{quote(hgvsc, safe='')}?hgvs=1&numbers=1&mane=1")
@@ -87,9 +111,7 @@ class NmdPredictionProvider:
             return []
         # Prefer the consequence VEP marks as MANE Select for this accession; the variant is
         # evaluated against a RefSeq transcript, and that is the only field tying the two.
-        preferred = [item for item in candidates
-                     if (item.get("mane_select") or "").split(".")[0] == transcript.split(".")[0]]
-        chosen = preferred or candidates
+        chosen = self._for_transcript(candidates, transcript)
         positions = {parse_exon(item.get("exon")) for item in chosen}
         if len(positions) != 1:
             return []

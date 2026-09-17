@@ -17,11 +17,13 @@
   So only a match produces a record; anything else produces none, and PVS1 keeps reporting
   the transcript as unresolved for a curator.
 
-[What it deliberately does not supply]
-  `exon_relevance`, which NF03 needs after an NMD prediction, asks whether the affected exon
-  is present in the relevant transcripts. That is a comparison of exon structures across
-  transcripts, not something the MANE pick answers, so no value is invented for it and NF03
-  still stops.
+[exon_relevance]
+  NF03 asks whether the affected exon is present in the biologically relevant transcripts.
+  Once relevance has been asserted of this transcript, the question answers itself for any
+  variant VEP can place in a numbered exon *of that transcript*: the exon is in it by
+  construction. So the caller passes the exon number in, and it is only asserted when one
+  was found - an exon VEP could not place leaves NF03 unresolved as before. What is never
+  claimed is the converse: no exon number does not mean the exon is absent.
 
 [Version matching]
   Accessions are compared without their version suffix. A transcript's version changes when
@@ -86,8 +88,12 @@ class ManeTranscriptProvider:
         return cls(client, summary_url=f"{directory}MANE.GRCh38.v{release}.summary.txt.gz",
                    release=release)
 
-    def get_transcript_assessment(self, variant, gene, transcript):
-        """One automated record when `transcript` is the gene's MANE Select, else none."""
+    def get_transcript_assessment(self, variant, gene, transcript, exon=None):
+        """One automated record when `transcript` is the gene's MANE Select, else none.
+
+        `exon` is this variant's exon as VEP numbers it on `transcript` - see
+        NmdPredictionProvider.exon_on_transcript(). Supplying it also answers NF03.
+        """
         if not gene or not transcript:
             return []
         response = self.client.fetch(self.summary_url, response_format="text-gz")
@@ -108,17 +114,18 @@ class ManeTranscriptProvider:
             "transcript": transcript,
             "gene": gene,
             "relevance": "RELEVANT",
-            # Not supplied on purpose - see the module docstring. NF03 stops here.
             "assessment_method": "automated",
             "method": METHOD,
             "policy_version": f"MANE v{self.release}",
             "mane_select_accession": mane,
+            **({"exon_relevance": "RELEVANT", "affected_exon": exon} if exon else {}),
             "evaluated_accession": transcript,
             "policy_note": (
                 "Relevance asserted because the evaluated transcript is this gene's MANE "
                 "Select. A transcript that is not MANE Select yields no record rather than "
                 "NOT_RELEVANT: curation legitimately uses other transcripts. exon_relevance "
-                "is not derived here."
+                "follows only when VEP numbered the exon on this same transcript; without a "
+                "number it stays unasserted rather than being read as absent."
             ),
             "response_sha256": digest,
         }]
