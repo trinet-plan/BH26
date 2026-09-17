@@ -9,6 +9,7 @@ lookup, points-to-Strength mapping, EvidenceLine construction), not the
 judgment logic itself - see test_pp4_pp1_bs4.py for that.
 """
 
+import asyncio
 import json
 import sys
 import tempfile
@@ -16,6 +17,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+import acmg_pipeline.hpo_extraction as hpo_extraction
 from acmg_pipeline.classification import CriterionStatus, Strength
 from acmg_pipeline.clinical_note import (
     ClinicalFeature, ClinicalNoteExtraction, Family, Proband, ProbandPhenotype, Relative,
@@ -27,6 +29,33 @@ from test_harness import Harness
 
 h = Harness()
 check = h.check
+
+
+async def _identity_normalize_hpo(extraction):
+    # engine.evaluate() now calls hpo_extraction.normalize_hpo() (a real
+    # TogoMCP + LLM round trip) before evaluate_locus_evidence(). This
+    # test's fixtures already hand-set ClinicalFeature.hpo_id to synthetic
+    # values (HP:0000001/HP:0000002) matching the synthetic reference
+    # records below, purely to test the ENGINE's own logic - not TogoMCP
+    # resolution of real phenotype labels, which is hpo_extraction.py's own
+    # concern (exercised directly, live, in the earlier manual check of
+    # resolve_hpo_labels()). Patching normalize_hpo() to a pass-through
+    # keeps this file fast, deterministic, and offline, as it was before
+    # engine.evaluate() became async.
+    return extraction
+
+
+hpo_extraction.normalize_hpo = _identity_normalize_hpo
+
+
+def run_evaluate(variant, note, config):
+    # engine.evaluate() became async on 2026-09-17 once it started calling
+    # acmg_pipeline.hpo_extraction.normalize_hpo() (a TogoMCP + LLM round
+    # trip) for genes with a curated reference record - this test file
+    # stays plain top-to-bottom script style (test_harness.py convention),
+    # so each call site just drives its own event loop instead of the
+    # whole file becoming async.
+    return asyncio.run(engine.evaluate(variant, note, config))
 
 
 def _variant(gene: str) -> VariantRecord:
@@ -59,7 +88,7 @@ print("[1] No curated reference -> UNKNOWN")
 empty_registry = Path(tempfile.mkdtemp()) / "empty.json"
 empty_registry.write_text(json.dumps({"schema_version": "1.0", "entries": []}), encoding="utf-8")
 
-results = engine.evaluate(
+results = run_evaluate(
     _variant("UNCURATED_GENE"), _note(),
     {"pp4_reference_records_path": str(empty_registry)},
 )
@@ -78,7 +107,7 @@ draft_registry.write_text(json.dumps({
         "diagnostic_yield": 0.7, "testing_method": "sequencing", "source_citation": "x",
     }],
 }), encoding="utf-8")
-draft_results = engine.evaluate(_variant("GENE1"), _note(), {"pp4_reference_records_path": str(draft_registry)})
+draft_results = run_evaluate(_variant("GENE1"), _note(), {"pp4_reference_records_path": str(draft_registry)})
 check("a DRAFT (unapproved) entry does not load", draft_results["PP4"].status == CriterionStatus.UNKNOWN)
 
 
@@ -104,7 +133,7 @@ config = {"pp4_reference_records_path": str(approved_registry)}
 # but here going through the FULL engine.evaluate() -> to_criterion_evidence() path, not
 # evaluate_locus_evidence() directly.
 note_with_relative = _note(relatives=[Relative("sister", affected_status=True, variant_status=True)])
-sibling_results = engine.evaluate(_variant("GENE1"), note_with_relative, config)
+sibling_results = run_evaluate(_variant("GENE1"), note_with_relative, config)
 check("PP4 MET (matches case (1)'s 4.0 points -> Strength tier below 8, at/above 4 -> STRONG)",
       sibling_results["PP4"].status == CriterionStatus.MET
       and sibling_results["PP4"].strength == Strength.STRONG)
@@ -116,7 +145,7 @@ check("BS4 NOT_MET (no non-segregation observed)",
 
 # No family data at all -> PP4 alone (segregation not evaluable).
 note_no_family = _note(relatives=[])
-solo_results = engine.evaluate(_variant("GENE1"), note_no_family, config)
+solo_results = run_evaluate(_variant("GENE1"), note_no_family, config)
 check("PP4 still MET without family data", solo_results["PP4"].status == CriterionStatus.MET)
 check("PP1 UNKNOWN without family data (not evaluable, not a fabricated NOT_MET)",
       solo_results["PP1"].status == CriterionStatus.UNKNOWN)

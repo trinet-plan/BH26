@@ -258,7 +258,7 @@ def _default_strength(code: str) -> str:
     return default_strength(code)
 
 
-def evaluate(
+async def evaluate(
     variant: VariantRecord,
     clinical_note: ClinicalNoteExtraction,
     config: dict,
@@ -270,6 +270,15 @@ def evaluate(
     `automated_config` (acmg_pipeline.pipeline_interface.load_automated_config()) -
     an optional "pp4_reference_records_path" key overrides the default
     registry location, mainly for tests.
+
+    HPO normalization (acmg_pipeline.hpo_extraction.normalize_hpo(), a
+    TogoMCP + LLM round trip) only runs once a curated reference record is
+    actually found for this gene - with no APPROVED entry the result is
+    UNKNOWN regardless of phenotype, so normalizing first would just spend
+    real network/LLM cost on an answer that's already decided. The import
+    is local (not top-level) because hpo_extraction requires VLLM_BASE_URL/
+    VLLM_API_KEY at import time (same reason clinical_note.py lazily
+    imports clinical_extraction.py instead of importing it at module load).
     """
     gene = str(variant.info.get("GENE", ""))
     registry_path = Path(config.get("pp4_reference_records_path", _DEFAULT_REGISTRY_PATH))
@@ -277,6 +286,9 @@ def evaluate(
     entry = registry.get(gene)
     if entry is None:
         return _unknown_all(f"pp1_bs4_pp4_engine: no APPROVED curated PP4 reference record for gene {gene!r}")
+
+    from acmg_pipeline import hpo_extraction
+    clinical_note = await hpo_extraction.normalize_hpo(clinical_note)
 
     gates = entry["gates"]
     result = evaluate_locus_evidence(

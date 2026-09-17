@@ -936,7 +936,7 @@ async def evaluate_variant_evidence_lines(
                 variant=variant,
             )
 
-    phenotype_segregation_results = pp1_bs4_pp4_engine.evaluate(variant, clinical_note, automated_config)
+    phenotype_segregation_results = await pp1_bs4_pp4_engine.evaluate(variant, clinical_note, automated_config)
     for code in PHENOTYPE_SEGREGATION_CODES:
         by_code[code] = pp1_bs4_pp4_engine.build_evidence_line(
             code, phenotype_segregation_results[code], variant,
@@ -1048,7 +1048,7 @@ async def evaluate_selected_criteria(
                 )
 
     if phenotype_segregation_subset:
-        phenotype_segregation_results = pp1_bs4_pp4_engine.evaluate(variant, clinical_note, automated_config)
+        phenotype_segregation_results = await pp1_bs4_pp4_engine.evaluate(variant, clinical_note, automated_config)
         for code in phenotype_segregation_subset:
             by_code[code] = pp1_bs4_pp4_engine.build_evidence_line(
                 code, phenotype_segregation_results[code], variant,
