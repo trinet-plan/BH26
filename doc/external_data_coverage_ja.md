@@ -77,6 +77,11 @@ TogoVarだけを唯一の外部経路とする場合、既存のEnsembl・gnomAD
 | predictorの利用可否を承認する | PP3、BP4、PS1、PM5 | predictor、版または`UNKNOWN`許可、適用範囲、閾値、理由 |
 | ClinVar assertionの採用基準を確認する | PS1、PM5、PP5、BP6 | accepted review status、対象疾患一致条件、競合時の扱い |
 
+公開済みのClinGen/VCEP BS1仕様は [`config/bs1_thresholds_draft.json`](../config/bs1_thresholds_draft.json) に
+review用DRAFTとして転記する。DRAFTはruntimeへ自動投入しない。各行について対象疾患・遺伝形式・対象遺伝子・gnomAD release・
+AF/FAF・境界比較・最低AN/AC・例外変異をキュレーターが確認し、`APPROVED`、`reviewed_at`、版付きの根拠を記録してから
+`disease_frequency_threshold`として利用する。
+
 ### 変異ごとに確認する事項
 
 | 確認対象 | 主なcriterion | キュレーターが判断する内容 |

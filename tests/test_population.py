@@ -27,7 +27,8 @@ class PopulationTests(unittest.TestCase):
         self.config["BS1"].update({"default_max_credible_af": 0.0001,
                                    "default_source": "synthetic-default-policy",
                                    "default_source_version": "1",
-                                   "default_frequency_statistic": "faf95"})
+                                   "default_frequency_statistic": "faf95",
+                                   "default_comparison": ">"})
 
     def observation(self, ac=0, an=10000, **extra):
         return {"variant_key": self.variant.key, "evidence_id": "test:frequency",
@@ -179,9 +180,14 @@ class PopulationTests(unittest.TestCase):
         # The curated threshold does not name the statistic it was calibrated against, so it
         # is read as a point-estimate cutoff and the assumption is surfaced, not buried.
         self.assertEqual(value.provenance["frequency_statistic"], "af")
-        self.assertEqual(value.review_points,
-                         ["Confirm the curated threshold is a point-estimate AF cutoff, "
-                          "not a filtering allele frequency"])
+        # Neither the statistic nor the comparison is named, so both are read the weaker way
+        # and both assumptions are surfaced.
+        self.assertEqual(value.provenance["comparison"], ">")
+        self.assertEqual(value.review_points, [
+            "Confirm the curated threshold is a point-estimate AF cutoff, "
+            "not a filtering allele frequency",
+            "Confirm the specification says allele frequency > the threshold, not >=",
+        ])
 
     def test_bs1_uses_the_statistic_the_threshold_names(self):
         """AF and FAF are different numbers, so a threshold is compared with its own one."""
@@ -192,6 +198,36 @@ class PopulationTests(unittest.TestCase):
                 value = self.evaluate(bs1, self.services([observation]))
                 self.assertEqual(value.status, expected)
                 self.assertEqual(value.provenance["frequency_statistic"], statistic)
+
+    def test_bs1_applies_the_comparison_the_specification_writes(self):
+        """A variant sitting exactly on the threshold is the one the panel drew a line at.
+
+        ClinGen's PAH and Lysosomal Storage Disorders panels write BS1 as AF > their
+        threshold; Hearing Loss, PTEN, Glaucoma and Familial Hypercholesterolemia write >=.
+        """
+        observation = self.observation(10, an=10000)  # AF exactly 0.001
+        for symbol, expected in ((">", CriterionStatus.NOT_MET), (">=", CriterionStatus.MET)):
+            with self.subTest(comparison=symbol):
+                self.with_threshold(max_credible_af=0.001, frequency_statistic="af",
+                                    comparison=symbol)
+                value = self.evaluate(bs1, self.services([observation]))
+                self.assertEqual(value.status, expected)
+                self.assertEqual(value.provenance["comparison"], symbol)
+
+    def test_bs1_assumes_the_weaker_comparison_and_says_so(self):
+        """Assuming ">" can only withhold BS1, never assert it on a boundary variant."""
+        self.with_threshold(max_credible_af=0.001, frequency_statistic="af", comparison=None)
+        value = self.evaluate(bs1, self.services([self.observation(10, an=10000)]))
+        self.assertEqual(value.status, CriterionStatus.NOT_MET)
+        self.assertEqual(value.provenance["comparison"], ">")
+        self.assertIn("Confirm the specification says allele frequency > the threshold, not >=",
+                      value.review_points)
+
+    def test_bs1_rejects_a_comparison_it_cannot_apply(self):
+        self.with_threshold(comparison="approximately")
+        value = self.evaluate(bs1, self.services([self.observation(100)]))
+        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
+        self.assertEqual(value.missing_inputs, ["disease_frequency_threshold.comparison"])
 
     def test_bs1_rejects_a_statistic_it_cannot_compute(self):
         self.with_threshold(frequency_statistic="popmax")
