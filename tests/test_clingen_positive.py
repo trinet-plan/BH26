@@ -54,7 +54,7 @@ class ClinGenPositiveReferenceTests(unittest.TestCase):
         for criterion, expectation in self.expected["criteria"].items():
             with self.subTest(criterion=criterion):
                 result = self.by_record[expectation["record_id"]][criterion]
-                self.assertEqual(result["status"], "MET")
+                self.assertEqual(result["status"], "met")
                 self.assertEqual(result["strength"], expectation["strength"])
                 self.assertTrue(result["evidence"])
 

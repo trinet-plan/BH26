@@ -73,7 +73,7 @@ class DemoPipelineTests(unittest.TestCase):
             self.assertTrue(references <= set(catalog))
         pm2 = [result for record in results["records"] for result in record["results"]
                if result["criterion"] == "PM2"]
-        self.assertTrue(any(result["status"] == "NOT_MET" for result in pm2))
+        self.assertTrue(any(result["status"] == "not_met" for result in pm2))
 
         # Calibrated PP3/BP4 need the dbNSFP release that produced the scores.
         dbnsfp = providers["MyVariant.info dbNSFP"]
@@ -81,7 +81,7 @@ class DemoPipelineTests(unittest.TestCase):
         self.assertEqual(dbnsfp["errors"], [])
         computational = [result for record in results["records"] for result in record["results"]
                          if result["criterion"] in ("PP3", "BP4")]
-        met = [result for result in computational if result["status"] == "MET"]
+        met = [result for result in computational if result["status"] == "met"]
         self.assertEqual(len(met), 18)
         strengths = {result["evidence_outcome"] for result in met}
         self.assertEqual(strengths, {"PP3", "PP3_moderate", "PP3_strong",
@@ -106,9 +106,9 @@ class DemoPipelineTests(unittest.TestCase):
         # The committed BA1 exception list resolves the high-frequency records either way.
         ba1 = [result for record in results["records"] for result in record["results"]
                if result["criterion"] == "BA1"]
-        self.assertEqual(sum(result["status"] == "MET" for result in ba1), 11)
+        self.assertEqual(sum(result["status"] == "met" for result in ba1), 11)
         for result in ba1:
-            if result["status"] == "MET":
+            if result["status"] == "met":
                 assessment = result["provenance"]["ba1_exception_assessment"]
                 self.assertFalse(assessment["is_exception"])
                 self.assertEqual(assessment["list_size"], 9)
@@ -122,23 +122,23 @@ class DemoPipelineTests(unittest.TestCase):
         pm1 = [result for record in results["records"] for result in record["results"]
                if result["criterion"] == "PM1"]
         statuses = {status: sum(result["status"] == status for result in pm1)
-                    for status in ("MET", "NOT_MET", "unknown")}
+                    for status in ("met", "not_met", "unknown")}
         # Every demo variant that ClinVar classifies is excluded from its own density, so no
         # record is NOT_MET on the strength of its own submitted classification.
-        self.assertEqual(statuses, {"MET": 2, "NOT_MET": 0, "unknown": 26})
+        self.assertEqual(statuses, {"met": 2, "not_met": 0, "unknown": 26})
         # PM5 needs a residue-scoped search; MYH7 p.Arg719 has a pathogenic ClinVar comparator.
         pm5 = [result for record in results["records"] for result in record["results"]
                if result["criterion"] == "PM5"]
         pm5_statuses = {status: sum(result["status"] == status for result in pm5)
-                        for status in ("MET", "NOT_MET", "unknown")}
-        self.assertEqual(pm5_statuses, {"MET": 1, "NOT_MET": 17, "unknown": 10})
-        pm5_met = next(result for result in pm5 if result["status"] == "MET")
+                        for status in ("met", "not_met", "unknown")}
+        self.assertEqual(pm5_statuses, {"met": 1, "not_met": 17, "unknown": 10})
+        pm5_met = next(result for result in pm5 if result["status"] == "met")
         self.assertEqual(pm5_met["evidence_outcome"], "PM5")
         self.assertEqual(pm5_met["provenance"]["assessment_scope"], "protein_level")
         # The committed record-level context now supplies HCM for this case.
         self.assertEqual(pm5_met["provenance"]["condition_assessment"], "MATCHED")
 
-        met = [result for result in pm1 if result["status"] == "MET"]
+        met = [result for result in pm1 if result["status"] == "met"]
         for result in met:
             self.assertEqual(result["evidence_outcome"], "PM1")
             self.assertEqual(result["provenance"]["pm1_route"], "mutational_hotspot")
@@ -146,7 +146,7 @@ class DemoPipelineTests(unittest.TestCase):
             self.assertEqual(result["provenance"]["benign_count"], 0)
             self.assertGreaterEqual(result["provenance"]["pathogenic_count"], 3)
             # Disease relevance is unresolved without a condition, so it stays a review point.
-            self.assertEqual(result["provenance"]["condition_assessment"], "unknown")
+            self.assertEqual(result["provenance"]["condition_assessment"], "NOT_EVALUATED")
             self.assertTrue(result["review_points"])
 
         # Exercise a real case2 record and the committed gnomAD response with an explicit,
@@ -163,7 +163,7 @@ class DemoPipelineTests(unittest.TestCase):
         )
         by_id = {record["record_id"]: record["results"][0]
                  for record in case2_results["records"]}
-        self.assertEqual(by_id["case2:24:1"]["status"], "MET")
+        self.assertEqual(by_id["case2:24:1"]["status"], "met")
         self.assertEqual(by_id["case2:24:1"]["evidence_outcome"], "PM2_supporting")
         maximum_af = max(float(item["AF"]) for item in by_id["case2:24:1"]["evidence"])
         self.assertLessEqual(maximum_af, 0.000014)
