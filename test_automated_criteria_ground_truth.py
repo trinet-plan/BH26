@@ -191,6 +191,7 @@ for record in records:
         result = by_code.get(code)
         engine_status = result["status"] if result else "unknown"
         engine_strength = result.get("strength") if result else None
+        engine_summary = result.get("summary") if result else None
         is_match = engine_status == "met"
         match_n += is_match
         label = f"{variant_id} {code} (curator: MET{'/' + expected_strength if expected_strength else ''})"
@@ -198,8 +199,9 @@ for record in records:
             print(f"  MATCH    {label} -> engine: met"
                   f"{'/' + engine_strength if engine_strength else ''}")
         else:
-            print(f"  MISMATCH {label} -> engine: {engine_status}")
-            mismatches.append(label)
+            reason = f" [{engine_summary}]" if engine_summary else ""
+            print(f"  MISMATCH {label} -> engine: {engine_status}{reason}")
+            mismatches.append(f"{label} -> engine: {engine_status}{reason}")
 
     for code, result in by_code.items():
         if code in AUTOMATED_CODES and result["status"] == "met" and code not in truth:
