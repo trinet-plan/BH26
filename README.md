@@ -20,6 +20,7 @@ acmg_pipeline/            判定パイプライン本体
 
 democase/                 デモ用の臨床ノート・VCF・正解データ
 doc/                       設計・参加者向け資料
+examples/                 APIクライアントのスケルトンコード
 va_spec_output/           パイプライン実行結果(VA-Spec JSON)
 logs/                      実行ログ(git管理対象外)
 ref_impl/                  参考実装アーカイブ
@@ -105,6 +106,57 @@ python3 -m acmg_pipeline.pipeline
 CLI引数は用意されていません。対象の遺伝子/変異を変えたい場合は
 `acmg_pipeline/pipeline.py` の `main()` 内 `test_cases`(505行目付近)を
 直接編集してください。
+
+## APIサーバーの起動
+
+1.  ビルド
+
+    ````bash
+    docker build -t acmg-api:v1 .
+    ```
+
+2. 起動(ホストの8000番で公開)
+
+    ````bash
+    docker run -d --name acmg-api -p 8000:8000 acmg-api:v1
+    ```
+
+3. 動作確認(これまでと同じcurl手順がそのまま使える)
+
+    ````bash
+    curl -s http://localhost:8000/health
+    ```
+
+    ````bash
+    JOB_ID=$(curl -s -X POST http://localhost:8000/v1/variant \
+      -H "Content-Type: application/json" \
+      -d @democase/case1_api_input_case1-noise2.json | jq -r .job_id)
+    ````
+
+    ````bash
+    curl -s http://localhost:8000/v1/variant/$JOB_ID | jq .
+    ```
+
+4. 停止
+
+    ````bash
+    docker rm -f acmg-api
+    ```
+
+上記1〜2の代わりに [`compose.yaml`](compose.yaml) を使ってもよい
+(`docker compose up -d --build` / 停止は `docker compose down`)。
+
+## APIクライアントの例
+
+APIクライアントの実装例は以下にあります。
+
+* [`examples/client_example.py`](examples/client_example.py) 
+
+APIサーバー起動後に以下のコマンドを実行してください。
+
+```bash
+python3 examples/client_example.py democase/case1_api_input_case1-noise2.json
+```
 
 ## ライセンス・注意事項
 
