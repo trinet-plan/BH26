@@ -12,11 +12,13 @@ os.environ.setdefault("VLLM_BASE_URL", "http://127.0.0.1:8000/v1")
 os.environ.setdefault("VLLM_API_KEY", "test-only")
 
 from acmg_pipeline.services.resolve import StaticEvidenceResolver
+from acmg_pipeline.automated_core.models import CriterionResult
 from acmg_pipeline.classification import ALL_ACMG_CODES
 from acmg_pipeline.clinical_note import ClinicalNoteExtraction
 from acmg_pipeline.common import MatchStatus, PaperContribution, VariantMatchingResult
+from acmg_pipeline.constants import CriterionStatus
 from acmg_pipeline.criteria import segregation
-from acmg_pipeline.export import build_evidence_line
+from acmg_pipeline.export import build_automated_evidence_line, build_evidence_line
 from acmg_pipeline.pipeline import evaluate_variant_evidence_lines
 from acmg_pipeline.vcf_record import VariantRecord
 
@@ -140,3 +142,33 @@ def test_reference_lookup_failure_does_not_remove_criterion_line():
 
     assert line["specifiedBy"]["methodType"] == "PM1"
     assert not any(item["name"] == "referenceLink" for item in line["extensions"])
+
+
+def test_unknown_automated_line_keeps_review_points_as_curator_hints():
+    variant = VariantRecord(
+        chrom="1", pos=100, id="case-pm1", ref="A", alt="G",
+        qual=".", filter="PASS", info={"GENE": "GENE1", "HGVSC": "c.1A>G"},
+    )
+    result = CriterionResult(
+        "PM1", CriterionStatus.UNKNOWN,
+        {"assembly": "GRCh38", "chrom": "1", "pos": 100, "ref": "A", "alt": "G"},
+        "Reviewed region unavailable",
+        missing_inputs=["region"],
+        review_points=["Curate a disease-relevant functional region"],
+    )
+    with (
+        patch(
+            "acmg_pipeline.export.reference_links.reference_url_for_criterion",
+            return_value=None,
+        ),
+        patch.dict("acmg_pipeline.export._CODE_CURATOR_INFO_FETCHERS", {}, clear=True),
+    ):
+        line = build_automated_evidence_line(result, variant)
+
+    extensions = {item["name"]: item["value"] for item in line["extensions"]}
+    assert "reviewPoints" not in extensions["bh26AssessmentDetails"]
+    assert extensions["curatorHints"] == [{
+        "severity": "caution",
+        "category": "review",
+        "message": "Curate a disease-relevant functional region",
+    }]

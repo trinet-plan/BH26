@@ -168,6 +168,38 @@ class VaSpecTests(unittest.TestCase):
         self.assertEqual(details["evaluationContext"]["gene"], "TEST")
         self.assertEqual(details["rulesUsed"][0]["source"], "ClinGen PVS1 2018")
         self.assertEqual(wrapped["evidence_line"]["extensions"][0]["value"], details)
+        self.assertNotIn("warnings", details)
+        hints = wrapped["evidence_line"]["extensions"][1]
+        self.assertEqual(hints, {
+            "name": "curatorHints",
+            "value": [{
+                "severity": "warning",
+                "category": "warning",
+                "message": "Condition was not provided.",
+            }],
+        })
+
+    def test_automated_review_messages_use_shared_curator_hints_extension(self):
+        result = CriterionResult(
+            "PM2", CriterionStatus.MET, VARIANT, "rare", "supporting", "supports",
+            "PM2_supporting", evidence=EVIDENCE,
+            conflict_flags=["Conflicting automated assessments"],
+            review_points=["Confirm disease-specific frequency threshold"],
+            warnings=["Population coverage is limited"],
+        )
+        line = to_evidence_line(result)
+        extensions = {item["name"]: item["value"] for item in line["extensions"]}
+        self.assertNotIn("reviewPoints", extensions["bh26AssessmentDetails"])
+        self.assertNotIn("conflictFlags", extensions["bh26AssessmentDetails"])
+        self.assertNotIn("warnings", extensions["bh26AssessmentDetails"])
+        self.assertEqual(extensions["curatorHints"], [
+            {"severity": "warning", "category": "conflict",
+             "message": "Conflicting automated assessments"},
+            {"severity": "caution", "category": "review",
+             "message": "Confirm disease-specific frequency threshold"},
+            {"severity": "warning", "category": "warning",
+             "message": "Population coverage is limited"},
+        ])
 
     def test_workflow_only_assessment_and_its_evidence_remain_auditable(self):
         evidence = [{
@@ -188,8 +220,7 @@ class VaSpecTests(unittest.TestCase):
         assessment = record["criterion_assessments"][0]
         self.assertEqual(assessment["status"], "unknown")
         self.assertEqual(assessment["missingInputs"], ["region"])
-        self.assertEqual(assessment["reviewPoints"],
-                         ["Curate a disease-relevant functional region"])
+        self.assertNotIn("reviewPoints", assessment)
         self.assertIn(evidence[0]["evidence_id"], record["referenced_evidence"])
 
     def test_audit_envelope_rejects_an_unresolved_evidence_reference(self):
