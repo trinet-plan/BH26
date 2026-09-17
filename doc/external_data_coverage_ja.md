@@ -29,6 +29,93 @@
 | predictorの固定版 | PP3、BP4、PS1、PM5 | predictor versionは `UNKNOWN` と明記したまま、取得日時・Ensembl release・レスポンスhash・許可ポリシーを残して使用できる。固定版が必須の運用では `UNKNOWN` 判定にする |
 | ClinVar assertionの詳細、review status、独立性 | PS1、PM5、PP5、BP6 | `UNKNOWN`。表示ラベルだけで支持根拠にしない |
 
+### 1-2. BS1の既定閾値が継承様式を見ていない（未解決）
+
+疾患別閾値がない場合、BS1は `config` の既定閾値へフォールバックする。このとき
+`inheritance` は参照されない。疾患別閾値の照合には使うが、既定閾値経路では無視される。
+
+`config/bs1_thresholds_draft.json` の転記が示すとおり、継承様式は本来この判定に効く軸で
+ある。ClinGen Hearing Loss VCEPはAR `0.003` / AD `0.0002` と**15倍**の差を付けている。
+単一の既定値をどちらにも当てると、一方は緩すぎ、他方は厳しすぎる。
+
+実例: demo-dataの `case4-var1`（DSG2 c.1592T>G、ARVC、**ホモ接合**症例）は、東アジア集団
+でのみ AC=21/AN=39,696（FAF 0.00037）と観測され、既定閾値 0.0001 を超えて BS1 = MET に
+なる。他の17集団はすべて AC=0 で、ToMMo・HGVDでも同様に日本人集団で 1e-4 台。頻度の
+観測自体は堅い。一方でキュレーターはBS1を挙げておらず（`PS3_Strong` / `PS4_Strong` のみ）、
+劣性/複合的な機序を想定していれば、ヘテロでの集団頻度はBS1の根拠として弱くなる。
+
+現状の出力は `threshold_scope: "default"` と review_points で「疾患別頻度で確認せよ」と
+明示するため、キュレーターは弾ける。ただし継承様式を見ない既定判定である事実は
+summaryに出ない。
+
+想定される対応（いずれも臨床判断が要る、未決）:
+
+- 既定閾値経路でも `inheritance` を必須にし、不明なら `UNKNOWN`
+- AR / AD 別の既定値を持つ
+- 既定閾値でのBS1をMETにせず、review必須の別状態として出す
+
+### 1-3. PM2がキュレーター判断と一致しない（未解決、原因は2つ）
+
+`test_automated_criteria_ground_truth.py` の照合で、キュレーターがMETとした15件のうち
+7件をengineが確認できない。**うち5件がPM2**で、原因は別々の2つ。
+
+#### (a) 閾値 `max_af = 0` が厳しすぎた（3件）→ 暫定値を設定して解消
+
+```
+case1-var2  curator: MET -> engine: not_met  [highest AF 0.0000232 exceeds cutoff (0)]
+case2-var1  curator: MET -> engine: not_met  [highest AF 0.0000136 exceeds cutoff (0)]
+case3-var1  curator: MET -> engine: not_met  [highest AF 0.0000299 exceeds cutoff (0)]
+```
+
+`config/demo-rules.json` の `PM2.max_af = 0` は、ACMG/AMP 2015の文言
+"Absent from controls" をそのまま実装したもの。しかしgnomAD規模のデータでは、実在する
+希少変異はほぼ必ず数アレル観測される。キュレーターは **AF 1e-5台の変異にPM2を付与**して
+おり、文字どおりのゼロは現行データに対して機能しない。
+
+なお `max_af` に既定値はない（未設定は `UNKNOWN`）。`0` は明示的な設定値であって、
+設定漏れではなかった。
+
+**暫定対応（2026-09-17）**: `PM2.max_af = 0.00005` を設定。デモ28変異の最大観測AFは
+キュレーターがPM2を付けた3件が `1.36e-5`〜`2.99e-5`、次に高い変異が `7.73e-4` で、
+その間に26倍のギャップがある。この区間ならどこに置いても同じ結果になる。
+`5e-5` を選んだのは `BS1.default_max_credible_af`（`1e-4`）より低く保つため。
+同値にすると「最大AF ≤ 閾値ならPM2」「いずれかのAF > 閾値ならBS1」が完全な補集合になり、
+すべての変異がPM2かBS1のどちらかに必ず該当してしまう。ACMGが想定するはずの中間帯
+（どちらも成立しない領域）を残している。ただしデモデータでは `5e-5`〜`1e-4` に該当する
+変異がなく、中間帯は 0/28 で、この設定の効果は現データでは観測されない。
+
+値は臨床レビュー未実施。`threshold_source` にPLACEHOLDERと明記してある。
+
+#### (b) gnomADに登録がない変異が `UNKNOWN` になる（2件）
+
+```
+case1-var1  curator: MET -> engine: unknown  [No reliable population observation]
+case2-var2  curator: MET -> engine: unknown  [No reliable population observation]
+            provider_failures: [{'provider': 'gnomAD', 'reason': 'NO_OBSERVATION'}]
+```
+
+`acmg_pipeline/services/resolve.py` の原則「未登録をAF=0として扱わない」による。
+BA1・BS1（「頻度が高すぎる」を見る）では、未登録から何も言えないのは正しい。
+
+**しかしPM2では、未登録そのものが求めている根拠**である。同じ原則を3基準に一律適用した
+結果、PM2だけ意味が反転している。
+
+区別に必要なのは **その座位のcoverage**。「未登録かつ十分にcallable」なら absent from
+controls だが、「未登録かつcoverage不明」は判断不能。現在のgnomADプロバイダはcoverageを
+取得していない。`usable_observations()` は `AC == 0` の観測に `callable: true` を要求して
+いるが、レコード自体が返らない場合はcallability情報が存在しない。
+
+#### 対応の方向（いずれも未決）
+
+| # | 内容 | 判断の種類 |
+|---|---|---|
+| 1 | ~~`PM2.max_af` に非ゼロの閾値を設定する~~ → 暫定 `5e-5` を設定済み。正式値は臨床レビュー待ち | 臨床判断。ClinGen SVIはPM2をSupportingへ降格し、VCEPごとに「absent or rare」の具体値を定める |
+| 2 | BS1と同じく `frequency_statistic` / `comparison` を対で持たせる | 設計。ただしPM2で保守的なのは信頼区間の**上限**（「稀少と言い切れるか」は最悪ケースで判断する）で、BS1のFAF（下限）とは逆側 |
+| 3 | gnomAD coverageを取得し、「未登録 + 十分なcoverage」を absent as evidence として扱う | 設計 + プロバイダ拡張。クエリ変更はオフラインキャッシュのキーを変えるため再取得が必要 |
+
+1は3件、3は2件の不一致に対応する。1は暫定値を設定済みで、キュレーター一致率は
+8/15 から 11/15 になった。残る2件は閾値では解消せず、3が必要。
+
 ### 2. 現在はstubとして残すcriterion
 
 次の9基準は実判定を行わず、全28本のVA-Spec EvidenceLineには `UNKNOWN` として出力する。
@@ -76,6 +163,11 @@ TogoVarだけを唯一の外部経路とする場合、既存のEnsembl・gnomAD
 | hotspot / critical domainの採用範囲を確認する | PM1 | transcript/protein範囲、良性変異評価、適用ポリシー、根拠文献 |
 | predictorの利用可否を承認する | PP3、BP4、PS1、PM5 | predictor、版または`UNKNOWN`許可、適用範囲、閾値、理由 |
 | ClinVar assertionの採用基準を確認する | PS1、PM5、PP5、BP6 | accepted review status、対象疾患一致条件、競合時の扱い |
+
+公開済みのClinGen/VCEP BS1仕様は [`config/bs1_thresholds_draft.json`](../config/bs1_thresholds_draft.json) に
+review用DRAFTとして転記する。DRAFTはruntimeへ自動投入しない。各行について対象疾患・遺伝形式・対象遺伝子・gnomAD release・
+AF/FAF・境界比較・最低AN/AC・例外変異をキュレーターが確認し、`APPROVED`、`reviewed_at`、版付きの根拠を記録してから
+`disease_frequency_threshold`として利用する。
 
 ### 変異ごとに確認する事項
 
