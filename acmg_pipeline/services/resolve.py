@@ -46,6 +46,7 @@ from acmg_pipeline.automated_core.models import Variant
 from acmg_pipeline.providers.clinvar import (
     VCV, ClinVarComparatorProvider, ClinVarHotspotProvider, ClinVarProvider,
 )
+from acmg_pipeline.providers.clingen_dosage import ClinGenDosageProvider
 from acmg_pipeline.providers.dbnsfp import DbnsfpProvider
 from acmg_pipeline.providers.ensembl import EnsemblIdentityProvider
 from acmg_pipeline.providers.http import CachedHttpClient, FetchError
@@ -193,6 +194,7 @@ class ProviderEvidenceResolver:
         clinvar_release: str | None = None,
         evidence_cache_dir=None,
         hotspot_policy: dict | None = None,
+        with_clingen_dosage: bool = False,
     ):
         self._client = CachedHttpClient(cache_dir, offline=offline)
         self._external = (
@@ -206,6 +208,7 @@ class ProviderEvidenceResolver:
             clinvar_release or datetime.now(timezone.utc).date().isoformat()
         )
         self._hotspot_policy = hotspot_policy
+        self._with_clingen_dosage = with_clingen_dosage
         self._ensembl = None
 
     def _ensembl_provider(self) -> EnsemblIdentityProvider:
@@ -237,6 +240,7 @@ class ProviderEvidenceResolver:
             resolved.records.append(annotation)
             resolved.records.extend(predictions)
         self._add_population(variant, resolved)
+        self._add_lof_mechanism(annotation, variant, resolved)
 
         suite = self._suite()
         transcript = annotation.get("transcript") if annotation else None
@@ -259,6 +263,21 @@ class ProviderEvidenceResolver:
         if self._hotspot_policy and annotation.get("protein_start"):
             resolved.absorb(ClinVarHotspotProvider.name, suite.hotspot(annotation, variant))
         return resolved
+
+    def _add_lof_mechanism(self, annotation, variant, resolved):
+        """PVS1's G01 gate, from ClinGen dosage rather than a per-gene review.
+
+        Off unless asked for: it supplies an automated stand-in for a curated judgment, so a
+        run has to opt into it. A curated gene_disease record for the same gene still wins -
+        _resolve_mechanism() prefers a condition-specific one, and these are gene-level.
+        """
+        if not self._with_clingen_dosage or annotation is None:
+            return
+        provider = ClinGenDosageProvider(self._external)
+        try:
+            resolved.records.extend(provider.get_mechanism(variant, annotation.get("gene")))
+        except PROVIDER_ERRORS as exc:
+            resolved.failures.append({"provider": ClinGenDosageProvider.name, "error": str(exc)})
 
     def _annotate(self, identity, variant, resolved):
         record = {"identity": identity}

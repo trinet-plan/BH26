@@ -12,11 +12,17 @@ from acmg_pipeline.automated_core.reference import FastaReference
 from acmg_pipeline.automated_core.models import CRITERIA, Variant
 from acmg_pipeline.gene_disease import build_assessment_document, build_draft_document
 from acmg_pipeline.automated_output import run_internal
+from acmg_pipeline.providers.clingen_dosage import METHOD as DOSAGE_METHOD, ClinGenDosageProvider
 from acmg_pipeline.providers.clinvar import (
     VCV, ClinVarComparatorProvider, ClinVarHotspotProvider, ClinVarProvider,
 )
 from acmg_pipeline.providers.ensembl import EnsemblIdentityProvider
 from acmg_pipeline.providers.gnomad import GnomadProvider
+from acmg_pipeline.providers.mane import METHOD as MANE_METHOD, ManeTranscriptProvider
+from acmg_pipeline.providers.nmd import (
+    METHOD as NMD_METHOD, RULE_SOURCE as NMD_RULE_SOURCE, TRUNCATING as NMD_TRUNCATING,
+    NmdPredictionProvider,
+)
 from acmg_pipeline.providers.http import CachedHttpClient
 from acmg_pipeline.providers.togovar import API_VERSION as TOGOVAR_API_VERSION, TogoVarProvider
 from acmg_pipeline.services.resolve import VariantProviderSuite, splice_score_for
@@ -57,6 +63,15 @@ def main(argv=None):
                         help="Fetch dbNSFP meta-predictor scores pinned to their dbNSFP release")
     online.add_argument("--with-pm1-hotspot", action="store_true",
                         help="Count ClinVar missense density around each residue as PM1 hotspot proxy")
+    online.add_argument("--with-clingen-dosage", action="store_true",
+                        help="Derive PVS1's LoF-mechanism gate from ClinGen haploinsufficiency "
+                             "scores (automated stand-in for a curated gene_disease record)")
+    online.add_argument("--with-mane-transcript", action="store_true",
+                        help="Assert PVS1's transcript-relevance gate when the evaluated "
+                             "transcript is the gene's MANE Select (automated stand-in)")
+    online.add_argument("--with-nmd-prediction", action="store_true",
+                        help="Predict NMD from VEP exon numbering for PVS1's NF02 gate "
+                             "(no record for the last two exons, where the rule needs a distance)")
     online.add_argument("--rules", type=Path,
                         help="Rules JSON supplying PM1.hotspot thresholds for --with-pm1-hotspot")
     online.add_argument("--clinvar-release", default=datetime.now(timezone.utc).date().isoformat())
@@ -336,6 +351,81 @@ def main(argv=None):
                         "max_benign": policy.get("max_benign"),
                         "region_evidence": hotspot_regions, "errors": hotspot_errors,
                         "use_restriction": "PM1_HOTSPOT_ROUTE_ONLY",
+                    })
+                if args.with_clingen_dosage:
+                    # PVS1 stops at G01 without a gene_disease record. This supplies one
+                    # from published dosage curation, marked automated so it can never be
+                    # mistaken for the per-gene review it stands in for.
+                    dosage = ClinGenDosageProvider(external_client)
+                    dosage_records, dosage_errors, seen_genes = [], [], set()
+                    for annotation in annotations:
+                        gene = annotation.get("gene")
+                        key = (annotation["variant_key"], gene)
+                        if not gene or key in seen_genes:
+                            continue
+                        seen_genes.add(key)
+                        try:
+                            dosage_records.extend(
+                                dosage.get_mechanism(variants[annotation["variant_key"]], gene))
+                        except (FetchError, ValueError) as exc:
+                            dosage_errors.append(f"{gene}: {exc}")
+                    evidence.extend(dosage_records)
+                    external_manifest.append({
+                        "provider": dosage.name,
+                        "provider_version": dosage_records[0]["source_version"] if dosage_records else None,
+                        "method": DOSAGE_METHOD,
+                        "genes_queried": len(seen_genes), "evidence": len(dosage_records),
+                        "errors": dosage_errors,
+                        "use_restriction": "PVS1_LOF_MECHANISM_GATE_ONLY",
+                    })
+                if args.with_mane_transcript:
+                    # PVS1's NF01 gate. Only a MANE Select match produces a record; see
+                    # providers/mane.py for why a non-match is not NOT_RELEVANT.
+                    mane = ManeTranscriptProvider.from_directory(external_client)
+                    mane_records, mane_errors, seen = [], [], set()
+                    for annotation in annotations:
+                        key = (annotation["variant_key"], annotation.get("transcript"))
+                        if key in seen:
+                            continue
+                        seen.add(key)
+                        try:
+                            mane_records.extend(mane.get_transcript_assessment(
+                                variants[annotation["variant_key"]],
+                                annotation.get("gene"), annotation.get("transcript")))
+                        except (FetchError, ValueError) as exc:
+                            mane_errors.append(f"{annotation.get('gene')}: {exc}")
+                    evidence.extend(mane_records)
+                    external_manifest.append({
+                        "provider": mane.name, "provider_version": f"MANE v{mane.release}",
+                        "method": MANE_METHOD,
+                        "transcripts_queried": len(seen), "evidence": len(mane_records),
+                        "errors": mane_errors,
+                        "use_restriction": "PVS1_TRANSCRIPT_RELEVANCE_GATE_ONLY",
+                    })
+                if args.with_nmd_prediction:
+                    # PVS1's NF02 gate. Its own VEP request, so the committed offline
+                    # annotation cache keeps replaying unchanged - see providers/nmd.py.
+                    nmd = NmdPredictionProvider(external_client, args.ensembl_release
+                                                or provider.release)
+                    nmd_records, nmd_errors, seen = [], [], set()
+                    for annotation in annotations:
+                        key = (annotation["variant_key"], annotation.get("transcript"))
+                        if key in seen or not set(annotation.get("consequences") or []) & NMD_TRUNCATING:
+                            continue
+                        seen.add(key)
+                        try:
+                            nmd_records.extend(nmd.get_nmd_prediction(
+                                variants[annotation["variant_key"]], annotation.get("gene"),
+                                annotation.get("transcript"), annotation.get("hgvsc")))
+                        except (FetchError, ValueError) as exc:
+                            nmd_errors.append(f"{annotation.get('hgvsc')}: {exc}")
+                    evidence.extend(nmd_records)
+                    external_manifest.append({
+                        "provider": nmd.name, "provider_version": nmd.release,
+                        "method": NMD_METHOD, "rule_source": NMD_RULE_SOURCE,
+                        "variants_queried": len(seen), "evidence": len(nmd_records),
+                        "errors": nmd_errors,
+                        "use_restriction": "PVS1_NMD_GATE_ONLY",
                     })
             args.output_dir.mkdir(parents=True, exist_ok=False)
             output = args.output_dir / "audit.json"

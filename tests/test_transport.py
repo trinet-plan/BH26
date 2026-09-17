@@ -1,3 +1,4 @@
+import gzip
 import io
 import json
 from pathlib import Path
@@ -48,6 +49,35 @@ class TransportTests(unittest.TestCase):
             cache.data[path] = json.dumps(document)
             with self.assertRaisesRegex(FetchError, "CACHE_INTEGRITY_FAILURE"):
                 client.fetch("https://example.org/data", dataset_version="1")
+
+    def test_gzip_text_is_decompressed_once_and_cached_as_text(self):
+        """NCBI publishes the MANE summary only as .gz, and decoding a gzip stream as UTF-8
+        first destroys it. The cache holds the decompressed text, so a replay never has to
+        decompress anything."""
+        cache = MemoryCache()
+        calls = []
+
+        def opener(request, timeout):
+            calls.append(request.full_url)
+            return io.BytesIO(gzip.compress(
+                b"symbol\tRefSeq_nuc\nMYBPC3\tNM_000256.3\n"))
+
+        with patch.object(Path, "exists", lambda p: cache.exists(p)), \
+             patch.object(Path, "read_text", lambda p, **kw: cache.read(p, **kw)), \
+             patch.object(Path, "write_text", lambda p, v, **kw: cache.write(p, v, **kw)), \
+             patch.object(Path, "mkdir"):
+            client = CachedHttpClient("cache", opener=opener, sleeper=lambda _: None)
+            first = client.fetch("https://example.org/summary.txt.gz", response_format="text-gz")
+            self.assertIn("MYBPC3", first["body"])
+            client.offline = True
+            replay = client.fetch("https://example.org/summary.txt.gz", response_format="text-gz")
+            self.assertEqual(first["body"], replay["body"])
+            self.assertEqual(len(calls), 1)
+
+    def test_an_unknown_response_format_is_refused(self):
+        client = CachedHttpClient("absent-cache", opener=None, sleeper=lambda _: None)
+        with self.assertRaises(ValueError):
+            client.fetch("https://example.org/x", response_format="xml")
 
     def test_retry_is_bounded(self):
         calls = []

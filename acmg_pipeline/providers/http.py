@@ -1,5 +1,6 @@
 """Replayable, content-checked response cache with bounded HTTP retries."""
 
+import gzip
 import hashlib
 import json
 from datetime import datetime, timezone
@@ -35,7 +36,11 @@ class CachedHttpClient:
 
     def fetch(self, url, *, data=None, response_format="json", dataset_version=None,
               allow_application_errors=False):
-        if not url.startswith("https://") or response_format not in {"json", "text"}:
+        # "text-gz" is the same contract as "text" for callers - the cached body is the
+        # decompressed text, so a replay never has to decompress anything - but the fetch
+        # itself must not decode the gzip stream as UTF-8 first. NCBI publishes the MANE
+        # summary only as .gz.
+        if not url.startswith("https://") or response_format not in {"json", "text", "text-gz"}:
             raise ValueError("HTTPS and JSON/text response formats are required")
         request_key = {"url": url, "data": data, "format": response_format,
                        "dataset_version": dataset_version}
@@ -61,7 +66,10 @@ class CachedHttpClient:
             self.sleeper(self.delay * (2 ** attempt))
             try:
                 with self.opener(request, timeout=self.timeout) as response:
-                    raw = response.read().decode("utf-8")
+                    payload_bytes = response.read()
+                if response_format == "text-gz":
+                    payload_bytes = gzip.decompress(payload_bytes)
+                raw = payload_bytes.decode("utf-8")
                 self.network_used = True
                 body = json.loads(raw) if response_format == "json" else raw
                 if (not allow_application_errors and isinstance(body, dict)
