@@ -23,7 +23,8 @@ class PopulationTests(unittest.TestCase):
         # threshold in this project it lives in the policy, not in the code.
         self.config["BS1"].update({"default_max_credible_af": 0.0001,
                                    "default_source": "synthetic-default-policy",
-                                   "default_source_version": "1"})
+                                   "default_source_version": "1",
+                                   "default_frequency_statistic": "faf95"})
 
     def observation(self, ac=0, an=10000, **extra):
         return {"variant_key": self.variant.key, "evidence_id": "test:frequency",
@@ -121,7 +122,29 @@ class PopulationTests(unittest.TestCase):
         self.assertEqual(value.status, CriterionStatus.MET)
         self.assertEqual(value.provenance["disease_frequency_threshold"]["max_credible_af"], 0.001)
         self.assertEqual(value.provenance["threshold_scope"], "disease_specific")
-        self.assertEqual(value.review_points, [])
+        # The curated threshold does not name the statistic it was calibrated against, so it
+        # is read as a point-estimate cutoff and the assumption is surfaced, not buried.
+        self.assertEqual(value.provenance["frequency_statistic"], "af")
+        self.assertEqual(value.review_points,
+                         ["Confirm the curated threshold is a point-estimate AF cutoff, "
+                          "not a filtering allele frequency"])
+
+    def test_bs1_uses_the_statistic_the_threshold_names(self):
+        """AF and FAF are different numbers, so a threshold is compared with its own one."""
+        observation = self.observation(12, an=15256)  # AF 0.000787, FAF95 0.000491
+        for statistic, expected in (("af", CriterionStatus.MET), ("faf95", CriterionStatus.NOT_MET)):
+            with self.subTest(statistic=statistic):
+                self.with_threshold(max_credible_af=0.0006, frequency_statistic=statistic)
+                value = self.evaluate(bs1, self.services([observation]))
+                self.assertEqual(value.status, expected)
+                self.assertEqual(value.provenance["frequency_statistic"], statistic)
+
+    def test_bs1_rejects_a_statistic_it_cannot_compute(self):
+        self.with_threshold(frequency_statistic="popmax")
+        value = self.evaluate(bs1, self.services([self.observation(100)]))
+        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
+        self.assertEqual(value.missing_inputs,
+                         ["disease_frequency_threshold.frequency_statistic"])
 
     # BS1's maximum credible frequency is a per-disease policy, so it is reached through a
     # chain of gates before any observation is compared. Each gate is a different job for a
@@ -166,13 +189,15 @@ class PopulationTests(unittest.TestCase):
 
     def test_bs1_reports_an_unconfigured_default_instead_of_inventing_one(self):
         """No disease-specific threshold and no configured default is not a verdict."""
-        for key in ("default_max_credible_af", "default_source", "default_source_version"):
+        for key in ("default_max_credible_af", "default_source", "default_source_version",
+                    "default_frequency_statistic"):
             del self.config["BS1"][key]
         value = self.evaluate(bs1, self.services([self.observation(100)]))
         self.assertEqual(value.status, CriterionStatus.UNKNOWN)
         self.assertEqual(value.missing_inputs, ["BS1.default_max_credible_af",
                                                 "BS1.default_source",
-                                                "BS1.default_source_version"])
+                                                "BS1.default_source_version",
+                                                "BS1.default_frequency_statistic"])
 
     def test_bs1_rejects_a_default_outside_zero_to_one(self):
         self.config["BS1"]["default_max_credible_af"] = 5

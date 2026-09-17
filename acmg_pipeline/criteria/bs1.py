@@ -1,7 +1,7 @@
 from acmg_pipeline.constants import CriterionStatus
 from acmg_pipeline.automated_core.interface import criterion_input
 from acmg_pipeline.criteria.common import citable, population_context, result as _base_result
-from acmg_pipeline.services.population import number
+from acmg_pipeline.services.population import FAF_METHOD, faf95, number
 from acmg_pipeline.clinical_note import ClinicalNoteExtraction
 from acmg_pipeline.vcf_record import VariantRecord
 
@@ -46,6 +46,37 @@ def disease_specific_threshold(input_data):
     return number(assessment["max_credible_af"]), assessment, None
 
 
+STATISTICS = {"af", "faf95"}
+
+
+def frequency_statistic(input_data, applied, scope):
+    """Which quantity this threshold was calibrated against - AF or FAF - never a free choice.
+
+    A threshold and the statistic it is compared with are one unit. The ClinGen Cardiomyopathy
+    VCEP's 0.02% for MYH7 is a point-estimate MAF cutoff; comparing a filtering allele
+    frequency with it silently makes the criterion stricter than the specification says,
+    because FAF is always the lower number. gnomAD's FAF and ClinGen SVI's later advice to
+    prefer it do not retroactively recalibrate specifications written before them.
+
+    So the policy names its own statistic. A curated assessment that does not is read as the
+    point-estimate cutoff its wording implies, and the assumption is reported rather than
+    made quietly. The configured default is ours to state, so it has to state it.
+
+    Returns (early_result, statistic, assumed).
+    """
+    declared = applied.get("frequency_statistic")
+    if declared is None and scope == "disease_specific":
+        return None, "af", True
+    if declared not in STATISTICS:
+        key = ("disease_frequency_threshold.frequency_statistic" if scope == "disease_specific"
+               else "BS1.default_frequency_statistic")
+        return result("BS1", input_data, CriterionStatus.UNKNOWN,
+                      f"The threshold names {declared!r} as the frequency statistic to compare "
+                      f"against; BS1 supports {' and '.join(sorted(STATISTICS))}",
+                      missing=[key]), None, False
+    return None, declared, False
+
+
 def evaluate(variant: VariantRecord, clinical_note: ClinicalNoteExtraction, services, config):
     input_data = criterion_input(variant, clinical_note)
     condition = input_data.get("condition")
@@ -59,7 +90,7 @@ def evaluate(variant: VariantRecord, clinical_note: ClinicalNoteExtraction, serv
         # weaker claim than the criterion describes, so the substitution travels with the
         # result instead of disappearing into a number.
         applied = {key: rule.get(f"default_{key}") for key in
-                   ("max_credible_af", "source", "source_version")}
+                   ("max_credible_af", "source", "source_version", "frequency_statistic")}
         threshold = number(applied["max_credible_af"])
         if not all(applied.values()):
             return result("BS1", input_data, CriterionStatus.UNKNOWN,
@@ -82,25 +113,42 @@ def evaluate(variant: VariantRecord, clinical_note: ClinicalNoteExtraction, serv
     early, context = population_context("BS1", input_data, services, config)
     if early:
         return early
+    early, statistic, assumed = frequency_statistic(input_data, applied, scope)
+    if early:
+        return early
     _, observations, rejected, failures, provenance = context
-    exceeding = [item for item in observations if number(item["AF"]) > threshold]
+    if statistic == "faf95":
+        scored = [(item, faf95(item.get("AC"), item.get("AN"))) for item in observations]
+        measure = "filtering allele frequency"
+        provenance = {**provenance, "faf_method": FAF_METHOD}
+    else:
+        scored = [(item, number(item.get("AF"))) for item in observations]
+        measure = "allele frequency"
+    exceeding = [item for item, value in scored if value is not None and value > threshold]
+    highest = max((value for _, value in scored if value is not None), default=None)
+    provenance = {**provenance, "frequency_statistic": statistic,
+                  "highest_observed": str(highest) if highest is not None else None}
     # One summary for all three outcomes would state the verdict without its reason, so each
     # says what was actually compared - and an incomplete search is not a negative result.
     if exceeding:
         status, strength = CriterionStatus.MET, "strong"
-        summary = (f"{len(exceeding)} of {len(observations)} resolved observation(s) report an AF "
-                   f"above {label} ({threshold})")
+        summary = (f"{len(exceeding)} of {len(observations)} resolved observation(s) have a {measure} "
+                   f"above {label} ({threshold}); highest {measure} {highest}")
     elif failures:
         status, strength = CriterionStatus.UNKNOWN, None
-        summary = (f"No resolved observation exceeds {label} ({threshold}), but "
+        summary = (f"No resolved observation has a {measure} above {label} "
+                   f"({threshold}; highest {measure} {highest}), but "
                    f"{len(failures)} population source(s) could not be queried, so the search "
                    f"is incomplete")
     else:
         status, strength = CriterionStatus.NOT_MET, None
-        summary = (f"Every population source resolved and none reports an AF above {label} "
-                   f"({threshold})")
+        summary = (f"Every population source resolved and none has a {measure} above {label} "
+                   f"({threshold}; highest {measure} {highest})")
     review = [] if scope == "disease_specific" else [
         "Confirm BS1 against a disease-specific maximum credible frequency"]
+    if assumed:
+        review = review + ["Confirm the curated threshold is a point-estimate AF cutoff, "
+                           "not a filtering allele frequency"]
     # The threshold is the policy the observations are judged against: always recorded, and
     # cited as an evidence item only when it carries a retrievable identifier.
     return result("BS1", input_data, status, summary + fallback_note,
