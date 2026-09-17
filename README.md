@@ -143,6 +143,9 @@ CLI引数は用意されていません。対象の遺伝子/変異を変えた�
     docker rm -f acmg-api
     ```
 
+上記1〜2の代わりに [`compose.yaml`](compose.yaml) を使ってもよい
+(`docker compose up -d --build` / 停止は `docker compose down`)。
+
 ## APIクライアントの例
 
 APIクライアントの実装例は以下にあります。
