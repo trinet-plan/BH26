@@ -34,7 +34,18 @@
     "default_source": "BH26 provisional default BS1 threshold for rare Mendelian disease (PLACEHOLDER - not a reviewed clinical value; a real threshold is per-disease, e.g. the ClinGen Inherited Cardiomyopathy VCEP applies 0.0002 for MYH7)",
     "default_source_version": "2026-09-17-provisional-2",
     "default_frequency_statistic": "faf95",
-    "default_comparison": ">"
+    "default_comparison": ">",
+    "default_derivation": {
+      "method": "Maximum credible allele frequency (Whiffin et al. 2017), https://pubmed.ncbi.nlm.nih.gov/28518168/",
+      "prevalence": null,
+      "inheritance": null,
+      "penetrance": null,
+      "max_genetic_contribution": null,
+      "max_allelic_contribution": null,
+      "target_population": null,
+      "source_url": "https://clinicalgenome.org/site/assets/files/5182/pm2_-_svi_recommendation_-_approved_sept2020.pdf"
+    },
+    "default_derivation_note": "The nulls are not blanks to be filled in by the pipeline. Each is an input only a curator can supply for a particular disease, and the criterion reports them as derivation_inputs_missing so the gap is visible in the result rather than assumed away. Until they are supplied and the threshold is reviewed, default_policy_status stays DRAFT and BS1 cannot reach MET on this threshold - see doc/external_data_coverage_ja.md, 2026-09-17."
   },
   "PVS1": {
     "ruleset": {

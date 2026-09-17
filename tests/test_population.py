@@ -258,18 +258,20 @@ class PopulationTests(unittest.TestCase):
         self.assertEqual(value.provenance["threshold_scope"], "default")
         self.assertIn(because, value.summary)
         self.assertIn("not a disease-specific threshold", value.summary)
-        self.assertEqual(value.review_points,
-                         ["Confirm BS1 against a disease-specific maximum credible frequency"])
+        self.assertIn("Confirm BS1 against a disease-specific maximum credible frequency",
+                      value.review_points)
 
     def test_bs1_without_a_disease_context_uses_the_default_threshold(self):
+        """The default threshold is not approved for any disease, so an exceedance under it is
+        a draft for a curator, never MET - see doc/external_data_coverage_ja.md, 2026-09-17."""
         value = self.evaluate(bs1, self.services([self.observation(100)]))
-        self.assertEqual(value.status, CriterionStatus.MET)
+        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
         self.assertFellBackToDefault(value, because="no disease context was supplied")
 
     def test_bs1_without_a_curated_threshold_uses_the_default_threshold(self):
         self.input["condition"] = "test:disease"
         value = self.evaluate(bs1, self.services([self.observation(100)]))
-        self.assertEqual(value.status, CriterionStatus.MET)
+        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
         self.assertFellBackToDefault(value, because="no curated maximum credible allele frequency")
 
     def test_bs1_threshold_for_another_disease_does_not_apply_to_this_one(self):
