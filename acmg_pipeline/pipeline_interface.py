@@ -22,9 +22,9 @@ from typing import Any
 
 from acmg_pipeline.classification import CriterionEvidence, Strength, classify
 from acmg_pipeline.clinical_note import extract_clinical_note
-from acmg_pipeline.constants import ALL_ACMG_CODES, CriterionStatus
+from acmg_pipeline.constants import ALL_ACMG_CODES, LITERATURE_CODES, CriterionStatus
 from acmg_pipeline.gate import ERepoClient
-from acmg_pipeline.pipeline import evaluate_variant_evidence_lines
+from acmg_pipeline.pipeline import evaluate_selected_criteria, evaluate_variant_evidence_lines
 from acmg_pipeline.vcf_record import VariantRecord, parse_vcf
 
 
@@ -76,6 +76,43 @@ async def run_pipeline(
     return PipelineOutput(
         classification=classify([_evidence_from_line(code, evidence_lines[code]) for code in ALL_ACMG_CODES]),
         evidence_lines=evidence_lines,
+    )
+
+
+def needs_literature_workflow(criteria: tuple[str, ...]) -> bool:
+    """True if any of `criteria` requires the LLM/PubMed literature workflow.
+
+    The API layer uses this to route a /v1/get_evidence_line_by_target_criteria
+    request: False means it
+    can answer synchronously (run_selected_criteria() with mcp/erepo_client
+    left None); True means it must go through the async job pattern.
+    """
+    return bool(set(criteria) & LITERATURE_CODES)
+
+
+async def run_selected_criteria(
+    variant: VariantRecord,
+    clinical_note: str,
+    criteria: tuple[str, ...],
+    *,
+    mcp=None,
+    erepo_client: ERepoClient | None = None,
+    vcep_name: str | None = None,
+    full_text_cache=None,
+) -> dict[str, dict]:
+    """Evaluate only `criteria`, returning {code: VA-Spec EvidenceLine}.
+
+    The API-facing counterpart of run_pipeline(): where run_pipeline()
+    always evaluates and classifies all 28 codes, this answers "does this
+    variant meet criterion X" for an arbitrary caller-chosen subset, without
+    running (or classifying against) the other 27.
+    """
+    extraction = extract_clinical_note(clinical_note)
+    return await evaluate_selected_criteria(
+        variant, extraction, criteria,
+        automated_config=load_automated_config(),
+        mcp=mcp, erepo_client=erepo_client,
+        vcep_name=vcep_name, full_text_cache=full_text_cache,
     )
 
 
