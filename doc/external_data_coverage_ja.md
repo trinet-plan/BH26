@@ -29,6 +29,31 @@
 | predictorの固定版 | PP3、BP4、PS1、PM5 | predictor versionは `UNKNOWN` と明記したまま、取得日時・Ensembl release・レスポンスhash・許可ポリシーを残して使用できる。固定版が必須の運用では `UNKNOWN` 判定にする |
 | ClinVar assertionの詳細、review status、独立性 | PS1、PM5、PP5、BP6 | `UNKNOWN`。表示ラベルだけで支持根拠にしない |
 
+### 1-2. BS1の既定閾値が継承様式を見ていない（未解決）
+
+疾患別閾値がない場合、BS1は `config` の既定閾値へフォールバックする。このとき
+`inheritance` は参照されない。疾患別閾値の照合には使うが、既定閾値経路では無視される。
+
+`config/bs1_thresholds_draft.json` の転記が示すとおり、継承様式は本来この判定に効く軸で
+ある。ClinGen Hearing Loss VCEPはAR `0.003` / AD `0.0002` と**15倍**の差を付けている。
+単一の既定値をどちらにも当てると、一方は緩すぎ、他方は厳しすぎる。
+
+実例: demo-dataの `case4-var1`（DSG2 c.1592T>G、ARVC、**ホモ接合**症例）は、東アジア集団
+でのみ AC=21/AN=39,696（FAF 0.00037）と観測され、既定閾値 0.0001 を超えて BS1 = MET に
+なる。他の17集団はすべて AC=0 で、ToMMo・HGVDでも同様に日本人集団で 1e-4 台。頻度の
+観測自体は堅い。一方でキュレーターはBS1を挙げておらず（`PS3_Strong` / `PS4_Strong` のみ）、
+劣性/複合的な機序を想定していれば、ヘテロでの集団頻度はBS1の根拠として弱くなる。
+
+現状の出力は `threshold_scope: "default"` と review_points で「疾患別頻度で確認せよ」と
+明示するため、キュレーターは弾ける。ただし継承様式を見ない既定判定である事実は
+summaryに出ない。
+
+想定される対応（いずれも臨床判断が要る、未決）:
+
+- 既定閾値経路でも `inheritance` を必須にし、不明なら `UNKNOWN`
+- AR / AD 別の既定値を持つ
+- 既定閾値でのBS1をMETにせず、review必須の別状態として出す
+
 ### 2. 現在はstubとして残すcriterion
 
 次の9基準は実判定を行わず、全28本のVA-Spec EvidenceLineには `UNKNOWN` として出力する。
