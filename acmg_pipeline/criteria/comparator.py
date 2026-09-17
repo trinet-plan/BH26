@@ -2,7 +2,7 @@ from acmg_pipeline.constants import CriterionStatus
 """Same-residue comparison requires independent, reviewed pathogenic evidence."""
 
 from acmg_pipeline.automated_core.models import Variant
-from acmg_pipeline.criteria.common import annotation_context, get_evidence, result
+from acmg_pipeline.criteria.common import NOT_APPLICABLE, annotation_context, get_evidence, result
 
 
 def evaluate_comparator(code, input_data, services, config):
@@ -10,10 +10,21 @@ def evaluate_comparator(code, input_data, services, config):
     if early:
         return early
     if "missense_variant" not in annotation["consequences"]:
+        # A splice consequence is not outside the criterion the way a synonymous one is: PS1's
+        # same-effect argument can extend to an equivalent splice effect, which a curator has
+        # to assess.  So only the non-splice case is reported as inapplicable.
         splice = any("splice" in item for item in annotation["consequences"])
-        return result(code, input_data, CriterionStatus.UNKNOWN if code == "PS1" and splice else CriterionStatus.UNKNOWN,
-                      "Splice-equivalence requires review" if splice else "Requires missense substitution",
-                      evidence=[annotation], review=["Assess splice-effect equivalence"] if splice else [])
+        listed = ", ".join(sorted(annotation["consequences"]))
+        if splice:
+            return result(code, input_data, CriterionStatus.UNKNOWN,
+                          f"{code} compares amino-acid substitutions, and the annotation reports a "
+                          f"splice consequence ({listed}); equivalence of the splice effect has to "
+                          f"be assessed before the comparison can be made",
+                          evidence=[annotation], review=["Assess splice-effect equivalence"])
+        return result(code, input_data, CriterionStatus.UNKNOWN,
+                      f"{code} is not applicable: it compares missense substitutions, and the "
+                      f"annotation reports {listed}.",
+                      evidence=[annotation], provenance=NOT_APPLICABLE)
     # Both codes compare amino acid changes at one residue, so they are protein-level
     # statements; the disease relevance is reported separately instead of being required.
     fields = ("protein_id", "protein_start", "ref_aa", "alt_aa")

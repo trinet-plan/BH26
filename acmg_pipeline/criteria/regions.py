@@ -2,7 +2,7 @@ from acmg_pipeline.constants import CriterionStatus
 """Protein length / repeat / critical-region assessments with explicit missingness."""
 
 from acmg_pipeline.criteria.common import (
-    annotation_context, curated_context, require_boolean_fields, result,
+    NOT_APPLICABLE, annotation_context, curated_context, require_boolean_fields, result,
 )
 
 # ACMG PM1 reads "mutational hot spot and/or critical and well-established functional
@@ -24,13 +24,15 @@ def evaluate_region(code, input_data, services, config):
     if code == "PM4" and not (indel or "stop_lost" in consequences):
         return result(code, input_data, CriterionStatus.UNKNOWN,
                       "PM4 is not applicable: the annotation does not indicate an in-frame insertion, "
-                      "in-frame deletion, or stop-loss consequence.",
-                      evidence=[annotation])
+                      f"in-frame deletion, or stop-loss consequence (annotated: "
+                      f"{', '.join(sorted(consequences))}).",
+                      evidence=[annotation], provenance=NOT_APPLICABLE)
     if code == "BP3" and not indel:
         return result(code, input_data, CriterionStatus.UNKNOWN,
                       "BP3 is not applicable: the annotation does not indicate an in-frame insertion "
-                      "or deletion, which BP3 requires before repeat-region assessment.",
-                      evidence=[annotation])
+                      f"or deletion, which BP3 requires before repeat-region assessment "
+                      f"(annotated: {', '.join(sorted(consequences))}).",
+                      evidence=[annotation], provenance=NOT_APPLICABLE)
     # PM1 is a protein-level statement about the region itself, so a condition-agnostic
     # reviewed assessment is usable; the disease relevance is reported separately.
     early, region = curated_context(code, "region", input_data, services, annotation,
@@ -45,9 +47,23 @@ def evaluate_region(code, input_data, services, config):
         return result(code, input_data, CriterionStatus.UNKNOWN, "Protein reference mapping unavailable",
                       evidence=evidence, missing=["protein_id"])
     start, stop = region.get("start"), region.get("end")
-    if not all(type(value) is int and value > 0 for value in (position, end, start, stop)) or start > stop or position > end:
-        return result(code, input_data, CriterionStatus.UNKNOWN, "Protein coordinates unavailable",
+    # An absent coordinate and a reversed interval need different fixes - one is evidence to
+    # retrieve, the other is evidence to correct - so they are not reported as one cause.
+    labelled = {"protein_start": position, "protein_end": end,
+                "region.start": start, "region.end": stop}
+    unusable = [name for name, value in labelled.items()
+                if type(value) is not int or value <= 0]
+    if unusable:
+        return result(code, input_data, CriterionStatus.UNKNOWN,
+                      f"Protein coordinates unavailable: {', '.join(unusable)} is not a positive "
+                      f"residue position",
                       evidence=evidence, missing=["protein_interval"])
+    if start > stop or position > end:
+        return result(code, input_data, CriterionStatus.UNKNOWN,
+                      f"Protein coordinates are inconsistent: the assessed region is "
+                      f"{start}-{stop} and the altered interval is {position}-{end}; each must "
+                      f"start at or before it ends",
+                      evidence=evidence, review=["Correct the protein interval bounds"])
     # A partial intersection is insufficient to classify the full altered region as non-functional.
     contained = start <= position <= end <= stop
     if not contained:

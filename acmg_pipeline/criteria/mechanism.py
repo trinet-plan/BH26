@@ -1,7 +1,9 @@
 from acmg_pipeline.constants import CriterionStatus
 """Gene-disease mechanism and variant spectrum, not constraint alone."""
 
-from acmg_pipeline.criteria.common import annotation_context, curated_context, require_boolean_fields, result
+from acmg_pipeline.criteria.common import (
+    NOT_APPLICABLE, annotation_context, curated_context, require_boolean_fields, result,
+)
 
 
 def evaluate_mechanism(code, input_data, services, config):
@@ -9,8 +11,10 @@ def evaluate_mechanism(code, input_data, services, config):
     if early:
         return early
     if "missense_variant" not in annotation["consequences"]:
-        return result(code, input_data, CriterionStatus.UNKNOWN, "Requires a missense variant",
-                      evidence=[annotation])
+        return result(code, input_data, CriterionStatus.UNKNOWN,
+                      f"{code} is not applicable: it evaluates missense variants, and the "
+                      f"annotation reports {', '.join(sorted(annotation['consequences']))}.",
+                      evidence=[annotation], provenance=NOT_APPLICABLE)
     # The mechanism statement is about the gene, so a condition-agnostic assessment is
     # usable and the disease relevance is reported instead of being required up front.
     early, mechanism = curated_context(code, "gene_disease", input_data, services, annotation,
@@ -28,9 +32,11 @@ def evaluate_mechanism(code, input_data, services, config):
             code,
             input_data,
             CriterionStatus.UNKNOWN,
-            "Criterion is not applicable under the reviewed gene-disease specification",
+            f"{code} is not applicable: the reviewed gene-disease specification for "
+            f"{mechanism.get('gene')} marks it as not applicable",
             evidence=evidence,
             provenance={
+                **NOT_APPLICABLE,
                 "assessment_scope": "condition_specific" if mechanism.get("condition") else "gene_level",
                 "condition_assessment": (
                     "MATCHED" if mechanism.get("condition") == input_data.get("condition")

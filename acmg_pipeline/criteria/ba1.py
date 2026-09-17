@@ -24,8 +24,16 @@ def evaluate(variant: VariantRecord, clinical_note: ClinicalNoteExtraction, serv
     _, observations, rejected, failures, provenance = context
     high = [item for item in observations if number(item["AF"]) > number("0.05")]
     if not high:
-        status = CriterionStatus.UNKNOWN if failures else CriterionStatus.NOT_MET
-        return result("BA1", input_data, status, "No reliable AF above 5%",
+        # "Nothing above 5% was found" and "nothing above 5% exists" are different claims:
+        # an unreachable provider could still hold the observation that carries BA1.
+        if failures:
+            return result("BA1", input_data, CriterionStatus.UNKNOWN,
+                          f"No resolved observation exceeds 5%, but {len(failures)} population "
+                          f"source(s) could not be queried, so the search is incomplete",
+                          evidence=observations, missing=["complete_population_evidence"],
+                          provenance=provenance)
+        return result("BA1", input_data, CriterionStatus.NOT_MET,
+                      "Every population source resolved and none reports an AF above 5%",
                       evidence=observations, provenance=provenance)
     exception = input_data.get("ba1_exception_assessment", {})
     if not all(exception.get(key) for key in ("source", "source_version", "reviewed_at")):

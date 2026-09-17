@@ -29,11 +29,18 @@ def evaluate(variant: VariantRecord, clinical_note: ClinicalNoteExtraction, serv
     maximum = max(number(item["AF"]) for item in observations)
     # A reliable counterexample defeats rarity even if another source is unavailable.
     if maximum > threshold:
-        return result("PM2", input_data, CriterionStatus.NOT_MET, "Observed AF exceeds configured rarity cutoff",
+        return result("PM2", input_data, CriterionStatus.NOT_MET,
+                      f"The highest reliable observed AF ({maximum}) exceeds the configured "
+                      f"rarity cutoff ({threshold})",
                       evidence=observations, provenance=provenance)
     if failures:
-        return result("PM2", input_data, CriterionStatus.UNKNOWN, "Population search incomplete",
+        return result("PM2", input_data, CriterionStatus.UNKNOWN,
+                      f"Every resolved observation is at or below the rarity cutoff ({threshold}), "
+                      f"but {len(failures)} population source(s) could not be queried, so the "
+                      f"search is incomplete",
                       evidence=observations, missing=["complete_population_evidence"],
                       provenance=provenance)
-    return result("PM2", input_data, CriterionStatus.MET, "All resolved observations satisfy rarity policy",
+    return result("PM2", input_data, CriterionStatus.MET,
+                  f"Every population source resolved and the highest observed AF ({maximum}) is at "
+                  f"or below the configured rarity cutoff ({threshold})",
                   strength="supporting", evidence=observations, provenance=provenance)
