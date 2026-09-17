@@ -113,6 +113,25 @@ class TogoVarProviderTests(unittest.TestCase):
         }]}
         self.assertIsNone(TogoVarProvider(Client(body)).get_frequency(variant))
 
+    def test_exact_frequency_without_togovar_id_uses_coordinate_evidence_url(self):
+        body = {"data": [{
+            "chromosome": "1", "position": 68431328,
+            "reference": "T", "alternate": "C",
+            "frequencies": [{
+                "source": "gnomad_exomes", "ac": 14, "an": 1461704,
+                "af": 9.57785960054025e-06, "filter": ["PASS"],
+            }],
+        }]}
+        result = TogoVarProvider(Client(body), frequency_sources=["gnomad"]).get_frequency(
+            Variant("GRCh38", "1", 68431328, "T", "C")
+        )
+        self.assertEqual(result[0]["togovar_id"], None)
+        self.assertEqual(
+            result[0]["evidence_id"],
+            "https://grch38.togovar.org/variant/1-68431328-T-C#frequency:gnomad_exomes",
+        )
+        self.assertEqual(result[0]["AF"], str(Decimal(14) / Decimal(1461704)))
+
     def test_non_pass_frequency_is_retained_but_marked_filtered(self):
         body = {"data": [{
             "id": "tgv123", "chromosome": "1", "position": 2,

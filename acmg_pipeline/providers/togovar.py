@@ -81,10 +81,15 @@ class TogoVarProvider:
         if len(matches) != 1:
             raise ValueError("TogoVar returned duplicate exact alleles")
         remote = matches[0]
+        # The search API normally returns a ``tgv...`` ID, but a valid exact
+        # allele can omit it (as observed for RPE65 1-68431328-T-C).  TogoVar
+        # documents its coordinate/REF/ALT URL as another canonical variant
+        # identifier, so lack of the optional display ID must not discard
+        # otherwise complete AC/AN/AF evidence.
         tgv_id = remote.get("id")
-        frequencies = remote.get("frequencies")
-        if not isinstance(tgv_id, str) or not tgv_id.startswith("tgv"):
+        if tgv_id is not None and (not isinstance(tgv_id, str) or not tgv_id.startswith("tgv")):
             raise ValueError("Invalid TogoVar variant ID")
+        frequencies = remote.get("frequencies")
         if frequencies is None:
             return None
         if not isinstance(frequencies, list):
@@ -121,9 +126,7 @@ class TogoVarProvider:
         return {
             "category": "population",
             "variant_key": variant.key,
-            "evidence_id": (
-                f"https://grch38.togovar.org/variant/{tgv_id}#frequency:{dataset}"
-            ),
+            "evidence_id": self._evidence_id(variant, tgv_id, dataset),
             "source": self.name,
             "source_version": f"API {self.api_version}",
             "retrieved_at": retrieved_at,
@@ -143,3 +146,9 @@ class TogoVarProvider:
             "upstream_dataset_version": "NOT_PROVIDED_BY_TOGOVAR_API",
             "togovar_id": tgv_id,
         }
+
+    @staticmethod
+    def _evidence_id(variant, tgv_id, dataset):
+        """Use TogoVar's exact coordinate URL when its opaque ID is absent."""
+        identifier = tgv_id or f"{variant.chrom}-{variant.pos}-{variant.ref}-{variant.alt}"
+        return f"https://grch38.togovar.org/variant/{identifier}#frequency:{dataset}"
