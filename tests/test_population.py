@@ -16,6 +16,9 @@ class PopulationTests(unittest.TestCase):
         self.input = {"variant": self.variant.to_dict()}
         self.config = {code: {"minimum_an": 2000, "policy_source": "synthetic-test-policy",
                               "policy_version": "1"} for code in ("PM2", "BA1", "BS1")}
+        # "Absent from controls" is stated, not defaulted: pm2.evaluate() reports an unset
+        # max_af as an unconfigured policy rather than running as the strictest threshold.
+        self.config["PM2"]["max_af"] = 0
 
     def observation(self, ac=0, an=10000, **extra):
         return {"variant_key": self.variant.key, "evidence_id": "test:frequency",
@@ -39,6 +42,19 @@ class PopulationTests(unittest.TestCase):
     def test_no_record_is_not_absence(self):
         value = self.evaluate(pm2, self.services([]))
         self.assertEqual(value.status, CriterionStatus.UNKNOWN)
+
+    def test_unset_threshold_is_not_the_strictest_threshold(self):
+        """An absent max_af used to default to 0 and score PM2 on an unstated policy."""
+        del self.config["PM2"]["max_af"]
+        value = self.evaluate(pm2, self.services([self.observation()]))
+        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
+        self.assertIn("PM2.max_af", value.missing_inputs)
+
+    def test_configured_zero_threshold_still_scores(self):
+        """max_af = 0 is the standard "absent from controls" policy, not a missing one."""
+        self.config["PM2"]["max_af"] = 0
+        value = self.evaluate(pm2, self.services([self.observation()]))
+        self.assertEqual(value.status, CriterionStatus.MET)
 
     def test_high_regional_af_is_not_hidden(self):
         value = self.evaluate(pm2, self.services(

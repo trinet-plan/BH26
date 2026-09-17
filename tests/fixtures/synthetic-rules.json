@@ -1,5 +1,5 @@
 {
-  "PM2": {"minimum_an": 2000, "policy_source": "synthetic-test-only", "policy_version": "1"},
+  "PM2": {"max_af": 0, "minimum_an": 2000, "policy_source": "synthetic-test-only", "policy_version": "1"},
   "BA1": {"minimum_an": 2000, "policy_source": "synthetic-test-only", "policy_version": "1"},
   "BS1": {"minimum_an": 2000, "policy_source": "synthetic-test-only", "policy_version": "1"}
 }
