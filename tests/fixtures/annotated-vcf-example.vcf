@@ -1,0 +1,15 @@
+##fileformat=VCFv4.2
+##fileDate=20260917
+##source=bcftools_annotate-1.19
+##reference=GRCh38
+##comment=Shaped like a VEP/bcftools annotate output rather than this project's demo VCFs: population frequencies carry Source and Version, so they can be pinned; the AlphaMissense score deliberately does not, so it is skipped and fetched instead.
+##INFO=<ID=GENE,Number=1,Type=String,Description="Gene symbol">
+##INFO=<ID=TRANSCRIPT,Number=1,Type=String,Description="RefSeq transcript">
+##INFO=<ID=HGVSC,Number=1,Type=String,Description="HGVS coding">
+##INFO=<ID=gnomAD_AF,Number=1,Type=Float,Description="Allele frequency,Source="gnomAD",Version="4.1.1"">
+##INFO=<ID=gnomAD_AC,Number=1,Type=Integer,Description="Allele count,Source="gnomAD",Version="4.1.1"">
+##INFO=<ID=gnomAD_AN,Number=1,Type=Integer,Description="Allele number,Source="gnomAD",Version="4.1.1"">
+##INFO=<ID=CLNSIG,Number=1,Type=String,Description="Clinical significance as reported">
+##INFO=<ID=AM_PATHOGENICITY,Number=1,Type=Float,Description="AlphaMissense pathogenicity score with no stated release">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
+11	47352561	annotated-1	G	A	99	PASS	ASSEMBLY=GRCh38;GENE=MYBPC3;TRANSCRIPT=NM_000256.3;HGVSC=c.1000G>A;gnomAD_AF=0.00012;gnomAD_AC=18;gnomAD_AN=150000;CLNSIG=Likely_pathogenic;AM_PATHOGENICITY=0.91

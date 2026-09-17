@@ -21,11 +21,23 @@ searches, the PM1 hotspot search), so that logic exists once.
   `quality_status` - `acmg_pipeline.services.evidence.EvidenceService` filters on
   all five, and `acmg_pipeline.automated_va_spec.evidence_reference()` refuses to
   export an item without an IRI. Only a provider can supply those. In
-  particular they cannot be read off the VCF INFO column: the demo VCFs
-  carry identity/context (GENE/TRANSCRIPT/HGVSC/HGVSP/ZYGOSITY/
+  particular they cannot be read off the demo VCFs' INFO column: those
+  files carry identity/context (GENE/TRANSCRIPT/HGVSC/HGVSP/ZYGOSITY/
   DISEASE_ASSOCIATION) plus already-decided answers (CLNSIG, ACMG_CODES)
   and uncalibrated scores (AM_*/AG_*), but no population frequency and no
-  source version for anything. INFO stays identity and context only.
+  source version for anything.
+
+  That was about those files, not about VCF as a format, and it still
+  holds for them. A file written by VEP or bcftools annotate carries the
+  same frequencies and consequences the providers fetch, and names the
+  tool and release that produced them in its headers. Where it does,
+  providers/vcf_annotation.py reads those fields under this same contract
+  and drops whatever cannot meet it - a field with no pinnable release is
+  skipped and fetched instead, a curator's conclusion cannot be mapped at
+  all, and a predictor score keeps the version that decides whether a
+  calibration accepts it. It is opt-in, and every record it produces
+  carries origin="vcf_input", because a file handed to us with the variant
+  is not the same evidence as a source this pipeline queried.
 
 [Absent is not zero]
   A variant missing from TogoVar yields no population record at all, so
