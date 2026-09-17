@@ -51,7 +51,7 @@ def test_integrated_entrypoint_returns_one_ordered_line_per_acmg_code():
                 variant,
                 clinical_note,
                 automated_config=config,
-                normalized_evidence=[],
+                evidence_resolver=StaticEvidenceResolver([]),
                 mcp=object(),
                 erepo_client=object(),
             )
@@ -79,7 +79,7 @@ def test_integrated_entrypoint_requires_shared_input_classes():
                 {},
                 ClinicalNoteExtraction(),
                 automated_config={},
-                normalized_evidence=[],
+                evidence_resolver=StaticEvidenceResolver([]),
                 mcp=object(),
                 erepo_client=object(),
             )

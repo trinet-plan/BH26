@@ -806,17 +806,18 @@ async def evaluate_variant_evidence_lines(
     variant: VariantRecord,
     clinical_note: ClinicalNoteExtraction,
     *,
-    normalized_evidence: list[dict],
     automated_config: dict,
     mcp: ClientSession,
     erepo_client: ERepoClient,
+    evidence_resolver=None,
     vcep_name: str | None = None,
     full_text_cache: dict[str, tuple[str | None, str]] | None = None,
 ) -> list[dict]:
     """Return exactly one VA-Spec EvidenceLine for each of the 28 ACMG codes.
 
-    `normalized_evidence` is explicit caller-supplied evidence.  The VCF
-    INFO column supplies identity and context only - GENE,
+    Evidence for the automated criteria is retrieved and normalized by the
+    server-side ProviderEvidenceResolver. The VCF INFO column supplies
+    identity and context only - GENE,
     TRANSCRIPT, HGVSC, CLNVARIATIONID here, the rest via
     `acmg_pipeline.automated_core.interface.criterion_input`. It is never read as evidence:
     the demo VCFs' CLNSIG/ACMG_CODES are already-reached conclusions, the
@@ -832,8 +833,14 @@ async def evaluate_variant_evidence_lines(
     if not isinstance(automated_config, dict):
         raise TypeError("automated_config must be a dictionary")
 
+    resolver = evidence_resolver or ProviderEvidenceResolver(
+        automated_config.get("evidence_cache_dir", "cache/evidence"),
+        offline=bool(automated_config.get("offline")),
+        ensembl_release=automated_config.get("ensembl_release"),
+    )
+    resolved = resolver.resolve(_identity_from_info(variant), _automated_variant(variant))
     services = make_services(
-        normalized_evidence,
+        resolved.records,
         automated_config.get("population_providers"),
     )
     automated_results = evaluate_automated_record(

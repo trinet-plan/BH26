@@ -168,8 +168,8 @@ def _run_both_stacks() -> list[dict]:
             evaluate_variant_evidence_lines(
                 _variant(),
                 ClinicalNoteExtraction(),
-                normalized_evidence=_normalized_evidence(),
                 automated_config=config,
+                evidence_resolver=StaticEvidenceResolver(_normalized_evidence()),
                 mcp=object(),
                 erepo_client=object(),
                 vcep_name="Cardiomyopathy VCEP",

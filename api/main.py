@@ -15,7 +15,6 @@ from contextlib import AsyncExitStack
 from fastapi import BackgroundTasks, FastAPI, HTTPException
 from pydantic import BaseModel
 
-from acmg_pipeline.clinical_note import ClinicalNoteExtraction
 from acmg_pipeline.gate import ERepoClient
 from acmg_pipeline.pipeline import connect_pubmed
 from acmg_pipeline.pipeline_interface import parse_request_vcf, run_pipeline
@@ -27,17 +26,16 @@ app = FastAPI(title="ACMG判定API")
 
 class VariantRequest(BaseModel):
     vcf: str
-    clinical_note_extraction: dict
-    normalized_evidence: list[dict]
+    clinical_note: str = ""
 
 
-async def _execute_job(job_id: str, record, clinical_note, normalized_evidence, gene: str, hgvsc: str, hgvsp: str) -> None:
+async def _execute_job(job_id: str, record, clinical_note: str, gene: str, hgvsc: str, hgvsp: str) -> None:
     mark_running(job_id)
     try:
         async with AsyncExitStack() as stack:
             mcp = await connect_pubmed(stack)
             output = await run_pipeline(
-                record, clinical_note, normalized_evidence=normalized_evidence,
+                record, clinical_note,
                 mcp=mcp, erepo_client=ERepoClient(),
             )
         va_spec = build_variant_statement(output, gene=gene, hgvsc=hgvsc, hgvsp=hgvsp)
@@ -51,7 +49,6 @@ async def _execute_job(job_id: str, record, clinical_note, normalized_evidence, 
 def submit_variant(request: VariantRequest, background_tasks: BackgroundTasks) -> dict:
     try:
         record = parse_request_vcf(request.vcf)
-        clinical_note = ClinicalNoteExtraction.from_json(request.clinical_note_extraction)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -60,7 +57,7 @@ def submit_variant(request: VariantRequest, background_tasks: BackgroundTasks) -
     hgvsp = record.info.get("HGVSP", "")
     job = create_job(variant={"gene": gene, "hgvsc": hgvsc, "hgvsp": hgvsp})
     background_tasks.add_task(
-        _execute_job, job.job_id, record, clinical_note, request.normalized_evidence,
+        _execute_job, job.job_id, record, request.clinical_note,
         gene, hgvsc, hgvsp,
     )
     return {"job_id": job.job_id, "status": job.status, "poll_url": f"/v1/variant/{job.job_id}"}

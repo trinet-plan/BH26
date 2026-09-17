@@ -21,7 +21,7 @@ from pathlib import Path
 from typing import Any
 
 from acmg_pipeline.classification import CriterionEvidence, Strength, classify
-from acmg_pipeline.clinical_note import ClinicalNoteExtraction
+from acmg_pipeline.clinical_note import extract_clinical_note
 from acmg_pipeline.constants import ALL_ACMG_CODES, CriterionStatus
 from acmg_pipeline.gate import ERepoClient
 from acmg_pipeline.pipeline import evaluate_variant_evidence_lines
@@ -57,20 +57,17 @@ def _evidence_from_line(code: str, line: dict) -> CriterionEvidence:
 
 async def run_pipeline(
     variant: VariantRecord,
-    clinical_note_extraction: ClinicalNoteExtraction,
+    clinical_note: str,
     *,
-    normalized_evidence: list[dict],
     mcp,
     erepo_client: ERepoClient,
     vcep_name: str | None = None,
     full_text_cache=None,
 ) -> PipelineOutput:
     """Evaluate 19 implemented and 9 UNKNOWN stub criteria in ACMG order."""
-    if not isinstance(normalized_evidence, list):
-        raise TypeError("normalized_evidence must be a list")
+    extraction = extract_clinical_note(clinical_note)
     lines = await evaluate_variant_evidence_lines(
-        variant, clinical_note_extraction,
-        normalized_evidence=normalized_evidence,
+        variant, extraction,
         automated_config=load_automated_config(),
         mcp=mcp, erepo_client=erepo_client, vcep_name=vcep_name,
         full_text_cache=full_text_cache,
