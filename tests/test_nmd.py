@@ -53,11 +53,19 @@ class NmdPredictionTests(unittest.TestCase):
         self.assertEqual(records[0]["rule_source"], RULE_SOURCE)
         self.assertEqual(records[0]["exon"], "2/34")
 
-    def test_the_last_two_exons_are_left_to_a_curator(self):
-        """"Within the last 50 nucleotides of the penultimate exon" needs that exon's
-        length. Numbering does not carry it, and guessing would guess at exactly the
-        distinction the rule draws."""
-        for exon in ("34/34", "33/34", "8/8", "7/8"):
+    def test_a_ptc_in_the_last_exon_escapes_decay(self):
+        """The 50-nucleotide distance is measured inside the penultimate exon, so it does
+        not bear on a PTC that is already past the final junction."""
+        for exon in ("34/34", "8/8"):
+            with self.subTest(exon=exon):
+                records = self.predict([consequence(exon=exon)])
+                self.assertEqual(len(records), 1)
+                self.assertIs(records[0]["predicted"], False)
+
+    def test_the_penultimate_exon_is_left_to_a_curator(self):
+        """"Within the last 50 nucleotides" needs that exon's length. Numbering does not
+        carry it, and guessing would guess at the distinction the rule draws."""
+        for exon in ("33/34", "7/8"):
             with self.subTest(exon=exon):
                 self.assertEqual(self.predict([consequence(exon=exon)]), [])
 
@@ -140,11 +148,11 @@ class NmdPredictionTests(unittest.TestCase):
         """The MANE provider needs this for NF03; sharing it keeps one VEP request."""
         self.assertEqual(self.exon([consequence(exon="2/34")]), "2/34")
 
-    def test_the_exon_helper_answers_for_the_last_exons_too(self):
+    def test_the_exon_helper_answers_where_the_prediction_stays_silent(self):
         """NF03 asks whether the exon is in the transcript, which the NMD boundary does not
-        affect - the prediction stays silent there, the exon does not have to."""
-        self.assertEqual(self.exon([consequence(exon="34/34")]), "34/34")
-        self.assertEqual(self.predict([consequence(exon="34/34")]), [])
+        affect - the prediction declines the penultimate exon, the exon does not have to."""
+        self.assertEqual(self.exon([consequence(exon="33/34")]), "33/34")
+        self.assertEqual(self.predict([consequence(exon="33/34")]), [])
 
     def test_the_exon_helper_stays_silent_when_transcripts_disagree(self):
         self.assertIsNone(self.exon([

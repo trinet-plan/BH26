@@ -142,12 +142,25 @@ class Pvs1AutomatedGateTests(unittest.TestCase):
         self.assertEqual(result.status, CriterionStatus.UNKNOWN)
         self.assertIn("exon_relevance", result.missing_inputs)
 
-    def test_a_variant_in_the_last_exons_stops_at_nf02_with_the_exon_known(self):
+    def test_the_penultimate_exon_stops_at_nf02_with_the_exon_known(self):
         """The NMD rule declines the boundary case while NF03's question stays answerable."""
-        exon = self.exon_from_vep("34/34")
-        self.assertEqual(exon, "34/34")
-        result = self.evaluate(self.dosage(), self.mane(exon=exon), self.nmd("34/34"))
+        exon = self.exon_from_vep("33/34")
+        self.assertEqual(exon, "33/34")
+        result = self.evaluate(self.dosage(), self.mane(exon=exon), self.nmd("33/34"))
         self.assertEqual(self.nodes(result)["NF02"], "UNKNOWN")
+
+    def test_a_ptc_in_the_last_exon_takes_the_region_path_and_stops_at_nf06(self):
+        """NMD is escaped, so PVS1 weighs the region instead - and the two gates that ask
+        what the lost residues *do* are judgments no coordinate answers."""
+        exon = self.exon_from_vep("34/34")
+        result = self.evaluate(self.dosage(), self.mane(exon=exon), self.nmd("34/34"))
+        nodes = self.nodes(result)
+        self.assertEqual(nodes["NF02"], "PASS")
+        self.assertEqual(nodes["NF04"], "UNKNOWN")   # critical region - curator
+        self.assertEqual(nodes["NF05"], "PASS")      # no frequent LoF observed
+        self.assertEqual(nodes["NF06"], "UNKNOWN")   # biological relevance - curator
+        self.assertNotIn("NF07", nodes)
+        self.assertIn("region_biological_relevance", result.missing_inputs)
 
     def test_a_non_mane_transcript_stops_at_nf01_undenied(self):
         result = self.evaluate(self.dosage(), self.mane(accession="NM_999999.1"), self.nmd())
@@ -159,6 +172,47 @@ class Pvs1AutomatedGateTests(unittest.TestCase):
                                consequence_term="stop_gained")
         self.assertEqual(result.status, CriterionStatus.MET)
         self.assertEqual(self.nodes(result)["V01"], "PASS")
+
+    def region(self, protein_start=204, length=213):
+        """The measurement provider's record, with NF04/NF06 left unanswered as it does."""
+        from tests.test_protein_region import FakeClient as RegionClient
+        from acmg_pipeline.providers.protein_region import ProteinRegionProvider
+        client = RegionClient([consequence(exon="3/3")], length=length)
+        return ProteinRegionProvider(client, "116").get_protein_region(
+            self.variant, GENE, TRANSCRIPT, HGVSC, protein_start)
+
+    def relevance(self, **values):
+        """The one judgment NF06 needs, as a curator would supply it."""
+        return [{
+            "category": "protein_region", "variant_key": self.variant.key,
+            "evidence_id": f"curated:region:{self.variant.key}",
+            "source": "curator", "source_version": "1", "retrieved_at": "2026-09-17",
+            "quality_status": "PASS", "curator": "test", "reviewed_at": "2026-09-17",
+            "transcript": TRANSCRIPT, "region_biologically_relevant": True, **values,
+        }]
+
+    def test_the_measurement_alone_still_stops_at_the_curator_judgment(self):
+        result = self.evaluate(self.dosage(), self.mane(exon="3/3"), self.nmd("3/3"),
+                               self.region())
+        nodes = self.nodes(result)
+        self.assertEqual(nodes["NF02"], "PASS")
+        self.assertEqual(nodes["NF06"], "UNKNOWN")
+        self.assertNotIn("NF07", nodes)
+        self.assertIn("region_biological_relevance", result.missing_inputs)
+
+    def test_measurement_plus_the_judgment_reaches_nf07_and_sets_the_strength(self):
+        """VHL c.610G>T: 10 residues of 213 is 4.7%, under the 10% the rule set splits on,
+        which is the PVS1_Moderate its expert panel recorded."""
+        curated = self.relevance(lost_residues=10, total_protein_length=213)
+        result = self.evaluate(self.dosage(), self.mane(exon="3/3"), self.nmd("3/3"), curated)
+        self.assertEqual(result.status, CriterionStatus.MET)
+        self.assertEqual(result.strength, "moderate")
+        self.assertEqual(self.nodes(result)["NF07"], "PASS")
+
+    def test_losing_more_than_a_tenth_of_the_protein_is_strong(self):
+        curated = self.relevance(lost_residues=100, total_protein_length=213)
+        result = self.evaluate(self.dosage(), self.mane(exon="3/3"), self.nmd("3/3"), curated)
+        self.assertEqual(result.strength, "strong")
 
     def test_automated_records_are_marked_as_such_in_the_evidence(self):
         """A curator reading the result has to see which gates were answered by derivation."""

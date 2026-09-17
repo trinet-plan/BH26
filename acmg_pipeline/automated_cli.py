@@ -19,6 +19,9 @@ from acmg_pipeline.providers.clinvar import (
 from acmg_pipeline.providers.ensembl import EnsemblIdentityProvider
 from acmg_pipeline.providers.gnomad import GnomadProvider
 from acmg_pipeline.providers.mane import METHOD as MANE_METHOD, ManeTranscriptProvider
+from acmg_pipeline.providers.protein_region import (
+    METHOD as REGION_METHOD, ProteinRegionProvider,
+)
 from acmg_pipeline.providers.nmd import (
     METHOD as NMD_METHOD, RULE_SOURCE as NMD_RULE_SOURCE, TRUNCATING as NMD_TRUNCATING,
     NmdPredictionProvider,
@@ -438,6 +441,28 @@ def main(argv=None):
                         "variants_queried": len(seen), "evidence": len(nmd_records),
                         "errors": nmd_errors,
                         "use_restriction": "PVS1_NMD_GATE_ONLY",
+                    })
+                    # PVS1's NF07 measurement, for the variants the NMD rule says escape
+                    # decay. The region gates NF04/NF06 stay unanswered - see
+                    # providers/protein_region.py.
+                    region = ProteinRegionProvider(external_client, nmd.release)
+                    region_records, region_errors = [], []
+                    for annotation in annotations:
+                        if not set(annotation.get("consequences") or []) & NMD_TRUNCATING:
+                            continue
+                        try:
+                            region_records.extend(region.get_protein_region(
+                                variants[annotation["variant_key"]], annotation.get("gene"),
+                                annotation.get("transcript"), annotation.get("hgvsc"),
+                                annotation.get("protein_start")))
+                        except (FetchError, ValueError) as exc:
+                            region_errors.append(f"{annotation.get('hgvsc')}: {exc}")
+                    evidence.extend(region_records)
+                    external_manifest.append({
+                        "provider": region.name, "provider_version": region.release,
+                        "method": REGION_METHOD,
+                        "evidence": len(region_records), "errors": region_errors,
+                        "use_restriction": "PVS1_PROTEIN_LOSS_MEASUREMENT_ONLY",
                     })
             args.output_dir.mkdir(parents=True, exist_ok=False)
             output = args.output_dir / "audit.json"

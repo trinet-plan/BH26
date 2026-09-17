@@ -6,12 +6,16 @@
   the penultimate exon. Everything upstream of that is predicted to undergo NMD.
 
 [What this can and cannot decide]
-  Exon numbering alone settles the upstream case: a PTC in exon 2 of 34 is nowhere near the
-  final junction, whichever way the last exons are sized. It does not settle the boundary
-  case - "within the last 50 nucleotides of the penultimate exon" needs that exon's length,
-  which the numbering does not carry. So a variant in either of the last two exons produces
-  no record, PVS1 reports the NMD prediction as unresolved, and a curator decides. Guessing
-  there would be guessing at exactly the distinction the rule exists to draw.
+  Exon numbering settles both ends of the rule and neither is a guess. A PTC upstream of the
+  final two exons is nowhere near the junction whichever way those exons are sized, so NMD is
+  predicted. A PTC in the last exon is past the junction entirely, so NMD is escaped - the
+  50-nucleotide distance does not enter into it, because that distance is measured within the
+  *penultimate* exon.
+
+  The penultimate exon is the one case numbering cannot settle: "within the last 50
+  nucleotides" needs that exon's length and the variant's position in it. A PTC there
+  produces no record, PVS1 reports the prediction as unresolved, and a curator decides.
+  Guessing there would guess at exactly the distinction the rule exists to draw.
 
 [Why it asks Ensembl again instead of reusing the annotation]
   The annotation this pipeline already has does not carry exon numbers: the VEP request that
@@ -35,8 +39,6 @@ from urllib.parse import quote
 RULE_SOURCE = "ClinGen PVS1 2018"
 METHOD = "clingen_pvs1_2018_nmd_exon_rule"
 TRUNCATING = {"stop_gained", "frameshift_variant"}
-# The rule's own boundary: the last exon, and the last 50 nt of the one before it.
-UNDECIDABLE_FROM_NUMBERING = 2
 
 
 def parse_exon(value):
@@ -118,9 +120,11 @@ class NmdPredictionProvider:
         index, total = positions.pop()
         if total < 1 or not 1 <= index <= total:
             return []
-        if index > total - UNDECIDABLE_FROM_NUMBERING:
-            # Last exon, or the penultimate one where the 50-nt boundary decides it.
+        if index == total - 1:
+            # The penultimate exon: the rule's 50-nucleotide boundary decides it, and the
+            # numbering does not carry that distance.
             return []
+        predicted = index < total
         digest = hashlib.sha256(response["body_sha256"].encode("utf-8")).hexdigest()
         item = chosen[0]
         return [{
@@ -133,7 +137,7 @@ class NmdPredictionProvider:
             "quality_status": "PASS",
             "transcript": transcript,
             "gene": gene,
-            "predicted": True,
+            "predicted": predicted,
             "rule_source": RULE_SOURCE,
             "exon": item.get("exon"),
             "assessment_method": "automated",
@@ -141,9 +145,10 @@ class NmdPredictionProvider:
             "policy_version": RULE_SOURCE,
             "ensembl_transcript": item.get("transcript_id"),
             "policy_note": (
-                "NMD predicted because the premature termination codon lies upstream of the "
-                "final two exons. A variant in the last exon, or in the penultimate one "
-                "where the rule's 50-nucleotide boundary applies, yields no record: exon "
+                "NMD predicted when the premature termination codon lies upstream of the "
+                "final two exons, and escaped when it lies in the last exon - the rule's "
+                "50-nucleotide distance is measured inside the penultimate exon, so it does "
+                "not bear on either. A PTC in the penultimate exon yields no record: exon "
                 "numbering does not carry the distance that decides it."
             ),
             "response_sha256": response["body_sha256"],
