@@ -311,6 +311,12 @@ def _truncating_path(input_data, services, annotation, state):
         return _conflicting_record(
             input_data, state, "nmd_prediction", nmd, "NF02", "nmd_prediction")
     state["evidence"].append(nmd)
+    if nmd.get("position_type") == "intron":
+        state["pending_review"].append(
+            "NF02/NF03 (NMD prediction / exon relevance) answered from the affected "
+            "intron's position, a flagged approximation for a canonical splice donor/"
+            "acceptor loss (see acmg_pipeline.providers.nmd's own docstring) - not the "
+            "exact exon a real skipped-exon or retained-intron outcome would fall in.")
     predicted = nmd.get("predicted")
     if type(predicted) is not bool or not nmd.get("rule_source"):
         state["trace"].append(_node("NF02", "nmd_prediction", "UNKNOWN", predicted, [nmd]))

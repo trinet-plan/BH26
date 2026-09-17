@@ -218,72 +218,16 @@
           "name": "ACMG literature-evidence LLM pipeline (gemma-4 via vLLM) - AI-generated draft evidence, requires human curator review before use"
         },
         "activityType": "automated evidence evaluation",
-        "date": "2026-09-17T07:52:06.885579Z"
+        "date": "2026-09-17T13:58:56.378885Z"
       }
     ],
     "reportedIn": [
       {
         "type": "Document",
         "urls": [
-          "https://pubmed.ncbi.nlm.nih.gov/24829265/"
-        ],
-        "pmid": "24829265"
-      },
-      {
-        "type": "Document",
-        "urls": [
-          "https://pubmed.ncbi.nlm.nih.gov/12974739/"
-        ],
-        "pmid": "12974739"
-      },
-      {
-        "type": "Document",
-        "urls": [
-          "https://pubmed.ncbi.nlm.nih.gov/9822100/"
-        ],
-        "pmid": "9822100"
-      },
-      {
-        "type": "Document",
-        "urls": [
-          "https://pubmed.ncbi.nlm.nih.gov/10957787/"
-        ],
-        "pmid": "10957787"
-      },
-      {
-        "type": "Document",
-        "urls": [
           "https://pubmed.ncbi.nlm.nih.gov/8282798/"
         ],
         "pmid": "8282798"
-      },
-      {
-        "type": "Document",
-        "urls": [
-          "https://pubmed.ncbi.nlm.nih.gov/19645038/"
-        ],
-        "pmid": "19645038"
-      },
-      {
-        "type": "Document",
-        "urls": [
-          "https://pubmed.ncbi.nlm.nih.gov/9829907/"
-        ],
-        "pmid": "9829907"
-      },
-      {
-        "type": "Document",
-        "urls": [
-          "https://pubmed.ncbi.nlm.nih.gov/22429680/"
-        ],
-        "pmid": "22429680"
-      },
-      {
-        "type": "Document",
-        "urls": [
-          "https://pubmed.ncbi.nlm.nih.gov/23816408/"
-        ],
-        "pmid": "23816408"
       },
       {
         "type": "Document",
@@ -295,14 +239,160 @@
       {
         "type": "Document",
         "urls": [
+          "https://pubmed.ncbi.nlm.nih.gov/9829907/"
+        ],
+        "pmid": "9829907"
+      },
+      {
+        "type": "Document",
+        "urls": [
           "https://pubmed.ncbi.nlm.nih.gov/27532257/"
         ],
         "pmid": "27532257"
+      },
+      {
+        "type": "Document",
+        "urls": [
+          "https://pubmed.ncbi.nlm.nih.gov/10957787/"
+        ],
+        "pmid": "10957787"
+      },
+      {
+        "type": "Document",
+        "urls": [
+          "https://pubmed.ncbi.nlm.nih.gov/9822100/"
+        ],
+        "pmid": "9822100"
+      },
+      {
+        "type": "Document",
+        "urls": [
+          "https://pubmed.ncbi.nlm.nih.gov/24829265/"
+        ],
+        "pmid": "24829265"
+      },
+      {
+        "type": "Document",
+        "urls": [
+          "https://pubmed.ncbi.nlm.nih.gov/23816408/"
+        ],
+        "pmid": "23816408"
+      },
+      {
+        "type": "Document",
+        "urls": [
+          "https://pubmed.ncbi.nlm.nih.gov/19645038/"
+        ],
+        "pmid": "19645038"
+      },
+      {
+        "type": "Document",
+        "urls": [
+          "https://pubmed.ncbi.nlm.nih.gov/12974739/"
+        ],
+        "pmid": "12974739"
+      },
+      {
+        "type": "Document",
+        "urls": [
+          "https://pubmed.ncbi.nlm.nih.gov/22429680/"
+        ],
+        "pmid": "22429680"
       }
     ],
     "hasEvidenceItems": [
       {
-        "id": "evline:paper-1-24829265",
+        "id": "evline:paper-1-8282798",
+        "type": "EvidenceLine",
+        "description": "The paper provides clinical and segregation data rather than experimental functional assay data required for PS3/BS3 evidence. No laboratory-based functional tests were reported in the provided abstract.",
+        "reportedIn": [
+          {
+            "type": "Document",
+            "urls": [
+              "https://pubmed.ncbi.nlm.nih.gov/8282798/"
+            ],
+            "pmid": "8282798"
+          }
+        ],
+        "directionOfEvidenceProvided": "neutral"
+      },
+      {
+        "id": "evline:paper-2-12707239",
+        "type": "EvidenceLine",
+        "description": "The provided text does not contain any functional assay data or specific mentions of the target variant c.2155C>T. Therefore, no functional evidence can be assessed.",
+        "reportedIn": [
+          {
+            "type": "Document",
+            "urls": [
+              "https://pubmed.ncbi.nlm.nih.gov/12707239/"
+            ],
+            "pmid": "12707239"
+          }
+        ],
+        "directionOfEvidenceProvided": "neutral"
+      },
+      {
+        "id": "evline:paper-3-9829907",
+        "type": "EvidenceLine",
+        "description": "The provided text reports clinical associations and phenotype descriptions in patients but does not describe any experimental functional assays to assess the variant's effect on protein function.",
+        "reportedIn": [
+          {
+            "type": "Document",
+            "urls": [
+              "https://pubmed.ncbi.nlm.nih.gov/9829907/"
+            ],
+            "pmid": "9829907"
+          }
+        ],
+        "directionOfEvidenceProvided": "neutral"
+      },
+      {
+        "id": "evline:paper-4-27532257",
+        "type": "EvidenceLine",
+        "description": "The paper is a population-based association study rather than a functional study. It provides no experimental data (e.g., biochemical or cellular assays) to evaluate the functional impact of the specific variant c.2155C>T.",
+        "reportedIn": [
+          {
+            "type": "Document",
+            "urls": [
+              "https://pubmed.ncbi.nlm.nih.gov/27532257/"
+            ],
+            "pmid": "27532257"
+          }
+        ],
+        "directionOfEvidenceProvided": "neutral"
+      },
+      {
+        "id": "evline:paper-5-10957787",
+        "type": "EvidenceLine",
+        "description": "The paper provides clinical phenotypic evidence and segregation data for a patient, but it lacks any controlled functional laboratory experiments (assays) required to meet PS3 or BS3 criteria.",
+        "reportedIn": [
+          {
+            "type": "Document",
+            "urls": [
+              "https://pubmed.ncbi.nlm.nih.gov/10957787/"
+            ],
+            "pmid": "10957787"
+          }
+        ],
+        "directionOfEvidenceProvided": "neutral"
+      },
+      {
+        "id": "evline:paper-6-9822100",
+        "type": "EvidenceLine",
+        "description": "The target variant c.2155C>T was not identified or tested in the provided text. Therefore, no functional evidence can be extracted from this study.",
+        "reportedIn": [
+          {
+            "type": "Document",
+            "urls": [
+              "https://pubmed.ncbi.nlm.nih.gov/9822100/"
+            ],
+            "pmid": "9822100"
+          }
+        ],
+        "directionOfEvidenceProvided": "neutral"
+      },
+      {
+        "id": "evline:paper-7-24829265",
         "type": "EvidenceLine",
         "description": "The paper uses a mouse knock-in model to demonstrate that the V606M variant alone (both heterozygous and homozygous) results in no detectable morphological or functional cardiac abnormalities compared to wild-type controls. Although the variant exacerbates other mutations in a compound heterozygous state, the direct functional evidence for the variant itself supports a benign effect.",
         "extensions": [
@@ -346,67 +436,22 @@
         "directionOfEvidenceProvided": "neutral"
       },
       {
-        "id": "evline:paper-2-12974739",
+        "id": "evline:paper-8-23816408",
         "type": "EvidenceLine",
-        "description": "The provided abstract does not mention the target variant c.2155C>T. While the study screens MYH7 for mutations, the specific results for this variant are not reported in the text.",
+        "description": "The target variant c.2155C>T was not identified in the provided text. Therefore, no functional assays or experimental data for this specific variant could be extracted.",
         "reportedIn": [
           {
             "type": "Document",
             "urls": [
-              "https://pubmed.ncbi.nlm.nih.gov/12974739/"
+              "https://pubmed.ncbi.nlm.nih.gov/23816408/"
             ],
-            "pmid": "12974739"
+            "pmid": "23816408"
           }
         ],
         "directionOfEvidenceProvided": "neutral"
       },
       {
-        "id": "evline:paper-3-9822100",
-        "type": "EvidenceLine",
-        "description": "The target variant c.2155C>T was not identified or tested in the provided text. Therefore, no functional evidence can be extracted from this study.",
-        "reportedIn": [
-          {
-            "type": "Document",
-            "urls": [
-              "https://pubmed.ncbi.nlm.nih.gov/9822100/"
-            ],
-            "pmid": "9822100"
-          }
-        ],
-        "directionOfEvidenceProvided": "neutral"
-      },
-      {
-        "id": "evline:paper-4-10957787",
-        "type": "EvidenceLine",
-        "description": "The paper provides clinical phenotypic evidence and segregation data for a patient, but it lacks any controlled functional laboratory experiments (assays) required to meet PS3 or BS3 criteria.",
-        "reportedIn": [
-          {
-            "type": "Document",
-            "urls": [
-              "https://pubmed.ncbi.nlm.nih.gov/10957787/"
-            ],
-            "pmid": "10957787"
-          }
-        ],
-        "directionOfEvidenceProvided": "neutral"
-      },
-      {
-        "id": "evline:paper-5-8282798",
-        "type": "EvidenceLine",
-        "description": "The paper provides clinical and segregation data rather than experimental functional assay data required for PS3/BS3 evidence. No laboratory-based functional tests were reported in the provided abstract.",
-        "reportedIn": [
-          {
-            "type": "Document",
-            "urls": [
-              "https://pubmed.ncbi.nlm.nih.gov/8282798/"
-            ],
-            "pmid": "8282798"
-          }
-        ],
-        "directionOfEvidenceProvided": "neutral"
-      },
-      {
-        "id": "evline:paper-6-19645038",
+        "id": "evline:paper-9-19645038",
         "type": "EvidenceLine",
         "description": "The provided text does not contain any functional assay data for the target variant. It only reports clinical cosegregation for a double mutation involving the same residue.",
         "reportedIn": [
@@ -421,22 +466,22 @@
         "directionOfEvidenceProvided": "neutral"
       },
       {
-        "id": "evline:paper-7-9829907",
+        "id": "evline:paper-10-12974739",
         "type": "EvidenceLine",
-        "description": "The provided text reports clinical associations and phenotype descriptions in patients but does not describe any experimental functional assays to assess the variant's effect on protein function.",
+        "description": "The provided abstract does not mention the target variant c.2155C>T. While the study screens MYH7 for mutations, the specific results for this variant are not reported in the text.",
         "reportedIn": [
           {
             "type": "Document",
             "urls": [
-              "https://pubmed.ncbi.nlm.nih.gov/9829907/"
+              "https://pubmed.ncbi.nlm.nih.gov/12974739/"
             ],
-            "pmid": "9829907"
+            "pmid": "12974739"
           }
         ],
         "directionOfEvidenceProvided": "neutral"
       },
       {
-        "id": "evline:paper-8-22429680",
+        "id": "evline:paper-11-22429680",
         "type": "EvidenceLine",
         "description": "The paper uses HRM scanning to identify the variant in a patient with HCM, but HRM is a screening tool for detecting sequence variations rather than a functional assay measuring protein or cellular activity. The authors explicitly state that functional studies (e.g., two-hybrid assays) are still being initiated or are required to determine phenotypic effects.",
         "extensions": [
@@ -458,51 +503,6 @@
               "https://pubmed.ncbi.nlm.nih.gov/22429680/"
             ],
             "pmid": "22429680"
-          }
-        ],
-        "directionOfEvidenceProvided": "neutral"
-      },
-      {
-        "id": "evline:paper-9-23816408",
-        "type": "EvidenceLine",
-        "description": "The target variant c.2155C>T was not identified in the provided text. Therefore, no functional assays or experimental data for this specific variant could be extracted.",
-        "reportedIn": [
-          {
-            "type": "Document",
-            "urls": [
-              "https://pubmed.ncbi.nlm.nih.gov/23816408/"
-            ],
-            "pmid": "23816408"
-          }
-        ],
-        "directionOfEvidenceProvided": "neutral"
-      },
-      {
-        "id": "evline:paper-10-12707239",
-        "type": "EvidenceLine",
-        "description": "The provided text does not contain any functional assay data or specific mentions of the target variant c.2155C>T. Therefore, no functional evidence can be assessed.",
-        "reportedIn": [
-          {
-            "type": "Document",
-            "urls": [
-              "https://pubmed.ncbi.nlm.nih.gov/12707239/"
-            ],
-            "pmid": "12707239"
-          }
-        ],
-        "directionOfEvidenceProvided": "neutral"
-      },
-      {
-        "id": "evline:paper-11-27532257",
-        "type": "EvidenceLine",
-        "description": "The paper is a population-based association study rather than a functional study. It provides no experimental data (e.g., biochemical or cellular assays) to evaluate the functional impact of the specific variant c.2155C>T.",
-        "reportedIn": [
-          {
-            "type": "Document",
-            "urls": [
-              "https://pubmed.ncbi.nlm.nih.gov/27532257/"
-            ],
-            "pmid": "27532257"
           }
         ],
         "directionOfEvidenceProvided": "neutral"
@@ -553,72 +553,16 @@
           "name": "ACMG literature-evidence LLM pipeline (gemma-4 via vLLM) - AI-generated draft evidence, requires human curator review before use"
         },
         "activityType": "automated evidence evaluation",
-        "date": "2026-09-17T07:52:06.882847Z"
+        "date": "2026-09-17T13:58:56.377160Z"
       }
     ],
     "reportedIn": [
       {
         "type": "Document",
         "urls": [
-          "https://pubmed.ncbi.nlm.nih.gov/24829265/"
-        ],
-        "pmid": "24829265"
-      },
-      {
-        "type": "Document",
-        "urls": [
-          "https://pubmed.ncbi.nlm.nih.gov/12974739/"
-        ],
-        "pmid": "12974739"
-      },
-      {
-        "type": "Document",
-        "urls": [
-          "https://pubmed.ncbi.nlm.nih.gov/9822100/"
-        ],
-        "pmid": "9822100"
-      },
-      {
-        "type": "Document",
-        "urls": [
-          "https://pubmed.ncbi.nlm.nih.gov/10957787/"
-        ],
-        "pmid": "10957787"
-      },
-      {
-        "type": "Document",
-        "urls": [
           "https://pubmed.ncbi.nlm.nih.gov/8282798/"
         ],
         "pmid": "8282798"
-      },
-      {
-        "type": "Document",
-        "urls": [
-          "https://pubmed.ncbi.nlm.nih.gov/19645038/"
-        ],
-        "pmid": "19645038"
-      },
-      {
-        "type": "Document",
-        "urls": [
-          "https://pubmed.ncbi.nlm.nih.gov/9829907/"
-        ],
-        "pmid": "9829907"
-      },
-      {
-        "type": "Document",
-        "urls": [
-          "https://pubmed.ncbi.nlm.nih.gov/22429680/"
-        ],
-        "pmid": "22429680"
-      },
-      {
-        "type": "Document",
-        "urls": [
-          "https://pubmed.ncbi.nlm.nih.gov/23816408/"
-        ],
-        "pmid": "23816408"
       },
       {
         "type": "Document",
@@ -630,14 +574,237 @@
       {
         "type": "Document",
         "urls": [
+          "https://pubmed.ncbi.nlm.nih.gov/9829907/"
+        ],
+        "pmid": "9829907"
+      },
+      {
+        "type": "Document",
+        "urls": [
           "https://pubmed.ncbi.nlm.nih.gov/27532257/"
         ],
         "pmid": "27532257"
+      },
+      {
+        "type": "Document",
+        "urls": [
+          "https://pubmed.ncbi.nlm.nih.gov/10957787/"
+        ],
+        "pmid": "10957787"
+      },
+      {
+        "type": "Document",
+        "urls": [
+          "https://pubmed.ncbi.nlm.nih.gov/9822100/"
+        ],
+        "pmid": "9822100"
+      },
+      {
+        "type": "Document",
+        "urls": [
+          "https://pubmed.ncbi.nlm.nih.gov/24829265/"
+        ],
+        "pmid": "24829265"
+      },
+      {
+        "type": "Document",
+        "urls": [
+          "https://pubmed.ncbi.nlm.nih.gov/23816408/"
+        ],
+        "pmid": "23816408"
+      },
+      {
+        "type": "Document",
+        "urls": [
+          "https://pubmed.ncbi.nlm.nih.gov/19645038/"
+        ],
+        "pmid": "19645038"
+      },
+      {
+        "type": "Document",
+        "urls": [
+          "https://pubmed.ncbi.nlm.nih.gov/12974739/"
+        ],
+        "pmid": "12974739"
+      },
+      {
+        "type": "Document",
+        "urls": [
+          "https://pubmed.ncbi.nlm.nih.gov/22429680/"
+        ],
+        "pmid": "22429680"
       }
     ],
     "hasEvidenceItems": [
       {
-        "id": "evline:paper-1-24829265",
+        "id": "evline:paper-1-8282798",
+        "type": "EvidenceLine",
+        "description": "The study is a report of novel mutations in families (family cohort) rather than a case-control study with a defined control group and denominator. No case-control statistics (odds ratio or p-value for enrichment against a control population) are provided.",
+        "extensions": [
+          {
+            "name": "structuredEvidenceItems",
+            "value": [
+              {
+                "label": "Study design: family_cohort",
+                "checked": false,
+                "detail": ""
+              }
+            ]
+          }
+        ],
+        "reportedIn": [
+          {
+            "type": "Document",
+            "urls": [
+              "https://pubmed.ncbi.nlm.nih.gov/8282798/"
+            ],
+            "pmid": "8282798"
+          }
+        ],
+        "directionOfEvidenceProvided": "neutral"
+      },
+      {
+        "id": "evline:paper-2-12707239",
+        "type": "EvidenceLine",
+        "description": "The target variant was not identified in the provided text, and the study design is a case series of 197 index cases rather than a case-control study with a defined unaffected control group.",
+        "extensions": [
+          {
+            "name": "structuredEvidenceItems",
+            "value": [
+              {
+                "label": "Affected-side counts",
+                "checked": false,
+                "detail": "affected_carriers=None, total_affected=197"
+              },
+              {
+                "label": "Study design: case_series",
+                "checked": false,
+                "detail": ""
+              }
+            ]
+          }
+        ],
+        "reportedIn": [
+          {
+            "type": "Document",
+            "urls": [
+              "https://pubmed.ncbi.nlm.nih.gov/12707239/"
+            ],
+            "pmid": "12707239"
+          }
+        ],
+        "directionOfEvidenceProvided": "neutral"
+      },
+      {
+        "id": "evline:paper-3-9829907",
+        "type": "EvidenceLine",
+        "description": "The target variant was not identified or discussed in the provided text; therefore, no evidence can be extracted.",
+        "extensions": [
+          {
+            "name": "structuredEvidenceItems",
+            "value": [
+              {
+                "label": "Study design: not_case_control",
+                "checked": false,
+                "detail": ""
+              }
+            ]
+          }
+        ],
+        "reportedIn": [
+          {
+            "type": "Document",
+            "urls": [
+              "https://pubmed.ncbi.nlm.nih.gov/9829907/"
+            ],
+            "pmid": "9829907"
+          }
+        ],
+        "directionOfEvidenceProvided": "neutral"
+      },
+      {
+        "id": "evline:paper-4-27532257",
+        "type": "EvidenceLine",
+        "description": "The target variant is not reported or analyzed in this study.",
+        "extensions": [
+          {
+            "name": "structuredEvidenceItems",
+            "value": [
+              {
+                "label": "Study design: case_control",
+                "checked": true,
+                "detail": ""
+              }
+            ]
+          }
+        ],
+        "reportedIn": [
+          {
+            "type": "Document",
+            "urls": [
+              "https://pubmed.ncbi.nlm.nih.gov/27532257/"
+            ],
+            "pmid": "27532257"
+          }
+        ],
+        "directionOfEvidenceProvided": "neutral"
+      },
+      {
+        "id": "evline:paper-5-10957787",
+        "type": "EvidenceLine",
+        "description": "The target variant c.2155C>T was not identified in the provided text; therefore, no evidence can be extracted.",
+        "extensions": [
+          {
+            "name": "structuredEvidenceItems",
+            "value": [
+              {
+                "label": "Study design: not_case_control",
+                "checked": false,
+                "detail": ""
+              }
+            ]
+          }
+        ],
+        "reportedIn": [
+          {
+            "type": "Document",
+            "urls": [
+              "https://pubmed.ncbi.nlm.nih.gov/10957787/"
+            ],
+            "pmid": "10957787"
+          }
+        ],
+        "directionOfEvidenceProvided": "neutral"
+      },
+      {
+        "id": "evline:paper-6-9822100",
+        "type": "EvidenceLine",
+        "description": "The target variant MYH7 c.2155C>T was not identified or reported in the provided text. The paper discusses other variants (Arg719Trp, Asn696Ser, and Aspl75Asn), but not the requested variant.",
+        "extensions": [
+          {
+            "name": "structuredEvidenceItems",
+            "value": [
+              {
+                "label": "Study design: not_case_control",
+                "checked": false,
+                "detail": ""
+              }
+            ]
+          }
+        ],
+        "reportedIn": [
+          {
+            "type": "Document",
+            "urls": [
+              "https://pubmed.ncbi.nlm.nih.gov/9822100/"
+            ],
+            "pmid": "9822100"
+          }
+        ],
+        "directionOfEvidenceProvided": "neutral"
+      },
+      {
+        "id": "evline:paper-7-24829265",
         "type": "EvidenceLine",
         "description": "The study is a functional assay using knock-in mouse models to evaluate the phenotypic consequences of the V606M mutation, rather than a case-control or cohort study of human patients. Therefore, it does not provide the necessary epidemiological data for PS4 evaluation.",
         "extensions": [
@@ -664,7 +831,61 @@
         "directionOfEvidenceProvided": "neutral"
       },
       {
-        "id": "evline:paper-2-12974739",
+        "id": "evline:paper-8-23816408",
+        "type": "EvidenceLine",
+        "description": "The target variant was not identified in the provided text; therefore, no evidence can be extracted.",
+        "extensions": [
+          {
+            "name": "structuredEvidenceItems",
+            "value": [
+              {
+                "label": "Study design: case_series",
+                "checked": false,
+                "detail": ""
+              }
+            ]
+          }
+        ],
+        "reportedIn": [
+          {
+            "type": "Document",
+            "urls": [
+              "https://pubmed.ncbi.nlm.nih.gov/23816408/"
+            ],
+            "pmid": "23816408"
+          }
+        ],
+        "directionOfEvidenceProvided": "neutral"
+      },
+      {
+        "id": "evline:paper-9-19645038",
+        "type": "EvidenceLine",
+        "description": "The target variant c.2155C>T was not identified or tested in this study; the paper describes a different double missense mutation.",
+        "extensions": [
+          {
+            "name": "structuredEvidenceItems",
+            "value": [
+              {
+                "label": "Study design: not_case_control",
+                "checked": false,
+                "detail": ""
+              }
+            ]
+          }
+        ],
+        "reportedIn": [
+          {
+            "type": "Document",
+            "urls": [
+              "https://pubmed.ncbi.nlm.nih.gov/19645038/"
+            ],
+            "pmid": "19645038"
+          }
+        ],
+        "directionOfEvidenceProvided": "neutral"
+      },
+      {
+        "id": "evline:paper-10-12974739",
         "type": "EvidenceLine",
         "description": "The target variant c.2155C>T was not identified or reported in the provided text; therefore, no evidence can be extracted.",
         "extensions": [
@@ -696,142 +917,7 @@
         "directionOfEvidenceProvided": "neutral"
       },
       {
-        "id": "evline:paper-3-9822100",
-        "type": "EvidenceLine",
-        "description": "The target variant MYH7 c.2155C>T was not identified or reported in the provided text. The paper discusses other variants (Arg719Trp, Asn696Ser, and Aspl75Asn), but not the requested variant.",
-        "extensions": [
-          {
-            "name": "structuredEvidenceItems",
-            "value": [
-              {
-                "label": "Study design: not_case_control",
-                "checked": false,
-                "detail": ""
-              }
-            ]
-          }
-        ],
-        "reportedIn": [
-          {
-            "type": "Document",
-            "urls": [
-              "https://pubmed.ncbi.nlm.nih.gov/9822100/"
-            ],
-            "pmid": "9822100"
-          }
-        ],
-        "directionOfEvidenceProvided": "neutral"
-      },
-      {
-        "id": "evline:paper-4-10957787",
-        "type": "EvidenceLine",
-        "description": "The target variant c.2155C>T was not identified in the provided text; therefore, no evidence can be extracted.",
-        "extensions": [
-          {
-            "name": "structuredEvidenceItems",
-            "value": [
-              {
-                "label": "Study design: not_case_control",
-                "checked": false,
-                "detail": ""
-              }
-            ]
-          }
-        ],
-        "reportedIn": [
-          {
-            "type": "Document",
-            "urls": [
-              "https://pubmed.ncbi.nlm.nih.gov/10957787/"
-            ],
-            "pmid": "10957787"
-          }
-        ],
-        "directionOfEvidenceProvided": "neutral"
-      },
-      {
-        "id": "evline:paper-5-8282798",
-        "type": "EvidenceLine",
-        "description": "The study is a report of novel mutations in families (family cohort) rather than a case-control study with a defined control group and denominator. No case-control statistics (odds ratio or p-value for enrichment against a control population) are provided.",
-        "extensions": [
-          {
-            "name": "structuredEvidenceItems",
-            "value": [
-              {
-                "label": "Study design: family_cohort",
-                "checked": false,
-                "detail": ""
-              }
-            ]
-          }
-        ],
-        "reportedIn": [
-          {
-            "type": "Document",
-            "urls": [
-              "https://pubmed.ncbi.nlm.nih.gov/8282798/"
-            ],
-            "pmid": "8282798"
-          }
-        ],
-        "directionOfEvidenceProvided": "neutral"
-      },
-      {
-        "id": "evline:paper-6-19645038",
-        "type": "EvidenceLine",
-        "description": "The target variant c.2155C>T was not identified or tested in this study; the paper describes a different double missense mutation.",
-        "extensions": [
-          {
-            "name": "structuredEvidenceItems",
-            "value": [
-              {
-                "label": "Study design: not_case_control",
-                "checked": false,
-                "detail": ""
-              }
-            ]
-          }
-        ],
-        "reportedIn": [
-          {
-            "type": "Document",
-            "urls": [
-              "https://pubmed.ncbi.nlm.nih.gov/19645038/"
-            ],
-            "pmid": "19645038"
-          }
-        ],
-        "directionOfEvidenceProvided": "neutral"
-      },
-      {
-        "id": "evline:paper-7-9829907",
-        "type": "EvidenceLine",
-        "description": "The target variant was not identified or discussed in the provided text; therefore, no evidence can be extracted.",
-        "extensions": [
-          {
-            "name": "structuredEvidenceItems",
-            "value": [
-              {
-                "label": "Study design: not_case_control",
-                "checked": false,
-                "detail": ""
-              }
-            ]
-          }
-        ],
-        "reportedIn": [
-          {
-            "type": "Document",
-            "urls": [
-              "https://pubmed.ncbi.nlm.nih.gov/9829907/"
-            ],
-            "pmid": "9829907"
-          }
-        ],
-        "directionOfEvidenceProvided": "neutral"
-      },
-      {
-        "id": "evline:paper-8-22429680",
+        "id": "evline:paper-11-22429680",
         "type": "EvidenceLine",
         "description": "While the variant is identified in one affected patient (sample 49), the paper does not provide statistical enrichment analysis (e.g., p-value or odds ratio) to support a significant association between this specific variant and the disease.",
         "extensions": [
@@ -866,92 +952,6 @@
           }
         ],
         "directionOfEvidenceProvided": "neutral"
-      },
-      {
-        "id": "evline:paper-9-23816408",
-        "type": "EvidenceLine",
-        "description": "The target variant was not identified in the provided text; therefore, no evidence can be extracted.",
-        "extensions": [
-          {
-            "name": "structuredEvidenceItems",
-            "value": [
-              {
-                "label": "Study design: case_series",
-                "checked": false,
-                "detail": ""
-              }
-            ]
-          }
-        ],
-        "reportedIn": [
-          {
-            "type": "Document",
-            "urls": [
-              "https://pubmed.ncbi.nlm.nih.gov/23816408/"
-            ],
-            "pmid": "23816408"
-          }
-        ],
-        "directionOfEvidenceProvided": "neutral"
-      },
-      {
-        "id": "evline:paper-10-12707239",
-        "type": "EvidenceLine",
-        "description": "The target variant was not identified in the provided text, and the study design is a case series of 197 index cases rather than a case-control study with a defined unaffected control group.",
-        "extensions": [
-          {
-            "name": "structuredEvidenceItems",
-            "value": [
-              {
-                "label": "Affected-side counts",
-                "checked": false,
-                "detail": "affected_carriers=None, total_affected=197"
-              },
-              {
-                "label": "Study design: case_series",
-                "checked": false,
-                "detail": ""
-              }
-            ]
-          }
-        ],
-        "reportedIn": [
-          {
-            "type": "Document",
-            "urls": [
-              "https://pubmed.ncbi.nlm.nih.gov/12707239/"
-            ],
-            "pmid": "12707239"
-          }
-        ],
-        "directionOfEvidenceProvided": "neutral"
-      },
-      {
-        "id": "evline:paper-11-27532257",
-        "type": "EvidenceLine",
-        "description": "The target variant is not reported or analyzed in this study.",
-        "extensions": [
-          {
-            "name": "structuredEvidenceItems",
-            "value": [
-              {
-                "label": "Study design: case_control",
-                "checked": true,
-                "detail": ""
-              }
-            ]
-          }
-        ],
-        "reportedIn": [
-          {
-            "type": "Document",
-            "urls": [
-              "https://pubmed.ncbi.nlm.nih.gov/27532257/"
-            ],
-            "pmid": "27532257"
-          }
-        ],
-        "directionOfEvidenceProvided": "neutral"
       }
     ],
     "directionOfEvidenceProvided": "neutral"
@@ -959,24 +959,50 @@
   {
     "id": "evline:MYH7_c_2155C_T_PM1",
     "type": "EvidenceLine",
-    "description": "No region assessment was retrieved for this variant. PM1 evaluates a variant in a reviewed mutational hotspot or critical functional domain with no conflicting benign variation. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
+    "name": "PM1 assessment for GRCh38:14:23425971:G:A",
+    "description": "Reviewed mutational_hotspot evidence covering the altered protein interval. PM1 evaluates a variant in a reviewed mutational hotspot or critical functional domain with no conflicting benign variation. Outcome: MET; the available evidence satisfies PM1.",
     "extensions": [
       {
         "name": "bh26AssessmentDetails",
         "value": {
           "criterion": "PM1",
-          "status": "unknown",
-          "summary": "No region assessment was retrieved for this variant. PM1 evaluates a variant in a reviewed mutational hotspot or critical functional domain with no conflicting benign variation. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
+          "status": "met",
+          "summary": "Reviewed mutational_hotspot evidence covering the altered protein interval. PM1 evaluates a variant in a reviewed mutational hotspot or critical functional domain with no conflicting benign variation. Outcome: MET; the available evidence satisfies PM1.",
           "evidenceItemIds": [
-            "urn:sha256:98f5f6e59a66a7cf0fc0c34f374931d0f9784fb76be89b6829c0388b84724d4c:annotation:NM_000257.4"
+            "urn:sha256:98f5f6e59a66a7cf0fc0c34f374931d0f9784fb76be89b6829c0388b84724d4c:annotation:NM_000257.4",
+            "urn:sha256:df0ea28125c525eb1788dddaeb16639e226b7cb6484b374262cfcf5a2dd1be14:clinvar-pm1-hotspot:NP_000248.2:714-724"
           ],
           "provenance": {
-            "rule_version": "PM1-v1"
+            "rule_version": "PM1-v1",
+            "assessment_scope": "protein_level",
+            "condition_assessment": "NOT_EVALUATED",
+            "assessment_method": "automated",
+            "pm1_route": "mutational_hotspot",
+            "hotspot_policy": {
+              "window_aa": 5,
+              "min_pathogenic": 3,
+              "max_benign": 0,
+              "method": "clinvar_local_density",
+              "policy_source": "BH26 demo PM1 hotspot proxy policy (fastVEP-style ClinVar missense density); not a ClinGen VCEP specification",
+              "policy_version": "PM1-hotspot-v1"
+            },
+            "pathogenic_count": 9,
+            "benign_count": 0
           },
-          "missingInputs": [
-            "region"
-          ]
+          "strength": "moderate",
+          "direction": "supports",
+          "evidenceOutcome": "PM1"
         }
+      },
+      {
+        "name": "curatorHints",
+        "value": [
+          {
+            "severity": "caution",
+            "category": "review",
+            "message": "Confirm region criticality for the disease context before final classification"
+          }
+        ]
       },
       {
         "name": "referenceLink",
@@ -985,16 +1011,36 @@
     ],
     "specifiedBy": {
       "type": "Method",
-      "name": "ACMG/AMP PM1 assessment (unknown)",
+      "name": "ACMG/AMP 2015 with ClinGen General Guidance",
       "methodType": "PM1",
       "reportedIn": {
         "type": "Document",
         "name": "Richards et al., 2015, Genet Med.",
+        "urls": [
+          "https://pubmed.ncbi.nlm.nih.gov/25741868/"
+        ],
         "doi": "10.1038/gim.2015.30",
         "pmid": "25741868"
       }
     },
-    "directionOfEvidenceProvided": "neutral"
+    "hasEvidenceItems": [
+      "urn:sha256:98f5f6e59a66a7cf0fc0c34f374931d0f9784fb76be89b6829c0388b84724d4c:annotation:NM_000257.4",
+      "urn:sha256:df0ea28125c525eb1788dddaeb16639e226b7cb6484b374262cfcf5a2dd1be14:clinvar-pm1-hotspot:NP_000248.2:714-724"
+    ],
+    "directionOfEvidenceProvided": "supports",
+    "strengthOfEvidenceProvided": {
+      "primaryCoding": {
+        "system": "ACMG Guidelines, 2015",
+        "code": "moderate"
+      }
+    },
+    "evidenceOutcome": {
+      "name": "ACMG 2015 PM1 criterion met",
+      "primaryCoding": {
+        "system": "ACMG Guidelines, 2015",
+        "code": "PM1"
+      }
+    }
   },
   {
     "id": "evline:MYH7_c_2155C_T_PM2",
@@ -1320,14 +1366,14 @@
   {
     "id": "evline:MYH7_c_2155C_T_PP1",
     "type": "EvidenceLine",
-    "description": "pp1_bs4_pp4_engine: no APPROVED curated PP4 reference record for gene 'MYH7'",
+    "description": "pp1_bs4_pp4_engine: segregation not evaluable (no family data or unknown inheritance mode)",
     "extensions": [
       {
         "name": "bh26AssessmentDetails",
         "value": {
           "criterion": "PP1",
           "status": "unknown",
-          "summary": "pp1_bs4_pp4_engine: no APPROVED curated PP4 reference record for gene 'MYH7'"
+          "summary": "pp1_bs4_pp4_engine: segregation not evaluable (no family data or unknown inheritance mode)"
         }
       },
       {
@@ -1478,14 +1524,14 @@
   {
     "id": "evline:MYH7_c_2155C_T_PP4",
     "type": "EvidenceLine",
-    "description": "pp1_bs4_pp4_engine: no APPROVED curated PP4 reference record for gene 'MYH7'",
+    "description": "pp1_bs4_pp4_engine: phenotype not evaluable (no_diagnosis_available_to_search_literature_for)",
     "extensions": [
       {
         "name": "bh26AssessmentDetails",
         "value": {
           "criterion": "PP4",
           "status": "unknown",
-          "summary": "pp1_bs4_pp4_engine: no APPROVED curated PP4 reference record for gene 'MYH7'"
+          "summary": "pp1_bs4_pp4_engine: phenotype not evaluable (no_diagnosis_available_to_search_literature_for)"
         }
       }
     ],
@@ -1700,12 +1746,23 @@
             "comparison": ">",
             "highest_observed": "0.00000146578468102426634033724240",
             "threshold_scope": "default",
+            "policy_status": "DRAFT",
             "disease_frequency_threshold": {
               "max_credible_af": 0.0001,
               "source": "BH26 provisional default BS1 threshold for rare Mendelian disease (PLACEHOLDER - not a reviewed clinical value; a real threshold is per-disease, e.g. the ClinGen Inherited Cardiomyopathy VCEP applies 0.0002 for MYH7)",
               "source_version": "2026-09-17-provisional-2",
               "frequency_statistic": "faf95",
-              "comparison": ">"
+              "comparison": ">",
+              "derivation": {
+                "method": "Maximum credible allele frequency (Whiffin et al. 2017), https://pubmed.ncbi.nlm.nih.gov/28518168/",
+                "prevalence": null,
+                "inheritance": null,
+                "penetrance": null,
+                "max_genetic_contribution": null,
+                "max_allelic_contribution": null,
+                "target_population": null,
+                "source_url": "https://clinicalgenome.org/site/assets/files/5182/pm2_-_svi_recommendation_-_approved_sept2020.pdf"
+              }
             }
           },
           "direction": "none",
@@ -1909,72 +1966,16 @@
           "name": "ACMG literature-evidence LLM pipeline (gemma-4 via vLLM) - AI-generated draft evidence, requires human curator review before use"
         },
         "activityType": "automated evidence evaluation",
-        "date": "2026-09-17T07:52:06.879414Z"
+        "date": "2026-09-17T13:58:56.381288Z"
       }
     ],
     "reportedIn": [
       {
         "type": "Document",
         "urls": [
-          "https://pubmed.ncbi.nlm.nih.gov/24829265/"
-        ],
-        "pmid": "24829265"
-      },
-      {
-        "type": "Document",
-        "urls": [
-          "https://pubmed.ncbi.nlm.nih.gov/12974739/"
-        ],
-        "pmid": "12974739"
-      },
-      {
-        "type": "Document",
-        "urls": [
-          "https://pubmed.ncbi.nlm.nih.gov/9822100/"
-        ],
-        "pmid": "9822100"
-      },
-      {
-        "type": "Document",
-        "urls": [
-          "https://pubmed.ncbi.nlm.nih.gov/10957787/"
-        ],
-        "pmid": "10957787"
-      },
-      {
-        "type": "Document",
-        "urls": [
           "https://pubmed.ncbi.nlm.nih.gov/8282798/"
         ],
         "pmid": "8282798"
-      },
-      {
-        "type": "Document",
-        "urls": [
-          "https://pubmed.ncbi.nlm.nih.gov/19645038/"
-        ],
-        "pmid": "19645038"
-      },
-      {
-        "type": "Document",
-        "urls": [
-          "https://pubmed.ncbi.nlm.nih.gov/9829907/"
-        ],
-        "pmid": "9829907"
-      },
-      {
-        "type": "Document",
-        "urls": [
-          "https://pubmed.ncbi.nlm.nih.gov/22429680/"
-        ],
-        "pmid": "22429680"
-      },
-      {
-        "type": "Document",
-        "urls": [
-          "https://pubmed.ncbi.nlm.nih.gov/23816408/"
-        ],
-        "pmid": "23816408"
       },
       {
         "type": "Document",
@@ -1986,14 +1987,160 @@
       {
         "type": "Document",
         "urls": [
+          "https://pubmed.ncbi.nlm.nih.gov/9829907/"
+        ],
+        "pmid": "9829907"
+      },
+      {
+        "type": "Document",
+        "urls": [
           "https://pubmed.ncbi.nlm.nih.gov/27532257/"
         ],
         "pmid": "27532257"
+      },
+      {
+        "type": "Document",
+        "urls": [
+          "https://pubmed.ncbi.nlm.nih.gov/10957787/"
+        ],
+        "pmid": "10957787"
+      },
+      {
+        "type": "Document",
+        "urls": [
+          "https://pubmed.ncbi.nlm.nih.gov/9822100/"
+        ],
+        "pmid": "9822100"
+      },
+      {
+        "type": "Document",
+        "urls": [
+          "https://pubmed.ncbi.nlm.nih.gov/24829265/"
+        ],
+        "pmid": "24829265"
+      },
+      {
+        "type": "Document",
+        "urls": [
+          "https://pubmed.ncbi.nlm.nih.gov/23816408/"
+        ],
+        "pmid": "23816408"
+      },
+      {
+        "type": "Document",
+        "urls": [
+          "https://pubmed.ncbi.nlm.nih.gov/19645038/"
+        ],
+        "pmid": "19645038"
+      },
+      {
+        "type": "Document",
+        "urls": [
+          "https://pubmed.ncbi.nlm.nih.gov/12974739/"
+        ],
+        "pmid": "12974739"
+      },
+      {
+        "type": "Document",
+        "urls": [
+          "https://pubmed.ncbi.nlm.nih.gov/22429680/"
+        ],
+        "pmid": "22429680"
       }
     ],
     "hasEvidenceItems": [
       {
-        "id": "evline:paper-1-24829265",
+        "id": "evline:paper-1-8282798",
+        "type": "EvidenceLine",
+        "description": "The paper provides clinical and segregation data rather than experimental functional assay data required for PS3/BS3 evidence. No laboratory-based functional tests were reported in the provided abstract.",
+        "reportedIn": [
+          {
+            "type": "Document",
+            "urls": [
+              "https://pubmed.ncbi.nlm.nih.gov/8282798/"
+            ],
+            "pmid": "8282798"
+          }
+        ],
+        "directionOfEvidenceProvided": "neutral"
+      },
+      {
+        "id": "evline:paper-2-12707239",
+        "type": "EvidenceLine",
+        "description": "The provided text does not contain any functional assay data or specific mentions of the target variant c.2155C>T. Therefore, no functional evidence can be assessed.",
+        "reportedIn": [
+          {
+            "type": "Document",
+            "urls": [
+              "https://pubmed.ncbi.nlm.nih.gov/12707239/"
+            ],
+            "pmid": "12707239"
+          }
+        ],
+        "directionOfEvidenceProvided": "neutral"
+      },
+      {
+        "id": "evline:paper-3-9829907",
+        "type": "EvidenceLine",
+        "description": "The provided text reports clinical associations and phenotype descriptions in patients but does not describe any experimental functional assays to assess the variant's effect on protein function.",
+        "reportedIn": [
+          {
+            "type": "Document",
+            "urls": [
+              "https://pubmed.ncbi.nlm.nih.gov/9829907/"
+            ],
+            "pmid": "9829907"
+          }
+        ],
+        "directionOfEvidenceProvided": "neutral"
+      },
+      {
+        "id": "evline:paper-4-27532257",
+        "type": "EvidenceLine",
+        "description": "The paper is a population-based association study rather than a functional study. It provides no experimental data (e.g., biochemical or cellular assays) to evaluate the functional impact of the specific variant c.2155C>T.",
+        "reportedIn": [
+          {
+            "type": "Document",
+            "urls": [
+              "https://pubmed.ncbi.nlm.nih.gov/27532257/"
+            ],
+            "pmid": "27532257"
+          }
+        ],
+        "directionOfEvidenceProvided": "neutral"
+      },
+      {
+        "id": "evline:paper-5-10957787",
+        "type": "EvidenceLine",
+        "description": "The paper provides clinical phenotypic evidence and segregation data for a patient, but it lacks any controlled functional laboratory experiments (assays) required to meet PS3 or BS3 criteria.",
+        "reportedIn": [
+          {
+            "type": "Document",
+            "urls": [
+              "https://pubmed.ncbi.nlm.nih.gov/10957787/"
+            ],
+            "pmid": "10957787"
+          }
+        ],
+        "directionOfEvidenceProvided": "neutral"
+      },
+      {
+        "id": "evline:paper-6-9822100",
+        "type": "EvidenceLine",
+        "description": "The target variant c.2155C>T was not identified or tested in the provided text. Therefore, no functional evidence can be extracted from this study.",
+        "reportedIn": [
+          {
+            "type": "Document",
+            "urls": [
+              "https://pubmed.ncbi.nlm.nih.gov/9822100/"
+            ],
+            "pmid": "9822100"
+          }
+        ],
+        "directionOfEvidenceProvided": "neutral"
+      },
+      {
+        "id": "evline:paper-7-24829265",
         "type": "EvidenceLine",
         "description": "The paper uses a mouse knock-in model to demonstrate that the V606M variant alone (both heterozygous and homozygous) results in no detectable morphological or functional cardiac abnormalities compared to wild-type controls. Although the variant exacerbates other mutations in a compound heterozygous state, the direct functional evidence for the variant itself supports a benign effect.",
         "extensions": [
@@ -2037,67 +2184,22 @@
         "directionOfEvidenceProvided": "neutral"
       },
       {
-        "id": "evline:paper-2-12974739",
+        "id": "evline:paper-8-23816408",
         "type": "EvidenceLine",
-        "description": "The provided abstract does not mention the target variant c.2155C>T. While the study screens MYH7 for mutations, the specific results for this variant are not reported in the text.",
+        "description": "The target variant c.2155C>T was not identified in the provided text. Therefore, no functional assays or experimental data for this specific variant could be extracted.",
         "reportedIn": [
           {
             "type": "Document",
             "urls": [
-              "https://pubmed.ncbi.nlm.nih.gov/12974739/"
+              "https://pubmed.ncbi.nlm.nih.gov/23816408/"
             ],
-            "pmid": "12974739"
+            "pmid": "23816408"
           }
         ],
         "directionOfEvidenceProvided": "neutral"
       },
       {
-        "id": "evline:paper-3-9822100",
-        "type": "EvidenceLine",
-        "description": "The target variant c.2155C>T was not identified or tested in the provided text. Therefore, no functional evidence can be extracted from this study.",
-        "reportedIn": [
-          {
-            "type": "Document",
-            "urls": [
-              "https://pubmed.ncbi.nlm.nih.gov/9822100/"
-            ],
-            "pmid": "9822100"
-          }
-        ],
-        "directionOfEvidenceProvided": "neutral"
-      },
-      {
-        "id": "evline:paper-4-10957787",
-        "type": "EvidenceLine",
-        "description": "The paper provides clinical phenotypic evidence and segregation data for a patient, but it lacks any controlled functional laboratory experiments (assays) required to meet PS3 or BS3 criteria.",
-        "reportedIn": [
-          {
-            "type": "Document",
-            "urls": [
-              "https://pubmed.ncbi.nlm.nih.gov/10957787/"
-            ],
-            "pmid": "10957787"
-          }
-        ],
-        "directionOfEvidenceProvided": "neutral"
-      },
-      {
-        "id": "evline:paper-5-8282798",
-        "type": "EvidenceLine",
-        "description": "The paper provides clinical and segregation data rather than experimental functional assay data required for PS3/BS3 evidence. No laboratory-based functional tests were reported in the provided abstract.",
-        "reportedIn": [
-          {
-            "type": "Document",
-            "urls": [
-              "https://pubmed.ncbi.nlm.nih.gov/8282798/"
-            ],
-            "pmid": "8282798"
-          }
-        ],
-        "directionOfEvidenceProvided": "neutral"
-      },
-      {
-        "id": "evline:paper-6-19645038",
+        "id": "evline:paper-9-19645038",
         "type": "EvidenceLine",
         "description": "The provided text does not contain any functional assay data for the target variant. It only reports clinical cosegregation for a double mutation involving the same residue.",
         "reportedIn": [
@@ -2112,22 +2214,22 @@
         "directionOfEvidenceProvided": "neutral"
       },
       {
-        "id": "evline:paper-7-9829907",
+        "id": "evline:paper-10-12974739",
         "type": "EvidenceLine",
-        "description": "The provided text reports clinical associations and phenotype descriptions in patients but does not describe any experimental functional assays to assess the variant's effect on protein function.",
+        "description": "The provided abstract does not mention the target variant c.2155C>T. While the study screens MYH7 for mutations, the specific results for this variant are not reported in the text.",
         "reportedIn": [
           {
             "type": "Document",
             "urls": [
-              "https://pubmed.ncbi.nlm.nih.gov/9829907/"
+              "https://pubmed.ncbi.nlm.nih.gov/12974739/"
             ],
-            "pmid": "9829907"
+            "pmid": "12974739"
           }
         ],
         "directionOfEvidenceProvided": "neutral"
       },
       {
-        "id": "evline:paper-8-22429680",
+        "id": "evline:paper-11-22429680",
         "type": "EvidenceLine",
         "description": "The paper uses HRM scanning to identify the variant in a patient with HCM, but HRM is a screening tool for detecting sequence variations rather than a functional assay measuring protein or cellular activity. The authors explicitly state that functional studies (e.g., two-hybrid assays) are still being initiated or are required to determine phenotypic effects.",
         "extensions": [
@@ -2152,51 +2254,6 @@
           }
         ],
         "directionOfEvidenceProvided": "neutral"
-      },
-      {
-        "id": "evline:paper-9-23816408",
-        "type": "EvidenceLine",
-        "description": "The target variant c.2155C>T was not identified in the provided text. Therefore, no functional assays or experimental data for this specific variant could be extracted.",
-        "reportedIn": [
-          {
-            "type": "Document",
-            "urls": [
-              "https://pubmed.ncbi.nlm.nih.gov/23816408/"
-            ],
-            "pmid": "23816408"
-          }
-        ],
-        "directionOfEvidenceProvided": "neutral"
-      },
-      {
-        "id": "evline:paper-10-12707239",
-        "type": "EvidenceLine",
-        "description": "The provided text does not contain any functional assay data or specific mentions of the target variant c.2155C>T. Therefore, no functional evidence can be assessed.",
-        "reportedIn": [
-          {
-            "type": "Document",
-            "urls": [
-              "https://pubmed.ncbi.nlm.nih.gov/12707239/"
-            ],
-            "pmid": "12707239"
-          }
-        ],
-        "directionOfEvidenceProvided": "neutral"
-      },
-      {
-        "id": "evline:paper-11-27532257",
-        "type": "EvidenceLine",
-        "description": "The paper is a population-based association study rather than a functional study. It provides no experimental data (e.g., biochemical or cellular assays) to evaluate the functional impact of the specific variant c.2155C>T.",
-        "reportedIn": [
-          {
-            "type": "Document",
-            "urls": [
-              "https://pubmed.ncbi.nlm.nih.gov/27532257/"
-            ],
-            "pmid": "27532257"
-          }
-        ],
-        "directionOfEvidenceProvided": "neutral"
       }
     ],
     "directionOfEvidenceProvided": "neutral"
@@ -2204,14 +2261,14 @@
   {
     "id": "evline:MYH7_c_2155C_T_BS4",
     "type": "EvidenceLine",
-    "description": "pp1_bs4_pp4_engine: no APPROVED curated PP4 reference record for gene 'MYH7'",
+    "description": "pp1_bs4_pp4_engine: segregation not evaluable (no family data or unknown inheritance mode)",
     "extensions": [
       {
         "name": "bh26AssessmentDetails",
         "value": {
           "criterion": "BS4",
           "status": "unknown",
-          "summary": "pp1_bs4_pp4_engine: no APPROVED curated PP4 reference record for gene 'MYH7'"
+          "summary": "pp1_bs4_pp4_engine: segregation not evaluable (no family data or unknown inheritance mode)"
         }
       }
     ],

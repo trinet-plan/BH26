@@ -223,7 +223,7 @@
           "name": "ACMG literature-evidence LLM pipeline (gemma-4 via vLLM) - AI-generated draft evidence, requires human curator review before use"
         },
         "activityType": "automated evidence evaluation",
-        "date": "2026-09-17T07:51:18.338707Z"
+        "date": "2026-09-17T13:56:05.109534Z"
       }
     ],
     "reportedIn": [
@@ -473,7 +473,7 @@
           "name": "ACMG literature-evidence LLM pipeline (gemma-4 via vLLM) - AI-generated draft evidence, requires human curator review before use"
         },
         "activityType": "automated evidence evaluation",
-        "date": "2026-09-17T07:51:18.336244Z"
+        "date": "2026-09-17T13:56:05.104559Z"
       }
     ],
     "reportedIn": [
@@ -875,14 +875,15 @@
   {
     "id": "evline:MYBPC3_c_278delA_PM2",
     "type": "EvidenceLine",
-    "description": "No reliable population observation",
+    "name": "PM2 assessment for GRCh38:11:47351252:CT:C",
+    "description": "Every queried population source resolved and reported no record at all for this allele. PM2 evaluates whether reliable population observations satisfy the configured rarity threshold. Outcome: MET; satisfies PM2.",
     "extensions": [
       {
         "name": "bh26AssessmentDetails",
         "value": {
           "criterion": "PM2",
-          "status": "unknown",
-          "summary": "No reliable population observation",
+          "status": "met",
+          "summary": "Every queried population source resolved and reported no record at all for this allele. PM2 evaluates whether reliable population observations satisfy the configured rarity threshold. Outcome: MET; satisfies PM2.",
           "evidenceItemIds": [],
           "provenance": {
             "rule_version": "PM2-v1",
@@ -891,10 +892,20 @@
             "rejected_observations": [],
             "provider_failures": []
           },
-          "missingInputs": [
-            "population"
-          ]
+          "strength": "supporting",
+          "direction": "supports",
+          "evidenceOutcome": "PM2_supporting"
         }
+      },
+      {
+        "name": "curatorHints",
+        "value": [
+          {
+            "severity": "caution",
+            "category": "review",
+            "message": "Locus coverage at this position is not confirmed - total absence from population databases is treated here as weak evidence of rarity, not a confirmed AF observation"
+          }
+        ]
       },
       {
         "name": "referenceLink",
@@ -903,16 +914,32 @@
     ],
     "specifiedBy": {
       "type": "Method",
-      "name": "ACMG/AMP PM2 assessment (unknown)",
+      "name": "ACMG/AMP 2015 with ClinGen General Guidance",
       "methodType": "PM2",
       "reportedIn": {
         "type": "Document",
         "name": "Richards et al., 2015, Genet Med.",
+        "urls": [
+          "https://pubmed.ncbi.nlm.nih.gov/25741868/"
+        ],
         "doi": "10.1038/gim.2015.30",
         "pmid": "25741868"
       }
     },
-    "directionOfEvidenceProvided": "neutral"
+    "directionOfEvidenceProvided": "supports",
+    "strengthOfEvidenceProvided": {
+      "primaryCoding": {
+        "system": "ACMG Guidelines, 2015",
+        "code": "supporting"
+      }
+    },
+    "evidenceOutcome": {
+      "name": "ACMG 2015 PM2 criterion met",
+      "primaryCoding": {
+        "system": "ACMG Guidelines, 2015",
+        "code": "PM2_supporting"
+      }
+    }
   },
   {
     "id": "evline:MYBPC3_c_278delA_PM3",
@@ -1053,14 +1080,14 @@
   {
     "id": "evline:MYBPC3_c_278delA_PP1",
     "type": "EvidenceLine",
-    "description": "pp1_bs4_pp4_engine: no APPROVED curated PP4 reference record for gene 'MYBPC3'",
+    "description": "pp1_bs4_pp4_engine: segregation not evaluable (no family data or unknown inheritance mode)",
     "extensions": [
       {
         "name": "bh26AssessmentDetails",
         "value": {
           "criterion": "PP1",
           "status": "unknown",
-          "summary": "pp1_bs4_pp4_engine: no APPROVED curated PP4 reference record for gene 'MYBPC3'"
+          "summary": "pp1_bs4_pp4_engine: segregation not evaluable (no family data or unknown inheritance mode)"
         }
       },
       {
@@ -1155,14 +1182,14 @@
   {
     "id": "evline:MYBPC3_c_278delA_PP4",
     "type": "EvidenceLine",
-    "description": "pp1_bs4_pp4_engine: no APPROVED curated PP4 reference record for gene 'MYBPC3'",
+    "description": "pp1_bs4_pp4_engine: phenotype not evaluable (no_diagnosis_available_to_search_literature_for)",
     "extensions": [
       {
         "name": "bh26AssessmentDetails",
         "value": {
           "criterion": "PP4",
           "status": "unknown",
-          "summary": "pp1_bs4_pp4_engine: no APPROVED curated PP4 reference record for gene 'MYBPC3'"
+          "summary": "pp1_bs4_pp4_engine: phenotype not evaluable (no_diagnosis_available_to_search_literature_for)"
         }
       }
     ],
@@ -1371,7 +1398,7 @@
           "name": "ACMG literature-evidence LLM pipeline (gemma-4 via vLLM) - AI-generated draft evidence, requires human curator review before use"
         },
         "activityType": "automated evidence evaluation",
-        "date": "2026-09-17T07:51:18.331930Z"
+        "date": "2026-09-17T13:56:05.111673Z"
       }
     ],
     "reportedIn": [
@@ -1581,14 +1608,14 @@
   {
     "id": "evline:MYBPC3_c_278delA_BS4",
     "type": "EvidenceLine",
-    "description": "pp1_bs4_pp4_engine: no APPROVED curated PP4 reference record for gene 'MYBPC3'",
+    "description": "pp1_bs4_pp4_engine: segregation not evaluable (no family data or unknown inheritance mode)",
     "extensions": [
       {
         "name": "bh26AssessmentDetails",
         "value": {
           "criterion": "BS4",
           "status": "unknown",
-          "summary": "pp1_bs4_pp4_engine: no APPROVED curated PP4 reference record for gene 'MYBPC3'"
+          "summary": "pp1_bs4_pp4_engine: segregation not evaluable (no family data or unknown inheritance mode)"
         }
       }
     ],

@@ -64,6 +64,9 @@ from acmg_pipeline.providers.clinvar_spectrum import ClinvarSpectrumProvider
 from acmg_pipeline.providers.gene_disease_draft import GeneDiseaseDraftProvider
 from acmg_pipeline.providers.gnomad_constraint import GnomadConstraintProvider
 from acmg_pipeline.providers.initiation import InitiationProvider
+from acmg_pipeline.providers.mane import ManeTranscriptProvider
+from acmg_pipeline.providers.nmd import TRUNCATING as NMD_TRUNCATING, NmdPredictionProvider
+from acmg_pipeline.providers.protein_region import ProteinRegionProvider
 from acmg_pipeline.providers.splice_default import SpliceDefaultProvider
 from acmg_pipeline.providers.upstream_pathogenic import UpstreamPathogenicProvider
 from acmg_pipeline.providers.dbnsfp import DbnsfpProvider
@@ -220,6 +223,7 @@ class ProviderEvidenceResolver:
         with_splice_default: bool = False,
         splice_default_policy_version: str | None = None,
         with_initiation_assessment: bool = False,
+        with_pvs1_transcript_gates: bool = False,
     ):
         self._client = CachedHttpClient(cache_dir, offline=offline)
         self._external = (
@@ -240,6 +244,8 @@ class ProviderEvidenceResolver:
         self._with_splice_default = with_splice_default
         self._splice_default_policy_version = splice_default_policy_version
         self._with_initiation_assessment = with_initiation_assessment
+        self._with_pvs1_transcript_gates = with_pvs1_transcript_gates
+        self._mane = None
         self._clingen_gene_validity = None
         self._gnomad_constraint = None
         self._ensembl = None
@@ -277,6 +283,7 @@ class ProviderEvidenceResolver:
         self._add_gene_disease_draft(annotation, variant, identity, resolved)
         self._add_splice_default(annotation, variant, resolved)
         self._add_initiation_assessment(annotation, variant, identity, resolved)
+        self._add_pvs1_transcript_gates(annotation, variant, resolved)
 
         try:
             suite = self._suite()
@@ -461,6 +468,68 @@ class ProviderEvidenceResolver:
             resolved.failures.append({"provider": UpstreamPathogenicProvider.name, "error": str(exc)})
             upstream = {}
         resolved.records.append({**record, **upstream})
+
+    def _mane_provider(self) -> ManeTranscriptProvider:
+        if self._mane is None:
+            self._mane = ManeTranscriptProvider.from_directory(self._external)
+        return self._mane
+
+    def _add_pvs1_transcript_gates(self, annotation, variant, resolved):
+        """PVS1's NF01/NF02/NF03/NF04/NF06/NF07 - MANE Select relevance, NMD
+        prediction, and the protein-loss measurement (with its own UniProt-
+        derived NF04/NF06 first pass - see providers/protein_region.py).
+
+        Off unless asked for, same convention as the other optional steps
+        above. Mirrors automated_cli.py's --with-mane-transcript/--with-nmd-
+        prediction batch path (mane.get_transcript_assessment(),
+        nmd.get_nmd_prediction(), region.get_protein_region()), which existed
+        long before this method but was never called from here - a live
+        PVS1 evaluation through the integrated pipeline always stopped at
+        NF01 (transcript relevance unresolved) regardless of what those
+        three already-implemented providers could answer.
+        """
+        if not self._with_pvs1_transcript_gates or annotation is None:
+            return
+        gene, transcript = annotation.get("gene"), annotation.get("transcript")
+        hgvsc = annotation.get("hgvsc")
+        if not (gene and transcript):
+            return
+        # NF02/NF04/NF06/NF07 also apply to a canonical splice variant that SP02 (see
+        # _add_splice_default()) determines disrupts the reading frame - _truncating_path()
+        # is reached from both V01=TRUNCATING and SP02=disrupted, and NF02 asks the same
+        # NMD question either way (it is about position, not the original consequence type).
+        consequences = set(annotation.get("consequences") or [])
+        truncating = bool(consequences & (NMD_TRUNCATING | self._CANONICAL_SPLICE_CONSEQUENCES))
+        release = self._ensembl_release or self._ensembl_provider().release
+
+        exon = None
+        if truncating and hgvsc:
+            try:
+                exon = NmdPredictionProvider(self._external, release).exon_on_transcript(
+                    gene, transcript, hgvsc)
+            except PROVIDER_ERRORS:
+                exon = None
+        try:
+            resolved.records.extend(self._mane_provider().get_transcript_assessment(
+                variant, gene, transcript, exon=exon))
+        except PROVIDER_ERRORS as exc:
+            resolved.failures.append({"provider": ManeTranscriptProvider.name, "error": str(exc)})
+
+        if not (truncating and hgvsc):
+            return
+        try:
+            nmd_provider = NmdPredictionProvider(self._external, release)
+            resolved.records.extend(
+                nmd_provider.get_nmd_prediction(variant, gene, transcript, hgvsc))
+        except PROVIDER_ERRORS as exc:
+            resolved.failures.append({"provider": NmdPredictionProvider.name, "error": str(exc)})
+            return
+        try:
+            resolved.records.extend(ProteinRegionProvider(self._external, release)
+                                    .get_protein_region(variant, gene, transcript, hgvsc,
+                                                        annotation.get("protein_start")))
+        except PROVIDER_ERRORS as exc:
+            resolved.failures.append({"provider": ProteinRegionProvider.name, "error": str(exc)})
 
     def _annotate(self, identity, variant, resolved):
         record = {"identity": identity}
