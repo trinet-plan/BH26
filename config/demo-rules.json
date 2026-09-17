@@ -1,6 +1,13 @@
 {
-  "population_providers": [
-    "gnomAD"
+  "population_sources": [
+    {
+      "provider": "togovar",
+      "api_version": "0.9.1",
+      "frequency_sources": [
+        "gnomad",
+        "tommo"
+      ]
+    }
   ],
   "PM2": {
     "minimum_an": 2000,

@@ -18,6 +18,7 @@ from acmg_pipeline.providers.clinvar import (
 from acmg_pipeline.providers.ensembl import EnsemblIdentityProvider
 from acmg_pipeline.providers.gnomad import GnomadProvider
 from acmg_pipeline.providers.http import CachedHttpClient
+from acmg_pipeline.providers.togovar import API_VERSION as TOGOVAR_API_VERSION, TogoVarProvider
 from acmg_pipeline.services.resolve import VariantProviderSuite, splice_score_for
 
 
@@ -40,7 +41,16 @@ def main(argv=None):
     online.add_argument("--output-dir", type=Path, required=True)
     online.add_argument("--ensembl-release")
     online.add_argument("--evidence-cache-dir", type=Path)
-    online.add_argument("--with-gnomad", action="store_true")
+    population = online.add_mutually_exclusive_group()
+    population.add_argument(
+        "--with-togovar", action="store_true",
+        help="Fetch population frequencies through the TogoVar GRCh38 API",
+    )
+    population.add_argument(
+        "--with-gnomad", action="store_true",
+        help="Legacy direct gnomAD fetch retained for replaying existing cached runs",
+    )
+    online.add_argument("--togovar-api-version", default=TOGOVAR_API_VERSION)
     online.add_argument("--gnomad-release", default="4.1.1")
     online.add_argument("--with-clinvar", action="store_true")
     online.add_argument("--with-dbnsfp", action="store_true",
@@ -161,6 +171,31 @@ def main(argv=None):
                     row["resolution"]["variant"]["alt"]: Variant(**row["resolution"]["variant"])
                     for row in records if row["resolution"]
                 }
+                if args.with_togovar:
+                    togovar = TogoVarProvider(
+                        external_client, api_version=args.togovar_api_version
+                    )
+                    observations = []
+                    observed_variants = 0
+                    errors = []
+                    for key, variant in sorted(variants.items()):
+                        try:
+                            batch = togovar.get_frequency(variant)
+                        except ValueError as exc:
+                            errors.append({"variant_key": key, "error": str(exc)})
+                            continue
+                        if batch:
+                            observed_variants += 1
+                            observations.extend(batch)
+                    evidence.extend(observations)
+                    external_manifest.append({
+                        "provider": togovar.name,
+                        "provider_version": f"API {togovar.api_version}",
+                        "queried_variants": len(variants),
+                        "observed_variants": observed_variants,
+                        "evidence": len(observations),
+                        "errors": errors,
+                    })
                 if args.with_gnomad:
                     gnomad = GnomadProvider(external_client, release=args.gnomad_release)
                     try:

@@ -50,6 +50,25 @@ class VaSpecTests(unittest.TestCase):
         self.assertEqual(study["cohort"]["type"], "StudyGroup")
         self.assertEqual(study["specifiedBy"]["type"], "Method")
 
+    def test_togovar_population_provenance_is_exported(self):
+        evidence = deepcopy(EVIDENCE)
+        evidence[0].update({
+            "evidence_id": "https://grch38.togovar.org/variant/tgv123#frequency:tommo",
+            "source": "TogoVar",
+            "source_version": "API 0.9.1",
+            "population": "tommo:global",
+        })
+        result = CriterionResult(
+            "PM2", CriterionStatus.MET, VARIANT, "rare", "supporting", "supports",
+            "PM2_supporting", evidence=evidence,
+        )
+        study = to_evidence_line(result)["hasEvidenceItems"][0]
+        self.assertEqual(study["sourceDataSet"]["id"], "https://grch38.togovar.org/")
+        self.assertEqual(study["sourceDataSet"]["version"], "API 0.9.1")
+        self.assertEqual(study["cohort"]["name"], "tommo:global")
+        self.assertEqual(study["specifiedBy"]["name"],
+                         "TogoVar API allele frequency aggregation")
+
     def test_not_met_maps_to_machine_readable_neutral(self):
         result = CriterionResult("PM2", CriterionStatus.NOT_MET, VARIANT, "not rare", None, "none",
                                  "PM2_not_met", evidence=EVIDENCE)

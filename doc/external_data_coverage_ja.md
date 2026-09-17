@@ -10,7 +10,7 @@
 |---|---|---|
 | consequence、HGVS、transcript、予測値 | Ensembl VEP | PVS1、PM4、BP3、BP7、PP3、BP4 |
 | REVEL、SpliceAI等の追加予測値 | Ensembl VEP / dbNSFP由来の注釈 | PP3、BP4、PS1、PM5 |
-| AF、AC、AN、FILTER、集団別頻度 | gnomAD GraphQL | PM2、BA1、BS1 |
+| AF、AC、AN、FILTER、データセット別頻度 | TogoVar API 0.9.1（GRCh38） | PM2、BA1、BS1 |
 | individual ClinVar record、同一残基比較、hotspot検索 | NCBI ClinVar | PS1、PM1、PM5、PP5、BP6 |
 | gene--disease mechanism、頻度閾値、領域ポリシー | サーバー設定のreview済みcontext | PVS1、PM1、PP2、BP1、BS1 |
 
@@ -86,12 +86,12 @@ case3-var1  curator: MET -> engine: not_met  [highest AF 0.0000299 exceeds cutof
 
 値は臨床レビュー未実施。`threshold_source` にPLACEHOLDERと明記してある。
 
-#### (b) gnomADに登録がない変異が `UNKNOWN` になる（2件）
+#### (b) 頻度データセットに登録がない変異が `UNKNOWN` になる（2件）
 
 ```
 case1-var1  curator: MET -> engine: unknown  [No reliable population observation]
 case2-var2  curator: MET -> engine: unknown  [No reliable population observation]
-            provider_failures: [{'provider': 'gnomAD', 'reason': 'NO_OBSERVATION'}]
+            provider_failures: [{'provider': 'TogoVar', 'reason': 'NO_OBSERVATION'}]
 ```
 
 `acmg_pipeline/services/resolve.py` の原則「未登録をAF=0として扱わない」による。
@@ -101,8 +101,8 @@ BA1・BS1（「頻度が高すぎる」を見る）では、未登録から何�
 結果、PM2だけ意味が反転している。
 
 区別に必要なのは **その座位のcoverage**。「未登録かつ十分にcallable」なら absent from
-controls だが、「未登録かつcoverage不明」は判断不能。現在のgnomADプロバイダはcoverageを
-取得していない。`usable_observations()` は `AC == 0` の観測に `callable: true` を要求して
+controls だが、「未登録かつcoverage不明」は判断不能。現在のTogoVar APIレスポンスは座位
+coverageを返さない。`usable_observations()` は `AC == 0` の観測に `callable: true` を要求して
 いるが、レコード自体が返らない場合はcallability情報が存在しない。
 
 #### 対応の方向（いずれも未決）
@@ -111,7 +111,7 @@ controls だが、「未登録かつcoverage不明」は判断不能。現在の
 |---|---|---|
 | 1 | ~~`PM2.max_af` に非ゼロの閾値を設定する~~ → 暫定 `5e-5` を設定済み。正式値は臨床レビュー待ち | 臨床判断。ClinGen SVIはPM2をSupportingへ降格し、VCEPごとに「absent or rare」の具体値を定める |
 | 2 | BS1と同じく `frequency_statistic` / `comparison` を対で持たせる | 設計。ただしPM2で保守的なのは信頼区間の**上限**（「稀少と言い切れるか」は最悪ケースで判断する）で、BS1のFAF（下限）とは逆側 |
-| 3 | gnomAD coverageを取得し、「未登録 + 十分なcoverage」を absent as evidence として扱う | 設計 + プロバイダ拡張。クエリ変更はオフラインキャッシュのキーを変えるため再取得が必要 |
+| 3 | coverageを取得できるreview済み経路を追加し、「未登録 + 十分なcoverage」を absent as evidence として扱う | 設計 + プロバイダ拡張。TogoVar APIだけでは現状不足 |
 
 1は3件、3は2件の不一致に対応する。1は暫定値を設定済みで、キュレーター一致率は
 8/15 から 11/15 になった。残る2件は閾値では解消せず、3が必要。
@@ -130,7 +130,7 @@ controls だが、「未登録かつcoverage不明」は判断不能。現在の
 | BP2 | cis/trans情報、もう一方の変異の病原性 |
 | BP5 | 代替となる分子診断と表現型の整合 |
 
-## TogoVarへ置換する場合の境界
+## TogoVar経由で取得する場合の境界
 
 TogoVarはGRCh38の座標・REF・ALTから、VEP transcript/HGVS/consequence、gnomAD等の頻度、ClinVar/MGeNDラベル、SIFT/PolyPhen/AlphaMissenseを取得できる。従って次は置換候補である。
 
@@ -148,7 +148,9 @@ TogoVarはGRCh38の座標・REF・ALTから、VEP transcript/HGVS/consequence、
 3. TogoVarにない、またはprovenanceが判定要件を満たさないデータは補完・推測しない。
 4. そのcriterionを `UNKNOWN` とし、missing inputs と理由をVA-Specの `bh26AssessmentDetails` に残す。
 
-TogoVarだけを唯一の外部経路とする場合、既存のEnsembl・gnomAD・ClinVar直接呼出しへ暗黙にfallbackしない。必要なら、どのcriterionで別のreview済みデータを許可するかを設定で明示する。
+頻度プロバイダーは設定の `population_sources` で選択する。現在登録されているオンラインプロバイダーはTogoVarで、その内部ソースとして `gnomad` と `tommo` のみを有効にしている。前者はTogoVarレスポンスの `gnomad_exomes` / `gnomad_genomes`、後者は `tommo` に展開される。選択した各データセットは、重複する可能性があるため統合せず別々の観測として保持する。TogoVar内で指定可能なグループは `gnomad`、`tommo`、`jga`、`ncbn`、`gem_j`、`hgvd`。APIが各上流データセットの版を返さないため、`upstream_dataset_version` は `NOT_PROVIDED_BY_TOGOVAR_API` と明示し、TogoVar API版、取得日時、キャッシュ本文hashを監査情報として保持する。
+
+TogoVarとは別の頻度DBを追加する場合は、共通のnormalised evidence形式を返すアダプターを実装し、`population_registry.py` にfactoryを明示登録する。設定ファイルから任意のPythonコードをimportする方式は採用しない。`gnomad.py` は既存キャッシュの参考・互換資産として残すが、このregistryおよび通常の実行経路からは利用しない。
 
 ## キュレーターが関わる箇所
 

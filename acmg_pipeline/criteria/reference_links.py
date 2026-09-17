@@ -38,14 +38,15 @@ a later VCF INFO field addition needs no signature change here.
                      itself is still not URL-able, but the UniProt entry
                      page needed to show it is, via a gene-symbol ->
                      UniProt-accession lookup (see gene_to_uniprot_accession())
-  PM2, BA1, BS1, BS2: "show the gnomAD af page"
+  PM2, BA1, BS1, BS2: population-frequency page (TogoVar in current runtime)
   PM3:              "use AI to check if in trans previously reported (ClinVar)"
   PP1:              "use AI to check if segregation previously reported (ClinVar)"
   PP2:              "get the gnomAD zscore" (gene-level, not variant-level)
   PP3, BP4:         "show the predictors, follow thresholds" -> NOT URL-able
                      (a static threshold table, not a single reference page)
 
-[Verified reachable, 2026-09-16]
+[Verified reachable]
+  togovar_variant_url() uses TogoVar's documented GRCh38 coordinate URL.
   gnomad_variant_url() and gnomad_gene_url() confirmed HTTP 200 against a
   real variant (MYH7 c.2155C>T) and gene (MYH7). clinvar_search_url()
   confirmed to 302-redirect to a real ClinVar search results page.
@@ -216,6 +217,14 @@ def gnomad_variant_url(variant: VariantRecord, dataset: str = "gnomad_r4") -> st
             f"{variant.chrom}-{variant.pos}-{variant.ref}-{variant.alt}?dataset={dataset}")
 
 
+def togovar_variant_url(variant: VariantRecord) -> str | None:
+    """Return TogoVar's GRCh38 report page for an exact positional allele."""
+    if not variant.ref or not variant.alt or variant.alt in (".", ""):
+        return None
+    return (f"https://grch38.togovar.org/variant/"
+            f"{variant.chrom}-{variant.pos}-{variant.ref}-{variant.alt}")
+
+
 def gnomad_gene_url(variant: VariantRecord, dataset: str = "gnomad_r4") -> str | None:
     """
     Criteria: PP2 (doc: "get the gnomAD zscore" - the missense Z-score is a
@@ -247,10 +256,10 @@ _URL_BUILDERS = {
     "PP1": clinvar_search_url,
     "PM1": uniprot_page_url,
     "PM5": uniprot_page_url,
-    "PM2": gnomad_variant_url,
-    "BA1": gnomad_variant_url,
-    "BS1": gnomad_variant_url,
-    "BS2": gnomad_variant_url,
+    "PM2": togovar_variant_url,
+    "BA1": togovar_variant_url,
+    "BS1": togovar_variant_url,
+    "BS2": togovar_variant_url,
     "PP2": gnomad_gene_url,
 }
 
