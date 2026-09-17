@@ -42,20 +42,34 @@ class TogoVarProvider:
         )
 
     def get_frequency(self, variant, context=None):
-        response = self.client.fetch(
+        response = self._search_at(variant, variant.pos)
+        observations = self._parse_response(response, variant)
+        if observations is not None or not self._is_vcf_deletion(variant):
+            return observations
+
+        # TogoVar documents a deletion at the first deleted base, with the
+        # deleted sequence as REF and no ALT.  A normalized VCF instead
+        # anchors the deletion on its preceding retained base.  For example,
+        # VCF POS=100 REF=TA ALT=T is TogoVar POS=101 REF=A ALT=<empty>.
+        # Do not run this extra lookup for substitutions/insertions: it is
+        # only a documented alternate representation of a deletion.
+        response = self._search_at(variant, variant.pos + len(variant.alt))
+        return self._parse_response(response, variant)
+
+    def _search_at(self, variant, position):
+        return self.client.fetch(
             API_URL,
             data={
                 "query": {
                     "location": {
                         "chromosome": variant.chrom,
-                        "position": variant.pos,
+                        "position": position,
                     }
                 },
                 "limit": 1000,
             },
             dataset_version=f"TogoVar API {self.api_version}",
         )
-        return self._parse_response(response, variant)
 
     def get_frequencies(self, variants):
         """Fetch multiple variants while retaining one replayable cache entry per allele."""
@@ -68,14 +82,8 @@ class TogoVarProvider:
         body = response.get("body")
         if not isinstance(body, dict) or not isinstance(body.get("data"), list):
             raise ValueError("Unexpected TogoVar response")
-        matches = [
-            item for item in body["data"]
-            if isinstance(item, dict)
-            and (
-                str(item.get("chromosome")), item.get("position"),
-                item.get("reference"), item.get("alternate"),
-            ) == (variant.chrom, variant.pos, variant.ref, variant.alt)
-        ]
+        matches = [item for item in body["data"]
+                   if isinstance(item, dict) and self._matches_variant(item, variant)]
         if not matches:
             return None
         if len(matches) != 1:
@@ -100,6 +108,29 @@ class TogoVarProvider:
             if isinstance(values, dict) and values.get("source") in self.datasets
         ]
         return observations or None
+
+    @staticmethod
+    def _is_vcf_deletion(variant):
+        return len(variant.ref) > len(variant.alt) and variant.ref.startswith(variant.alt)
+
+    @classmethod
+    def _matches_variant(cls, item, variant):
+        """Match either VCF alleles or TogoVar's documented deletion form."""
+        direct = (
+            str(item.get("chromosome")), item.get("position"),
+            item.get("reference"), item.get("alternate"),
+        ) == (variant.chrom, variant.pos, variant.ref, variant.alt)
+        if direct:
+            return True
+        if not cls._is_vcf_deletion(variant):
+            return False
+        deleted = variant.ref[len(variant.alt):]
+        return (
+            str(item.get("chromosome")) == variant.chrom
+            and item.get("position") == variant.pos + len(variant.alt)
+            and item.get("reference") == deleted
+            and item.get("alternate") in (None, "")
+        )
 
     def _observation(self, variant, tgv_id, values, retrieved_at):
         if not isinstance(values, dict):
