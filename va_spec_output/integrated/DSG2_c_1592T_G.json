@@ -222,7 +222,7 @@
           "name": "ACMG literature-evidence LLM pipeline (gemma-4 via vLLM) - AI-generated draft evidence, requires human curator review before use"
         },
         "activityType": "automated evidence evaluation",
-        "date": "2026-09-17T14:00:30.353520Z"
+        "date": "2026-09-17T14:27:31.441126Z"
       }
     ],
     "reportedIn": [
@@ -622,7 +622,7 @@
           "name": "ACMG literature-evidence LLM pipeline (gemma-4 via vLLM) - AI-generated draft evidence, requires human curator review before use"
         },
         "activityType": "automated evidence evaluation",
-        "date": "2026-09-17T14:00:30.350624Z"
+        "date": "2026-09-17T14:27:31.443885Z"
       }
     ],
     "reportedIn": [
@@ -1259,6 +1259,44 @@
       {
         "name": "referenceLink",
         "value": "https://www.ncbi.nlm.nih.gov/clinvar/?term=DSG2%5Bgene%5D%20AND%20c.1592T%3EG"
+      },
+      {
+        "name": "curatorInfo",
+        "value": {
+          "clinvarVariationId": "44283",
+          "segregationMentions": [
+            {
+              "text": "The F531C variant of uncertain significance in the DSG2 gene has been previously reported in either the heterozygous or homozygous state in several Asian individuals with definite or suspected ARVC (Yu et al., 2008; Bao et al., 2013a; Bao et al., 2013b; Ohno et al., 2013); however, detailed clinical information and segregation data were not provided for most probands. In addition, one of these probands, who inherited the F531C variant from his father, was also found to be homozygous for a second variant in the DSP gene (Ohno et al., 2013). Upon evaluation, both of his parents were diagnosed with possible ARVC and were found to be heterozygous for this DSP variant (Ohno et al., 2013). Furthermore, F531C has been identified in the homozygous state in two other individuals referred for cardiac genetic testing at GeneDx. This variant has also been observed in approximately 0.1% of alleles from individuals of East Asian background in the Exome Aggregation Consortium, indicating it may be a rare benign variant in this population (Lek et al., 2016; Exome Variant Server). Nevertheless, F531C is a non-conservative amino acid substitution, which is likely to impact secondary protein structure as these residues differ in polarity, charge, size and/or other properties. This substitution also occurs at a position that is conserved across species. Moreover, in silico analysis predicts F531C is probably damaging to the protein structure/function.",
+              "matchedKeyword": "segregat"
+            },
+            {
+              "text": "The p.F531C variant (also known as c.1592T>G), located in coding exon 11 of the DSG2 gene, results from a T to G substitution at nucleotide position 1592. The phenylalanine at codon 531 is replaced by cysteine, an amino acid with highly dissimilar properties. This variant has been reported in the homozygous state in individuals of Asian background with arrhythmogenic right ventricular cardiomyopathy (ARVC) and segregated with disease in at least one family; however, when detected in the heterozygous state, additional cardiac variants were detected and/or clinical details were limited (Yu CC et al. J. Formos Med Assoc. 2008;107:548-58; Bao J et al. Circ Cardiovasc Genet. 2013;6:552-6; Ohno S et al. Circ J. 2013;77:1534-42; Zhou X et al. Eur J Med Genet. 2015;58(4):258-65; Lin Y et al. Cardiology. 2017;138:41-54; Zhang B et al. BMC Med. 2024 Sep 4;22(1):361). Heterozygous family members have been reported to be unaffected or to have only mild clinical features consistent with ARVC (Lin Y et al. J Electrocardiol , 2018 Jun;51:837-843; Chen L et al. Int. J. Cardiol., 2019 Jan;274:263-270; Chen X et al. Hum Genome Var, 2019 Aug;6:38). An in vivo knock-in mouse model showed affected mice in the homozygous state; however, heterozygous mice were unaffected (Zhang B et al. BMC Med. 2024 Sep 4;22(1):361). This amino acid position is highly conserved in available vertebrate species. In addition, this alteration is predicted to be deleterious by in silico analysis. Although evidence suggests that this alteration may be pathogenic when found in the homozygous state, supporting evidence for a role in autosomal dominant ARVC is limited. Based on the majority of available evidence to date, this variant is likely to be pathogenic in association with autosomal recessive ARVC; however, the clinical significance of this alteration with respect to autosomal dominant ARVC remains unclear.",
+              "matchedKeyword": "segregat"
+            },
+            {
+              "text": "Absent from controls (or at extremely low frequency if recessive) in Genome Aggregation Database, Exome Sequencing Project, 1000 Genomes Project, or Exome Aggregation Consortium.;Multiple lines of computational evidence support a deleterious effect on the gene or gene product (conservation, evolutionary, splicing impact, etc).;For recessive disorders, detected in trans with a pathogenic variant.;Patient's phenotype or family history is highly specific for a disease with a single genetic etiology.;Co-segregation with disease in multiple affected family members in a gene definitively known to cause the disease.",
+              "matchedKeyword": "segregat"
+            }
+          ],
+          "transMentions": [
+            {
+              "text": "This missense variant replaces phenylalanine with cysteine at codon 531 of the DSG2 protein. Computational prediction suggests that this variant may have deleterious impact on protein structure and function. A study using a homozygous knock-in mouse model has reported that this variant results in a cardiomyopathy phenotype with left ventricular systolic dysfunction (Wang et. al, 2019). This variant has been reported in over ten individuals of East Asian ancestry affected with arrhythmogenic right ventricular cardiomyopathy, either in homozygous or compound heterozygous state (PMID: 18632414, 23514727, 24125834, 25765472, 28578331, 30129429, 30177324, 30454721, 31183845, 31645976; Wang et. al, 2019, https://doi.org/10.1093/eurheartj/ehz746.0202). In these families, over 20 heterozygous family members were reported to be unaffected, while several heterozygotes were reported to be affected with arrhythmogenic right ventricular cardiomyopathy, dilated cardiomyopathy, or sudden unexplained death. However, some evidence exists suggesting that this variant may be a common benign variant in the population and the biallelic affected individuals reported in the literature may carry another variant that could explain the observed phenotype: In one study that reported 3 homozygous individuals affected with arrhythmogenic cardiomyopathy, a potentially pathogenic covariant was observed in the DSP, SCN5A and MYH7 gene in each of the three probands (PMID: 39253717). In addition, this variant occurs at a high allele frequency in the East Asian population (16/19518 East Asian chromosomes; 0.0819%) by the Genome Aggregation Database (gnomAD). The available evidence is insufficient to determine the role of this variant in autosomal dominant arrhythmogenic cardiomyopathy conclusively. Therefore, this variant is classified as a Variant of Uncertain Significance.",
+              "matchedKeyword": "compound heterozygo"
+            },
+            {
+              "text": "Absent from controls (or at extremely low frequency if recessive) in Genome Aggregation Database, Exome Sequencing Project, 1000 Genomes Project, or Exome Aggregation Consortium.;Multiple lines of computational evidence support a deleterious effect on the gene or gene product (conservation, evolutionary, splicing impact, etc).;For recessive disorders, detected in trans with a pathogenic variant.;Patient's phenotype or family history is highly specific for a disease with a single genetic etiology.;Co-segregation with disease in multiple affected family members in a gene definitively known to cause the disease.",
+              "matchedKeyword": "in trans"
+            },
+            {
+              "text": "This missense variant replaces phenylalanine with cysteine at codon 531 of the DSG2 protein. Computational prediction suggests that this variant may have deleterious impact on protein structure and function (internally defined REVEL score threshold >= 0.7, PMID: 27666373). A study using a homozygous knock-in mouse model has reported that this variant results in a cardiomyopathy phenotype with left ventricular systolic dysfunction (Wang et. al, 2019). This variant has been reported in over ten individuals of East Asian ancestry affected with arrhythmogenic right ventricular cardiomyopathy, either in homozygous or compound heterozygous state (PMID: 18632414, 23514727, 24125834, 25765472, 28578331, 30129429, 30177324, 30454721, 31183845, 31645976; Wang et. al, 2019, https://doi.org/10.1093/eurheartj/ehz746.0202). In these families, over 20 heterozygous family members were reported to be unaffected, while several heterozygotes were reported to be affected with arrhythmogenic right ventricular cardiomyopathy, dilated cardiomyopathy, or sudden unexplained death. This variant has also been identified in 16/280790 chromosomes (16/19518 East Asian chromosomes, 0.0819%) in the general population by the Genome Aggregation Database (gnomAD). The available evidence is insufficient to determine the role of this variant in autosomal dominant arrhythmogenic cardiomyopathy conclusively. Therefore, this variant is classified as a Variant of Uncertain Significance.",
+              "matchedKeyword": "compound heterozygo"
+            },
+            {
+              "text": "This variant is classified as Likely pathogenic. Evidence in support of pathogenic classification: Variant is present in gnomAD <0.001 for a dominant condition (v4: 26 heterozygote(s), 0 homozygote(s)); This variant has strong previous evidence of pathogenicity in unrelated individuals. This variant has been reported in a homozygous or compound heterozygous state in multiple individuals with ARVC in the literature (PMID: 39253717, 37288269, 35941102, 30177324, 41178662, 18632414). In some cases heterozygous carrier parents showed milder disease, but not all had extensive cardiac investigations (PMID: 30454721). Additionally, it has been primarily classified as a VUS by clinical laboratories in ClinVar, in addition to a single likely pathogenic classification; Missense variant predicted to be damaging by in silico tool(s) or highly conserved with a major amino acid change. Additional information: Variant is predicted to result in a missense amino acid change from Phe to Cys; This variant is heterozygous; This gene is associated with both recessive and dominant disease. Dominant and recessive inheritance has been reported for both arrhythmogenic right ventricular dysplasia 10 (MIM#610193), and dilated cardiomyopathy 1BB (MIM#612877) (OMIM, PanelApp Australia); Other missense variant(s) comparable to the one identified in this case have inconclusive previous evidence for pathogenicity. Both p.(Phe531Leu) and p.(Phe531Ser) have been classified as a VUS by clinical laboratories in ClinVar; Variant is not located in an established domain, motif, hotspot or informative constraint region; Loss of function is a known mechanism of disease in this gene and is associated with arrhythmogenic right ventricular dysplasia 10 (ARVC) (MIM#610193) and dilated cardiomyopathy, 1BB (DCM) (MIM#612877). A single variant has been reported with a gain of function mechanism (PMID: 23071725); Inheritance information for this variant is not currently available in this individual.",
+              "matchedKeyword": "compound heterozygo"
+            }
+          ]
+        }
       }
     ],
     "specifiedBy": {
@@ -1433,28 +1471,36 @@
   {
     "id": "evline:DSG2_c_1592T_G_PP2",
     "type": "EvidenceLine",
-    "description": "No gene_disease assessment was retrieved for this variant. PP2 evaluates missense variants in genes where missense is an established disease mechanism and benign missense variation is constrained. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
+    "description": "1 reviewed gene_disease assessment(s) were made against a different transcript (None, not NM_001943.5). PP2 evaluates missense variants in genes where missense is an established disease mechanism and benign missense variation is constrained. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
     "extensions": [
       {
         "name": "bh26AssessmentDetails",
         "value": {
           "criterion": "PP2",
           "status": "unknown",
-          "summary": "No gene_disease assessment was retrieved for this variant. PP2 evaluates missense variants in genes where missense is an established disease mechanism and benign missense variation is constrained. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
+          "summary": "1 reviewed gene_disease assessment(s) were made against a different transcript (None, not NM_001943.5). PP2 evaluates missense variants in genes where missense is an established disease mechanism and benign missense variation is constrained. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
           "evidenceItemIds": [
-            "urn:sha256:9908b24cf1b295180f712f6449a8495648a4a1d6c5de16022ec1a2daca0d6678:annotation:NM_001943.5"
+            "urn:sha256:9908b24cf1b295180f712f6449a8495648a4a1d6c5de16022ec1a2daca0d6678:annotation:NM_001943.5",
+            "urn:sha256:b7aedf994c71dfcc61b4957dcfffb791d75a6bcf8638ebb7e641a3b56a995294:clingen-dosage:DSG2:GRCh38:18:31536370:T:G"
           ],
           "provenance": {
             "rule_version": "PP2-v1"
-          },
-          "missingInputs": [
-            "gene_disease"
-          ]
+          }
         }
       },
       {
         "name": "referenceLink",
         "value": "https://gnomad.broadinstitute.org/gene/DSG2?dataset=gnomad_r4"
+      },
+      {
+        "name": "curatorHints",
+        "value": [
+          {
+            "severity": "caution",
+            "category": "review",
+            "message": "Resolve the transcript of the gene_disease assessment"
+          }
+        ]
       }
     ],
     "specifiedBy": {
@@ -2088,7 +2134,7 @@
           "name": "ACMG literature-evidence LLM pipeline (gemma-4 via vLLM) - AI-generated draft evidence, requires human curator review before use"
         },
         "activityType": "automated evidence evaluation",
-        "date": "2026-09-17T14:00:30.355883Z"
+        "date": "2026-09-17T14:27:31.446151Z"
       }
     ],
     "reportedIn": [
@@ -2471,24 +2517,32 @@
   {
     "id": "evline:DSG2_c_1592T_G_BP1",
     "type": "EvidenceLine",
-    "description": "No gene_disease assessment was retrieved for this variant. BP1 evaluates missense variants in genes where disease is predominantly caused by truncating variants rather than missense variation. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
+    "description": "1 reviewed gene_disease assessment(s) were made against a different transcript (None, not NM_001943.5). BP1 evaluates missense variants in genes where disease is predominantly caused by truncating variants rather than missense variation. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
     "extensions": [
       {
         "name": "bh26AssessmentDetails",
         "value": {
           "criterion": "BP1",
           "status": "unknown",
-          "summary": "No gene_disease assessment was retrieved for this variant. BP1 evaluates missense variants in genes where disease is predominantly caused by truncating variants rather than missense variation. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
+          "summary": "1 reviewed gene_disease assessment(s) were made against a different transcript (None, not NM_001943.5). BP1 evaluates missense variants in genes where disease is predominantly caused by truncating variants rather than missense variation. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
           "evidenceItemIds": [
-            "urn:sha256:9908b24cf1b295180f712f6449a8495648a4a1d6c5de16022ec1a2daca0d6678:annotation:NM_001943.5"
+            "urn:sha256:9908b24cf1b295180f712f6449a8495648a4a1d6c5de16022ec1a2daca0d6678:annotation:NM_001943.5",
+            "urn:sha256:b7aedf994c71dfcc61b4957dcfffb791d75a6bcf8638ebb7e641a3b56a995294:clingen-dosage:DSG2:GRCh38:18:31536370:T:G"
           ],
           "provenance": {
             "rule_version": "BP1-v1"
-          },
-          "missingInputs": [
-            "gene_disease"
-          ]
+          }
         }
+      },
+      {
+        "name": "curatorHints",
+        "value": [
+          {
+            "severity": "caution",
+            "category": "review",
+            "message": "Resolve the transcript of the gene_disease assessment"
+          }
+        ]
       }
     ],
     "specifiedBy": {

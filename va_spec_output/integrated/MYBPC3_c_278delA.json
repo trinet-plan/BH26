@@ -2,36 +2,40 @@
   {
     "id": "evline:MYBPC3_c_278delA_PVS1",
     "type": "EvidenceLine",
-    "description": "Loss-of-function disease mechanism unavailable. PVS1 evaluates predicted loss-of-function variants only when loss of function is an established disease mechanism for the gene. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
+    "name": "PVS1 assessment for GRCh38:11:47351252:CT:C",
+    "description": "LoF is predicted to undergo NMD in a relevant transcript and exon. PVS1 evaluates predicted loss-of-function variants only when loss of function is an established disease mechanism for the gene. Outcome: MET; the available evidence satisfies PVS1.",
     "extensions": [
       {
         "name": "bh26AssessmentDetails",
         "value": {
           "criterion": "PVS1",
-          "status": "unknown",
-          "summary": "Loss-of-function disease mechanism unavailable. PVS1 evaluates predicted loss-of-function variants only when loss of function is an established disease mechanism for the gene. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
+          "status": "met",
+          "summary": "LoF is predicted to undergo NMD in a relevant transcript and exon. PVS1 evaluates predicted loss-of-function variants only when loss of function is an established disease mechanism for the gene. Outcome: MET; the available evidence satisfies PVS1.",
           "evidenceItemIds": [
-            "urn:sha256:a04aeca39543cf0e63dbeaa44fa9a14421d6507dd385413440d6fcf6e7391115:annotation:NM_000256.3"
+            "urn:sha256:a04aeca39543cf0e63dbeaa44fa9a14421d6507dd385413440d6fcf6e7391115:annotation:NM_000256.3",
+            "urn:sha256:b7aedf994c71dfcc61b4957dcfffb791d75a6bcf8638ebb7e641a3b56a995294:clingen-dosage:MYBPC3:GRCh38:11:47351252:CT:C",
+            "urn:sha256:9158ea1eed2a9fd029854642560a930d4cc26938948da2ca9200e1a6bda5e336:mane:NM_000256.3:GRCh38:11:47351252:CT:C",
+            "urn:sha256:5638d92ddbb391b7720ea000a475e9206ff26f7d19a00b098790f3522e800f39:nmd:NM_000256.3:GRCh38:11:47351252:CT:C"
           ],
           "provenance": {
             "rule_version": "PVS1-v1",
-            "assessment_scope": "unknown",
+            "assessment_scope": "gene_level",
             "condition_assessment": "NOT_EVALUATED",
             "pvs1_ruleset": {
               "name": "clingen_general_pvs1",
               "version": "2018+2023-splicing"
             }
           },
-          "missingInputs": [
-            "loss-of-function disease mechanism"
-          ],
+          "strength": "very_strong",
+          "direction": "supports",
+          "evidenceOutcome": "PVS1",
           "evaluationContext": {
             "gene": "MYBPC3",
             "condition_id": null,
             "condition_label": null,
             "condition_status": "NOT_PROVIDED",
             "condition_specific": false,
-            "mechanism_scope": "UNKNOWN"
+            "mechanism_scope": "GENE_LEVEL"
           },
           "decisionTrace": [
             {
@@ -48,10 +52,77 @@
             {
               "node_id": "G01",
               "name": "lof_mechanism_available",
-              "result": "UNKNOWN",
-              "value": null,
-              "evidence_ids": [],
+              "result": "PASS",
+              "value": true,
+              "evidence_ids": [
+                "urn:sha256:b7aedf994c71dfcc61b4957dcfffb791d75a6bcf8638ebb7e641a3b56a995294:clingen-dosage:MYBPC3:GRCh38:11:47351252:CT:C"
+              ],
               "rule_id": "G01",
+              "rule_source": "clingen_pvs1_2018",
+              "next_node": null,
+              "note": null
+            },
+            {
+              "node_id": "G02",
+              "name": "lof_mechanism_established",
+              "result": "PASS",
+              "value": true,
+              "evidence_ids": [
+                "urn:sha256:b7aedf994c71dfcc61b4957dcfffb791d75a6bcf8638ebb7e641a3b56a995294:clingen-dosage:MYBPC3:GRCh38:11:47351252:CT:C"
+              ],
+              "rule_id": "G02",
+              "rule_source": "clingen_pvs1_2018",
+              "next_node": null,
+              "note": null
+            },
+            {
+              "node_id": "V01",
+              "name": "variant_type",
+              "result": "PASS",
+              "value": "FRAMESHIFT",
+              "evidence_ids": [
+                "urn:sha256:a04aeca39543cf0e63dbeaa44fa9a14421d6507dd385413440d6fcf6e7391115:annotation:NM_000256.3"
+              ],
+              "rule_id": "V01",
+              "rule_source": "clingen_pvs1_2018",
+              "next_node": null,
+              "note": null
+            },
+            {
+              "node_id": "NF01",
+              "name": "transcript_relevance",
+              "result": "PASS",
+              "value": "RELEVANT",
+              "evidence_ids": [
+                "urn:sha256:9158ea1eed2a9fd029854642560a930d4cc26938948da2ca9200e1a6bda5e336:mane:NM_000256.3:GRCh38:11:47351252:CT:C"
+              ],
+              "rule_id": "NF01",
+              "rule_source": "clingen_pvs1_2018",
+              "next_node": null,
+              "note": null
+            },
+            {
+              "node_id": "NF02",
+              "name": "nmd_prediction",
+              "result": "PASS",
+              "value": true,
+              "evidence_ids": [
+                "urn:sha256:5638d92ddbb391b7720ea000a475e9206ff26f7d19a00b098790f3522e800f39:nmd:NM_000256.3:GRCh38:11:47351252:CT:C"
+              ],
+              "rule_id": "NF02",
+              "rule_source": "clingen_pvs1_2018",
+              "next_node": null,
+              "note": null
+            },
+            {
+              "node_id": "NF03",
+              "name": "exon_relevance",
+              "result": "PASS",
+              "value": "RELEVANT",
+              "evidence_ids": [
+                "urn:sha256:9158ea1eed2a9fd029854642560a930d4cc26938948da2ca9200e1a6bda5e336:mane:NM_000256.3:GRCh38:11:47351252:CT:C"
+              ],
+              "rule_id": "NF03",
               "rule_source": "clingen_pvs1_2018",
               "next_node": null,
               "note": null
@@ -73,15 +144,8 @@
               "doi": "10.1016/j.ajhg.2023.06.002",
               "pmid": "37352859"
             }
-          ],
-          "unresolvedRequirements": [
-            "loss-of-function disease mechanism"
           ]
         }
-      },
-      {
-        "name": "referenceLink",
-        "value": "https://autopvs1.bgi.com"
       },
       {
         "name": "curatorHints",
@@ -97,20 +161,46 @@
             "message": "PVS1 was evaluated using gene-level loss-of-function mechanism evidence."
           }
         ]
+      },
+      {
+        "name": "referenceLink",
+        "value": "https://autopvs1.bgi.com"
       }
     ],
     "specifiedBy": {
       "type": "Method",
-      "name": "ACMG/AMP PVS1 assessment (unknown)",
+      "name": "ACMG/AMP 2015 with ClinGen General Guidance",
       "methodType": "PVS1",
       "reportedIn": {
         "type": "Document",
         "name": "Richards et al., 2015, Genet Med.",
+        "urls": [
+          "https://pubmed.ncbi.nlm.nih.gov/25741868/"
+        ],
         "doi": "10.1038/gim.2015.30",
         "pmid": "25741868"
       }
     },
-    "directionOfEvidenceProvided": "neutral"
+    "hasEvidenceItems": [
+      "urn:sha256:a04aeca39543cf0e63dbeaa44fa9a14421d6507dd385413440d6fcf6e7391115:annotation:NM_000256.3",
+      "urn:sha256:b7aedf994c71dfcc61b4957dcfffb791d75a6bcf8638ebb7e641a3b56a995294:clingen-dosage:MYBPC3:GRCh38:11:47351252:CT:C",
+      "urn:sha256:9158ea1eed2a9fd029854642560a930d4cc26938948da2ca9200e1a6bda5e336:mane:NM_000256.3:GRCh38:11:47351252:CT:C",
+      "urn:sha256:5638d92ddbb391b7720ea000a475e9206ff26f7d19a00b098790f3522e800f39:nmd:NM_000256.3:GRCh38:11:47351252:CT:C"
+    ],
+    "directionOfEvidenceProvided": "supports",
+    "strengthOfEvidenceProvided": {
+      "primaryCoding": {
+        "system": "ACMG Guidelines, 2015",
+        "code": "very strong"
+      }
+    },
+    "evidenceOutcome": {
+      "name": "ACMG 2015 PVS1 criterion met",
+      "primaryCoding": {
+        "system": "ACMG Guidelines, 2015",
+        "code": "PVS1"
+      }
+    }
   },
   {
     "id": "evline:MYBPC3_c_278delA_PS1",
@@ -223,7 +313,7 @@
           "name": "ACMG literature-evidence LLM pipeline (gemma-4 via vLLM) - AI-generated draft evidence, requires human curator review before use"
         },
         "activityType": "automated evidence evaluation",
-        "date": "2026-09-17T13:56:05.109534Z"
+        "date": "2026-09-17T14:23:51.655893Z"
       }
     ],
     "reportedIn": [
@@ -473,7 +563,7 @@
           "name": "ACMG literature-evidence LLM pipeline (gemma-4 via vLLM) - AI-generated draft evidence, requires human curator review before use"
         },
         "activityType": "automated evidence evaluation",
-        "date": "2026-09-17T13:56:05.104559Z"
+        "date": "2026-09-17T14:23:51.659535Z"
       }
     ],
     "reportedIn": [
@@ -1398,7 +1488,7 @@
           "name": "ACMG literature-evidence LLM pipeline (gemma-4 via vLLM) - AI-generated draft evidence, requires human curator review before use"
         },
         "activityType": "automated evidence evaluation",
-        "date": "2026-09-17T13:56:05.111673Z"
+        "date": "2026-09-17T14:23:51.662846Z"
       }
     ],
     "reportedIn": [
