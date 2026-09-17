@@ -1,4 +1,6 @@
 {
+  "curated_context_path": "config/curated-context.json",
+  "with_clinvar_spectrum": true,
   "population_sources": [
     {
       "provider": "togovar",

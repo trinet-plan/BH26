@@ -60,6 +60,7 @@ from acmg_pipeline.providers.clinvar import (
 )
 from acmg_pipeline.providers.clingen_dosage import ClinGenDosageProvider
 from acmg_pipeline.providers.clingen_gene_validity import ClinGenGeneValidityProvider
+from acmg_pipeline.providers.clinvar_spectrum import ClinvarSpectrumProvider
 from acmg_pipeline.providers.gene_disease_draft import GeneDiseaseDraftProvider
 from acmg_pipeline.providers.gnomad_constraint import GnomadConstraintProvider
 from acmg_pipeline.providers.initiation import InitiationProvider
@@ -215,6 +216,7 @@ class ProviderEvidenceResolver:
         with_clingen_dosage: bool = False,
         with_gene_disease_draft: bool = False,
         gene_disease_draft_policy: dict | None = None,
+        with_clinvar_spectrum: bool = False,
         with_splice_default: bool = False,
         splice_default_policy_version: str | None = None,
         with_initiation_assessment: bool = False,
@@ -234,6 +236,7 @@ class ProviderEvidenceResolver:
         self._with_clingen_dosage = with_clingen_dosage
         self._with_gene_disease_draft = with_gene_disease_draft
         self._gene_disease_draft_policy = gene_disease_draft_policy
+        self._with_clinvar_spectrum = with_clinvar_spectrum
         self._with_splice_default = with_splice_default
         self._splice_default_policy_version = splice_default_policy_version
         self._with_initiation_assessment = with_initiation_assessment
@@ -372,6 +375,14 @@ class ProviderEvidenceResolver:
             resolved.failures.append(
                 {"provider": GnomadConstraintProvider.name, "error": str(exc)})
             constraint = None
+        clinvar_spectrum = None
+        if self._with_clinvar_spectrum:
+            try:
+                clinvar_spectrum = ClinvarSpectrumProvider(
+                    self._external, self._clinvar_release).get_spectrum(gene)
+            except PROVIDER_ERRORS as exc:
+                resolved.failures.append(
+                    {"provider": ClinvarSpectrumProvider.name, "error": str(exc)})
         try:
             provider = GeneDiseaseDraftProvider(self._gene_disease_draft_policy or {})
             drafts = provider.build(
@@ -379,6 +390,7 @@ class ProviderEvidenceResolver:
                 transcript=annotation.get("transcript"),
                 generated_at=datetime.now(timezone.utc).isoformat(),
                 validity=validity, condition=condition, constraint=constraint,
+                clinvar_spectrum=clinvar_spectrum,
             )
         except ValueError as exc:
             resolved.failures.append({"provider": GeneDiseaseDraftProvider.name, "error": str(exc)})
