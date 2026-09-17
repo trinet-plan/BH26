@@ -10,7 +10,9 @@ from copy import deepcopy
 
 from acmg_pipeline.automated_core.interface import criterion_input
 from acmg_pipeline.automated_core.models import Variant
-from acmg_pipeline.criteria.common import annotation_context, result as _base_result, reviewed_or_automated
+from acmg_pipeline.criteria.common import (
+    annotation_context, normalize_inheritance, result as _base_result, reviewed_or_automated,
+)
 from acmg_pipeline.clinical_note import ClinicalNoteExtraction
 from acmg_pipeline.vcf_record import VariantRecord
 
@@ -59,6 +61,14 @@ def _base_context(input_data, gene=None):
         "condition_status": "PROVIDED" if condition else "NOT_PROVIDED",
         "condition_specific": False,
         "mechanism_scope": "UNKNOWN",
+        # How the curated mechanism was matched to this case, reported rather than assumed.
+        # Only EXACT is produced today: normalizing OMIM/Orphanet identifiers and reading
+        # ClinGen lumping/splitting decisions are what would produce EQUIVALENT and INCLUDED,
+        # and neither is available here, so anything short of an identifier match stays
+        # UNKNOWN instead of being upgraded on a resemblance.
+        "disease_match": "UNKNOWN",
+        "inheritance": normalize_inheritance(input_data.get("inheritance")),
+        "moi_match": "UNKNOWN",
     }
 
 
@@ -107,19 +117,43 @@ def _select_context_record(category, input_data, services, transcript):
     return selected[0], None
 
 
+def _moi_applicable(record, inheritance):
+    """Whether a curated mechanism record may be read as this case's mechanism.
+
+    The same gene and the same disease can carry different mechanisms under different
+    inheritance modes, so a mechanism curated for one mode is not evidence about another.
+    A record that names no mode is not scoped to one and stays usable, exactly as a record
+    that names no condition stays usable across conditions. A record that does name one is
+    usable only when this case names the same mode - including when this case names none,
+    because an unknown mode cannot be confirmed compatible with anything, and assuming it is
+    would borrow the very evidence the scoping exists to keep apart.
+    """
+    declared = record.get("inheritance")
+    if not declared:
+        return True
+    mode = normalize_inheritance(declared)
+    return mode is not None and mode == inheritance
+
+
 def _resolve_mechanism(input_data, services, annotation, context):
     records = _candidates("gene_disease", input_data, services, annotation["transcript"])
     gene = annotation.get("gene")
     gene_records = [item for item in records if item.get("gene") == gene]
     if records and not gene_records:
         return None, records, "gene_mismatch"
+    inheritance = context["inheritance"]
+    applicable = [item for item in gene_records if _moi_applicable(item, inheritance)]
+    other_mode = [item for item in gene_records if item not in applicable]
+    if other_mode and not applicable:
+        context["moi_match"] = "MISMATCH"
+        return None, other_mode, "moi_mismatch"
     condition = input_data.get("condition")
     if condition:
-        exact = [item for item in gene_records if item.get("condition") == condition]
-        selected = exact or [item for item in gene_records if not item.get("condition")]
+        exact = [item for item in applicable if item.get("condition") == condition]
+        selected = exact or [item for item in applicable if not item.get("condition")]
         scope = "CONDITION_SPECIFIC" if exact else "GENE_LEVEL"
     else:
-        selected = [item for item in gene_records if not item.get("condition")]
+        selected = [item for item in applicable if not item.get("condition")]
         scope = "GENE_LEVEL"
     if not selected:
         return None, [], "missing"
@@ -128,6 +162,9 @@ def _resolve_mechanism(input_data, services, annotation, context):
         return None, selected, "conflict"
     context["mechanism_scope"] = scope
     context["condition_specific"] = scope == "CONDITION_SPECIFIC"
+    context["disease_match"] = "EXACT" if scope == "CONDITION_SPECIFIC" else "UNKNOWN"
+    context["moi_match"] = ("MATCHED" if any(item.get("inheritance") for item in selected)
+                            else "NOT_SCOPED")
     return selected[0], selected, None
 
 
@@ -506,6 +543,25 @@ def _evaluate_input(input_data, services, config):
         return _finish(input_data, state, CriterionStatus.UNKNOWN,
                        "Conflicting LoF mechanism assessments",
                        review=["Resolve LoF mechanism assessments"], extra_evidence=mechanism_records)
+    if mechanism_issue == "moi_mismatch":
+        modes = sorted({str(item.get("inheritance")) for item in mechanism_records})
+        raw = input_data.get("inheritance")
+        # An unrecognized mode and an absent one both fail to match, but a curator fixes them
+        # differently: one is a spelling this pipeline does not know, the other is a field
+        # nobody filled in. The message says which.
+        declared = (f"{context['inheritance']!r}" if context["inheritance"]
+                    else f"unrecognized {raw!r}" if raw else "unstated")
+        # The records are attached even though they were not used: a curator who cannot see
+        # what was rejected has no way to tell a genuinely absent mechanism from one that is
+        # present under another inheritance mode, and those need opposite actions.
+        state["trace"].append(_node(
+            "G01", "lof_mechanism_available", "UNKNOWN", declared, mechanism_records))
+        return _finish(
+            input_data, state, CriterionStatus.UNKNOWN,
+            f"The available loss-of-function mechanism evidence is curated for "
+            f"{', '.join(modes)} inheritance; this case's inheritance mode is {declared}",
+            missing=["loss-of-function disease mechanism for this inheritance mode"],
+            extra_evidence=mechanism_records)
     if mechanism_issue == "missing":
         state["trace"].append(_node("G01", "lof_mechanism_available", "UNKNOWN"))
         return _finish(input_data, state, CriterionStatus.UNKNOWN,

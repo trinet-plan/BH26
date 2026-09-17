@@ -116,6 +116,73 @@ class PVS1DecisionTreeTests(unittest.TestCase):
         self.assertEqual(value.status, CriterionStatus.UNKNOWN)
         self.assertIn("lof_mechanism_established", value.missing_inputs)
 
+    def test_disease_match_is_exact_only_on_an_identifier_match(self):
+        input_data = {**self.input, "condition": "MONDO:1"}
+        items = self.truncating_evidence()
+        items.append(self.mechanism(True, condition="MONDO:1"))
+        value = self.evaluate_result(*items, input_data=input_data)
+        self.assertEqual(value.status, CriterionStatus.MET)
+        self.assertEqual(value.evaluation_context["disease_match"], "EXACT")
+
+        # A gene-level record carries no disease identifier, so nothing was matched: the
+        # fallback must not be reported as if the disease had been confirmed.
+        fallback = self.evaluate_result(*self.truncating_evidence(), input_data=input_data)
+        self.assertEqual(fallback.status, CriterionStatus.MET)
+        self.assertEqual(fallback.evaluation_context["disease_match"], "UNKNOWN")
+
+        no_condition = self.evaluate_result(*self.truncating_evidence())
+        self.assertEqual(no_condition.evaluation_context["disease_match"], "UNKNOWN")
+
+    def test_inheritance_is_normalized_across_vocabularies(self):
+        for declared, supplied in (("AR", "autosomal recessive"),
+                                   ("autosomal_recessive", "AR"),
+                                   ("Autosomal-Recessive", "autosomal_recessive")):
+            with self.subTest(declared=declared, supplied=supplied):
+                input_data = {**self.input, "inheritance": supplied}
+                items = self.truncating_evidence()
+                items.append(self.mechanism(True, inheritance=declared))
+                value = self.evaluate_result(*items, input_data=input_data)
+                self.assertEqual(value.status, CriterionStatus.MET)
+                self.assertEqual(value.evaluation_context["inheritance"],
+                                 "autosomal_recessive")
+                self.assertEqual(value.evaluation_context["moi_match"], "MATCHED")
+
+    def test_mechanism_curated_for_another_inheritance_mode_is_not_borrowed(self):
+        input_data = {**self.input, "inheritance": "autosomal recessive"}
+        items = [self.annotation(), self.transcript(), self.nmd(),
+                 self.mechanism(True, inheritance="AD")]
+        value = self.evaluate_result(*items, input_data=input_data)
+        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
+        self.assertEqual(value.evaluation_context["moi_match"], "MISMATCH")
+        self.assertIn("loss-of-function disease mechanism for this inheritance mode",
+                      value.missing_inputs)
+        # The rejected record is still reported, so a curator can tell a mechanism that is
+        # absent from one that exists under a different mode.
+        self.assertIn("AD", value.summary)
+        self.assertIn("'autosomal_recessive'", value.summary)
+        self.assertTrue(any(item.get("inheritance") == "AD" for item in value.evidence))
+
+    def test_mode_scoped_mechanism_is_not_used_when_the_case_declares_no_mode(self):
+        items = [self.annotation(), self.transcript(), self.nmd(),
+                 self.mechanism(True, inheritance="AR")]
+        value = self.evaluate_result(*items)
+        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
+        self.assertEqual(value.evaluation_context["moi_match"], "MISMATCH")
+
+    def test_unscoped_mechanism_stays_usable_under_any_declared_mode(self):
+        input_data = {**self.input, "inheritance": "AD"}
+        value = self.evaluate_result(*self.truncating_evidence(), input_data=input_data)
+        self.assertEqual(value.status, CriterionStatus.MET)
+        self.assertEqual(value.evaluation_context["moi_match"], "NOT_SCOPED")
+
+    def test_unrecognized_inheritance_mode_is_not_treated_as_a_match(self):
+        input_data = {**self.input, "inheritance": "AR"}
+        items = [self.annotation(), self.transcript(), self.nmd(),
+                 self.mechanism(True, inheritance="recessive-ish")]
+        value = self.evaluate_result(*items, input_data=input_data)
+        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
+        self.assertEqual(value.evaluation_context["moi_match"], "MISMATCH")
+
     def test_conflicting_mechanisms_and_gene_mismatch_require_review(self):
         value = self.evaluate_result(self.annotation(), self.mechanism(True), self.mechanism(False))
         self.assertEqual(value.status, CriterionStatus.UNKNOWN)

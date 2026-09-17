@@ -213,3 +213,36 @@ def require_boolean_fields(code, input_data, evidence, assessment, fields):
                       f"{', '.join(missing)}, which {code} requires",
                       evidence=evidence, missing=missing)
     return None
+
+
+# The inheritance-mode vocabularies this pipeline has to reconcile. Curated specifications
+# write "AD"/"AR", clinical notes write "autosomal dominant", and prepared records have been
+# seen carrying "autosomal_recessive". Comparing those as raw strings silently fails to
+# match, and a silent non-match here is worse than a loud one: it drops a disease-specific
+# assessment and falls back to a weaker default without saying so.
+INHERITANCE_MODES = {
+    "autosomal_dominant": ("ad", "autosomal dominant", "autosomal dominant inheritance"),
+    "autosomal_recessive": ("ar", "autosomal recessive", "autosomal recessive inheritance"),
+    "x_linked_dominant": ("xld", "x linked dominant", "x linked dominant inheritance"),
+    "x_linked_recessive": ("xlr", "x linked recessive", "x linked recessive inheritance"),
+    "x_linked": ("xl", "x linked", "x linked inheritance"),
+    "mitochondrial": ("mt", "mitochondrial", "mitochondrial inheritance"),
+}
+
+_INHERITANCE_ALIASES = {alias: canonical
+                       for canonical, aliases in INHERITANCE_MODES.items()
+                       for alias in (canonical.replace("_", " "), *aliases)}
+
+
+def normalize_inheritance(value):
+    """Canonical inheritance-mode token, or None when absent or unrecognized.
+
+    Absent and unrecognized deliberately collapse to None at this level: both mean "this
+    string does not name a mode we can compare". Callers that must tell them apart check the
+    raw value first, because an unrecognized mode is a curation defect a curator should see,
+    while an absent one just means the record is not scoped to a mode.
+    """
+    if not isinstance(value, str):
+        return None
+    token = " ".join(value.strip().lower().replace("-", " ").replace("_", " ").split())
+    return _INHERITANCE_ALIASES.get(token)
