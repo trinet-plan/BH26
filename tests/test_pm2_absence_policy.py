@@ -1,14 +1,14 @@
 """PM2's strength, and what may count as absence.
 
 Recorded 2026-09-17 in doc/external_data_coverage_ja.md, following ClinGen SVI's PM2
-recommendation v1.0 (2020-09-04): PM2 is applied at Supporting strength, and absence from a
-public database supports rarity only where coverage and callability at the locus can be
-checked. TogoVar returns no locus coverage, so a variant it does not report is not absent -
-it is unknown.
-
-Both already held when the policy was written. These pin them, because the failure mode is
-silent: a defaulted strength or an AF of 0 read from a missing record would both still produce
-a confident-looking result.
+recommendation v1.0 (2020-09-04): PM2 is applied at Supporting strength. Absence from a
+public database is a weaker signal of rarity than a confirmed AF observation, because
+TogoVar returns no locus coverage and a variant it does not report cannot be told apart
+from an uncovered locus - but (2026-09-17 policy change, same day as the above) this project
+now scores that weaker signal as a flagged MET/supporting prediction rather than withholding
+a call outright: the coverage caveat travels in review_points/provenance instead of blocking
+the verdict. An AF of 0 is still never fabricated from a missing record - the observation
+list stays empty, only the outcome differs from a hard UNKNOWN.
 """
 
 import unittest
@@ -55,9 +55,14 @@ class Pm2PolicyTests(unittest.TestCase):
         self.assertEqual(self.evaluate([self.observation(callable=True)]).evidence_outcome,
                          "PM2_supporting")
 
-    def test_a_database_that_reports_nothing_is_not_absence(self):
-        """No record at all cannot be read as AF 0."""
-        self.assertEqual(self.evaluate([]).status, CriterionStatus.UNKNOWN)
+    def test_a_database_that_reports_nothing_is_a_flagged_prediction_not_af_zero(self):
+        """No record at all is not read as a confirmed AF 0, but (2026-09-17 policy change)
+        it now reaches a flagged supporting-strength MET rather than withholding a call -
+        the coverage caveat travels in review_points/provenance instead."""
+        value = self.evaluate([])
+        self.assertEqual(value.status, CriterionStatus.MET)
+        self.assertEqual(value.strength, "supporting")
+        self.assertTrue(value.review_points)
 
     def test_an_ac_of_zero_without_callability_is_rejected(self):
         value = self.evaluate([self.observation()])

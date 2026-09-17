@@ -1,6 +1,0 @@
-{
-  "schema_version": "1.0",
-  "registry_status": "DRAFT",
-  "purpose": "Curator-review queue for gene/phenotype diagnostic-yield reference records used by acmg_pipeline.criteria.pp4_pp1_bs4.evaluate_locus_evidence() (PP4 posterior-probability -> ClinGen 2024 Bayesian points). An entry MUST NOT be used as runtime input until status is APPROVED and a curator records reviewed_at - see acmg_pipeline.criteria.pp1_bs4_pp4_engine.load_reference_records(), which only returns APPROVED entries.",
-  "entries": []
-}

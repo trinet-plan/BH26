@@ -9,7 +9,7 @@ import unittest
 from acmg_pipeline.automated_core.models import Variant
 from acmg_pipeline.criteria.common import reviewed_or_automated
 from acmg_pipeline.providers.initiation import (
-    METHOD, InitiationProvider, downstream_in_frame_start,
+    IC01_METHOD, METHOD, InitiationProvider, downstream_in_frame_start,
 )
 
 
@@ -25,17 +25,28 @@ def consequence(**overrides):
 
 
 class FakeClient:
-    def __init__(self, consequences, cds):
+    def __init__(self, consequences, cds, gene_transcripts=()):
         self.consequences = consequences
         self.cds = cds
+        self.gene_transcripts = list(gene_transcripts)
         self.urls = []
 
     def fetch(self, url, *, response_format="json", **kwargs):
         self.urls.append(url)
-        body = ({"seq": self.cds} if "/sequence/id/" in url
-                else [{"transcript_consequences": self.consequences}])
+        if "/sequence/id/" in url:
+            body = {"seq": self.cds}
+        elif "/lookup/symbol/" in url:
+            body = {"Transcript": self.gene_transcripts}
+        else:
+            body = [{"transcript_consequences": self.consequences}]
         return {"body": body, "body_sha256": "abc123",
                 "retrieved_at": "2026-09-17T00:00:00Z"}
+
+
+def gene_transcript(transcript_id, *, strand=1, translation_start=100, translation_end=400,
+                    biotype="protein_coding"):
+    return {"id": transcript_id, "strand": strand, "biotype": biotype,
+            "Translation": {"start": translation_start, "end": translation_end}}
 
 
 # ATG, two codons, then an in-frame ATG at codon 4.
@@ -70,8 +81,8 @@ class InitiationProviderTests(unittest.TestCase):
         self.variant = Variant("GRCh38", "13", 20189546, "A", "G")
 
     def assess(self, cds=CDS_WITH_RESTART, consequences=None, gene="GJB2",
-               transcript="NM_004004.6", hgvsc="NM_004004.6:c.2T>C"):
-        client = FakeClient(consequences or [consequence()], cds)
+               transcript="NM_004004.6", hgvsc="NM_004004.6:c.2T>C", gene_transcripts=()):
+        client = FakeClient(consequences or [consequence()], cds, gene_transcripts=gene_transcripts)
         provider = InitiationProvider(client, "116")
         return provider.get_initiation_assessment(self.variant, gene, transcript, hgvsc), client
 
@@ -91,10 +102,48 @@ class InitiationProviderTests(unittest.TestCase):
         self.assertEqual(self.assess(cds="ATGA")[0], [])
         self.assertEqual(self.assess(cds=None)[0], [])
 
-    def test_it_does_not_answer_the_other_two_gates(self):
+    def test_it_does_not_answer_ic03(self):
         record = self.assess()[0][0]
-        self.assertNotIn("intact_alternative_transcript", record)
         self.assertNotIn("upstream_pathogenic_evidence", record)
+
+    def test_no_gene_transcript_data_leaves_ic01_unanswered(self):
+        """Honest gap, not a fabricated default - gene_transcripts=() simulates the
+        evaluated transcript not being found in the gene's Ensembl transcript list."""
+        record = self.assess(gene_transcripts=())[0][0]
+        self.assertNotIn("intact_alternative_transcript", record)
+
+    def test_gjb2_real_case_all_transcripts_share_one_start_no_alternative(self):
+        """Real GJB2 Ensembl data (2026-09-17): all 11 of GJB2's transcripts share the
+        exact same start-codon genomic position (20189581, minus strand) - a naive
+        "multiple transcripts exist" check would wrongly read this as an alternative
+        start, so intact_alternative_transcript must be False here."""
+        record = self.assess(gene_transcripts=[
+            gene_transcript("ENST00000382848", strand=-1, translation_start=20188901,
+                            translation_end=20189581),
+            gene_transcript("ENST00000906230", strand=-1, translation_start=20188901,
+                            translation_end=20189581),
+        ])[0][0]
+        self.assertFalse(record["intact_alternative_transcript"])
+        self.assertEqual(record["alternative_transcript_method"], IC01_METHOD)
+
+    def test_a_transcript_with_a_genuinely_different_start_sets_ic01_true(self):
+        record = self.assess(gene_transcripts=[
+            gene_transcript("ENST00000382848", strand=-1, translation_start=20188901,
+                            translation_end=20189581),
+            gene_transcript("ENST00099999999", strand=-1, translation_start=20180000,
+                            translation_end=20180500),
+        ])[0][0]
+        self.assertTrue(record["intact_alternative_transcript"])
+        self.assertEqual(record["alternative_transcript_candidate"], "ENST00099999999")
+
+    def test_a_non_protein_coding_alternative_does_not_count(self):
+        record = self.assess(gene_transcripts=[
+            gene_transcript("ENST00000382848", strand=-1, translation_start=20188901,
+                            translation_end=20189581),
+            gene_transcript("ENST00099999999", strand=-1, translation_start=20180000,
+                            translation_end=20180500, biotype="processed_transcript"),
+        ])[0][0]
+        self.assertFalse(record["intact_alternative_transcript"])
 
     def test_a_consequence_that_is_not_start_loss_is_not_this_question(self):
         self.assertEqual(

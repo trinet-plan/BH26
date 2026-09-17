@@ -47,7 +47,18 @@ def citable(assessment):
     return [assessment] if assessment.get("evidence_id") else []
 
 
-def population_context(code, input_data, services, config):
+def population_context(code, input_data, services, config, *, treat_total_absence_as_evidence=False):
+    """`treat_total_absence_as_evidence`: only PM2 passes this. For a rarity-seeking
+    criterion, a variant that no queried population source returned ANYTHING for (not
+    even a rejected/low-quality record) is itself a weak signal of rarity, not merely an
+    unanswerable gap - unlike BA1/BS1, where the same silence cannot argue a variant is
+    common. When true and every provider resolved cleanly with nothing to report (no real
+    fetch error - see the NO_OBSERVATION check below), the early UNKNOWN below is skipped
+    and an empty-but-valid context is returned instead, so the caller can score the absence
+    itself (with its own caveat) rather than being forced into UNKNOWN here. A provider that
+    could not be reached at all (a real error, not a confirmed empty result) still blocks
+    this path - that is a search gap, not an observation.
+    """
     rule = config.get(code, {})
     minimum_an = number(rule.get("minimum_an"))
     if minimum_an is None or minimum_an < 1 or minimum_an != minimum_an.to_integral_value():
@@ -62,6 +73,13 @@ def population_context(code, input_data, services, config):
     provenance = {"policy_source": rule["policy_source"], "policy_version": rule["policy_version"],
                   "rejected_observations": rejected, "provider_failures": resolved["failures"]}
     if not valid:
+        total_absence = (
+            treat_total_absence_as_evidence
+            and not resolved["observations"]
+            and all(f.get("reason") == "NO_OBSERVATION" for f in resolved["failures"])
+        )
+        if total_absence:
+            return None, (rule, [], rejected, resolved["failures"], provenance)
         return result(code, input_data, CriterionStatus.UNKNOWN, "No reliable population observation",
                       evidence=resolved["observations"], missing=["population"],
                       provenance=provenance), None

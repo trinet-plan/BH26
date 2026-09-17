@@ -95,6 +95,24 @@ class Pvs1AutomatedGateTests(unittest.TestCase):
     def nodes(self, result):
         return {node["node_id"]: node["result"] for node in result.decision_trace}
 
+    def splice_default(self, transcript=TRANSCRIPT):
+        from acmg_pipeline.providers.splice_default import SpliceDefaultProvider
+        provider = SpliceDefaultProvider("splice-default-v1")
+        return provider.get_splice_assessment(self.variant, transcript, "2026-09-17T00:00:00Z")
+
+    def test_splice_default_reaches_very_strong_on_the_real_mybpc3_splice_case(self):
+        """MYBPC3 c.2905+1G>A (canonical donor, ClinGen: PVS1_very_strong) - the naive
+        exon-length rule gets this wrong (see providers/splice_default.py's own
+        docstring); the literature-default policy this test drives instead reaches the
+        real answer, flagged as a default rather than a curator review."""
+        result = self.evaluate(
+            self.dosage(), self.mane(exon="27/34"), self.nmd(exon="27/34"), self.splice_default(),
+            consequence_term="splice_donor_variant",
+        )
+        self.assertEqual(result.status, CriterionStatus.MET)
+        self.assertEqual(result.strength, "very_strong")
+        self.assertTrue(any("default policy" in note for note in result.review_points))
+
     def test_the_three_providers_together_carry_pvs1_to_very_strong(self):
         exon = self.exon_from_vep()
         result = self.evaluate(self.dosage(), self.mane(exon=exon), self.nmd())
@@ -221,12 +239,19 @@ class Pvs1AutomatedGateTests(unittest.TestCase):
         self.assertEqual(self.nodes(result)["V01"], "PASS")
 
     def region(self, protein_start=204, length=213):
-        """The measurement provider's record, with NF04/NF06 left unanswered as it does."""
+        """The measurement provider's record, with NF04/NF06 left unanswered as it does
+        when UniProt itself cannot be resolved for this gene (mocked here to return no
+        accession, so this test exercises that honest-gap path deterministically rather
+        than depending on a real network lookup for MYBPC3 - see
+        tests/test_protein_region.py for the cases where UniProt DOES answer NF04/NF06)."""
+        from unittest.mock import patch
         from tests.test_protein_region import FakeClient as RegionClient
         from acmg_pipeline.providers.protein_region import ProteinRegionProvider
         client = RegionClient([consequence(exon="3/3")], length=length)
-        return ProteinRegionProvider(client, "116").get_protein_region(
-            self.variant, GENE, TRANSCRIPT, HGVSC, protein_start)
+        with patch("acmg_pipeline.providers.protein_region.gene_to_uniprot_accession",
+                  return_value=None):
+            return ProteinRegionProvider(client, "116").get_protein_region(
+                self.variant, GENE, TRANSCRIPT, HGVSC, protein_start)
 
     def relevance(self, **values):
         """The one judgment NF06 needs, as a curator would supply it."""

@@ -29,9 +29,10 @@ the PP1/BS4/PP4 phenotype-segregation engine).
   They moved to acmg_pipeline.constants.PHENOTYPE_SEGREGATION_CODES /
   IMPLEMENTED_CODES on 2026-09-17, once acmg_pipeline.criteria.
   pp1_bs4_pp4_engine connected the real ClinGen 2024 evaluator (pulled in
-  from r-kobayashi's pp4_pp1_bs4 branch). They still come back UNKNOWN for
-  any gene without a curated config/pp4_reference_records.json entry - the
-  same honest-gap behavior stub_evidence() below provides - but that now
+  from r-kobayashi's pp4_pp1_bs4 branch). They still come back UNKNOWN
+  when there is no diagnosis to search the literature for, or nothing
+  confirmed is found (acmg_pipeline.pp4_literature_search) - the same
+  honest-gap behavior stub_evidence() below provides - but that now
   happens inside pp1_bs4_pp4_engine itself, not here.
 """
 

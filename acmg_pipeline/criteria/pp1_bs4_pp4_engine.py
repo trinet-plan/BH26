@@ -11,131 +11,132 @@ per the user's explicit direction (2026-09-17): "pipelineと繋げて。テス�
   pp4_pp1_bs4.py is the reviewed judgment logic itself (ClinGen 2024
   Bayesian points, phenotype matching, family segregation scoring) and is
   left exactly as pulled in, unmodified. Everything specific to THIS
-  project's own integration - the points-to-Strength mapping, the curated
-  reference-record lookup, and the CriterionEvidence/EvidenceLine
-  conversion - lives here instead, the same separation segregation.py
-  (judgment logic) already keeps from export.py (VA-Spec conversion).
+  project's own integration - the points-to-Strength mapping and the
+  CriterionEvidence/EvidenceLine conversion - lives here instead, the same
+  separation segregation.py (judgment logic) already keeps from export.py
+  (VA-Spec conversion).
 
-[The points-to-Strength mapping now follows the paper's own Table 4]
+[The points-to-Strength mapping follows the paper's own Table 4]
   evaluator.py's DIAGNOSTIC_YIELD_POINT_TABLE and pp4_pp1_bs4.py's
   segregation scoring both produce points on the same Tavtigian-compatible
   scale acmg_pipeline.classification already uses (1/2/4/8 = Supporting/
-  Moderate/Strong/Very_Strong). This module used to floor PP4's points and
-  PP1's points to a Strength independently, which is only correct when one
-  of the two has no evidence at all; when both contribute for the same
-  locus, independent flooring can report a combined strength the shared
-  +5.0-point cap does not actually support. to_criterion_evidence() (below)
-  now calls acmg_pipeline.criteria.pp1_pp4_strength_table.
-  combined_pp1_pp4_strength() instead, which implements Table 4 from
-  Biesecker et al., 2024 (see that module's own docstring for the table
-  itself and the tie-break rule it uses when Table 4 allows more than one
-  split for a given combined total).
+  Moderate/Strong/Very_Strong). to_criterion_evidence() (below) calls
+  acmg_pipeline.criteria.pp1_pp4_strength_table.combined_pp1_pp4_strength()
+  to floor PP4's and PP1's points to a Strength TOGETHER (not
+  independently, which can report a combined strength the shared
+  +5.0-point cap does not actually support) - see that module's own
+  docstring for the table itself and its tie-break rule.
 
-[Why PP1/BS4/PP4 need a curated reference record, and what happens
- without one]
-  evaluate_locus_evidence() requires a PP4ReferenceRecord (curated gene-
-  phenotype diagnostic-yield data) and several explicit conservative gates
-  (method_comparable, fully_penetrant, low_phenocopy, ar_case_mode) that
-  the function deliberately never infers. This project has no such
-  curated database yet - config/pp4_reference_records.json is a real,
-  empty DRAFT registry (same "registry_status: DRAFT, only APPROVED
-  entries load" convention as config/bs1_thresholds_draft.json), not a
-  fabricated one. Until entries are curated and approved there, every
-  real gene correctly evaluates to UNKNOWN for PP1/BS4/PP4 - the same
-  "honest gap, not a guess" behavior every other stub in this project
-  already uses. See test_pp1_bs4_pp4_engine.py for both the "no curated
-  reference" path and (using a synthetic in-test reference record, the
-  same pattern test_pp4_pp1_bs4.py's own fixtures already use) the "real
-  evidence produced" path.
+[No curated reference registry - PP4/PP1/BS4 are always answered from a
+ live literature search (2026-09-17, superseding this module's earlier
+ config/pp4_reference_records.json design from the same day)]
+  evaluate_locus_evidence() needs a PP4ReferenceRecord (gene-phenotype
+  diagnostic-yield data) - a fact no tool can compute from a single
+  patient. This module originally read that fact from a hand-curated
+  config/pp4_reference_records.json registry (DRAFT/APPROVED/
+  AUTO_EXTRACTED), the same "only approved entries load" convention
+  config/bs1_thresholds_draft.json still uses for BS1. The user's explicit
+  direction (2026-09-17), after several rounds of discussion, was to drop
+  that registry entirely:
+    - Confirmed there is no "AI drafts, a human approves before use"
+      principle in this project - PS3/BS3/PS4 already show the real
+      pattern: a live LLM judgment against real literature becomes the
+      CriterionEvidence immediately, carrying a disclosure rather than
+      being withheld pending a separate approval step.
+    - A registry that only a human can populate reintroduces exactly the
+      "no data until someone does the curation work first" cold-start
+      problem this project is meant to help with in the first place - the
+      tool should find candidate evidence itself, not wait for it.
+    - An auto-caching layer that persists search results back into the
+      registry (an earlier, briefly-tried middle ground) was rejected too:
+      it does not match PS3/BS3/PS4's own ephemeral per-call caching, and
+      a live PubMed+LLM search is judged rare enough (PP4 does not apply
+      to most variants) that repeating it per call is an acceptable cost,
+      not a real one.
+  evaluate() therefore always calls acmg_pipeline.pp4_literature_search.
+  search_diagnostic_yield() (PubMed MCP + this project's own LLM) using
+  clinical_note.diagnosis as the phenotype description - the same
+  free-text field acmg_pipeline.export previously only fed into VA-Spec's
+  objectCondition, now put to a second use. No diagnosis, or nothing
+  confirmed found, means an honest UNKNOWN, not a guess.
 
-  The diagnostic_yield / locus_model / testing_method fields still must be
-  curated (they are literature-derived Bayesian-input statistics no tool
-  can compute from a single patient). phenotype_hpo is used again by
-  default - see the next section.
+[Why phenotype_match is assumed True, not computed, for a literature-
+ found reference]
+  The search query was itself "this gene + this patient's diagnosis," so
+  a match is true by construction. (An earlier, now-removed design tried
+  two alternative matchers here - an exact match against a curated
+  required-HPO-term list, which needs curated data this path has none of,
+  and a PubCaseFinder gene-ranking proxy, which real testing against case3
+  (MYH7) showed can rank the correct, ClinVar-established gene outside its
+  own top 10 for a real but sparse HPO profile. Neither fit a literature-
+  derived reference, so this module no longer tries to compute the
+  question at all here.)
 
-[Which phenotype-match method evaluate() uses, and why (2026-09-17)]
-  PP4's phenotype_match gate is now pluggable -
-  acmg_pipeline.criteria.phenotype_matchers.PHENOTYPE_MATCHERS - rather than
-  hard-wired to PubCaseFinder. The default,
-  phenotype_matchers.DEFAULT_PHENOTYPE_MATCHER
-  ("curated_hpo_list"), is Biesecker et al., 2024's own method (this is the
-  paper this project treats as the current ACMG/ClinGen guidance for PP1/
-  BS4/PP4 - ACMG's own 2015 base standard left these criteria's details
-  "sparse," per that paper's own summary): an exact match against the
-  curated PP4ReferenceRecord.phenotype_hpo definition the cited diagnostic-
-  yield study itself used (pp4_pp1_bs4.match_phenotype_constellation(),
-  left unmodified). PubCaseFinder (2026-09-17's earlier approach - a
-  HPO-based gene-ranking proxy, see acmg_pipeline.pubcasefinder's own
-  docstring) is kept available as "pubcasefinder" but is no longer the
-  default: it is not the paper's own method, and testing it against a real
-  demo case (case3, MYH7) showed it can rank the correct, ClinVar-
-  established gene outside its own top 10 for a real but sparse HPO
-  profile - see phenotype_matchers.py's docstring for the full reasoning.
-  A registry entry can override the choice per gene via its own
-  `gates.phenotype_matcher`; otherwise `config["pp4_phenotype_matcher"]`
-  (evaluate()'s own config dict) is used, falling back to
-  DEFAULT_PHENOTYPE_MATCHER.
+[method_comparable is assumed True, disclosed as unconfirmed]
+  Whether the CURRENT test's methodology is comparable to the cited
+  study's is not something a literature search can verify. Rather than
+  block PP4 entirely (the same reasoning PS3/BS3/PS4 use for their own
+  heuristic, unconfirmed strength estimates), this is assumed True and the
+  reference's own source_citation always says so explicitly.
+
+[Why the denominator matters - confirmed with two real experiments]
+  Two real searches (case3/MYH7, against both a GeneReviews entry and a
+  live PubMed hit) found the same trap twice: a gene's reported percentage
+  is very often "share among already gene-positive patients," not the
+  true overall diagnostic yield - using the former would badly overstate
+  the evidence. acmg_pipeline.pp4_literature_search (not this file)
+  discards any percentage not explicitly confirmed as the latter, rather
+  than guessing which denominator applies.
 """
 
 from __future__ import annotations
 
-import json
-from pathlib import Path
+from typing import Optional
 
 from acmg_pipeline.classification import CriterionEvidence, Strength
 from acmg_pipeline.clinical_note import ClinicalNoteExtraction
 from acmg_pipeline.constants import CriterionStatus
-from acmg_pipeline.criteria.phenotype_matchers import DEFAULT_PHENOTYPE_MATCHER, PHENOTYPE_MATCHERS
 from acmg_pipeline.criteria.pp1_pp4_strength_table import combined_pp1_pp4_strength
 from acmg_pipeline.criteria.pp4_pp1_bs4 import (
     LocusEvidenceResult,
+    PhenotypeMatchResult,
     PP4ReferenceRecord,
     evaluate_locus_evidence,
 )
 from acmg_pipeline.vcf_record import VariantRecord
 
-PP1_BS4_PP4_CODES = frozenset({"PP1", "BS4", "PP4"})
+async def _build_reference_from_literature(gene: str, diagnosis: str) -> Optional[PP4ReferenceRecord]:
+    """Ask acmg_pipeline.pp4_literature_search for a confirmed overall
+    diagnostic-yield statistic and, if found, wrap it as a PP4ReferenceRecord.
 
-_DEFAULT_REGISTRY_PATH = Path(__file__).resolve().parents[2] / "config" / "pp4_reference_records.json"
-
-
-def load_reference_records(path: Path = _DEFAULT_REGISTRY_PATH) -> dict[str, dict]:
-    """gene -> {"reference": PP4ReferenceRecord, "gates": {...}} for APPROVED entries only.
-
-    An entry's `gates` dict carries the conservative parameters evaluate_
-    locus_evidence() requires and never infers (method_comparable,
-    inheritance_mode, fully_penetrant, low_phenocopy, ar_case_mode) - these
-    are as much curated, per-gene/per-VCEP-specification facts as the
-    diagnostic yield itself, so they are curated in the same registry
-    entry rather than guessed at evaluation time.
+    Returns None when nothing usable was found - callers must treat that
+    as "not evaluable," never as a negative (benign) observation.
     """
-    if not path.is_file():
-        return {}
-    registry = json.loads(path.read_text(encoding="utf-8"))
-    result: dict[str, dict] = {}
-    for entry in registry.get("entries", []):
-        if entry.get("status") != "APPROVED":
-            continue
-        reference = PP4ReferenceRecord(
-            reference_id=entry["id"],
-            gene=entry["gene"],
-            phenotype_label=entry["phenotype_label"],
-            phenotype_hpo=tuple(entry.get("phenotype_hpo", [])),
-            locus_model=entry["locus_model"],
-            diagnostic_yield=entry["diagnostic_yield"],
-            testing_method=entry["testing_method"],
-            source_citation=entry["source_citation"],
-            source_note=entry.get("source_note", ""),
-        )
-        result[entry["gene"]] = {"reference": reference, "gates": entry.get("gates", {})}
-    return result
+    from acmg_pipeline import pp4_literature_search
 
+    result = await pp4_literature_search.search_diagnostic_yield(gene, diagnosis)
+    if not result.found or result.yield_fraction is None:
+        return None
 
-def _unknown_all(reason: str) -> dict[str, CriterionEvidence]:
-    return {
-        code: CriterionEvidence(code=code, status=CriterionStatus.UNKNOWN, source=reason)
-        for code in PP1_BS4_PP4_CODES
-    }
+    caution = (
+        f" [CAUTION: small sample size n={result.sample_size} - interpret with caution]"
+        if result.sample_size is not None and result.sample_size < 20 else ""
+    )
+    return PP4ReferenceRecord(
+        reference_id=f"pubmed:{result.pmid}",
+        gene=gene,
+        phenotype_label=diagnosis,
+        phenotype_hpo=(),
+        locus_model="heterogeneous",
+        diagnostic_yield=result.yield_fraction,
+        testing_method="unspecified",
+        source_citation=(
+            f"PMID:{result.pmid} (auto-extracted via literature search, unconfirmed - "
+            f"requires human curator review; denominator: {result.denominator_description}; "
+            f"sample_size={result.sample_size}){caution}"
+        ),
+        source_note=result.quote or "",
+    )
 
 
 def to_criterion_evidence(result: LocusEvidenceResult) -> dict[str, CriterionEvidence]:
@@ -163,7 +164,7 @@ def to_criterion_evidence(result: LocusEvidenceResult) -> dict[str, CriterionEvi
     if result.pp4 is not None and result.pp4.applicable:
         evidence["PP4"] = (
             CriterionEvidence(code="PP4", status=CriterionStatus.MET, strength=strengths.pp4,
-                              source=f"pp1_bs4_pp4_engine: {result.pp4.reference_id}")
+                              source=f"pp1_bs4_pp4_engine: {result.pp4.reference_id} - {result.pp4.source_citation}")
             if strengths.pp4 is not None
             else CriterionEvidence(code="PP4", status=CriterionStatus.NOT_MET,
                                     source=f"pp1_bs4_pp4_engine: {result.pp4.reference_id} (below Supporting threshold)")
@@ -288,60 +289,71 @@ async def evaluate(
     """Return {code: CriterionEvidence} for PP1, BS4, PP4 - the entry point
     acmg_pipeline.pipeline.evaluate_variant_evidence_lines() calls.
 
-    `config` follows the same convention as the automated engine's
-    `automated_config` (acmg_pipeline.pipeline_interface.load_automated_config()) -
-    an optional "pp4_reference_records_path" key overrides the default
-    registry location (mainly for tests), and an optional
-    "pp4_phenotype_matcher" key (one of acmg_pipeline.criteria.
-    phenotype_matchers.PHENOTYPE_MATCHERS's names) overrides which
-    phenotype-match method is used - see this module's own docstring
-    section on why "curated_hpo_list" (Biesecker et al., 2024's own method)
-    is the default rather than "pubcasefinder". A registry entry's own
-    `gates.phenotype_matcher` takes precedence over both when present, since
-    the choice of method is as much a per-citation curation fact as
-    diagnostic_yield itself (e.g. an entry with no phenotype_hpo definition
-    recorded may deliberately opt into "pubcasefinder" instead).
+    `config` is accepted for signature parity with the automated engine's
+    `automated_config` convention but currently unused - PP4's diagnostic-
+    yield input always comes from a live literature search now (see this
+    module's own docstring), not from a caller-supplied path/override.
+
+    PP1/BS4 (family co-segregation) never need the literature search at
+    all - they are scored from clinical_note.family.relatives alone, per
+    ClinGen 2024 Table 3 (pp4_pp1_bs4._score_family_segregation()). Only
+    PP4 needs a diagnostic-yield statistic. So when there is no diagnosis
+    to search for, or the search finds nothing confirmed, this function
+    still calls evaluate_locus_evidence() - with phenotype_match_override
+    set to matched=None (not True) so PP4 correctly comes back "not
+    evaluable" - rather than short-circuiting to UNKNOWN for all three;
+    evaluate_pp4() is skipped whenever phenotype.matched is None (see
+    pp4_pp1_bs4.evaluate_locus_evidence()), so PP1/BS4's segregation
+    scoring below is unaffected either way.
 
     HPO normalization (acmg_pipeline.hpo_extraction.normalize_hpo(), a
-    TogoMCP + LLM round trip) and the selected phenotype matcher only run
-    once a curated reference record is actually found for this gene - with
-    no APPROVED entry the result is UNKNOWN regardless of phenotype, so
-    spending real network/LLM cost first would be wasted on an answer
-    that's already decided. The hpo_extraction import is local (not
-    top-level) because it requires VLLM_BASE_URL/VLLM_API_KEY at import
-    time (same reason clinical_note.py lazily imports clinical_extraction.py
-    instead of importing it at module load).
+    TogoMCP + LLM round trip) and the literature search only run once
+    clinical_note.diagnosis is non-empty - with nothing to search for,
+    PP4 is already decided (not evaluable), so spending real network/LLM
+    cost first would be wasted. Both imports are local (not top-level)
+    because hpo_extraction and pp4_literature_search each require
+    VLLM_BASE_URL/VLLM_API_KEY at import time (same reason clinical_note.py
+    lazily imports clinical_extraction.py instead of importing it at
+    module load).
     """
     gene = str(variant.info.get("GENE", ""))
-    registry_path = Path(config.get("pp4_reference_records_path", _DEFAULT_REGISTRY_PATH))
-    registry = load_reference_records(registry_path)
-    entry = registry.get(gene)
-    if entry is None:
-        return _unknown_all(f"pp1_bs4_pp4_engine: no APPROVED curated PP4 reference record for gene {gene!r}")
+    diagnosis = (clinical_note.diagnosis or "").strip()
+
+    reference = await _build_reference_from_literature(gene, diagnosis) if diagnosis else None
+
+    if reference is not None:
+        phenotype_match_override = PhenotypeMatchResult(
+            matched=True, reason="phenotype_match_assumed_from_literature_search_query",
+        )
+    else:
+        phenotype_match_override = PhenotypeMatchResult(
+            matched=None,
+            reason=(
+                "no_diagnosis_available_to_search_literature_for" if not diagnosis
+                else "literature_search_found_no_confirmed_overall_diagnostic_yield_statistic"
+            ),
+        )
+        # PP1/BS4's segregation scoring below needs SOME PP4ReferenceRecord
+        # to call evaluate_locus_evidence() with, but evaluate_pp4() is
+        # never invoked while phenotype_match_override.matched is None (see
+        # pp4_pp1_bs4.py) - diagnostic_yield=0.0 here is inert, not a guess.
+        reference = PP4ReferenceRecord(
+            reference_id="none", gene=gene, phenotype_label=diagnosis,
+            phenotype_hpo=(), locus_model="heterogeneous", diagnostic_yield=0.0,
+            testing_method="unspecified", source_citation="",
+        )
 
     from acmg_pipeline import hpo_extraction
     clinical_note = await hpo_extraction.normalize_hpo(clinical_note)
 
-    gates = entry["gates"]
-    matcher_name = gates.get(
-        "phenotype_matcher", config.get("pp4_phenotype_matcher", DEFAULT_PHENOTYPE_MATCHER)
-    )
-    matcher = PHENOTYPE_MATCHERS.get(matcher_name)
-    if matcher is None:
-        return _unknown_all(
-            f"pp1_bs4_pp4_engine: unknown pp4_phenotype_matcher {matcher_name!r} "
-            f"(available: {sorted(PHENOTYPE_MATCHERS)})"
-        )
-    phenotype_match_override = await matcher(clinical_note, entry["reference"], gene)
-
     result = evaluate_locus_evidence(
         clinical_note,
-        entry["reference"],
-        method_comparable=bool(gates.get("method_comparable", False)),
-        inheritance_mode=gates.get("inheritance_mode"),
-        fully_penetrant=gates.get("fully_penetrant"),
-        low_phenocopy=gates.get("low_phenocopy"),
-        ar_case_mode=gates.get("ar_case_mode"),
+        reference,
+        method_comparable=True,  # unconfirmed - disclosed in reference.source_citation
+        inheritance_mode=None,  # falls back to clinical_note.family.inheritance_pattern
+        fully_penetrant=None,
+        low_phenocopy=None,
+        ar_case_mode=None,
         phenotype_match_override=phenotype_match_override,
     )
     return to_criterion_evidence(result)

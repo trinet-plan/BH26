@@ -1,4 +1,5 @@
-"""The downstream start codon PVS1's IC02 gate asks about, from the CDS sequence.
+"""The downstream start codon PVS1's IC02 gate asks about, from the CDS sequence -
+plus, since 2026-09-17, a flagged first-pass answer for IC01.
 
 [What it supplies]
   When the initiation codon is lost, PVS1 asks whether translation could restart at an
@@ -6,16 +7,28 @@
   read the CDS, step three bases at a time, look for ATG. Ensembl publishes the sequence, so
   the answer is derivable and exact.
 
-[What it deliberately does not supply]
-  The same `initiation_assessment` record carries two more fields, and this fills neither.
-
-  IC01 asks whether an intact, biologically relevant alternative transcript exists. "Biologically
-  relevant" is the same judgment NF06 turns on, and PVS1 reads it first - so the path still
-  stops there, with the downstream-start question already answered and one left for a curator.
+[IC01 - now a flagged Ensembl-derived prediction, not left unset]
+  IC01 asks whether an intact, biologically relevant alternative transcript rescues the
+  loss. A naive version of this check - "does the gene have more than one Ensembl
+  transcript?" - was tried and rejected: GJB2 alone has 11 transcript models, and every one
+  of them shares the exact same start-codon genomic position (confirmed against real
+  Ensembl data), so "multiple transcripts exist" would have wrongly read as "an alternative
+  start exists" for a gene that, in reality, has none. What this checks instead is whether
+  any OTHER protein_coding transcript's own start codon sits at a DIFFERENT genomic
+  position (correctly accounting for strand - the start codon is at Translation.end on the
+  minus strand, Translation.start on the plus strand) than the transcript actually being
+  evaluated. Finding none (as for GJB2's real 11 transcripts) sets
+  intact_alternative_transcript=False, matching what the real biology is - GJB2 has no
+  rescuing alternative isoform. Finding a genuinely different start position sets it True.
+  There is no known real case in this project where the correct answer is True to check
+  this against (the two real cases below were decided by a VCEP override of the general
+  framework instead), so - more than NF04/NF06/SP01 - this is UNVALIDATED: always disclosed
+  in acmg_pipeline.criteria.pvs1's review_points as an Ensembl-derived prediction, never a
+  curator's own review.
 
   IC03 asks whether a pathogenic variant has been reported upstream of that downstream start,
   which decides moderate against supporting. It needs a ClinVar region search bounded by the
-  codon found here, so it is a separate piece of work rather than something this can infer.
+  codon found here - see providers/upstream_pathogenic.py.
 
 [A caveat worth stating]
   ClinGen's general framework caps initiation-codon loss well below very_strong, but the
@@ -31,8 +44,16 @@ import hashlib
 from urllib.parse import quote
 
 METHOD = "ensembl_cds_downstream_in_frame_start"
+IC01_METHOD = "ensembl_alternative_start_position"
 START_CODON = "ATG"
 START_LOST = "start_lost"
+
+
+def _start_codon_genomic_position(transcript_record):
+    translation = transcript_record.get("Translation")
+    if not isinstance(translation, dict):
+        return None
+    return translation.get("end") if transcript_record.get("strand") == -1 else translation.get("start")
 
 
 def downstream_in_frame_start(cds):
@@ -82,6 +103,38 @@ class InitiationProvider:
         identifiers = {item["transcript_id"] for item in chosen}
         return identifiers.pop() if len(identifiers) == 1 else None
 
+    def _alternative_start(self, gene, ensembl_transcript):
+        """{} if unresolvable (honest gap), else IC01 fields to merge - see module docstring."""
+        try:
+            response = self.client.fetch(
+                f"https://rest.ensembl.org/lookup/symbol/homo_sapiens/{quote(gene, safe='')}"
+                "?expand=1", response_format="json", dataset_version=self.release)
+        except ValueError:
+            return {}
+        body = response["body"]
+        transcripts = body.get("Transcript") if isinstance(body, dict) else None
+        if not isinstance(transcripts, list):
+            return {}
+        by_id = {item.get("id"): item for item in transcripts if isinstance(item, dict)}
+        evaluated = by_id.get(ensembl_transcript)
+        if evaluated is None:
+            return {}
+        own_position = _start_codon_genomic_position(evaluated)
+        if own_position is None:
+            return {}
+        alternative = next(
+            (other_id for other_id, other in by_id.items()
+             if other_id != ensembl_transcript and other.get("biotype") == "protein_coding"
+             and _start_codon_genomic_position(other) not in (None, own_position)),
+            None,
+        )
+        return {
+            "intact_alternative_transcript": alternative is not None,
+            "alternative_transcript_method": IC01_METHOD,
+            "alternative_transcript_source_version": self.release,
+            "alternative_transcript_candidate": alternative,
+        }
+
     def get_initiation_assessment(self, variant, gene, transcript, hgvsc):
         """One automated record when the CDS settles the downstream start, else none."""
         if not (gene and transcript and hgvsc):
@@ -96,6 +149,7 @@ class InitiationProvider:
         if outcome == "unusable":
             return []
         digest = hashlib.sha256(response["body_sha256"].encode("utf-8")).hexdigest()
+        alternative_start = self._alternative_start(gene, ensembl_transcript)
         return [{
             "category": "initiation_assessment",
             "variant_key": variant.key,
@@ -107,17 +161,19 @@ class InitiationProvider:
             "transcript": transcript,
             "gene": gene,
             "downstream_in_frame_start": outcome == "found",
-            # Left unset on purpose - see the module docstring. IC01 and IC03 still ask.
+            # IC03 (upstream_pathogenic_evidence) still asks - see providers/upstream_pathogenic.py.
             "downstream_start_codon": codon,
             "assessment_method": "automated",
             "method": METHOD,
             "policy_version": self.release,
             "ensembl_transcript": ensembl_transcript,
             "policy_note": (
-                "Read from the coding sequence: the first in-frame ATG after the initiation "
-                "codon, or its absence. Whether an intact alternative transcript exists "
-                "(IC01) and whether a pathogenic variant is reported upstream of this codon "
-                "(IC03) are not derived here."
+                "downstream_in_frame_start/downstream_start_codon are read directly from the "
+                "coding sequence. intact_alternative_transcript (IC01), when present, is a "
+                "flagged Ensembl-derived prediction (alternative_transcript_method), not a "
+                "curator's own review and not validated against a known real case - see this "
+                "module's own docstring. upstream_pathogenic_evidence (IC03) is not derived here."
             ),
             "response_sha256": response["body_sha256"],
+            **alternative_start,
         }]

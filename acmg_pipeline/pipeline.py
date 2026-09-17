@@ -806,7 +806,7 @@ async def judge_variant_from_shared_input(
     return results
 
 
-_IDENTITY_INFO_KEYS = ("GENE", "TRANSCRIPT", "HGVSC", "HGVSP", "CLNVARIATIONID")
+_IDENTITY_INFO_KEYS = ("GENE", "TRANSCRIPT", "HGVSC", "HGVSP", "CLNVARIATIONID", "CONDITION")
 
 
 def _identity_from_info(variant: VariantRecord) -> dict:
@@ -815,6 +815,11 @@ def _identity_from_info(variant: VariantRecord) -> dict:
     Deliberately an allowlist, not the whole INFO dict: CLNSIG and
     ACMG_CODES sit in the same column and are conclusions, not lookup
     keys - nothing downstream should be able to reach them by accident.
+    CONDITION (a MONDO ID) is included so the resolver's optional
+    gene-disease-draft step (ClinGen Gene-Disease Validity + gnomAD
+    constraint, see services/resolve.py's _add_gene_disease_draft()) can
+    tell which of a gene's several curated diseases applies - it is
+    identity/context the same way GENE/TRANSCRIPT are, not a conclusion.
     """
     wanted = {key.casefold(): key for key in _IDENTITY_INFO_KEYS}
     identity = {}
@@ -823,6 +828,44 @@ def _identity_from_info(variant: VariantRecord) -> dict:
         if key is not None and value not in (None, ""):
             identity[key] = str(value)
     return identity
+
+
+_curated_context_cache: dict[str, dict] = {}
+
+
+def _apply_curated_context(variant: VariantRecord, automated_config: dict) -> None:
+    """Merges config/curated-context.json's BA1 exception check (and any per-variant
+    condition/disease-threshold override it records) into `variant.info`, in place.
+
+    Opt-in via automated_config["curated_context_path"] (unset by default, so existing
+    callers are unaffected). Before this, InitiationProvider/UpstreamPathogenicProvider's
+    fix pattern repeated: acmg_pipeline.automated_core.context's load_context()/
+    apply_context() already resolve the BA1 exception list precisely for every variant
+    (not just the ones it lists - "complete": true means absence from it is itself
+    resolved as is_exception=False), but only automated_cli.py's separate batch path ever
+    called them - a live BA1 evaluation through this module always saw
+    ba1_exception_assessment as absent, regardless of what curated-context.json already
+    had recorded. See acmg_pipeline.automated_core.context's own docstring for why this
+    lives in a separate versioned document rather than being read off VCF INFO directly.
+    """
+    path = automated_config.get("curated_context_path")
+    if not path:
+        return
+    if path not in _curated_context_cache:
+        from acmg_pipeline.automated_core.context import load_context
+        document = json.loads(Path(path).read_text(encoding="utf-8"))
+        _curated_context_cache[path] = load_context(document)
+    from acmg_pipeline.automated_core.context import apply_context
+    record = {
+        "variant": {"assembly": "GRCh38", "chrom": variant.chrom, "pos": variant.pos,
+                    "ref": variant.ref, "alt": variant.alt},
+        "record_id": variant.id,
+    }
+    updated = apply_context(record, _curated_context_cache[path])
+    for key in ("condition", "condition_label", "inheritance",
+                "disease_frequency_threshold", "ba1_exception_assessment"):
+        if key in updated:
+            variant.info[key] = updated[key]
 
 
 def _automated_variant(variant: VariantRecord) -> AutomatedVariant:
@@ -872,11 +915,22 @@ async def evaluate_variant_evidence_lines(
     if not isinstance(automated_config, dict):
         raise TypeError("automated_config must be a dictionary")
 
+    _apply_curated_context(variant, automated_config)
+
     resolver = evidence_resolver or ProviderEvidenceResolver(
         automated_config.get("evidence_cache_dir", "cache/evidence"),
         offline=bool(automated_config.get("offline")),
         ensembl_release=automated_config.get("ensembl_release"),
         population_sources=automated_config.get("population_sources"),
+        hotspot_policy=automated_config.get("PM1", {}).get("hotspot"),
+        with_clingen_dosage=bool(automated_config.get("with_clingen_dosage")),
+        with_pvs1_transcript_gates=bool(automated_config.get("with_pvs1_transcript_gates")),
+        with_gene_disease_draft=bool(automated_config.get("gene_disease_draft")),
+        gene_disease_draft_policy=automated_config.get("gene_disease_draft"),
+        with_clinvar_spectrum=bool(automated_config.get("with_clinvar_spectrum")),
+        with_splice_default=bool(automated_config.get("PVS1", {}).get("splice_default_policy_version")),
+        splice_default_policy_version=automated_config.get("PVS1", {}).get("splice_default_policy_version"),
+        with_initiation_assessment=bool(automated_config.get("PVS1", {}).get("with_initiation_assessment")),
     )
     resolved = resolver.resolve(_identity_from_info(variant), _automated_variant(variant))
     services = make_services(
@@ -986,6 +1040,8 @@ async def evaluate_selected_criteria(
     if not isinstance(automated_config, dict):
         raise TypeError("automated_config must be a dictionary")
 
+    _apply_curated_context(variant, automated_config)
+
     unknown = [code for code in criteria if code not in ALL_ACMG_CODES]
     if unknown:
         raise ValueError(f"Unrecognized ACMG code(s): {unknown}")
@@ -1012,6 +1068,15 @@ async def evaluate_selected_criteria(
             offline=bool(automated_config.get("offline")),
             ensembl_release=automated_config.get("ensembl_release"),
             population_sources=automated_config.get("population_sources"),
+            hotspot_policy=automated_config.get("PM1", {}).get("hotspot"),
+            with_clingen_dosage=bool(automated_config.get("with_clingen_dosage")),
+            with_pvs1_transcript_gates=bool(automated_config.get("with_pvs1_transcript_gates")),
+            with_gene_disease_draft=bool(automated_config.get("gene_disease_draft")),
+            gene_disease_draft_policy=automated_config.get("gene_disease_draft"),
+            with_clinvar_spectrum=bool(automated_config.get("with_clinvar_spectrum")),
+            with_splice_default=bool(automated_config.get("PVS1", {}).get("splice_default_policy_version")),
+            splice_default_policy_version=automated_config.get("PVS1", {}).get("splice_default_policy_version"),
+            with_initiation_assessment=bool(automated_config.get("PVS1", {}).get("with_initiation_assessment")),
         )
         resolved = resolver.resolve(_identity_from_info(variant), _automated_variant(variant))
         services = make_services(resolved.records, automated_config.get("population_providers"),
