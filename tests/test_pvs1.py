@@ -207,6 +207,26 @@ class PVS1DecisionTreeTests(unittest.TestCase):
                                  "autosomal_recessive")
                 self.assertEqual(value.evaluation_context["moi_match"], "MATCHED")
 
+    def test_an_unqualified_x_linked_mode_is_compatible_with_either_qualification(self):
+        """A source that records "X-linked" without saying which zygosity is affected has
+        not contradicted a case assessed as X-linked recessive. ACMG asks for compatible
+        inheritance, not identical inheritance."""
+        for supplied in ("XLR", "x-linked dominant", "x linked"):
+            with self.subTest(supplied=supplied):
+                input_data = {**self.input, "inheritance": supplied}
+                items = [self.annotation(), self.transcript(), self.nmd(),
+                         self.mechanism(True, inheritance="x_linked")]
+                value = self.evaluate_result(*items, input_data=input_data)
+                self.assertEqual(value.status, CriterionStatus.MET)
+                self.assertEqual(value.evaluation_context["moi_match"], "MATCHED")
+
+    def test_autosomal_modes_never_stand_in_for_one_another(self):
+        input_data = {**self.input, "inheritance": "AR"}
+        items = [self.annotation(), self.transcript(), self.nmd(),
+                 self.mechanism(True, inheritance="autosomal_dominant")]
+        value = self.evaluate_result(*items, input_data=input_data)
+        self.assertEqual(value.evaluation_context["moi_match"], "MISMATCH")
+
     def test_mechanism_curated_for_another_inheritance_mode_is_not_borrowed(self):
         input_data = {**self.input, "inheritance": "autosomal recessive"}
         items = [self.annotation(), self.transcript(), self.nmd(),

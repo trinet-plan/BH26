@@ -119,6 +119,21 @@ def _select_context_record(category, input_data, services, transcript):
     return selected[0], None
 
 
+# An unqualified mode is the less specific statement of the same thing, so it is compatible
+# with either qualification of it. ACMG asks for compatible inheritance rather than identical
+# inheritance, and the two differ exactly here: a source that records "X-linked" without
+# saying which zygosity is affected has not contradicted a case assessed as X-linked
+# recessive. Autosomal dominant and autosomal recessive are not related this way and never
+# stand in for one another.
+COMPATIBLE_MODES = {
+    "x_linked": {"x_linked", "x_linked_dominant", "x_linked_recessive"},
+}
+
+
+def _moi_compatible(declared, inheritance):
+    return inheritance in COMPATIBLE_MODES.get(declared, {declared})
+
+
 def _moi_applicable(record, inheritance):
     """Whether a curated mechanism record may be read as this case's mechanism.
 
@@ -126,7 +141,7 @@ def _moi_applicable(record, inheritance):
     inheritance modes, so a mechanism curated for one mode is not evidence about another.
     A record that names no mode is not scoped to one and stays usable, exactly as a record
     that names no condition stays usable across conditions. A record that does name one is
-    usable only when this case names the same mode - including when this case names none,
+    usable only when this case names a compatible mode - including when this case names none,
     because an unknown mode cannot be confirmed compatible with anything, and assuming it is
     would borrow the very evidence the scoping exists to keep apart.
     """
@@ -134,7 +149,7 @@ def _moi_applicable(record, inheritance):
     if not declared:
         return True
     mode = normalize_inheritance(declared)
-    return mode is not None and mode == inheritance
+    return mode is not None and _moi_compatible(mode, inheritance)
 
 
 def _resolve_mechanism(input_data, services, annotation, context):

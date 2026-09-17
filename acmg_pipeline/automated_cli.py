@@ -13,6 +13,9 @@ from acmg_pipeline.automated_core.models import CRITERIA, Variant
 from acmg_pipeline.gene_disease import build_assessment_document, build_draft_document
 from acmg_pipeline.automated_output import run_internal
 from acmg_pipeline.providers.clingen_dosage import METHOD as DOSAGE_METHOD, ClinGenDosageProvider
+from acmg_pipeline.providers.gene2phenotype import (
+    METHOD as G2P_METHOD, Gene2PhenotypeProvider,
+)
 from acmg_pipeline.providers.mondo import METHOD as MONDO_METHOD, MondoMappingProvider
 from acmg_pipeline.providers.clinvar import (
     VCV, ClinVarComparatorProvider, ClinVarHotspotProvider, ClinVarProvider,
@@ -76,6 +79,9 @@ def main(argv=None):
     online.add_argument("--with-clingen-dosage", action="store_true",
                         help="Derive PVS1's LoF-mechanism gate from ClinGen haploinsufficiency "
                              "scores (automated stand-in for a curated gene_disease record)")
+    online.add_argument("--with-gene2phenotype", action="store_true",
+                        help="Take PVS1's LoF-mechanism gate from G2P curation, which is "
+                             "scoped to one gene-disease pair and names its MONDO disease")
     online.add_argument("--with-mondo-mapping", action="store_true",
                         help="Resolve each record's OMIM/Orphanet condition to MONDO so "
                              "PVS1's disease gate can compare it with curated evidence")
@@ -392,6 +398,33 @@ def main(argv=None):
                         "method": DOSAGE_METHOD,
                         "genes_queried": len(seen_genes), "evidence": len(dosage_records),
                         "errors": dosage_errors,
+                        "use_restriction": "PVS1_LOF_MECHANISM_GATE_ONLY",
+                    })
+                if args.with_gene2phenotype:
+                    # Disease-scoped where ClinGen dosage is gene-scoped, so it separates a
+                    # gene that loses function in one disease from one that gains it in
+                    # another - the case a single per-gene score cannot.
+                    g2p = Gene2PhenotypeProvider(external_client)
+                    g2p_records, g2p_errors, g2p_seen = [], [], set()
+                    for annotation in annotations:
+                        gene = annotation.get("gene")
+                        key = (annotation["variant_key"], gene)
+                        if not gene or key in g2p_seen:
+                            continue
+                        g2p_seen.add(key)
+                        try:
+                            g2p_records.extend(
+                                g2p.get_mechanism(variants[annotation["variant_key"]], gene))
+                        except (FetchError, ValueError, KeyError) as exc:
+                            g2p_errors.append(f"{gene}: {exc}")
+                    evidence.extend(g2p_records)
+                    external_manifest.append({
+                        "provider": g2p.name,
+                        "provider_version": sorted(
+                            {item["source_version"] for item in g2p_records}) or None,
+                        "method": G2P_METHOD,
+                        "genes_queried": len(g2p_seen), "evidence": len(g2p_records),
+                        "errors": g2p_errors,
                         "use_restriction": "PVS1_LOF_MECHANISM_GATE_ONLY",
                     })
                 if args.with_mondo_mapping:
