@@ -1,9 +1,19 @@
 from acmg_pipeline.constants import CriterionStatus
 from acmg_pipeline.automated_core.interface import criterion_input
-from acmg_pipeline.criteria.common import citable, population_context, result
+from acmg_pipeline.criteria.common import citable, population_context, result as _base_result
 from acmg_pipeline.services.population import number
 from acmg_pipeline.clinical_note import ClinicalNoteExtraction
 from acmg_pipeline.vcf_record import VariantRecord
+
+
+def result(code, input_data, status, summary, **kwargs):
+    assert code == "BA1"
+    outcome = "satisfies BA1" if status == CriterionStatus.MET else (
+        "was evaluated but does not satisfy BA1" if status == CriterionStatus.NOT_MET
+        else "cannot be assigned MET or NOT_MET from the available information")
+    message = (f"{summary.rstrip('.')}. BA1 evaluates whether population allele frequency exceeds "
+               f"the stand-alone benign threshold after exception review. Outcome: {status.value.upper()}; {outcome}.")
+    return _base_result(code, input_data, status, message, **kwargs)
 
 
 def evaluate(variant: VariantRecord, clinical_note: ClinicalNoteExtraction, services, config):

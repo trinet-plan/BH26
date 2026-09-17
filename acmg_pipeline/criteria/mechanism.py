@@ -1,7 +1,19 @@
 from acmg_pipeline.constants import CriterionStatus
 """Gene-disease mechanism and variant spectrum, not constraint alone."""
 
-from acmg_pipeline.criteria.common import annotation_context, curated_context, require_boolean_fields, result
+from acmg_pipeline.criteria.common import annotation_context, curated_context, require_boolean_fields, result as _base_result
+
+
+def result(code, input_data, status, summary, **kwargs):
+    scope = {
+        "PP2": "PP2 evaluates missense variants in genes where missense is an established disease mechanism and benign missense variation is constrained.",
+        "BP1": "BP1 evaluates missense variants in genes where disease is predominantly caused by truncating variants rather than missense variation.",
+    }[code]
+    outcome = (f"the available evidence satisfies {code}" if status == CriterionStatus.MET else
+               f"{code} was evaluated but its requirements were not satisfied" if status == CriterionStatus.NOT_MET else
+               "no MET or NOT_MET judgment is made from the available information")
+    message = f"{summary.rstrip('.')}. {scope} Outcome: {status.value.upper()}; {outcome}."
+    return _base_result(code, input_data, status, message, **kwargs)
 
 
 def evaluate_mechanism(code, input_data, services, config):

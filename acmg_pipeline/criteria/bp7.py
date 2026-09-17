@@ -1,8 +1,19 @@
 from acmg_pipeline.constants import CriterionStatus
 from acmg_pipeline.automated_core.interface import criterion_input
-from acmg_pipeline.criteria.common import annotation_context, curated_context, require_boolean_fields, result
+from acmg_pipeline.criteria.common import annotation_context, curated_context, require_boolean_fields, result as _base_result
 from acmg_pipeline.clinical_note import ClinicalNoteExtraction
 from acmg_pipeline.vcf_record import VariantRecord
+
+
+def result(code, input_data, status, summary, **kwargs):
+    assert code == "BP7"
+    outcome = ("the available evidence satisfies BP7" if status == CriterionStatus.MET else
+               "BP7 was evaluated but its requirements were not satisfied" if status == CriterionStatus.NOT_MET else
+               "no MET or NOT_MET judgment is made from the available information")
+    message = (f"{summary.rstrip('.')}. BP7 evaluates synonymous variants outside splice-critical regions "
+               f"when splice prediction and conservation evidence support a benign interpretation. "
+               f"Outcome: {status.value.upper()}; {outcome}.")
+    return _base_result(code, input_data, status, message, **kwargs)
 
 
 def evaluate(variant: VariantRecord, clinical_note: ClinicalNoteExtraction, services, config):

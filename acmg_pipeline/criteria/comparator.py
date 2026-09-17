@@ -2,7 +2,19 @@ from acmg_pipeline.constants import CriterionStatus
 """Same-residue comparison requires independent, reviewed pathogenic evidence."""
 
 from acmg_pipeline.automated_core.models import Variant
-from acmg_pipeline.criteria.common import annotation_context, get_evidence, result
+from acmg_pipeline.criteria.common import annotation_context, get_evidence, result as _base_result
+
+
+def result(code, input_data, status, summary, **kwargs):
+    scope = {
+        "PS1": "PS1 compares a missense variant with an independently established pathogenic variant producing the same amino-acid substitution.",
+        "PM5": "PM5 compares a missense variant with an independently established pathogenic variant causing a different amino-acid substitution at the same residue.",
+    }[code]
+    outcome = (f"the available evidence satisfies {code}" if status == CriterionStatus.MET else
+               f"{code} was evaluated but its requirements were not satisfied" if status == CriterionStatus.NOT_MET else
+               "no MET or NOT_MET judgment is made from the available information")
+    message = f"{summary.rstrip('.')}. {scope} Outcome: {status.value.upper()}; {outcome}."
+    return _base_result(code, input_data, status, message, **kwargs)
 
 
 def evaluate_comparator(code, input_data, services, config):

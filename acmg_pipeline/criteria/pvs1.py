@@ -10,7 +10,7 @@ from copy import deepcopy
 
 from acmg_pipeline.automated_core.interface import criterion_input
 from acmg_pipeline.automated_core.models import Variant
-from acmg_pipeline.criteria.common import annotation_context, result, reviewed_or_automated
+from acmg_pipeline.criteria.common import annotation_context, result as _base_result, reviewed_or_automated
 from acmg_pipeline.clinical_note import ClinicalNoteExtraction
 from acmg_pipeline.vcf_record import VariantRecord
 
@@ -18,6 +18,21 @@ from acmg_pipeline.vcf_record import VariantRecord
 TRUNCATING = {"stop_gained": "STOP_GAINED", "frameshift_variant": "FRAMESHIFT"}
 CANONICAL_SPLICE = {"splice_donor_variant", "splice_acceptor_variant"}
 OTHER_LOF = {"transcript_ablation"}
+
+
+def result(code, input_data, status, summary, **kwargs):
+    """Keep PVS1's curator-facing explanation with its decision tree."""
+    assert code == "PVS1"
+    outcome = {
+        CriterionStatus.MET: "Outcome: MET; the available evidence satisfies PVS1.",
+        CriterionStatus.NOT_MET: "Outcome: NOT_MET; PVS1 was evaluated but its requirements were not satisfied.",
+        CriterionStatus.UNKNOWN: "Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
+    }[status]
+    message = (
+        f"{summary.rstrip('.')}. PVS1 evaluates predicted loss-of-function variants only when "
+        f"loss of function is an established disease mechanism for the gene. {outcome}"
+    )
+    return _base_result(code, input_data, status, message, **kwargs)
 
 
 def _node(node_id, name, node_result, value=None, evidence=(), source="clingen_pvs1_2018",
