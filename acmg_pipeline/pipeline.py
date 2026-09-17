@@ -78,6 +78,7 @@ from acmg_pipeline.classification import (
 from acmg_pipeline.criteria import stubs
 from acmg_pipeline.api_input import ApiCaseInput
 from acmg_pipeline.clinical_note import ClinicalNoteExtraction
+from acmg_pipeline.inputs import empty_clinical_note
 from acmg_pipeline.vcf_record import VariantRecord
 from acmg_pipeline.automated_core.models import CRITERIA as AUTOMATED_CRITERIA
 from acmg_pipeline.automated_core.models import Variant as AutomatedVariant
@@ -390,11 +391,22 @@ def extract_json(raw_text: str) -> dict:
     return json.loads(candidate)
 
 
-def call_llm_for_judgment(prompt: str) -> tuple[dict, dict]:
+def call_llm_for_judgment(prompt: str, cache=None) -> tuple[dict, dict]:
     """
     Sends the prompt to gemma-4 and gets structured JSON output back.
     Returns (parsed JSON, raw API response stats).
+
+    `cache`, when passed (an acmg_pipeline.llm_cache.DiskBackedLLMCache or
+    anything with the same dict protocol), is checked first keyed on
+    (MODEL, prompt) - see that module's own docstring for why freezing one
+    sampled answer per prompt is an acceptable tradeoff here (opt-in,
+    validation/development reruns, not production curator-facing use). A
+    cache hit returns instantly with elapsed_sec=0.0 and a cache_hit=True
+    marker in stats so callers/logs can tell it apart from a fresh call.
     """
+    if cache is not None and (MODEL, prompt) in cache:
+        parsed, stats = cache[(MODEL, prompt)]
+        return parsed, {**stats, "elapsed_sec": 0.0, "cache_hit": True}
     t0 = time.perf_counter()
     res = client.chat.completions.create(
         model=MODEL,
@@ -416,8 +428,11 @@ def call_llm_for_judgment(prompt: str) -> tuple[dict, dict]:
         "elapsed_sec": dt,
         "prompt_tokens": res.usage.prompt_tokens,
         "completion_tokens": res.usage.completion_tokens,
+        "cache_hit": False,
     }
     parsed = extract_json(msg.content or "")
+    if cache is not None:
+        cache[(MODEL, prompt)] = (parsed, stats)
     return parsed, stats
 
 
@@ -445,6 +460,7 @@ async def judge_single_paper(
     vcep_name: str | None,
     criterion: str,
     full_text_cache: dict[str, tuple[str | None, str]] | None = None,
+    llm_cache=None,
 ) -> PaperContribution | None:
     show(f"\n--- PMID:{pmid} ---")
 
@@ -471,17 +487,33 @@ async def judge_single_paper(
         )
         return PaperContribution(pmid=pmid, result=result)
 
-    prompt = engine.build_prompt(gene, hgvsc, hgvsp, equivalents, full_text)
+    # engine.build_prompt() takes (variant, clinical_note, full_text) as of
+    # h.muroda's 2026-09-16 "unify criterion input interfaces" refactor
+    # (ps3_bs3.py/ps4.py/segregation.py all match this now) - this function
+    # only has the already-flattened gene/hgvsc/hgvsp/equivalents (its own
+    # signature predates that refactor and several callers, e.g.
+    # run_validation_64.py, only ever have those flat values, not a real
+    # VariantRecord/ClinicalNoteExtraction), so a minimal VariantRecord is
+    # reconstructed here rather than threading a real one through every
+    # caller. EQUIVALENTS is stored in INFO because variant_identity()
+    # (which every build_prompt() calls) reads it from there - without it,
+    # protein-equivalent notation matching within a paper would be lost.
+    variant = VariantRecord(
+        chrom="", pos=1, id="", ref="", alt="", qual="", filter="",
+        info={"GENE": gene, "HGVSC": hgvsc, "HGVSP": hgvsp, "EQUIVALENTS": equivalents},
+    )
+    prompt = engine.build_prompt(variant, empty_clinical_note(), full_text)
     log(f"--- Prompt (first 1000 chars) ---\n{prompt[:1000]}")
 
     try:
-        raw_json, stats = call_llm_for_judgment(prompt)
+        raw_json, stats = call_llm_for_judgment(prompt, cache=llm_cache)
     except Exception as e:
         show(f"  -> Error during the LLM call / JSON parsing: {e}")
         return None
 
+    cache_note = " [llm_cache hit - no LLM call made]" if stats.get("cache_hit") else ""
     show(f"[LLM response] {stats['elapsed_sec']:.1f}s, "
-         f"prompt={stats['prompt_tokens']}tok, completion={stats['completion_tokens']}tok")
+         f"prompt={stats['prompt_tokens']}tok, completion={stats['completion_tokens']}tok{cache_note}")
     log(f"--- Raw LLM JSON ---\n{json.dumps(raw_json, ensure_ascii=False, indent=2)}")
 
     try:
@@ -515,6 +547,7 @@ async def judge_variant(
     criterion: str,
     ground_truth: str | None = None,
     full_text_cache: dict[str, tuple[str | None, str]] | None = None,
+    llm_cache=None,
 ) -> AggregatedJudgment:
     """
     Judges a variant using ALL of the given PMIDs (not just the first one),
@@ -554,7 +587,7 @@ async def judge_variant(
     for pmid in pmids:
         contribution = await judge_single_paper(
             engine, mcp, pmid, gene, hgvsc, hgvsp, equivalents, vcep_name, criterion,
-            full_text_cache=full_text_cache,
+            full_text_cache=full_text_cache, llm_cache=llm_cache,
         )
         if contribution is not None:
             contributions.append(contribution)
@@ -710,6 +743,7 @@ async def judge_variant_from_structured_input(
     criteria: tuple[str, ...] = ("PS3", "BS3", "PS4"),
     vcep_name: str | None = None,
     full_text_cache: dict[str, tuple[str | None, str]] | None = None,
+    llm_cache=None,
 ) -> dict[str, AggregatedJudgment]:
     """
     Parses `case_input`'s embedded VCF (exactly 1 variant, per ApiCaseInput's
@@ -730,6 +764,7 @@ async def judge_variant_from_structured_input(
         criteria=criteria,
         vcep_name=vcep_name,
         full_text_cache=full_text_cache,
+        llm_cache=llm_cache,
     )
 
 
@@ -740,6 +775,7 @@ async def judge_variant_from_shared_input(
     criteria: tuple[str, ...] = ("PS3", "BS3", "PS4"),
     vcep_name: str | None = None,
     full_text_cache: dict[str, tuple[str | None, str]] | None = None,
+    llm_cache=None,
 ) -> dict[str, AggregatedJudgment]:
     """Run the five literature criteria directly from main's shared input class."""
     if not isinstance(variant, VariantRecord):
@@ -763,7 +799,7 @@ async def judge_variant_from_shared_input(
         results[criterion] = await judge_variant(
             engine, mcp, pmids=pmids, gene=gene, hgvsc=hgvsc, hgvsp=hgvsp,
             equivalents=equivalents, vcep_name=vcep_name, criterion=criterion,
-            full_text_cache=full_text_cache,
+            full_text_cache=full_text_cache, llm_cache=llm_cache,
         )
     return results
 
@@ -812,6 +848,7 @@ async def evaluate_variant_evidence_lines(
     evidence_resolver=None,
     vcep_name: str | None = None,
     full_text_cache: dict[str, tuple[str | None, str]] | None = None,
+    llm_cache=None,
 ) -> list[dict]:
     """Return exactly one VA-Spec EvidenceLine for each of the 28 ACMG codes.
 
@@ -858,6 +895,7 @@ async def evaluate_variant_evidence_lines(
         erepo_client,
         vcep_name=vcep_name,
         full_text_cache=full_text_cache,
+        llm_cache=llm_cache,
     )
     gene = str(variant.info.get("GENE", ""))
     hgvsc = str(variant.info.get("HGVSC", ""))
@@ -919,6 +957,7 @@ async def evaluate_selected_criteria(
     evidence_resolver=None,
     vcep_name: str | None = None,
     full_text_cache: dict[str, tuple[str | None, str]] | None = None,
+    llm_cache=None,
 ) -> dict[str, dict]:
     """Return one VA-Spec EvidenceLine per requested code only.
 
@@ -980,7 +1019,7 @@ async def evaluate_selected_criteria(
     if literature_subset:
         literature_results = await judge_variant_from_shared_input(
             variant, mcp, erepo_client, criteria=literature_subset,
-            vcep_name=vcep_name, full_text_cache=full_text_cache,
+            vcep_name=vcep_name, full_text_cache=full_text_cache, llm_cache=llm_cache,
         )
         gene = str(variant.info.get("GENE", ""))
         hgvsc = str(variant.info.get("HGVSC", ""))
@@ -1031,9 +1070,11 @@ async def classify_variant_from_structured_input(
     erepo_client: ERepoClient,
     vcep_name: str | None = None,
     full_text_cache: dict[str, tuple[str | None, str]] | None = None,
+    llm_cache=None,
 ) -> ClassificationResult:
     literature_results = await judge_variant_from_structured_input(
-        case_input, mcp, erepo_client, vcep_name=vcep_name, full_text_cache=full_text_cache,
+        case_input, mcp, erepo_client, vcep_name=vcep_name,
+        full_text_cache=full_text_cache, llm_cache=llm_cache,
     )
 
     evidence = [

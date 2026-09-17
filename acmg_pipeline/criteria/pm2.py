@@ -22,10 +22,21 @@ def evaluate(variant: VariantRecord, clinical_note: ClinicalNoteExtraction, serv
     if early:
         return early
     rule, observations, rejected, failures, provenance = context
-    threshold = number(rule.get("max_af", 0))
+    # No default: max_af = 0 ("absent from controls") is the standard PM2 policy, so a
+    # defaulted 0 is indistinguishable from a configured one, and an unset policy would run
+    # as the strictest possible threshold instead of saying it is unset. The rest of the
+    # population policy (minimum_an, policy_source, policy_version) is already required this
+    # way in population_context().
+    if rule.get("max_af") is None:
+        return result("PM2", input_data, CriterionStatus.UNKNOWN,
+                      "No rarity threshold is configured for PM2",
+                      missing=["PM2.max_af"], provenance=provenance)
+    threshold = number(rule["max_af"])
     if threshold is None or not 0 <= threshold < 1:
-        return result("PM2", input_data, CriterionStatus.UNKNOWN, "Invalid rarity threshold",
-                      missing=["PM2.max_af"])
+        return result("PM2", input_data, CriterionStatus.UNKNOWN,
+                      f"The configured PM2 rarity threshold ({rule['max_af']!r}) is not a "
+                      f"fraction in [0, 1)",
+                      missing=["PM2.max_af"], provenance=provenance)
     maximum = max(number(item["AF"]) for item in observations)
     # A reliable counterexample defeats rarity even if another source is unavailable.
     if maximum > threshold:

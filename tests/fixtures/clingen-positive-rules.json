@@ -1,5 +1,7 @@
 {
-  "population_providers": ["ClinGen Evidence Repository"],
+  "population_providers": [
+    "ClinGen Evidence Repository"
+  ],
   "PM2": {
     "minimum_an": 2000,
     "max_af": 0.0004,
@@ -9,7 +11,9 @@
   "BA1": {
     "minimum_an": 2000,
     "policy_source": "ACMG/AMP BA1 with ClinGen SVI exception review",
-    "policy_version": "2018"
+    "policy_version": "2018",
+    "max_af": 0.05,
+    "frequency_statistic": "af"
   },
   "BS1": {
     "minimum_an": 2000,
@@ -21,12 +25,23 @@
       "name": "clingen_general_pvs1",
       "version": "2018+2023-splicing",
       "sources": [
-        {"id": "acmg_amp_2015", "pmid": "25741868"},
-        {"id": "clingen_pvs1_2018", "pmid": "30192042"},
-        {"id": "clingen_splicing_2023", "pmid": "37352859"}
+        {
+          "id": "acmg_amp_2015",
+          "pmid": "25741868"
+        },
+        {
+          "id": "clingen_pvs1_2018",
+          "pmid": "30192042"
+        },
+        {
+          "id": "clingen_splicing_2023",
+          "pmid": "37352859"
+        }
       ]
     },
-    "rules": {"protein_loss_threshold": 0.1}
+    "rules": {
+      "protein_loss_threshold": 0.1
+    }
   },
   "computational": {
     "calibrations": {
@@ -36,24 +51,56 @@
         "source": "Pejaver et al. 2022 ClinGen SVI calibration",
         "version": "2022",
         "mechanism": "protein",
-        "consequences": ["missense_variant"],
+        "consequences": [
+          "missense_variant"
+        ],
         "score_min": 0,
         "score_max": 1,
         "bands": {
           "PP3": [
-            {"min": 0.644, "max": 1.0, "strength": "supporting"},
-            {"min": 0.773, "max": 1.0, "strength": "moderate"},
-            {"min": 0.932, "max": 1.0, "strength": "strong"}
+            {
+              "min": 0.644,
+              "max": 1.0,
+              "strength": "supporting"
+            },
+            {
+              "min": 0.773,
+              "max": 1.0,
+              "strength": "moderate"
+            },
+            {
+              "min": 0.932,
+              "max": 1.0,
+              "strength": "strong"
+            }
           ],
           "BP4": [
-            {"min": 0.0, "max": 0.29, "strength": "supporting"},
-            {"min": 0.0, "max": 0.183, "strength": "moderate"},
-            {"min": 0.0, "max": 0.016, "strength": "strong"},
-            {"min": 0.0, "max": 0.003, "strength": "very_strong"}
+            {
+              "min": 0.0,
+              "max": 0.29,
+              "strength": "supporting"
+            },
+            {
+              "min": 0.0,
+              "max": 0.183,
+              "strength": "moderate"
+            },
+            {
+              "min": 0.0,
+              "max": 0.016,
+              "strength": "strong"
+            },
+            {
+              "min": 0.0,
+              "max": 0.003,
+              "strength": "very_strong"
+            }
           ]
         }
       }
     },
-    "selected_calibrations": ["revel-pejaver-2022"]
+    "selected_calibrations": [
+      "revel-pejaver-2022"
+    ]
   }
 }

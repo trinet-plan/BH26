@@ -57,6 +57,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from acmg_pipeline.classification import IMPLEMENTED_CODES
 from acmg_pipeline.fulltext_cache import DiskBackedFullTextCache
 from acmg_pipeline.gate import ERepoClient
+from acmg_pipeline.llm_cache import DiskBackedLLMCache
 from test_data.full_criteria_ground_truth import GROUND_TRUTH, GroundTruthEntry
 
 import acmg_pipeline.pipeline as pl
@@ -81,6 +82,10 @@ async def main() -> None:
     parser.add_argument("--cache-dir", default="cache/pubmed_fulltext", help="disk cache directory")
     parser.add_argument("--cache-max-files", type=int, default=5000)
     parser.add_argument("--cache-evict-batch", type=int, default=100)
+    parser.add_argument("--llm-cache-dir", default="cache/llm_judgments",
+                        help="disk cache directory for LLM judgment responses")
+    parser.add_argument("--no-llm-cache", action="store_true",
+                        help="disable LLM response caching (always call the LLM fresh)")
     args = parser.parse_args()
 
     full_text_cache = DiskBackedFullTextCache(
@@ -88,6 +93,9 @@ async def main() -> None:
     )
     pl.show(f"[cache] {args.cache_dir} ({len(full_text_cache)} entrie(s) already cached, "
             f"max_files={args.cache_max_files}, evict_batch={args.cache_evict_batch})")
+    llm_cache = None if args.no_llm_cache else DiskBackedLLMCache(args.llm_cache_dir)
+    if llm_cache is not None:
+        pl.show(f"[cache] {args.llm_cache_dir} ({len(llm_cache)} LLM judgment(s) already cached)")
 
     by_variant = _variant_criterion_pairs()
     variant_keys = list(by_variant.keys())
@@ -136,6 +144,7 @@ async def main() -> None:
                     engine, mcp, pmids=pmids, gene=gene, hgvsc=hgvsc, hgvsp=hgvsp,
                     equivalents=equivalents, vcep_name=None, criterion=e.criterion,
                     ground_truth=ground_truth_str, full_text_cache=full_text_cache,
+                    llm_cache=llm_cache,
                 )
                 direction = aggregated.aggregated_direction
                 _, gt_is_met = pl.parse_ground_truth(ground_truth_str)

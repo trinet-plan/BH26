@@ -1,0 +1,1241 @@
+[
+  {
+    "id": "evline:PTEN_c_112C_T_PVS1",
+    "type": "EvidenceLine",
+    "description": "Transcript annotation unavailable",
+    "extensions": [
+      {
+        "name": "bh26AssessmentDetails",
+        "value": {
+          "criterion": "PVS1",
+          "status": "unknown",
+          "summary": "Transcript annotation unavailable",
+          "evidenceItemIds": [],
+          "provenance": {
+            "rule_version": "PVS1-v1"
+          },
+          "missingInputs": [
+            "annotation",
+            "transcript"
+          ],
+          "evaluationContext": {
+            "gene": null,
+            "condition_id": null,
+            "condition_label": null,
+            "condition_status": "NOT_PROVIDED",
+            "condition_specific": false,
+            "mechanism_scope": "UNKNOWN"
+          },
+          "decisionTrace": [
+            {
+              "node_id": "C01",
+              "name": "condition_status",
+              "result": "PASS",
+              "value": "NOT_PROVIDED",
+              "evidence_ids": [],
+              "rule_id": "C01",
+              "rule_source": "acmg_amp_2015",
+              "next_node": null,
+              "note": null
+            }
+          ],
+          "warnings": [
+            "Condition was not provided.",
+            "PVS1 was evaluated using gene-level loss-of-function mechanism evidence."
+          ],
+          "unresolvedRequirements": [
+            "annotation",
+            "transcript"
+          ]
+        }
+      },
+      {
+        "name": "referenceLink",
+        "value": "https://autopvs1.bgi.com"
+      }
+    ],
+    "specifiedBy": {
+      "type": "Method",
+      "name": "ACMG/AMP PVS1 assessment (unknown)",
+      "methodType": "PVS1",
+      "reportedIn": {
+        "type": "Document",
+        "name": "Richards et al., 2015, Genet Med.",
+        "doi": "10.1038/gim.2015.30",
+        "pmid": "25741868"
+      }
+    },
+    "directionOfEvidenceProvided": "neutral"
+  },
+  {
+    "id": "evline:PTEN_c_112C_T_PS1",
+    "type": "EvidenceLine",
+    "description": "Transcript annotation unavailable. PS1 compares a missense variant with an independently established pathogenic variant producing the same amino-acid substitution. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
+    "extensions": [
+      {
+        "name": "bh26AssessmentDetails",
+        "value": {
+          "criterion": "PS1",
+          "status": "unknown",
+          "summary": "Transcript annotation unavailable. PS1 compares a missense variant with an independently established pathogenic variant producing the same amino-acid substitution. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
+          "evidenceItemIds": [],
+          "provenance": {
+            "rule_version": "PS1-v1"
+          },
+          "missingInputs": [
+            "annotation",
+            "transcript"
+          ]
+        }
+      },
+      {
+        "name": "referenceLink",
+        "value": "https://www.ncbi.nlm.nih.gov/clinvar/?term=PTEN%5Bgene%5D%20AND%20c.112C%3ET"
+      }
+    ],
+    "specifiedBy": {
+      "type": "Method",
+      "name": "ACMG/AMP PS1 assessment (unknown)",
+      "methodType": "PS1",
+      "reportedIn": {
+        "type": "Document",
+        "name": "Richards et al., 2015, Genet Med.",
+        "doi": "10.1038/gim.2015.30",
+        "pmid": "25741868"
+      }
+    },
+    "directionOfEvidenceProvided": "neutral"
+  },
+  {
+    "id": "evline:PTEN_c_112C_T_PS2",
+    "type": "EvidenceLine",
+    "description": "PS2 is not evaluated by this integrated pipeline. No judgment was made; any referenceLink or curatorInfo extension is an auxiliary curation aid only.",
+    "extensions": [
+      {
+        "name": "bh26AssessmentDetails",
+        "value": {
+          "criterion": "PS2",
+          "status": "unknown",
+          "summary": "PS2 is not evaluated by this integrated pipeline. No judgment was made; any referenceLink or curatorInfo extension is an auxiliary curation aid only.",
+          "missingInputs": [
+            "criterion implementation"
+          ]
+        }
+      }
+    ],
+    "specifiedBy": {
+      "type": "Method",
+      "name": "ACMG/AMP PS2 assessment (unknown)",
+      "methodType": "PS2",
+      "reportedIn": {
+        "type": "Document",
+        "name": "Richards et al., 2015, Genet Med.",
+        "doi": "10.1038/gim.2015.30",
+        "pmid": "25741868"
+      }
+    },
+    "directionOfEvidenceProvided": "neutral"
+  },
+  {
+    "id": "evline:PTEN_c_112C_T_PS3",
+    "type": "EvidenceLine",
+    "description": "None of the 2 paper(s) examined yielded a usable evidence-based judgment for this variant (either the variant could not be identified in the text, or the per-paper judgment was itself inconclusive).",
+    "extensions": [
+      {
+        "name": "curatorHints",
+        "value": [
+          {
+            "severity": "info",
+            "message": "None of the 2 paper(s) examined yielded a usable evidence-based judgment for this variant (either the variant could not be identified in the text, or the per-paper judgment was itself inconclusive)."
+          }
+        ]
+      },
+      {
+        "name": "bh26AssessmentDetails",
+        "value": {
+          "criterion": "PS3",
+          "status": "unknown",
+          "summary": "None of the 2 paper(s) examined yielded a usable evidence-based judgment for this variant (either the variant could not be identified in the text, or the per-paper judgment was itself inconclusive)."
+        }
+      }
+    ],
+    "specifiedBy": {
+      "type": "Method",
+      "name": "Unspecified VCEP ACMG/AMP PS3 evidence assessment (LLM-assisted draft)",
+      "methodType": "PS3",
+      "reportedIn": {
+        "type": "Document",
+        "name": "Richards et al., 2015, Genet Med.",
+        "doi": "10.1038/gim.2015.30",
+        "pmid": "25741868"
+      }
+    },
+    "contributions": [
+      {
+        "type": "Contribution",
+        "contributor": {
+          "id": "acmg-literature-llm-pipeline",
+          "type": "Agent",
+          "name": "ACMG literature-evidence LLM pipeline (gemma-4 via vLLM) - AI-generated draft evidence, requires human curator review before use"
+        },
+        "activityType": "automated evidence evaluation",
+        "date": "2026-09-17T05:15:41.498141Z"
+      }
+    ],
+    "reportedIn": [
+      {
+        "type": "Document",
+        "urls": [
+          "https://pubmed.ncbi.nlm.nih.gov/29706350/"
+        ],
+        "pmid": "29706350"
+      },
+      {
+        "type": "Document",
+        "urls": [
+          "https://pubmed.ncbi.nlm.nih.gov/29785012/"
+        ],
+        "pmid": "29785012"
+      }
+    ],
+    "hasEvidenceItems": [
+      {
+        "id": "evline:paper-1-29706350",
+        "type": "EvidenceLine",
+        "description": "The target variant is not explicitly identified in the provided text. Although the paper describes a large-scale functional screen that likely includes the variant, the specific result for c.112C>T is not reported in the abstract.",
+        "reportedIn": [
+          {
+            "type": "Document",
+            "urls": [
+              "https://pubmed.ncbi.nlm.nih.gov/29706350/"
+            ],
+            "pmid": "29706350"
+          }
+        ],
+        "directionOfEvidenceProvided": "neutral"
+      },
+      {
+        "id": "evline:paper-2-29785012",
+        "type": "EvidenceLine",
+        "description": "The variant is part of a large-scale deep mutational scan. Although the paper discusses the methodology and results for many PTEN variants, the specific quantitative functional result for c.112C>T is not explicitly stated in the provided text.",
+        "reportedIn": [
+          {
+            "type": "Document",
+            "urls": [
+              "https://pubmed.ncbi.nlm.nih.gov/29785012/"
+            ],
+            "pmid": "29785012"
+          }
+        ],
+        "directionOfEvidenceProvided": "neutral"
+      }
+    ],
+    "directionOfEvidenceProvided": "neutral"
+  },
+  {
+    "id": "evline:PTEN_c_112C_T_PS4",
+    "type": "EvidenceLine",
+    "description": "None of the 2 paper(s) examined yielded a usable evidence-based judgment for this variant (either the variant could not be identified in the text, or the per-paper judgment was itself inconclusive).",
+    "extensions": [
+      {
+        "name": "curatorHints",
+        "value": [
+          {
+            "severity": "info",
+            "message": "None of the 2 paper(s) examined yielded a usable evidence-based judgment for this variant (either the variant could not be identified in the text, or the per-paper judgment was itself inconclusive)."
+          }
+        ]
+      },
+      {
+        "name": "bh26AssessmentDetails",
+        "value": {
+          "criterion": "PS4",
+          "status": "unknown",
+          "summary": "None of the 2 paper(s) examined yielded a usable evidence-based judgment for this variant (either the variant could not be identified in the text, or the per-paper judgment was itself inconclusive)."
+        }
+      }
+    ],
+    "specifiedBy": {
+      "type": "Method",
+      "name": "Unspecified VCEP ACMG/AMP PS4 evidence assessment (LLM-assisted draft)",
+      "methodType": "PS4",
+      "reportedIn": {
+        "type": "Document",
+        "name": "Richards et al., 2015, Genet Med.",
+        "doi": "10.1038/gim.2015.30",
+        "pmid": "25741868"
+      }
+    },
+    "contributions": [
+      {
+        "type": "Contribution",
+        "contributor": {
+          "id": "acmg-literature-llm-pipeline",
+          "type": "Agent",
+          "name": "ACMG literature-evidence LLM pipeline (gemma-4 via vLLM) - AI-generated draft evidence, requires human curator review before use"
+        },
+        "activityType": "automated evidence evaluation",
+        "date": "2026-09-17T05:15:41.499668Z"
+      }
+    ],
+    "reportedIn": [
+      {
+        "type": "Document",
+        "urls": [
+          "https://pubmed.ncbi.nlm.nih.gov/29706350/"
+        ],
+        "pmid": "29706350"
+      },
+      {
+        "type": "Document",
+        "urls": [
+          "https://pubmed.ncbi.nlm.nih.gov/29785012/"
+        ],
+        "pmid": "29785012"
+      }
+    ],
+    "hasEvidenceItems": [
+      {
+        "id": "evline:paper-1-29706350",
+        "type": "EvidenceLine",
+        "description": "The paper is a functional assay study using a yeast model to evaluate mutational tolerance and phosphatase activity; it is not a case-control or cohort study investigating the enrichment of the specific target variant in human populations.",
+        "extensions": [
+          {
+            "name": "structuredEvidenceItems",
+            "value": [
+              {
+                "label": "Study design: not_case_control",
+                "checked": false,
+                "detail": ""
+              }
+            ]
+          }
+        ],
+        "reportedIn": [
+          {
+            "type": "Document",
+            "urls": [
+              "https://pubmed.ncbi.nlm.nih.gov/29706350/"
+            ],
+            "pmid": "29706350"
+          }
+        ],
+        "directionOfEvidenceProvided": "neutral"
+      },
+      {
+        "id": "evline:paper-2-29785012",
+        "type": "EvidenceLine",
+        "description": "The target variant was not identified in the provided text; therefore, no case-control evidence can be extracted.",
+        "extensions": [
+          {
+            "name": "structuredEvidenceItems",
+            "value": [
+              {
+                "label": "Study design: not_case_control",
+                "checked": false,
+                "detail": ""
+              }
+            ]
+          }
+        ],
+        "reportedIn": [
+          {
+            "type": "Document",
+            "urls": [
+              "https://pubmed.ncbi.nlm.nih.gov/29785012/"
+            ],
+            "pmid": "29785012"
+          }
+        ],
+        "directionOfEvidenceProvided": "neutral"
+      }
+    ],
+    "directionOfEvidenceProvided": "neutral"
+  },
+  {
+    "id": "evline:PTEN_c_112C_T_PM1",
+    "type": "EvidenceLine",
+    "description": "Transcript annotation unavailable. PM1 evaluates a variant in a reviewed mutational hotspot or critical functional domain with no conflicting benign variation. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
+    "extensions": [
+      {
+        "name": "bh26AssessmentDetails",
+        "value": {
+          "criterion": "PM1",
+          "status": "unknown",
+          "summary": "Transcript annotation unavailable. PM1 evaluates a variant in a reviewed mutational hotspot or critical functional domain with no conflicting benign variation. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
+          "evidenceItemIds": [],
+          "provenance": {
+            "rule_version": "PM1-v1"
+          },
+          "missingInputs": [
+            "annotation",
+            "transcript"
+          ]
+        }
+      },
+      {
+        "name": "referenceLink",
+        "value": "https://www.uniprot.org/uniprotkb/P60484/entry"
+      }
+    ],
+    "specifiedBy": {
+      "type": "Method",
+      "name": "ACMG/AMP PM1 assessment (unknown)",
+      "methodType": "PM1",
+      "reportedIn": {
+        "type": "Document",
+        "name": "Richards et al., 2015, Genet Med.",
+        "doi": "10.1038/gim.2015.30",
+        "pmid": "25741868"
+      }
+    },
+    "directionOfEvidenceProvided": "neutral"
+  },
+  {
+    "id": "evline:PTEN_c_112C_T_PM2",
+    "type": "EvidenceLine",
+    "description": "No reliable population observation",
+    "extensions": [
+      {
+        "name": "bh26AssessmentDetails",
+        "value": {
+          "criterion": "PM2",
+          "status": "unknown",
+          "summary": "No reliable population observation",
+          "evidenceItemIds": [],
+          "provenance": {
+            "rule_version": "PM2-v1",
+            "policy_source": "BH26 demo population evidence QC policy",
+            "policy_version": "2026-09-15",
+            "rejected_observations": [],
+            "provider_failures": [
+              {
+                "provider": "gnomAD",
+                "reason": "NO_OBSERVATION"
+              }
+            ]
+          },
+          "missingInputs": [
+            "population"
+          ]
+        }
+      },
+      {
+        "name": "referenceLink",
+        "value": "https://gnomad.broadinstitute.org/variant/10-87894057-C-T?dataset=gnomad_r4"
+      }
+    ],
+    "specifiedBy": {
+      "type": "Method",
+      "name": "ACMG/AMP PM2 assessment (unknown)",
+      "methodType": "PM2",
+      "reportedIn": {
+        "type": "Document",
+        "name": "Richards et al., 2015, Genet Med.",
+        "doi": "10.1038/gim.2015.30",
+        "pmid": "25741868"
+      }
+    },
+    "directionOfEvidenceProvided": "neutral"
+  },
+  {
+    "id": "evline:PTEN_c_112C_T_PM3",
+    "type": "EvidenceLine",
+    "description": "PM3 is not evaluated by this integrated pipeline. No judgment was made; any referenceLink or curatorInfo extension is an auxiliary curation aid only.",
+    "extensions": [
+      {
+        "name": "bh26AssessmentDetails",
+        "value": {
+          "criterion": "PM3",
+          "status": "unknown",
+          "summary": "PM3 is not evaluated by this integrated pipeline. No judgment was made; any referenceLink or curatorInfo extension is an auxiliary curation aid only.",
+          "missingInputs": [
+            "criterion implementation"
+          ]
+        }
+      },
+      {
+        "name": "referenceLink",
+        "value": "https://www.ncbi.nlm.nih.gov/clinvar/?term=PTEN%5Bgene%5D%20AND%20c.112C%3ET"
+      },
+      {
+        "name": "curatorInfo",
+        "value": {
+          "clinvarVariationId": "127688",
+          "segregationMentions": [],
+          "transMentions": []
+        }
+      }
+    ],
+    "specifiedBy": {
+      "type": "Method",
+      "name": "ACMG/AMP PM3 assessment (unknown)",
+      "methodType": "PM3",
+      "reportedIn": {
+        "type": "Document",
+        "name": "Richards et al., 2015, Genet Med.",
+        "doi": "10.1038/gim.2015.30",
+        "pmid": "25741868"
+      }
+    },
+    "directionOfEvidenceProvided": "neutral"
+  },
+  {
+    "id": "evline:PTEN_c_112C_T_PM4",
+    "type": "EvidenceLine",
+    "description": "Transcript annotation unavailable. PM4 evaluates protein-length changes caused by an in-frame insertion, in-frame deletion, or stop-loss variant. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
+    "extensions": [
+      {
+        "name": "bh26AssessmentDetails",
+        "value": {
+          "criterion": "PM4",
+          "status": "unknown",
+          "summary": "Transcript annotation unavailable. PM4 evaluates protein-length changes caused by an in-frame insertion, in-frame deletion, or stop-loss variant. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
+          "evidenceItemIds": [],
+          "provenance": {
+            "rule_version": "PM4-v1"
+          },
+          "missingInputs": [
+            "annotation",
+            "transcript"
+          ]
+        }
+      }
+    ],
+    "specifiedBy": {
+      "type": "Method",
+      "name": "ACMG/AMP PM4 assessment (unknown)",
+      "methodType": "PM4",
+      "reportedIn": {
+        "type": "Document",
+        "name": "Richards et al., 2015, Genet Med.",
+        "doi": "10.1038/gim.2015.30",
+        "pmid": "25741868"
+      }
+    },
+    "directionOfEvidenceProvided": "neutral"
+  },
+  {
+    "id": "evline:PTEN_c_112C_T_PM5",
+    "type": "EvidenceLine",
+    "description": "Transcript annotation unavailable. PM5 compares a missense variant with an independently established pathogenic variant causing a different amino-acid substitution at the same residue. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
+    "extensions": [
+      {
+        "name": "bh26AssessmentDetails",
+        "value": {
+          "criterion": "PM5",
+          "status": "unknown",
+          "summary": "Transcript annotation unavailable. PM5 compares a missense variant with an independently established pathogenic variant causing a different amino-acid substitution at the same residue. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
+          "evidenceItemIds": [],
+          "provenance": {
+            "rule_version": "PM5-v1"
+          },
+          "missingInputs": [
+            "annotation",
+            "transcript"
+          ]
+        }
+      },
+      {
+        "name": "referenceLink",
+        "value": "https://www.uniprot.org/uniprotkb/P60484/entry"
+      }
+    ],
+    "specifiedBy": {
+      "type": "Method",
+      "name": "ACMG/AMP PM5 assessment (unknown)",
+      "methodType": "PM5",
+      "reportedIn": {
+        "type": "Document",
+        "name": "Richards et al., 2015, Genet Med.",
+        "doi": "10.1038/gim.2015.30",
+        "pmid": "25741868"
+      }
+    },
+    "directionOfEvidenceProvided": "neutral"
+  },
+  {
+    "id": "evline:PTEN_c_112C_T_PM6",
+    "type": "EvidenceLine",
+    "description": "PM6 is not evaluated by this integrated pipeline. No judgment was made; any referenceLink or curatorInfo extension is an auxiliary curation aid only.",
+    "extensions": [
+      {
+        "name": "bh26AssessmentDetails",
+        "value": {
+          "criterion": "PM6",
+          "status": "unknown",
+          "summary": "PM6 is not evaluated by this integrated pipeline. No judgment was made; any referenceLink or curatorInfo extension is an auxiliary curation aid only.",
+          "missingInputs": [
+            "criterion implementation"
+          ]
+        }
+      }
+    ],
+    "specifiedBy": {
+      "type": "Method",
+      "name": "ACMG/AMP PM6 assessment (unknown)",
+      "methodType": "PM6",
+      "reportedIn": {
+        "type": "Document",
+        "name": "Richards et al., 2015, Genet Med.",
+        "doi": "10.1038/gim.2015.30",
+        "pmid": "25741868"
+      }
+    },
+    "directionOfEvidenceProvided": "neutral"
+  },
+  {
+    "id": "evline:PTEN_c_112C_T_PP1",
+    "type": "EvidenceLine",
+    "description": "PP1 is not evaluated by this integrated pipeline. No judgment was made; any referenceLink or curatorInfo extension is an auxiliary curation aid only.",
+    "extensions": [
+      {
+        "name": "bh26AssessmentDetails",
+        "value": {
+          "criterion": "PP1",
+          "status": "unknown",
+          "summary": "PP1 is not evaluated by this integrated pipeline. No judgment was made; any referenceLink or curatorInfo extension is an auxiliary curation aid only.",
+          "missingInputs": [
+            "criterion implementation"
+          ]
+        }
+      },
+      {
+        "name": "referenceLink",
+        "value": "https://www.ncbi.nlm.nih.gov/clinvar/?term=PTEN%5Bgene%5D%20AND%20c.112C%3ET"
+      }
+    ],
+    "specifiedBy": {
+      "type": "Method",
+      "name": "ACMG/AMP PP1 assessment (unknown)",
+      "methodType": "PP1",
+      "reportedIn": {
+        "type": "Document",
+        "name": "Richards et al., 2015, Genet Med.",
+        "doi": "10.1038/gim.2015.30",
+        "pmid": "25741868"
+      }
+    },
+    "directionOfEvidenceProvided": "neutral"
+  },
+  {
+    "id": "evline:PTEN_c_112C_T_PP2",
+    "type": "EvidenceLine",
+    "description": "Transcript annotation unavailable. PP2 evaluates missense variants in genes where missense is an established disease mechanism and benign missense variation is constrained. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
+    "extensions": [
+      {
+        "name": "bh26AssessmentDetails",
+        "value": {
+          "criterion": "PP2",
+          "status": "unknown",
+          "summary": "Transcript annotation unavailable. PP2 evaluates missense variants in genes where missense is an established disease mechanism and benign missense variation is constrained. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
+          "evidenceItemIds": [],
+          "provenance": {
+            "rule_version": "PP2-v1"
+          },
+          "missingInputs": [
+            "annotation",
+            "transcript"
+          ]
+        }
+      },
+      {
+        "name": "referenceLink",
+        "value": "https://gnomad.broadinstitute.org/gene/PTEN?dataset=gnomad_r4"
+      }
+    ],
+    "specifiedBy": {
+      "type": "Method",
+      "name": "ACMG/AMP PP2 assessment (unknown)",
+      "methodType": "PP2",
+      "reportedIn": {
+        "type": "Document",
+        "name": "Richards et al., 2015, Genet Med.",
+        "doi": "10.1038/gim.2015.30",
+        "pmid": "25741868"
+      }
+    },
+    "directionOfEvidenceProvided": "neutral"
+  },
+  {
+    "id": "evline:PTEN_c_112C_T_PP3",
+    "type": "EvidenceLine",
+    "description": "Transcript annotation unavailable. PP3 evaluates calibrated computational evidence supporting a damaging effect. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
+    "extensions": [
+      {
+        "name": "bh26AssessmentDetails",
+        "value": {
+          "criterion": "PP3",
+          "status": "unknown",
+          "summary": "Transcript annotation unavailable. PP3 evaluates calibrated computational evidence supporting a damaging effect. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
+          "evidenceItemIds": [],
+          "provenance": {
+            "rule_version": "PP3-v1"
+          },
+          "missingInputs": [
+            "annotation",
+            "transcript"
+          ]
+        }
+      }
+    ],
+    "specifiedBy": {
+      "type": "Method",
+      "name": "ACMG/AMP PP3 assessment (unknown)",
+      "methodType": "PP3",
+      "reportedIn": {
+        "type": "Document",
+        "name": "Richards et al., 2015, Genet Med.",
+        "doi": "10.1038/gim.2015.30",
+        "pmid": "25741868"
+      }
+    },
+    "directionOfEvidenceProvided": "neutral"
+  },
+  {
+    "id": "evline:PTEN_c_112C_T_PP4",
+    "type": "EvidenceLine",
+    "description": "PP4 is not evaluated by this integrated pipeline. No judgment was made; any referenceLink or curatorInfo extension is an auxiliary curation aid only.",
+    "extensions": [
+      {
+        "name": "bh26AssessmentDetails",
+        "value": {
+          "criterion": "PP4",
+          "status": "unknown",
+          "summary": "PP4 is not evaluated by this integrated pipeline. No judgment was made; any referenceLink or curatorInfo extension is an auxiliary curation aid only.",
+          "missingInputs": [
+            "criterion implementation"
+          ]
+        }
+      }
+    ],
+    "specifiedBy": {
+      "type": "Method",
+      "name": "ACMG/AMP PP4 assessment (unknown)",
+      "methodType": "PP4",
+      "reportedIn": {
+        "type": "Document",
+        "name": "Richards et al., 2015, Genet Med.",
+        "doi": "10.1038/gim.2015.30",
+        "pmid": "25741868"
+      }
+    },
+    "directionOfEvidenceProvided": "neutral"
+  },
+  {
+    "id": "evline:PTEN_c_112C_T_PP5",
+    "type": "EvidenceLine",
+    "description": "ClinGen General policy: retrieve primary evidence instead of scoring external assertions. PP5 is not scored from an external assertion alone; the primary evidence must be reviewed. Outcome: UNKNOWN; no MET or NOT_MET judgment is made.",
+    "extensions": [
+      {
+        "name": "bh26AssessmentDetails",
+        "value": {
+          "criterion": "PP5",
+          "status": "unknown",
+          "summary": "ClinGen General policy: retrieve primary evidence instead of scoring external assertions. PP5 is not scored from an external assertion alone; the primary evidence must be reviewed. Outcome: UNKNOWN; no MET or NOT_MET judgment is made.",
+          "evidenceItemIds": [],
+          "provenance": {
+            "rule_version": "PP5-v1"
+          }
+        }
+      }
+    ],
+    "specifiedBy": {
+      "type": "Method",
+      "name": "ACMG/AMP PP5 assessment (unknown)",
+      "methodType": "PP5",
+      "reportedIn": {
+        "type": "Document",
+        "name": "Richards et al., 2015, Genet Med.",
+        "doi": "10.1038/gim.2015.30",
+        "pmid": "25741868"
+      }
+    },
+    "directionOfEvidenceProvided": "neutral"
+  },
+  {
+    "id": "evline:PTEN_c_112C_T_BA1",
+    "type": "EvidenceLine",
+    "description": "No reliable population observation",
+    "extensions": [
+      {
+        "name": "bh26AssessmentDetails",
+        "value": {
+          "criterion": "BA1",
+          "status": "unknown",
+          "summary": "No reliable population observation",
+          "evidenceItemIds": [],
+          "provenance": {
+            "rule_version": "BA1-v1",
+            "policy_source": "BH26 demo population evidence QC policy",
+            "policy_version": "2026-09-15",
+            "rejected_observations": [],
+            "provider_failures": [
+              {
+                "provider": "gnomAD",
+                "reason": "NO_OBSERVATION"
+              }
+            ]
+          },
+          "missingInputs": [
+            "population"
+          ]
+        }
+      },
+      {
+        "name": "referenceLink",
+        "value": "https://gnomad.broadinstitute.org/variant/10-87894057-C-T?dataset=gnomad_r4"
+      }
+    ],
+    "specifiedBy": {
+      "type": "Method",
+      "name": "ACMG/AMP BA1 assessment (unknown)",
+      "methodType": "BA1",
+      "reportedIn": {
+        "type": "Document",
+        "name": "Richards et al., 2015, Genet Med.",
+        "doi": "10.1038/gim.2015.30",
+        "pmid": "25741868"
+      }
+    },
+    "directionOfEvidenceProvided": "neutral"
+  },
+  {
+    "id": "evline:PTEN_c_112C_T_BS1",
+    "type": "EvidenceLine",
+    "description": "No reliable population observation",
+    "extensions": [
+      {
+        "name": "bh26AssessmentDetails",
+        "value": {
+          "criterion": "BS1",
+          "status": "unknown",
+          "summary": "No reliable population observation",
+          "evidenceItemIds": [],
+          "provenance": {
+            "rule_version": "BS1-v1",
+            "policy_source": "BH26 demo population evidence QC policy",
+            "policy_version": "2026-09-15",
+            "rejected_observations": [],
+            "provider_failures": [
+              {
+                "provider": "gnomAD",
+                "reason": "NO_OBSERVATION"
+              }
+            ]
+          },
+          "missingInputs": [
+            "population"
+          ]
+        }
+      },
+      {
+        "name": "referenceLink",
+        "value": "https://gnomad.broadinstitute.org/variant/10-87894057-C-T?dataset=gnomad_r4"
+      }
+    ],
+    "specifiedBy": {
+      "type": "Method",
+      "name": "ACMG/AMP BS1 assessment (unknown)",
+      "methodType": "BS1",
+      "reportedIn": {
+        "type": "Document",
+        "name": "Richards et al., 2015, Genet Med.",
+        "doi": "10.1038/gim.2015.30",
+        "pmid": "25741868"
+      }
+    },
+    "directionOfEvidenceProvided": "neutral"
+  },
+  {
+    "id": "evline:PTEN_c_112C_T_BS2",
+    "type": "EvidenceLine",
+    "description": "BS2 is not evaluated by this integrated pipeline. No judgment was made; any referenceLink or curatorInfo extension is an auxiliary curation aid only.",
+    "extensions": [
+      {
+        "name": "bh26AssessmentDetails",
+        "value": {
+          "criterion": "BS2",
+          "status": "unknown",
+          "summary": "BS2 is not evaluated by this integrated pipeline. No judgment was made; any referenceLink or curatorInfo extension is an auxiliary curation aid only.",
+          "missingInputs": [
+            "criterion implementation"
+          ]
+        }
+      },
+      {
+        "name": "referenceLink",
+        "value": "https://gnomad.broadinstitute.org/variant/10-87894057-C-T?dataset=gnomad_r4"
+      }
+    ],
+    "specifiedBy": {
+      "type": "Method",
+      "name": "ACMG/AMP BS2 assessment (unknown)",
+      "methodType": "BS2",
+      "reportedIn": {
+        "type": "Document",
+        "name": "Richards et al., 2015, Genet Med.",
+        "doi": "10.1038/gim.2015.30",
+        "pmid": "25741868"
+      }
+    },
+    "directionOfEvidenceProvided": "neutral"
+  },
+  {
+    "id": "evline:PTEN_c_112C_T_BS3",
+    "type": "EvidenceLine",
+    "description": "None of the 2 paper(s) examined yielded a usable evidence-based judgment for this variant (either the variant could not be identified in the text, or the per-paper judgment was itself inconclusive).",
+    "extensions": [
+      {
+        "name": "curatorHints",
+        "value": [
+          {
+            "severity": "info",
+            "message": "None of the 2 paper(s) examined yielded a usable evidence-based judgment for this variant (either the variant could not be identified in the text, or the per-paper judgment was itself inconclusive)."
+          }
+        ]
+      },
+      {
+        "name": "bh26AssessmentDetails",
+        "value": {
+          "criterion": "BS3",
+          "status": "unknown",
+          "summary": "None of the 2 paper(s) examined yielded a usable evidence-based judgment for this variant (either the variant could not be identified in the text, or the per-paper judgment was itself inconclusive)."
+        }
+      }
+    ],
+    "specifiedBy": {
+      "type": "Method",
+      "name": "Unspecified VCEP ACMG/AMP BS3 evidence assessment (LLM-assisted draft)",
+      "methodType": "BS3",
+      "reportedIn": {
+        "type": "Document",
+        "name": "Richards et al., 2015, Genet Med.",
+        "doi": "10.1038/gim.2015.30",
+        "pmid": "25741868"
+      }
+    },
+    "contributions": [
+      {
+        "type": "Contribution",
+        "contributor": {
+          "id": "acmg-literature-llm-pipeline",
+          "type": "Agent",
+          "name": "ACMG literature-evidence LLM pipeline (gemma-4 via vLLM) - AI-generated draft evidence, requires human curator review before use"
+        },
+        "activityType": "automated evidence evaluation",
+        "date": "2026-09-17T05:15:41.501642Z"
+      }
+    ],
+    "reportedIn": [
+      {
+        "type": "Document",
+        "urls": [
+          "https://pubmed.ncbi.nlm.nih.gov/29706350/"
+        ],
+        "pmid": "29706350"
+      },
+      {
+        "type": "Document",
+        "urls": [
+          "https://pubmed.ncbi.nlm.nih.gov/29785012/"
+        ],
+        "pmid": "29785012"
+      }
+    ],
+    "hasEvidenceItems": [
+      {
+        "id": "evline:paper-1-29706350",
+        "type": "EvidenceLine",
+        "description": "The paper is a large-scale functional screen, but the specific quantitative result for the target variant c.112C>T is not provided in the text. Per instructions, I cannot infer the variant's specific result from the aggregate findings of the screen.",
+        "reportedIn": [
+          {
+            "type": "Document",
+            "urls": [
+              "https://pubmed.ncbi.nlm.nih.gov/29706350/"
+            ],
+            "pmid": "29706350"
+          }
+        ],
+        "directionOfEvidenceProvided": "neutral"
+      },
+      {
+        "id": "evline:paper-2-29785012",
+        "type": "EvidenceLine",
+        "description": "The target variant is not explicitly named or its specific experimental result reported in the provided text, even though the paper describes a massive functional screen for PTEN variants.",
+        "reportedIn": [
+          {
+            "type": "Document",
+            "urls": [
+              "https://pubmed.ncbi.nlm.nih.gov/29785012/"
+            ],
+            "pmid": "29785012"
+          }
+        ],
+        "directionOfEvidenceProvided": "neutral"
+      }
+    ],
+    "directionOfEvidenceProvided": "neutral"
+  },
+  {
+    "id": "evline:PTEN_c_112C_T_BS4",
+    "type": "EvidenceLine",
+    "description": "BS4 is not evaluated by this integrated pipeline. No judgment was made; any referenceLink or curatorInfo extension is an auxiliary curation aid only.",
+    "extensions": [
+      {
+        "name": "bh26AssessmentDetails",
+        "value": {
+          "criterion": "BS4",
+          "status": "unknown",
+          "summary": "BS4 is not evaluated by this integrated pipeline. No judgment was made; any referenceLink or curatorInfo extension is an auxiliary curation aid only.",
+          "missingInputs": [
+            "criterion implementation"
+          ]
+        }
+      }
+    ],
+    "specifiedBy": {
+      "type": "Method",
+      "name": "ACMG/AMP BS4 assessment (unknown)",
+      "methodType": "BS4",
+      "reportedIn": {
+        "type": "Document",
+        "name": "Richards et al., 2015, Genet Med.",
+        "doi": "10.1038/gim.2015.30",
+        "pmid": "25741868"
+      }
+    },
+    "directionOfEvidenceProvided": "neutral"
+  },
+  {
+    "id": "evline:PTEN_c_112C_T_BP1",
+    "type": "EvidenceLine",
+    "description": "Transcript annotation unavailable. BP1 evaluates missense variants in genes where disease is predominantly caused by truncating variants rather than missense variation. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
+    "extensions": [
+      {
+        "name": "bh26AssessmentDetails",
+        "value": {
+          "criterion": "BP1",
+          "status": "unknown",
+          "summary": "Transcript annotation unavailable. BP1 evaluates missense variants in genes where disease is predominantly caused by truncating variants rather than missense variation. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
+          "evidenceItemIds": [],
+          "provenance": {
+            "rule_version": "BP1-v1"
+          },
+          "missingInputs": [
+            "annotation",
+            "transcript"
+          ]
+        }
+      }
+    ],
+    "specifiedBy": {
+      "type": "Method",
+      "name": "ACMG/AMP BP1 assessment (unknown)",
+      "methodType": "BP1",
+      "reportedIn": {
+        "type": "Document",
+        "name": "Richards et al., 2015, Genet Med.",
+        "doi": "10.1038/gim.2015.30",
+        "pmid": "25741868"
+      }
+    },
+    "directionOfEvidenceProvided": "neutral"
+  },
+  {
+    "id": "evline:PTEN_c_112C_T_BP2",
+    "type": "EvidenceLine",
+    "description": "BP2 is not evaluated by this integrated pipeline. No judgment was made; any referenceLink or curatorInfo extension is an auxiliary curation aid only.",
+    "extensions": [
+      {
+        "name": "bh26AssessmentDetails",
+        "value": {
+          "criterion": "BP2",
+          "status": "unknown",
+          "summary": "BP2 is not evaluated by this integrated pipeline. No judgment was made; any referenceLink or curatorInfo extension is an auxiliary curation aid only.",
+          "missingInputs": [
+            "criterion implementation"
+          ]
+        }
+      }
+    ],
+    "specifiedBy": {
+      "type": "Method",
+      "name": "ACMG/AMP BP2 assessment (unknown)",
+      "methodType": "BP2",
+      "reportedIn": {
+        "type": "Document",
+        "name": "Richards et al., 2015, Genet Med.",
+        "doi": "10.1038/gim.2015.30",
+        "pmid": "25741868"
+      }
+    },
+    "directionOfEvidenceProvided": "neutral"
+  },
+  {
+    "id": "evline:PTEN_c_112C_T_BP3",
+    "type": "EvidenceLine",
+    "description": "Transcript annotation unavailable. BP3 evaluates in-frame insertions or deletions in a repetitive region without known function. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
+    "extensions": [
+      {
+        "name": "bh26AssessmentDetails",
+        "value": {
+          "criterion": "BP3",
+          "status": "unknown",
+          "summary": "Transcript annotation unavailable. BP3 evaluates in-frame insertions or deletions in a repetitive region without known function. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
+          "evidenceItemIds": [],
+          "provenance": {
+            "rule_version": "BP3-v1"
+          },
+          "missingInputs": [
+            "annotation",
+            "transcript"
+          ]
+        }
+      }
+    ],
+    "specifiedBy": {
+      "type": "Method",
+      "name": "ACMG/AMP BP3 assessment (unknown)",
+      "methodType": "BP3",
+      "reportedIn": {
+        "type": "Document",
+        "name": "Richards et al., 2015, Genet Med.",
+        "doi": "10.1038/gim.2015.30",
+        "pmid": "25741868"
+      }
+    },
+    "directionOfEvidenceProvided": "neutral"
+  },
+  {
+    "id": "evline:PTEN_c_112C_T_BP4",
+    "type": "EvidenceLine",
+    "description": "Transcript annotation unavailable. BP4 evaluates calibrated computational evidence supporting a benign effect. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
+    "extensions": [
+      {
+        "name": "bh26AssessmentDetails",
+        "value": {
+          "criterion": "BP4",
+          "status": "unknown",
+          "summary": "Transcript annotation unavailable. BP4 evaluates calibrated computational evidence supporting a benign effect. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
+          "evidenceItemIds": [],
+          "provenance": {
+            "rule_version": "BP4-v1"
+          },
+          "missingInputs": [
+            "annotation",
+            "transcript"
+          ]
+        }
+      }
+    ],
+    "specifiedBy": {
+      "type": "Method",
+      "name": "ACMG/AMP BP4 assessment (unknown)",
+      "methodType": "BP4",
+      "reportedIn": {
+        "type": "Document",
+        "name": "Richards et al., 2015, Genet Med.",
+        "doi": "10.1038/gim.2015.30",
+        "pmid": "25741868"
+      }
+    },
+    "directionOfEvidenceProvided": "neutral"
+  },
+  {
+    "id": "evline:PTEN_c_112C_T_BP5",
+    "type": "EvidenceLine",
+    "description": "BP5 is not evaluated by this integrated pipeline. No judgment was made; any referenceLink or curatorInfo extension is an auxiliary curation aid only.",
+    "extensions": [
+      {
+        "name": "bh26AssessmentDetails",
+        "value": {
+          "criterion": "BP5",
+          "status": "unknown",
+          "summary": "BP5 is not evaluated by this integrated pipeline. No judgment was made; any referenceLink or curatorInfo extension is an auxiliary curation aid only.",
+          "missingInputs": [
+            "criterion implementation"
+          ]
+        }
+      }
+    ],
+    "specifiedBy": {
+      "type": "Method",
+      "name": "ACMG/AMP BP5 assessment (unknown)",
+      "methodType": "BP5",
+      "reportedIn": {
+        "type": "Document",
+        "name": "Richards et al., 2015, Genet Med.",
+        "doi": "10.1038/gim.2015.30",
+        "pmid": "25741868"
+      }
+    },
+    "directionOfEvidenceProvided": "neutral"
+  },
+  {
+    "id": "evline:PTEN_c_112C_T_BP6",
+    "type": "EvidenceLine",
+    "description": "ClinGen General policy: retrieve primary evidence instead of scoring external assertions. BP6 is not scored from an external assertion alone; the primary evidence must be reviewed. Outcome: UNKNOWN; no MET or NOT_MET judgment is made.",
+    "extensions": [
+      {
+        "name": "bh26AssessmentDetails",
+        "value": {
+          "criterion": "BP6",
+          "status": "unknown",
+          "summary": "ClinGen General policy: retrieve primary evidence instead of scoring external assertions. BP6 is not scored from an external assertion alone; the primary evidence must be reviewed. Outcome: UNKNOWN; no MET or NOT_MET judgment is made.",
+          "evidenceItemIds": [],
+          "provenance": {
+            "rule_version": "BP6-v1"
+          }
+        }
+      }
+    ],
+    "specifiedBy": {
+      "type": "Method",
+      "name": "ACMG/AMP BP6 assessment (unknown)",
+      "methodType": "BP6",
+      "reportedIn": {
+        "type": "Document",
+        "name": "Richards et al., 2015, Genet Med.",
+        "doi": "10.1038/gim.2015.30",
+        "pmid": "25741868"
+      }
+    },
+    "directionOfEvidenceProvided": "neutral"
+  },
+  {
+    "id": "evline:PTEN_c_112C_T_BP7",
+    "type": "EvidenceLine",
+    "description": "Transcript annotation unavailable",
+    "extensions": [
+      {
+        "name": "bh26AssessmentDetails",
+        "value": {
+          "criterion": "BP7",
+          "status": "unknown",
+          "summary": "Transcript annotation unavailable",
+          "evidenceItemIds": [],
+          "provenance": {
+            "rule_version": "BP7-v1"
+          },
+          "missingInputs": [
+            "annotation",
+            "transcript"
+          ]
+        }
+      }
+    ],
+    "specifiedBy": {
+      "type": "Method",
+      "name": "ACMG/AMP BP7 assessment (unknown)",
+      "methodType": "BP7",
+      "reportedIn": {
+        "type": "Document",
+        "name": "Richards et al., 2015, Genet Med.",
+        "doi": "10.1038/gim.2015.30",
+        "pmid": "25741868"
+      }
+    },
+    "directionOfEvidenceProvided": "neutral"
+  }
+]

@@ -21,6 +21,10 @@ work/
 logs/*.log
 .python-version
 
+# API results written when ACMG_API_OUTPUT_DIR is set: one file per request,
+# so the directory grows with traffic and holds patient-derived judgments.
+api_results/
+
 # Virtual environments
 .venv/
 venv/

@@ -67,6 +67,7 @@ async def run_pipeline(
     erepo_client: ERepoClient,
     vcep_name: str | None = None,
     full_text_cache=None,
+    llm_cache=None,
 ) -> PipelineOutput:
     """Evaluate 19 implemented and 9 UNKNOWN stub criteria in ACMG order."""
     extraction = extract_clinical_note(clinical_note)
@@ -74,7 +75,7 @@ async def run_pipeline(
         variant, extraction,
         automated_config=load_automated_config(),
         mcp=mcp, erepo_client=erepo_client, vcep_name=vcep_name,
-        full_text_cache=full_text_cache,
+        full_text_cache=full_text_cache, llm_cache=llm_cache,
     )
     evidence_lines = {code: line for code, line in zip(ALL_ACMG_CODES, lines)}
     return PipelineOutput(
@@ -104,6 +105,7 @@ async def run_selected_criteria(
     erepo_client: ERepoClient | None = None,
     vcep_name: str | None = None,
     full_text_cache=None,
+    llm_cache=None,
 ) -> dict[str, dict]:
     """Evaluate only `criteria`, returning {code: VA-Spec EvidenceLine}.
 
@@ -117,7 +119,7 @@ async def run_selected_criteria(
         variant, extraction, criteria,
         automated_config=load_automated_config(),
         mcp=mcp, erepo_client=erepo_client,
-        vcep_name=vcep_name, full_text_cache=full_text_cache,
+        vcep_name=vcep_name, full_text_cache=full_text_cache, llm_cache=llm_cache,
     )
 
 

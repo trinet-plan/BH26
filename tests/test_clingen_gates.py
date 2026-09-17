@@ -49,9 +49,13 @@ class ClinGenGateTests(unittest.TestCase):
     def test_each_gate_opens_for_its_consequence(self):
         for record_id, (criterion, _) in GATES.items():
             result = self.by_record[record_id][criterion]
-            self.assertNotEqual(result["status"], "unknown",
+            # "The gate opened" used to be status != NOT_APPLICABLE, which c5b303f collapsed
+            # into UNKNOWN - leaving this asserting status != "unknown" and, on the next
+            # line, status == "unknown". Applicability is now reported in provenance, so the
+            # two halves can say what they meant: the consequence is in scope for the
+            # criterion, and with no curated evidence supplied it still stops undecided.
+            self.assertNotEqual(result["provenance"].get("assessment_outcome"), "not_applicable",
                                 f"{criterion} should apply to {record_id}")
-            # No curated evidence is supplied, so an opened gate stops here.
             self.assertEqual(result["status"], "unknown")
             self.assertTrue(result["missing_inputs"])
 

@@ -43,7 +43,9 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Optional
 
-from acmg_pipeline.clinical_note import Family
+from acmg_pipeline.clinical_note import ClinicalNoteExtraction, Family
+from acmg_pipeline.inputs import variant_identity
+from acmg_pipeline.vcf_record import VariantRecord
 from acmg_pipeline.common import (
     MatchStatus, VariantMatchingResult, CuratorHint, FinalResult,
     PaperContribution, AggregatedJudgment,
@@ -281,7 +283,21 @@ Output exactly this JSON structure:
 """
 
 
-def build_prompt(gene: str, hgvsc: str, hgvsp: str, equivalents: list[str], full_text: str) -> str:
+def build_prompt(
+    variant: VariantRecord,
+    clinical_note: ClinicalNoteExtraction,
+    full_text: str,
+) -> str:
+    """Build the literature prompt from the shared criterion input types.
+
+    ``clinical_note`` is accepted at the common boundary (see ps3_bs3.py/
+    ps4.py's own build_prompt(), whose signature this matches per h.muroda's
+    "unify criterion input interfaces" refactor, 2026-09-16) even though
+    PP1/BS4 is decided from segregation literature, not the patient's own
+    clinical note.
+    """
+    del clinical_note
+    gene, hgvsc, hgvsp, equivalents = variant_identity(variant)
     return PROMPT_TEMPLATE.format(
         gene=gene, hgvsc=hgvsc, hgvsp=hgvsp,
         equivalents=", ".join(equivalents), full_text=full_text,

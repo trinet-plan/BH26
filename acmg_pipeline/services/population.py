@@ -32,6 +32,59 @@ class PopulationService:
         return {"observations": observations, "failures": failures}
 
 
+# One-sided 95%: 95% of the distribution lies above the bound this returns.
+_Z95 = Decimal("1.6448536269514722")
+FAF_METHOD = "Wilson score interval, one-sided 95% lower bound, computed from AC/AN"
+
+
+def faf95(ac, an):
+    """Filtering allele frequency: the lower bound of the 95% CI for AC/AN.
+
+    A point-estimate AF says nothing about how well observed it is: 4 alleles in 5,600 and
+    400 in 560,000 both read 0.07%, but only the second is evidence that the frequency really
+    is that high. BS1 asks whether a variant is *too common* to cause the disease, so the
+    honest quantity is the lower bound - the frequency the data supports even in the worst
+    case - which is what gnomAD publishes as FAF and what ClinGen SVI asks BS1/BA1 to use.
+
+    gnomAD derives its own faf95 with a Poisson interval and does not return it from the
+    GraphQL fields this project requests, so this is computed locally by the Wilson score
+    method and is an approximation of that published value, not a copy of it. Every result
+    records FAF_METHOD alongside the number.
+    """
+    ac, an = number(ac), number(an)
+    if ac is None or an is None or an <= 0 or ac < 0 or ac > an:
+        return None
+    if ac == 0:
+        return Decimal(0)
+    proportion = ac / an
+    z_squared = _Z95 * _Z95
+    denominator = 1 + z_squared / an
+    centre = (proportion + z_squared / (2 * an)) / denominator
+    spread = (proportion * (1 - proportion) / an + z_squared / (4 * an * an)).sqrt()
+    lower = centre - (_Z95 / denominator) * spread
+    return lower if lower > 0 else Decimal(0)
+
+
+STATISTICS = {"af": "allele frequency", "faf95": "filtering allele frequency"}
+
+
+def article(measure):
+    return ("an " if measure[0] in "aeiou" else "a ") + measure
+
+
+def observed_frequencies(observations, statistic):
+    """Pair each observation with the quantity `statistic` names.
+
+    A frequency threshold and the statistic it was calibrated against are one unit - an AF
+    cutoff compared with a FAF is a stricter cutoff than the one that was written down - so
+    every criterion that compares against a threshold reads the statistic from its own policy
+    and passes it here rather than picking one.
+    """
+    if statistic == "faf95":
+        return [(item, faf95(item.get("AC"), item.get("AN"))) for item in observations]
+    return [(item, number(item.get("AF"))) for item in observations]
+
+
 def usable_observations(resolved, variant, minimum_an):
     """Keep raw AF, FAF and cohort observations separate. Do not pool overlapping cohorts."""
     valid, rejected = [], []
