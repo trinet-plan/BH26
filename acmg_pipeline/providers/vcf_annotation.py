@@ -17,9 +17,18 @@
   both shapes are handled - see below.)
 
 [Three refusals, each answering one line of that decision]
-  No version, no evidence. Every INFO field must be declared with a Source and Version in
-  its ##INFO header, or name a header the file states elsewhere. A field whose release
-  cannot be pinned is skipped, and the providers fetch it instead.
+  No version, no evidence - unless a deployment declares one. Every INFO field must be
+  pinned to a release: by Source and Version on its own ##INFO line, or by the file's
+  ##source together with a date. A field that neither pins is skipped and the providers
+  fetch it instead.
+
+  A real file may still carry none of that - an annotator that writes "annotated with VEP"
+  and no release. Rather than either refusing such a file outright or quietly inventing a
+  version for it, a deployment can declare one: which source it ran, at which version, who
+  says so and why. The declaration names the ##source it applies to, so it cannot attach
+  itself to a different file, and every record made under it carries version_status
+  "DECLARED" with the declaration beside it. The same shape the computational calibrations
+  use for a predictor whose release Ensembl does not report.
 
   Already-decided answers are never read. CLNSIG, ACMG_CODES and their kin are a curator's
   conclusion, and feeding a conclusion back as its own support is the circularity
@@ -54,6 +63,7 @@ from __future__ import annotations
 
 import hashlib
 import re
+from urllib.parse import unquote
 
 CATEGORY_POPULATION = "population"
 CATEGORY_ANNOTATION = "annotation"
@@ -97,6 +107,33 @@ def _accession(value):
     return str(value).split(".")[0] if value else None
 
 
+def declared_version(declaration, meta, group):
+    """(version, declaration) a deployment states for `group`, or (None, None).
+
+    A declaration is only usable when it names the ##source it applies to, says who declared
+    it and why, and states a version for this particular group. Anything less would be a
+    version appearing from nowhere.
+    """
+    if not isinstance(declaration, dict):
+        return None, None
+    required = ("matches_source", "declared_by", "justification")
+    if any(not declaration.get(field) for field in required):
+        return None, None
+    file_source = (meta.get("source") or "").strip()
+    if declaration["matches_source"] not in file_source:
+        return None, None
+    version = (declaration.get("declared_versions") or {}).get(group)
+    if not version:
+        return None, None
+    return version, {
+        "matches_source": declaration["matches_source"],
+        "declared_by": declaration["declared_by"],
+        "justification": declaration["justification"],
+        "declared_at": declaration.get("declared_at"),
+        "file_source": file_source,
+    }
+
+
 def field_provenance(definition, meta):
     """(source, version) for one INFO field, or None when it cannot be pinned.
 
@@ -122,11 +159,13 @@ class VcfEvidenceProvider:
 
     name = "Annotated VCF INFO"
 
-    def __init__(self, mapping):
+    def __init__(self, mapping, version_declaration=None):
         """`mapping` is {INFO id: {"category": ..., "field": ...}} from configuration.
 
         Policy lives in the configuration, not here: which INFO field means which evidence
         field is a property of the annotation pipeline that wrote the file.
+        `version_declaration` is the deployment's statement of the releases behind a file
+        whose headers do not name them - see declared_version().
         """
         if not isinstance(mapping, dict):
             raise ValueError("VCF INFO mapping must be an object")
@@ -136,6 +175,7 @@ class VcfEvidenceProvider:
                 f"These INFO fields carry a curator's conclusion and cannot be mapped to "
                 f"evidence: {sorted(refused)}")
         self.mapping = mapping
+        self.version_declaration = version_declaration
 
     def get_evidence(self, variant, parsed, transcript=None):
         """Every record the file supports, grouped and provenanced per category.
@@ -158,13 +198,20 @@ class VcfEvidenceProvider:
                                 CATEGORY_COMPUTATIONAL} or not (field or compound):
                 skipped.append({"info": info_id, "reason": "UNSUPPORTED_MAPPING"})
                 continue
+            group = rule.get("group")
+            declaration = None
             provenance = field_provenance(parsed.info_defs.get(info_id), parsed.meta)
             if provenance is None:
-                # No release to pin it to, so a provider fetches it instead.
-                skipped.append({"info": info_id, "reason": "NO_SOURCE_VERSION"})
-                continue
-            source, version = provenance
-            key = (category, rule.get("group") or source)
+                version, declaration = declared_version(
+                    self.version_declaration, parsed.meta, group)
+                if not version:
+                    # No release to pin it to, so a provider fetches it instead.
+                    skipped.append({"info": info_id, "reason": "NO_SOURCE_VERSION"})
+                    continue
+                source = group
+            else:
+                source, version = provenance
+            key = (category, group or source)
             record = grouped.get(key)
             if record is None:
                 if digest is None:
@@ -188,6 +235,10 @@ class VcfEvidenceProvider:
                     "info_fields": [],
                     "response_sha256": digest,
                 }
+                if declaration:
+                    # The version did not come from the file; the result says so.
+                    record["version_status"] = "DECLARED"
+                    record["version_declaration"] = declaration
             if compound:
                 values, reason = self._compound_values(
                     info[info_id], parsed.info_defs.get(info_id), compound, transcript)
@@ -199,7 +250,7 @@ class VcfEvidenceProvider:
                 record.update(values)
                 record["compound_format"] = "declared_in_header"
             else:
-                record[field] = info[info_id]
+                record[field] = _decode(info[info_id])
             record["info_fields"].append(info_id)
         return list(grouped.values()), skipped
 
@@ -226,12 +277,17 @@ class VcfEvidenceProvider:
         lists = set(compound.get("list_fields") or [])
         values = {}
         for subfield, target in fields.items():
-            raw = entry.get(subfield, "")
+            raw = _decode(entry.get(subfield, ""))
             if raw == "":
                 continue
             values[target] = ([part for part in raw.split(separator) if part]
                               if target in lists else raw)
         return values, None
+
+
+def _decode(value):
+    """VCF percent-encodes the characters its own delimiters use, so "%2C" is a comma."""
+    return unquote(value) if isinstance(value, str) else value
 
 
 def _slug(value):

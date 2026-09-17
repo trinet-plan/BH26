@@ -13,7 +13,8 @@ from acmg_pipeline.automated_core.models import Variant
 from acmg_pipeline.automated_core.vcf_adapter import parse_vcf as adapter_parse_vcf
 from acmg_pipeline.services.evidence import EvidenceService
 from acmg_pipeline.providers.vcf_annotation import (
-    REFUSED, VcfEvidenceProvider, compound_entries, field_provenance, subfield_order,
+    REFUSED, VcfEvidenceProvider, compound_entries, declared_version, field_provenance,
+    subfield_order,
 )
 from acmg_pipeline.vcf_record import InfoFieldDef, ParsedVcf, VariantRecord
 
@@ -292,3 +293,102 @@ class CompoundFieldTests(unittest.TestCase):
         records, _ = self.evidence("NM_000256.3")
         self.assertEqual(records[0]["origin"], "vcf_input")
         self.assertEqual(records[0]["source"], "ensembl-vep-116")
+
+
+DECLARATION = {
+    "matches_source": "Cross-Gene Annotation Explorer",
+    "declared_versions": {"gnomAD": "4.1.1", "Ensembl VEP": "116"},
+    "declared_by": "BH26 project configuration",
+    "justification": "The exporter states it used VEP but names no release.",
+    "declared_at": "2026-09-17",
+}
+EXPORTER_META = {"source": "Cross-Gene Annotation Explorer (selected variants with VEP annotations)"}
+
+
+class DeclaredVersionTests(unittest.TestCase):
+    """A declaration is a stated assumption, so it has to say who states it and about what."""
+
+    def test_a_complete_declaration_supplies_the_version(self):
+        version, recorded = declared_version(DECLARATION, EXPORTER_META, "gnomAD")
+        self.assertEqual(version, "4.1.1")
+        self.assertEqual(recorded["declared_by"], "BH26 project configuration")
+        self.assertTrue(recorded["justification"])
+
+    def test_it_does_not_attach_itself_to_another_file(self):
+        self.assertEqual(
+            declared_version(DECLARATION, {"source": "some other exporter"}, "gnomAD"),
+            (None, None))
+        self.assertEqual(declared_version(DECLARATION, {}, "gnomAD"), (None, None))
+
+    def test_a_group_it_says_nothing_about_stays_unpinned(self):
+        self.assertEqual(declared_version(DECLARATION, EXPORTER_META, "dbNSFP"), (None, None))
+        self.assertEqual(declared_version(DECLARATION, EXPORTER_META, None), (None, None))
+
+    def test_an_incomplete_declaration_is_not_usable(self):
+        for missing in ("matches_source", "declared_by", "justification"):
+            with self.subTest(missing=missing):
+                partial = {k: v for k, v in DECLARATION.items() if k != missing}
+                self.assertEqual(declared_version(partial, EXPORTER_META, "gnomAD"),
+                                 (None, None))
+        self.assertEqual(declared_version(None, EXPORTER_META, "gnomAD"), (None, None))
+
+
+class ExporterVcfTests(unittest.TestCase):
+    """The real file: VEP output flattened into VEP_* fields, with no release named."""
+
+    FIXTURE = Path(__file__).resolve().parent / "fixtures" / "exporter-vcf-example.vcf"
+    MAPPING = {
+        "GNOMAD_AF": {"category": "population", "group": "gnomAD", "field": "AF"},
+        "VEP_CONSEQUENCE": {"category": "annotation", "group": "Ensembl VEP",
+                            "field": "consequences"},
+        "VEP_TRANSCRIPT": {"category": "annotation", "group": "Ensembl VEP",
+                           "field": "transcript"},
+        "AM_CLASS": {"category": "computational", "group": "AlphaMissense",
+                     "field": "classification"},
+    }
+
+    def setUp(self):
+        self.parsed = adapter_parse_vcf(self.FIXTURE)[0]
+        self.variant = Variant("GRCh38", "2", 174757593, "C", "T")
+
+    def evidence(self, declaration):
+        return VcfEvidenceProvider(self.MAPPING, declaration).get_evidence(
+            self.variant, self.parsed)
+
+    def test_without_a_declaration_the_file_supports_nothing(self):
+        """It names no fileDate, no reference, and no Source or Version on any field."""
+        records, skipped = self.evidence(None)
+        self.assertEqual(records, [])
+        self.assertEqual({item["reason"] for item in skipped}, {"NO_SOURCE_VERSION"})
+
+    def test_a_declaration_makes_the_declared_groups_usable(self):
+        records, _ = self.evidence(DECLARATION)
+        by_source = {record["source"]: record for record in records}
+        self.assertEqual(by_source["gnomAD"]["source_version"], "4.1.1")
+        self.assertEqual(by_source["Ensembl VEP"]["source_version"], "116")
+
+    def test_a_declared_version_never_passes_as_one_the_file_stated(self):
+        records, _ = self.evidence(DECLARATION)
+        for record in records:
+            self.assertEqual(record["version_status"], "DECLARED")
+            self.assertTrue(record["version_declaration"]["justification"])
+
+    def test_an_undeclared_group_is_still_left_to_the_providers(self):
+        """AlphaMissense is in the mapping and in the file, and the declaration says nothing
+        about it, so it stays unpinned rather than borrowing another group's version."""
+        with_am = adapter_parse_vcf(self.FIXTURE)[1]  # the row carrying AM_CLASS
+        self.assertIn("AM_CLASS", with_am.record.info)
+        _records, skipped = VcfEvidenceProvider(self.MAPPING, DECLARATION).get_evidence(
+            Variant("GRCh38", "2", 188990344, "G", "A"), with_am)
+        self.assertIn({"info": "AM_CLASS", "reason": "NO_SOURCE_VERSION"}, skipped)
+
+    def test_percent_encoded_delimiters_are_decoded(self):
+        """VCF encodes the characters its own delimiters use; %2C is a comma."""
+        records, _ = self.evidence(DECLARATION)
+        annotation = next(r for r in records if r["category"] == "annotation")
+        self.assertEqual(annotation["consequences"], "stop_gained, frameshift_variant")
+
+    def test_the_clinical_significance_on_every_row_is_never_read(self):
+        self.assertIn("CLNSIG", self.parsed.record.info)
+        for record in self.evidence(DECLARATION)[0]:
+            self.assertNotIn("CLNSIG", record["info_fields"])

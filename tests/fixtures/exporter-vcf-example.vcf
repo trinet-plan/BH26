@@ -1,0 +1,30 @@
+##fileformat=VCFv4.2
+##source=Cross-Gene Annotation Explorer (selected variants with VEP annotations)
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##INFO=<ID=CLNSIG,Number=1,Type=String,Description="ClinVar clinical significance">
+##INFO=<ID=CLINVAR_RANK,Number=1,Type=Integer,Description="ClinVar-based priority rank (1=best; see docs)">
+##INFO=<ID=CLNDN,Number=1,Type=String,Description="ClinVar disease name(s)">
+##INFO=<ID=CLNVID,Number=1,Type=String,Description="ClinVar Variation ID">
+##INFO=<ID=RSID,Number=1,Type=String,Description="dbSNP rs ID">
+##INFO=<ID=GENE,Number=1,Type=String,Description="Gene symbol (from ClinVar GENEINFO)">
+##INFO=<ID=GNOMAD_AF,Number=1,Type=Float,Description="gnomAD overall allele frequency">
+##INFO=<ID=GNOMAD_AF_GRPMAX,Number=1,Type=Float,Description="gnomAD population max allele frequency">
+##INFO=<ID=AM_CLASS,Number=1,Type=String,Description="AlphaMissense classification">
+##INFO=<ID=VEP_IMPACT,Number=1,Type=String,Description="Ensembl VEP impact">
+##INFO=<ID=VEP_CONSEQUENCE,Number=1,Type=String,Description="Ensembl VEP consequence terms">
+##INFO=<ID=VEP_GENE_ID,Number=1,Type=String,Description="Ensembl VEP gene ID">
+##INFO=<ID=VEP_TRANSCRIPT,Number=1,Type=String,Description="Ensembl VEP transcript ID">
+##INFO=<ID=VEP_HGVSC,Number=1,Type=String,Description="HGVS c. notation from VEP">
+##INFO=<ID=VEP_HGVSP,Number=1,Type=String,Description="HGVS p. notation from VEP">
+##INFO=<ID=VEP_BIOTYPE,Number=1,Type=String,Description="Transcript biotype from VEP">
+##INFO=<ID=VEP_AMINO_ACIDS,Number=1,Type=String,Description="Amino acid change from VEP">
+##INFO=<ID=VEP_STRAND,Number=1,Type=String,Description="Strand (+/-)">
+##INFO=<ID=VEP_HGNC_ID,Number=1,Type=String,Description="HGNC gene ID">
+##INFO=<ID=DBNSFP_REVEL,Number=1,Type=Float,Description="dbNSFP REVEL score (0-1, higher=more pathogenic)">
+##INFO=<ID=DBNSFP_CADD,Number=1,Type=Float,Description="dbNSFP CADD Phred score">
+##INFO=<ID=DBNSFP_SIFT,Number=1,Type=String,Description="dbNSFP SIFT prediction (D=deleterious, T=tolerated)">
+##INFO=<ID=DBNSFP_POLYPHEN,Number=1,Type=String,Description="dbNSFP PolyPhen prediction (D=deleterious, P=possibly damaging, B=benign)">
+##INFO=<ID=DBNSFP_METASVM,Number=1,Type=String,Description="dbNSFP MetaSVM prediction (D=deleterious, T=tolerated)">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	HG002run1
+2	174757593	1209954	C	T	.	.	CLNSIG=Pathogenic/Likely_pathogenic;CLINVAR_RANK=2;CLNDN=not_provided;CLNVID=1209954;RSID=1476453955;GENE=CHRNA1;GNOMAD_AF=0.000010945;GNOMAD_AF_GRPMAX=0.0000134895;VEP_IMPACT=HIGH;VEP_CONSEQUENCE=stop_gained%2C frameshift_variant;VEP_GENE_ID=ENSG00000138435;VEP_TRANSCRIPT=ENST00000261007;VEP_BIOTYPE=protein_coding;VEP_AMINO_ACIDS=W/*;VEP_STRAND=-;VEP_HGNC_ID=HGNC:1955	GT	0/1
+2	188990344	101367	G	A	.	.	CLNSIG=Pathogenic/Likely_pathogenic;CLINVAR_RANK=2;CLNDN=not_provided|Ehlers-Danlos_syndrome%2C_type_4;CLNVID=101367;RSID=587779635;GENE=COL3A1;AM_CLASS=likely_pathogenic;VEP_IMPACT=HIGH;VEP_CONSEQUENCE=frameshift_variant;VEP_GENE_ID=ENSG00000168542;VEP_TRANSCRIPT=ENST00000304636;VEP_BIOTYPE=protein_coding;VEP_AMINO_ACIDS=G/EX;VEP_STRAND=+;VEP_HGNC_ID=HGNC:2201	GT	1/1

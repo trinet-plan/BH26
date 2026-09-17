@@ -6,7 +6,8 @@
     "The VEP entry is derived from VEP's documented CSQ layout, not from an output file this project has seen. VEP's field set depends on which plugins and --fields were used, so the subfield names present in a real header may differ.",
     "The bcftools entry assumes gnomAD-prefixed field names from `bcftools annotate -a gnomad.vcf.gz -c INFO/gnomAD_AF,...`. The names are whatever the -c argument assigned, so they are installation-specific.",
     "Both are starting points for reading a real header, not defaults to apply unseen.",
-    "Fields a curator already concluded (CLNSIG, ACMG_CODES and the rest of providers.vcf_annotation.REFUSED) cannot appear here; the provider raises if they do."
+    "Fields a curator already concluded (CLNSIG, ACMG_CODES and the rest of providers.vcf_annotation.REFUSED) cannot appear here; the provider raises if they do.",
+    "The cross-gene-annotation-explorer entry is the one checked against a real file (selected_variants_2026-09-14testyuko.vcf, 44 variants). Its version_declaration is a stated assumption, not something the file says - see the note on that entry."
   ],
   "annotators": {
     "ensembl-vep-vcf": {
@@ -19,7 +20,9 @@
           "compound": {
             "transcript_subfield": "Feature",
             "list_separator": "&",
-            "list_fields": ["consequences"],
+            "list_fields": [
+              "consequences"
+            ],
             "fields": {
               "Consequence": "consequences",
               "SYMBOL": "gene",
@@ -45,7 +48,9 @@
           "compound": {
             "transcript_subfield": "Feature_ID",
             "list_separator": "&",
-            "list_fields": ["consequences"],
+            "list_fields": [
+              "consequences"
+            ],
             "fields": {
               "Annotation": "consequences",
               "Gene_Name": "gene",
@@ -61,10 +66,93 @@
       "note": "Flat one-field-per-value output. Fields sharing a `group` become one evidence record, so AF, AC and AN arrive together as a single population observation. `callable` is not derivable from these fields and is deliberately absent - usable_observations() requires it for an AC of 0, so an absent variant still cannot be read as AF 0.",
       "reference": "https://samtools.github.io/bcftools/bcftools.html#annotate",
       "mapping": {
-        "gnomAD_AF": {"category": "population", "group": "gnomAD", "field": "AF"},
-        "gnomAD_AC": {"category": "population", "group": "gnomAD", "field": "AC"},
-        "gnomAD_AN": {"category": "population", "group": "gnomAD", "field": "AN"},
-        "gnomAD_popmax": {"category": "population", "group": "gnomAD", "field": "population"}
+        "gnomAD_AF": {
+          "category": "population",
+          "group": "gnomAD",
+          "field": "AF"
+        },
+        "gnomAD_AC": {
+          "category": "population",
+          "group": "gnomAD",
+          "field": "AC"
+        },
+        "gnomAD_AN": {
+          "category": "population",
+          "group": "gnomAD",
+          "field": "AN"
+        },
+        "gnomAD_popmax": {
+          "category": "population",
+          "group": "gnomAD",
+          "field": "population"
+        }
+      }
+    },
+    "cross-gene-annotation-explorer": {
+      "note": "VEP output flattened into VEP_* fields rather than a CSQ block, so the flat shape applies. The file names no fileDate, no reference, and no Source or Version on any INFO line - it says only that it used VEP - so without the declaration below nothing in it can be pinned and every field is skipped.",
+      "checked_against": "selected_variants_2026-09-14testyuko.vcf (44 variants, 2026-09-14)",
+      "version_declaration": {
+        "matches_source": "Cross-Gene Annotation Explorer",
+        "declared_versions": {
+          "gnomAD": "REPLACE-WITH-THE-RELEASE-THIS-EXPORTER-ACTUALLY-USED",
+          "Ensembl VEP": "REPLACE-WITH-THE-RELEASE-THIS-EXPORTER-ACTUALLY-USED"
+        },
+        "declared_by": "REPLACE-WITH-WHO-IS-STATING-THIS",
+        "justification": "The exporter reports that it annotated with VEP and gnomAD but names no release in the file, so the releases it was configured with are declared here instead. Every record built under this declaration carries version_status=DECLARED with this text, so a curator can see the version was assumed rather than read.",
+        "declared_at": "REPLACE-WITH-THE-DATE-THIS-WAS-CONFIRMED"
+      },
+      "mapping": {
+        "GNOMAD_AF": {
+          "category": "population",
+          "group": "gnomAD",
+          "field": "AF"
+        },
+        "GNOMAD_AF_GRPMAX": {
+          "category": "population",
+          "group": "gnomAD",
+          "field": "AF_grpmax"
+        },
+        "VEP_CONSEQUENCE": {
+          "category": "annotation",
+          "group": "Ensembl VEP",
+          "field": "consequences"
+        },
+        "VEP_TRANSCRIPT": {
+          "category": "annotation",
+          "group": "Ensembl VEP",
+          "field": "transcript"
+        },
+        "VEP_HGVSC": {
+          "category": "annotation",
+          "group": "Ensembl VEP",
+          "field": "hgvsc"
+        },
+        "VEP_HGVSP": {
+          "category": "annotation",
+          "group": "Ensembl VEP",
+          "field": "hgvsp"
+        },
+        "GENE": {
+          "category": "annotation",
+          "group": "Ensembl VEP",
+          "field": "gene"
+        },
+        "DBNSFP_REVEL": {
+          "category": "computational",
+          "group": "dbNSFP",
+          "field": "score"
+        },
+        "DBNSFP_CADD": {
+          "category": "computational",
+          "group": "dbNSFP",
+          "field": "cadd_phred"
+        }
+      },
+      "not_usable_from_this_file": {
+        "population": "GNOMAD_AF has no AC or AN beside it, and usable_observations() needs both - so PM2, BA1 and BS1 cannot run on it, and BS1's filtering allele frequency cannot be computed either. An AF of 0 also cannot be read as absence, because nothing in the file states callability.",
+        "transcript": "VEP_TRANSCRIPT holds an Ensembl accession (ENST...) while the pipeline evaluates RefSeq (NM_...). The MANE summary carries both, so a translation step is possible, but none exists yet.",
+        "AM_CLASS": "A classification with no score, and computational.py scores against calibrated intervals.",
+        "biotype": "Some rows are annotated on retained_intron or nonsense_mediated_decay transcripts, which may not be the transcript to evaluate."
       }
     }
   }
