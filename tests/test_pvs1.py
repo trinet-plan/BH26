@@ -208,6 +208,67 @@ class PVS1DecisionTreeTests(unittest.TestCase):
                                  "autosomal_recessive")
                 self.assertEqual(value.evaluation_context["moi_match"], "MATCHED")
 
+    def test_a_phenotype_lumped_into_the_curated_disease_is_used(self):
+        """The panel decided this phenotype is the disease it curated, so the mechanism is
+        about this case - an explicit decision, unlike an ontology relation."""
+        input_data = {**self.input, "condition": "MONDO:0014593"}
+        items = [self.annotation(), self.transcript(), self.nmd(),
+                 self.mechanism(True, condition="MONDO:0013212", condition_scope={
+                     "included": ["MONDO:0013212", "MONDO:0014593"], "excluded": []})]
+        value = self.evaluate_result(*items, input_data=input_data)
+        self.assertEqual((value.status, value.strength), (CriterionStatus.MET, "very_strong"))
+        self.assertEqual(value.evaluation_context["disease_match"], "INCLUDED")
+        self.assertTrue(value.evaluation_context["condition_specific"])
+
+    def test_an_excluded_phenotype_is_answered_rather_than_asked_about(self):
+        """ClinGen looked at this phenotype and kept it out, so a curator is told the answer
+        instead of being asked the question again."""
+        input_data = {**self.input, "condition": "MONDO:0030517"}
+        items = [self.annotation(), self.transcript(), self.nmd(),
+                 self.mechanism(True, condition="MONDO:0013212", condition_scope={
+                     "included": ["MONDO:0013212"], "excluded": ["MONDO:0030517"]})]
+        value = self.evaluate_result(*items, input_data=input_data)
+        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
+        self.assertEqual(value.evaluation_context["disease_match"], "EXCLUDED")
+        # The curation is inapplicable, which is not the same as PVS1 being inapplicable: a
+        # mechanism for this disease could still come from somewhere else, so the criterion
+        # is unevaluated rather than ruled out.
+        self.assertEqual(value.evaluation_context["applicability"], "NOT_EVALUATED")
+        self.assertEqual(value.review_points, [])
+        self.assertEqual(
+            {node["node_id"]: node["result"] for node in value.decision_trace},
+            {"C01": "PASS", "D01": "NOT_APPLICABLE"})
+
+    def test_an_exclusion_outranks_an_ontology_relation(self):
+        """A resemblance cannot reinstate a decision the panel already made."""
+        input_data = {**self.input, "condition": "MONDO:0030517",
+                      "condition_ancestors": ["MONDO:0013212"]}
+        items = [self.annotation(), self.transcript(), self.nmd(),
+                 self.mechanism(True, condition="MONDO:0013212", condition_scope={
+                     "included": ["MONDO:0013212"], "excluded": ["MONDO:0030517"]})]
+        value = self.evaluate_result(*items, input_data=input_data)
+        self.assertEqual(value.evaluation_context["disease_match"], "EXCLUDED")
+
+    def test_an_exclusion_on_one_curation_does_not_bury_a_match_on_another(self):
+        input_data = {**self.input, "condition": "MONDO:0030517"}
+        items = [self.annotation(), self.transcript(), self.nmd(),
+                 self.mechanism(True, condition="MONDO:0013212", condition_scope={
+                     "included": ["MONDO:0013212"], "excluded": ["MONDO:0030517"]}),
+                 self.mechanism(True, condition="MONDO:0030517", evidence_id="other")]
+        value = self.evaluate_result(*items, input_data=input_data)
+        self.assertEqual(value.status, CriterionStatus.MET)
+        self.assertEqual(value.evaluation_context["disease_match"], "EXACT")
+
+    def test_an_exact_match_is_preferred_over_an_inclusion(self):
+        input_data = {**self.input, "condition": "MONDO:0014593"}
+        items = [self.annotation(), self.transcript(), self.nmd(),
+                 self.mechanism(False, condition="MONDO:0013212", condition_scope={
+                     "included": ["MONDO:0013212", "MONDO:0014593"], "excluded": []}),
+                 self.mechanism(True, condition="MONDO:0014593", evidence_id="exact")]
+        value = self.evaluate_result(*items, input_data=input_data)
+        self.assertEqual(value.status, CriterionStatus.MET)
+        self.assertEqual(value.evaluation_context["disease_match"], "EXACT")
+
     def test_a_parent_disease_curation_is_handed_to_a_curator_not_used(self):
         """The case names a subtype and the curation names the disease above it. That is a
         reason to ask a person, never a reason to decide: the same gene can lose function in

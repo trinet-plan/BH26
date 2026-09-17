@@ -286,3 +286,15 @@ def ontology_related(case, case_condition, record, record_condition):
         return False
     return (record_condition in condition_ancestors(case)
             or case_condition in condition_ancestors(record))
+
+
+def condition_scope(record, key):
+    """The phenotypes a curated disease was recorded as covering, or as keeping out.
+
+    An absent scope is an empty set, which is not the same as a scope that says the set is
+    empty: the provider that supplies this never reports an unreadable curation as an empty
+    one, so nothing here has to tell the two apart.
+    """
+    scope = record.get("condition_scope")
+    value = scope.get(key) if isinstance(scope, dict) else None
+    return set(value) if isinstance(value, (list, set, tuple)) else set()

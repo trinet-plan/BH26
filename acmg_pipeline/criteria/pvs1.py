@@ -11,8 +11,8 @@ from copy import deepcopy
 from acmg_pipeline.automated_core.interface import criterion_input
 from acmg_pipeline.automated_core.models import Variant
 from acmg_pipeline.criteria.common import (
-    annotation_context, normalize_inheritance, ontology_related, resolved_condition,
-    result as _base_result, reviewed_or_automated,
+    annotation_context, condition_scope, normalize_inheritance, ontology_related,
+    resolved_condition, result as _base_result, reviewed_or_automated,
 )
 from acmg_pipeline.clinical_note import ClinicalNoteExtraction
 from acmg_pipeline.vcf_record import VariantRecord
@@ -187,22 +187,38 @@ def _resolve_mechanism(input_data, services, annotation, context, precedence=())
     condition, case_via = resolved_condition(input_data)
     if condition:
         matched = [(item, resolved_condition(item)) for item in applicable]
-        exact = [item for item, (value, _) in matched if value == condition]
-        if not exact:
+        # An expert panel that looked at this phenotype and kept it out of the disease it
+        # curated has answered the question outright, so its record is set aside before any
+        # weaker relation is considered - a resemblance cannot reinstate a decided exclusion.
+        ruled_out = {id(item) for item, _ in matched
+                     if condition in condition_scope(item, "excluded")}
+        considered = [(item, pair) for item, pair in matched if id(item) not in ruled_out]
+        exact = [item for item, (value, _) in considered if value == condition]
+        # Lumped into the curated disease by the same panel, so the curation is about this
+        # phenotype - an explicit decision, unlike an ontology relation.
+        included = [item for item, _ in considered
+                    if condition in condition_scope(item, "included")
+                    and id(item) not in {id(value) for value in exact}]
+        if not exact and not included:
+            if ruled_out:
+                context["disease_match"] = "EXCLUDED"
+                return None, [item for item, _ in matched if id(item) in ruled_out], "excluded"
             # A curation for a parent or a child disease is on file. It is not this disease,
             # so it cannot decide the mechanism, but reporting "no mechanism" would send a
             # curator hunting for evidence that is sitting under the neighbouring term.
-            related = [item for item, (value, _) in matched
+            related = [item for item, (value, _) in considered
                        if ontology_related(input_data, condition, item, value)]
             if related:
                 context["disease_match"] = "PARENT_CHILD"
                 return None, related, "parent_child"
-        selected = exact or [item for item in applicable if not item.get("condition")]
-        scope = "CONDITION_SPECIFIC" if exact else "GENE_LEVEL"
+        selected = exact or included or [item for item in applicable
+                                         if not item.get("condition")]
+        scope = "CONDITION_SPECIFIC" if (exact or included) else "GENE_LEVEL"
         # An identifier match on both sides is EXACT; anything that needed a mapping to line
         # the two up is EQUIVALENT, which is a weaker statement and is reported as one.
-        vias = {case_via, *(how for item, (_, how) in matched if item in exact)}
-        match_level = "EXACT" if vias == {"identity"} else "EQUIVALENT"
+        vias = {case_via, *(how for item, (_, how) in considered
+                            if id(item) in {id(value) for value in exact})}
+        match_level = ("EXACT" if vias == {"identity"} else "EQUIVALENT") if exact else "INCLUDED"
     else:
         selected = [item for item in applicable if not item.get("condition")]
         scope = "GENE_LEVEL"
@@ -697,6 +713,19 @@ def _evaluate_input(input_data, services, config):
         return _finish(input_data, state, CriterionStatus.UNKNOWN,
                        "Conflicting LoF mechanism assessments",
                        review=["Resolve LoF mechanism assessments"], extra_evidence=mechanism_records)
+    if mechanism_issue == "excluded":
+        # Not a review point: ClinGen already reviewed this phenotype and kept it out, so
+        # asking a curator to decide again would be asking a settled question. The node says
+        # NOT_APPLICABLE because this curation is not applicable here; the criterion stays
+        # NOT_EVALUATED, because a mechanism for this disease could still come from elsewhere
+        # and PVS1 has not been ruled out, only this route to it.
+        return _not_evaluated(
+            input_data, services, annotation, variant_type, state, confirmed_rna,
+            _node("D01", "disease_match", "NOT_APPLICABLE", "EXCLUDED", mechanism_records),
+            f"The available loss-of-function mechanism evidence is curated for a disease "
+            f"whose expert panel explicitly excluded {input_data['condition']!r} from it",
+            "disease-specific loss-of-function mechanism",
+            evidence=mechanism_records)
     if mechanism_issue == "parent_child":
         return _not_evaluated(
             input_data, services, annotation, variant_type, state, confirmed_rna,

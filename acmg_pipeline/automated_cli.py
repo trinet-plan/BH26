@@ -16,6 +16,9 @@ from acmg_pipeline.providers.clingen_dosage import METHOD as DOSAGE_METHOD, Clin
 from acmg_pipeline.providers.gene2phenotype import (
     METHOD as G2P_METHOD, Gene2PhenotypeProvider,
 )
+from acmg_pipeline.providers.clingen_lumping import (
+    METHOD as LUMPING_METHOD, ClinGenLumpingProvider,
+)
 from acmg_pipeline.providers.mondo import METHOD as MONDO_METHOD, MondoMappingProvider
 from acmg_pipeline.providers.mondo_hierarchy import (
     METHOD as MONDO_TREE_METHOD, MondoHierarchyProvider,
@@ -88,6 +91,10 @@ def main(argv=None):
     online.add_argument("--with-mondo-mapping", action="store_true",
                         help="Resolve each record's OMIM/Orphanet condition to MONDO so "
                              "PVS1's disease gate can compare it with curated evidence")
+    online.add_argument("--with-clingen-lumping", action="store_true",
+                        help="Attach the phenotypes each curated disease lumps in or keeps "
+                             "out, so an included case is matched and an excluded one is "
+                             "answered instead of being sent to review")
     online.add_argument("--with-mondo-hierarchy", action="store_true",
                         help="Look up MONDO ancestry so a mechanism curated for a parent or "
                              "child disease reaches a curator instead of being reported as "
@@ -465,6 +472,35 @@ def main(argv=None):
                         "unresolved": sorted(resolvable - set(condition_mappings)),
                         "errors": mondo_errors,
                         "use_restriction": "DISEASE_MATCH_EQUIVALENCE_ONLY",
+                    })
+                if args.with_clingen_lumping:
+                    # The scope belongs to the curated disease, so it is attached to the
+                    # mechanism records rather than to the case: one case can meet several
+                    # curations, and each of them drew its own boundary.
+                    lumping = ClinGenLumpingProvider(
+                        external_client, MondoMappingProvider(external_client))
+                    lump_errors, scoped, pairs = [], 0, set()
+                    for item in evidence:
+                        if item.get("category") != "gene_disease":
+                            continue
+                        pair = (item.get("gene"), item.get("condition"))
+                        if not all(pair) or not str(pair[1]).startswith("MONDO:"):
+                            continue
+                        pairs.add(pair)
+                        try:
+                            scope = lumping.get_scope(*pair)
+                        except (FetchError, ValueError, KeyError) as exc:
+                            lump_errors.append(f"{pair[0]} {pair[1]}: {exc}")
+                            continue
+                        if scope:
+                            item["condition_scope"] = scope
+                            scoped += 1
+                    external_manifest.append({
+                        "provider": lumping.name, "provider_version": None,
+                        "method": LUMPING_METHOD,
+                        "curations_queried": len(pairs), "evidence": scoped,
+                        "errors": lump_errors,
+                        "use_restriction": "DISEASE_MATCH_SCOPE_ONLY",
                     })
                 if args.with_mondo_hierarchy:
                     # Ancestry is asked of both sides, because the case can be the broader
