@@ -18,7 +18,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 from acmg_pipeline.classification import CriterionEvidence, Strength, classify
 from acmg_pipeline.clinical_note import extract_clinical_note
@@ -32,6 +32,10 @@ from acmg_pipeline.vcf_record import VariantRecord, parse_vcf
 class PipelineOutput:
     classification: Any
     evidence_lines: dict[str, dict]
+    # clinical_noteから抽出された自由文の診断名。VA-Spec Statementの
+    # objectConditionに使う(acmg_pipeline/va_spec_statement.py参照)。
+    # extract_clinical_note()が未実装のため現状は常にNone。
+    diagnosis: Optional[str] = None
 
 def load_automated_config() -> dict:
     """Load server-owned rule settings; callers cannot override them."""
@@ -77,6 +81,7 @@ async def run_pipeline(
     return PipelineOutput(
         classification=classify([_evidence_from_line(code, evidence_lines[code]) for code in ALL_ACMG_CODES]),
         evidence_lines=evidence_lines,
+        diagnosis=extraction.diagnosis,
     )
 
 
