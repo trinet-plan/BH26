@@ -50,11 +50,31 @@ per the user's explicit direction (2026-09-17): "pipelineと繋げて。テス�
 
   The diagnostic_yield / locus_model / testing_method fields still must be
   curated (they are literature-derived Bayesian-input statistics no tool
-  can compute from a single patient). phenotype_hpo no longer has to be:
-  evaluate() (below) now gets PP4's phenotype_match gate from
-  acmg_pipeline.pubcasefinder instead, per the BH26 ACMG criteria
-  definition v2 (2026-09-14)'s Layer 2 ("表現型データが必要...PubCaseFinder
-  等を想定").
+  can compute from a single patient). phenotype_hpo is used again by
+  default - see the next section.
+
+[Which phenotype-match method evaluate() uses, and why (2026-09-17)]
+  PP4's phenotype_match gate is now pluggable -
+  acmg_pipeline.criteria.phenotype_matchers.PHENOTYPE_MATCHERS - rather than
+  hard-wired to PubCaseFinder. The default,
+  phenotype_matchers.DEFAULT_PHENOTYPE_MATCHER
+  ("curated_hpo_list"), is Biesecker et al., 2024's own method (this is the
+  paper this project treats as the current ACMG/ClinGen guidance for PP1/
+  BS4/PP4 - ACMG's own 2015 base standard left these criteria's details
+  "sparse," per that paper's own summary): an exact match against the
+  curated PP4ReferenceRecord.phenotype_hpo definition the cited diagnostic-
+  yield study itself used (pp4_pp1_bs4.match_phenotype_constellation(),
+  left unmodified). PubCaseFinder (2026-09-17's earlier approach - a
+  HPO-based gene-ranking proxy, see acmg_pipeline.pubcasefinder's own
+  docstring) is kept available as "pubcasefinder" but is no longer the
+  default: it is not the paper's own method, and testing it against a real
+  demo case (case3, MYH7) showed it can rank the correct, ClinVar-
+  established gene outside its own top 10 for a real but sparse HPO
+  profile - see phenotype_matchers.py's docstring for the full reasoning.
+  A registry entry can override the choice per gene via its own
+  `gates.phenotype_matcher`; otherwise `config["pp4_phenotype_matcher"]`
+  (evaluate()'s own config dict) is used, falling back to
+  DEFAULT_PHENOTYPE_MATCHER.
 """
 
 from __future__ import annotations
@@ -65,13 +85,12 @@ from pathlib import Path
 from acmg_pipeline.classification import CriterionEvidence, Strength
 from acmg_pipeline.clinical_note import ClinicalNoteExtraction
 from acmg_pipeline.constants import CriterionStatus
+from acmg_pipeline.criteria.phenotype_matchers import DEFAULT_PHENOTYPE_MATCHER, PHENOTYPE_MATCHERS
 from acmg_pipeline.criteria.pp1_pp4_strength_table import combined_pp1_pp4_strength
 from acmg_pipeline.criteria.pp4_pp1_bs4 import (
     LocusEvidenceResult,
-    PhenotypeMatchResult,
     PP4ReferenceRecord,
     evaluate_locus_evidence,
-    patient_hpo_terms,
 )
 from acmg_pipeline.vcf_record import VariantRecord
 
@@ -272,27 +291,26 @@ async def evaluate(
     `config` follows the same convention as the automated engine's
     `automated_config` (acmg_pipeline.pipeline_interface.load_automated_config()) -
     an optional "pp4_reference_records_path" key overrides the default
-    registry location, mainly for tests.
+    registry location (mainly for tests), and an optional
+    "pp4_phenotype_matcher" key (one of acmg_pipeline.criteria.
+    phenotype_matchers.PHENOTYPE_MATCHERS's names) overrides which
+    phenotype-match method is used - see this module's own docstring
+    section on why "curated_hpo_list" (Biesecker et al., 2024's own method)
+    is the default rather than "pubcasefinder". A registry entry's own
+    `gates.phenotype_matcher` takes precedence over both when present, since
+    the choice of method is as much a per-citation curation fact as
+    diagnostic_yield itself (e.g. an entry with no phenotype_hpo definition
+    recorded may deliberately opt into "pubcasefinder" instead).
 
     HPO normalization (acmg_pipeline.hpo_extraction.normalize_hpo(), a
-    TogoMCP + LLM round trip) and the PubCaseFinder phenotype-specificity
-    lookup (acmg_pipeline.pubcasefinder.rank_genes_by_phenotype(), TogoMCP)
-    only run once a curated reference record is actually found for this gene
-    - with no APPROVED entry the result is UNKNOWN regardless of phenotype,
-    so spending real network/LLM cost first would be wasted on an answer
-    that's already decided. Both imports are local (not top-level) because
-    hpo_extraction requires VLLM_BASE_URL/VLLM_API_KEY at import time (same
-    reason clinical_note.py lazily imports clinical_extraction.py instead of
-    importing it at module load).
-
-    PubCaseFinder (Layer 2 of the BH26 ACMG criteria definition v2) supplies
-    PP4's phenotype_match gate directly from the patient's own HPO profile,
-    superseding evaluate_locus_evidence()'s default required-HPO-list match
-    against reference.phenotype_hpo - curators no longer need to populate
-    that field per gene for PP4 to be evaluable. If PubCaseFinder itself
-    raises (rate limit, no recognized HPO IDs, HTTP error) or the patient has
-    no normalized HPO terms at all, phenotype_match falls back to "not
-    evaluable" (matched=None) rather than a guessed match/non-match.
+    TogoMCP + LLM round trip) and the selected phenotype matcher only run
+    once a curated reference record is actually found for this gene - with
+    no APPROVED entry the result is UNKNOWN regardless of phenotype, so
+    spending real network/LLM cost first would be wasted on an answer
+    that's already decided. The hpo_extraction import is local (not
+    top-level) because it requires VLLM_BASE_URL/VLLM_API_KEY at import
+    time (same reason clinical_note.py lazily imports clinical_extraction.py
+    instead of importing it at module load).
     """
     gene = str(variant.info.get("GENE", ""))
     registry_path = Path(config.get("pp4_reference_records_path", _DEFAULT_REGISTRY_PATH))
@@ -301,29 +319,21 @@ async def evaluate(
     if entry is None:
         return _unknown_all(f"pp1_bs4_pp4_engine: no APPROVED curated PP4 reference record for gene {gene!r}")
 
-    from acmg_pipeline import hpo_extraction, pubcasefinder
+    from acmg_pipeline import hpo_extraction
     clinical_note = await hpo_extraction.normalize_hpo(clinical_note)
 
-    patient_terms = patient_hpo_terms(clinical_note)
-    hpo_ids = [term.hpo_id for term in patient_terms]
-    if not hpo_ids:
-        phenotype_match_override = PhenotypeMatchResult(
-            matched=None, patient_terms=patient_terms, reason="no_normalized_proband_hpo",
-        )
-    else:
-        try:
-            ranking = await pubcasefinder.rank_genes_by_phenotype(hpo_ids)
-        except (ValueError, RuntimeError) as exc:
-            phenotype_match_override = PhenotypeMatchResult(
-                matched=None, patient_terms=patient_terms,
-                reason=f"pubcasefinder_unavailable:{exc}",
-            )
-        else:
-            phenotype_match_override = pubcasefinder.phenotype_match_from_gene_ranking(
-                ranking, gene, patient_terms=patient_terms,
-            )
-
     gates = entry["gates"]
+    matcher_name = gates.get(
+        "phenotype_matcher", config.get("pp4_phenotype_matcher", DEFAULT_PHENOTYPE_MATCHER)
+    )
+    matcher = PHENOTYPE_MATCHERS.get(matcher_name)
+    if matcher is None:
+        return _unknown_all(
+            f"pp1_bs4_pp4_engine: unknown pp4_phenotype_matcher {matcher_name!r} "
+            f"(available: {sorted(PHENOTYPE_MATCHERS)})"
+        )
+    phenotype_match_override = await matcher(clinical_note, entry["reference"], gene)
+
     result = evaluate_locus_evidence(
         clinical_note,
         entry["reference"],

@@ -80,7 +80,13 @@ def to_openai_tools(mcp_tools: list[Any]) -> list[dict[str, Any]]:
             "function": {
                 "name": tool.name,
                 "description": tool.description or "",
-                "parameters": tool.inputSchema,
+                # mcp.types.Tool's JSON-schema field name differs by installed
+                # mcp version - camelCase inputSchema in some releases,
+                # snake_case input_schema in others (confirmed: mcp==2.2.0
+                # exposes input_schema only). Same class of version drift
+                # already worked around for streamable_http_client's naming
+                # above and in pipeline.py's connect_pubmed().
+                "parameters": getattr(tool, "inputSchema", None) or getattr(tool, "input_schema", None),
             },
         }
         for tool in mcp_tools

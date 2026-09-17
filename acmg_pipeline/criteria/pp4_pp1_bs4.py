@@ -443,9 +443,30 @@ def evaluate_locus_evidence(
         patient's own HPO profile, so callers with that signal available no
         longer need a hand-curated ``phenotype_hpo`` required-term list per
         reference record.
+
+    [candidate_variants_on_allele also divides PP1's Table 3 points, not just
+     PP4's Table 2 points - added 2026-09-17]
+      Table 3's own footnote b states the same rule as Table 2's footnote a:
+      "these points apply to the allele, and if there is more than one
+      variant on that allele, the evidence for the allele must be divided by
+      the number of variants." Biesecker et al., 2024 only work through a
+      full worked example for PP4 (the CTNS case: divide the POSTERIOR
+      PROBABILITY, then re-derive points from Table 2 - dividing the points
+      themselves would be "mathematically incorrect," per that paper's own
+      text). Table 3 has no such probability to round-trip through - it is
+      a direct empirical points-per-meiosis count, not a probability-to-
+      points conversion - and the paper gives no worked PP1 example for this
+      case, so this project divides the raw PP1 points directly by
+      ``candidate_variants_on_allele`` instead. This is this project's own
+      reading of an underspecified case, not an authoritative ClinGen
+      worked method - flagged the same way other provisional
+      interpretations are in this codebase (see e.g.
+      acmg_pipeline.criteria.pp1_pp4_strength_table's own docstring).
     """
     if adjusted_diagnostic_yield is not None and not 0.0 <= adjusted_diagnostic_yield <= 1.0:
         raise ValueError("adjusted_diagnostic_yield must be between 0 and 1")
+    if candidate_variants_on_allele < 1:
+        raise ValueError("candidate_variants_on_allele must be >= 1")
 
     phenotype = (
         phenotype_match_override
@@ -485,7 +506,10 @@ def evaluate_locus_evidence(
     )
 
     pp4_points = pp4_result.points if pp4_result and pp4_result.applicable else 0.0
-    raw_pp1 = segregation.pp1_points_raw
+    # segregation.pp1_points_raw stays the true, undivided per-allele evidence
+    # (for audit); raw_pp1 is the per-variant apportioned share actually used
+    # below - see this function's own docstring section on why.
+    raw_pp1 = segregation.pp1_points_raw / candidate_variants_on_allele
 
     # High-yield locus-homogeneous phenotype: PP1 pathogenic support overlaps
     # with PP4 and should not be added again.

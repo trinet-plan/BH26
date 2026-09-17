@@ -176,15 +176,18 @@ check("BS4 UNKNOWN without family data", solo_results["BS4"].status == Criterion
 
 
 # ============================================================================
-# [2b] PubCaseFinder supplies phenotype_match, not reference.phenotype_hpo
+# [2b] PubCaseFinder is a selectable matcher, but no longer the default
 # ============================================================================
-print("\n[2b] PubCaseFinder phenotype-specificity gate")
+print("\n[2b] PubCaseFinder phenotype-specificity gate (opt-in via config)")
+
+pubcasefinder_config = {**config, "pp4_phenotype_matcher": "pubcasefinder"}
 
 # GENE1 ranks below OTHER_GENE for this phenotype profile -> not a phenotype
 # match, even though reference.phenotype_hpo (still present in the fixture
-# above) would have matched under the old required-HPO-list check.
+# above, and what the DEFAULT "curated_hpo_list" matcher would have used)
+# would have matched.
 pubcasefinder.rank_genes_by_phenotype = _fake_rank_genes_by_phenotype(top_gene="OTHER_GENE")
-not_top_ranked_results = run_evaluate(_variant("GENE1"), note_no_family, config)
+not_top_ranked_results = run_evaluate(_variant("GENE1"), note_no_family, pubcasefinder_config)
 check("PP4 NOT_MET when GENE1 is not PubCaseFinder's top-ranked gene",
       not_top_ranked_results["PP4"].status == CriterionStatus.NOT_MET)
 check("reason cites PubCaseFinder, not the curated HPO list",
@@ -197,13 +200,39 @@ async def _raising_rank(hpo_ids):
 
 
 pubcasefinder.rank_genes_by_phenotype = _raising_rank
-unavailable_results = run_evaluate(_variant("GENE1"), note_no_family, config)
+unavailable_results = run_evaluate(_variant("GENE1"), note_no_family, pubcasefinder_config)
 check("PP4 UNKNOWN when PubCaseFinder raises",
       unavailable_results["PP4"].status == CriterionStatus.UNKNOWN)
 check("reason cites pubcasefinder_unavailable",
       "pubcasefinder_unavailable" in unavailable_results["PP4"].source)
 
 pubcasefinder.rank_genes_by_phenotype = _fake_rank_genes_by_phenotype()
+
+# A registry entry's own gates.phenotype_matcher overrides config - same
+# effect as passing pp4_phenotype_matcher above, but per-gene.
+per_gene_registry = Path(tempfile.mkdtemp()) / "per_gene.json"
+per_gene_registry.write_text(json.dumps({
+    "schema_version": "1.0",
+    "entries": [{
+        "status": "APPROVED", "id": "test-gene1-pcf", "gene": "GENE1",
+        "phenotype_label": "Demo phenotype", "phenotype_hpo": [],
+        "locus_model": "heterogeneous", "diagnostic_yield": 0.70,
+        "testing_method": "sequencing", "source_citation": "demo source",
+        "gates": {"method_comparable": True, "phenotype_matcher": "pubcasefinder"},
+    }],
+}), encoding="utf-8")
+per_gene_results = run_evaluate(
+    _variant("GENE1"), note_no_family, {"pp4_reference_records_path": str(per_gene_registry)},
+)
+check("gates.phenotype_matcher='pubcasefinder' is honored with no config override",
+      per_gene_results["PP4"].status == CriterionStatus.MET)
+
+# An unknown matcher name is an honest UNKNOWN, not a crash or a silent
+# fallback to the default.
+check("unknown pp4_phenotype_matcher name -> UNKNOWN, not a crash",
+      run_evaluate(_variant("GENE1"), note_no_family,
+                   {**config, "pp4_phenotype_matcher": "not_a_real_matcher"})["PP4"].status
+      == CriterionStatus.UNKNOWN)
 
 
 # ============================================================================
