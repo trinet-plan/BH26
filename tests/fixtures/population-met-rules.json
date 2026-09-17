@@ -1,5 +1,7 @@
 {
-  "population_providers": ["synthetic"],
+  "population_providers": [
+    "synthetic"
+  ],
   "PM2": {
     "minimum_an": 2000,
     "max_af": 0,
@@ -9,6 +11,8 @@
   "BA1": {
     "minimum_an": 2000,
     "policy_source": "synthetic-test-only",
-    "policy_version": "1"
+    "policy_version": "1",
+    "max_af": 0.05,
+    "frequency_statistic": "af"
   }
 }

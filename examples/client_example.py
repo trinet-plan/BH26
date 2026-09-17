@@ -1,6 +1,6 @@
 """
 client_example.py
-api/main.py が公開するACMG判定API(POST/GET /v1/variant)を呼び出す
+api/main.py が公開するACMG判定API(POST/GET /v1/classify_criteria)を呼び出す
 最小構成のクライアントスケルトン。ジョブ登録 → ポーリング → 結果取得の
 一連の流れのみを示す。認証やリトライ等は含まれていないため、実運用では
 そのまま使わず、必要な処理を足して利用すること。
@@ -24,17 +24,17 @@ DEFAULT_BASE_URL = "http://localhost:8000"
 
 
 def submit_variant(base_url: str, vcf: str, clinical_note: str = "") -> str:
-    """POST /v1/variant でジョブを登録し、job_idを返す。"""
-    resp = requests.post(f"{base_url}/v1/variant", json={"vcf": vcf, "clinical_note": clinical_note})
+    """POST /v1/classify_criteria でジョブを登録し、job_idを返す。"""
+    resp = requests.post(f"{base_url}/v1/classify_criteria", json={"vcf": vcf, "clinical_note": clinical_note})
     resp.raise_for_status()
     return resp.json()["job_id"]
 
 
 def wait_for_result(base_url: str, job_id: str, interval_sec: float = 2.0, timeout_sec: float = 300.0) -> dict:
-    """GET /v1/variant/{job_id} を status が succeeded/failed になるまでポーリングする。"""
+    """GET /v1/classify_criteria/{job_id} を status が succeeded/failed になるまでポーリングする。"""
     deadline = time.monotonic() + timeout_sec
     while True:
-        resp = requests.get(f"{base_url}/v1/variant/{job_id}")
+        resp = requests.get(f"{base_url}/v1/classify_criteria/{job_id}")
         resp.raise_for_status()
         job = resp.json()
         if job["status"] in ("succeeded", "failed"):

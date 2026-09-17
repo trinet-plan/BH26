@@ -92,8 +92,8 @@ class OutputTests(unittest.TestCase):
             record["record_id"]: {result["criterion"]: result for result in record["results"]}
             for record in payload["records"]
         }
-        self.assertEqual(by_record["fixture:pm2-met"]["PM2"]["status"], "MET")
-        self.assertEqual(by_record["fixture:ba1-met"]["BA1"]["status"], "MET")
+        self.assertEqual(by_record["fixture:pm2-met"]["PM2"]["status"], "met")
+        self.assertEqual(by_record["fixture:ba1-met"]["BA1"]["status"], "met")
 
         pm2 = load_object(output / "va-spec-1.0.1" / "fixture_pm2-met--PM2.json")
         self.assertEqual(pm2["directionOfEvidenceProvided"], "supports")

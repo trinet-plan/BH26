@@ -182,10 +182,11 @@ def evidence_line_id(code: str, gene: str, safe_hgvsc: str) -> str:
     JSON-Schema `iri-reference`, which is all the 1.0.1 output schema asks
     of `id`.
 
-    acmg/va_spec/mapper.py's urn scheme is deliberately left alone: the
-    standalone `acmg evaluate` CLI has no gene/HGVSC to build this form
-    from (only assembly:chrom:pos:ref:alt), and its own output contract
-    and tests are pinned to the urn.
+    The urn scheme in acmg_pipeline/automated_va_spec.py (stable_urn(), used
+    by to_evidence_line()) is deliberately left alone: the standalone
+    `acmg evaluate` CLI has no gene/HGVSC to build this form from (only
+    assembly:chrom:pos:ref:alt), and its own output contract and tests are
+    pinned to the urn.
     """
     return f"evline:{gene}_{safe_hgvsc}_{code}"
 
@@ -194,16 +195,30 @@ def evidence_line_id(code: str, gene: str, safe_hgvsc: str) -> str:
 def _integrated_line_schema() -> dict:
     """The 1.0.1 output schema, widened to the fields the integrated document uses.
 
-    `acmg/va_spec/schemas/acmg-evidence-line-1.0.1-output.json` describes
+    `acmg_pipeline/schemas/acmg-evidence-line-1.0.1-output.json` describes
     exactly what evidence-cli emits for a scored criterion, so applying it
     verbatim to all 28 lines is impossible in two ways:
 
       * it is `additionalProperties: false` and lists neither `reportedIn`
         nor `contributions`, both of which the literature lines carry
         (PMIDs of the papers judged, and the LLM agent's contribution);
-      * it requires `evidenceOutcome`, which a workflow line
-        (NOT_EVALUATED / MANUAL_REVIEW / NOT_APPLICABLE) must not have -
-        emitting one would assert a judgment that was never made.
+      * it requires `evidenceOutcome`, which a workflow line must not have -
+        emitting one would assert a judgment that was never made.  Such a
+        line is any result that is neither MET nor NOT_MET; see
+        build_automated_evidence_line(), which routes those to
+        build_workflow_evidence_line() instead.
+
+    [Vocabulary note - corrected 2026-09-17]
+      Before the evidence-cli merge (c5b303f) this said the workflow states
+      were NOT_EVALUATED / MANUAL_REVIEW / NOT_APPLICABLE, which was the
+      six-value `acmg.core.models.Status` enum of the standalone package.
+      That enum no longer exists: the merge folded it into the three-value
+      `acmg_pipeline.constants.CriterionStatus` (met / not_met / unknown),
+      so a workflow line now always carries status "unknown" and those
+      three names are never emitted.  VA-Spec documents under
+      va_spec_output/ that still show them predate the merge.  A criterion
+      that is inapplicable rather than merely undecided is marked inside
+      provenance instead - see acmg_pipeline.criteria.common.NOT_APPLICABLE.
 
     So the schema file itself is NOT edited - its sha256 is recorded as
     provenance by acmg_pipeline.automated_va_spec.output_schema_sha256() and travels
@@ -361,8 +376,9 @@ def _strength_blocks(
     # An ACMG outcome code carries a strength suffix only when the strength
     # DIFFERS from the criterion's own default - "PP1_supporting" is not a
     # legal code, because supporting is what plain PP1 already means. This
-    # is the same rule evidence-cli applies in acmg/criteria/common.py
-    # result(); before the merge nothing checked it on this side, and
+    # is the same rule evidence-cli applies in
+    # acmg_pipeline/criteria/common.py result(); before the merge nothing
+    # checked it on this side, and
     # PP1/BS4 at the supporting tier emitted the illegal form.
     outcome_code = code_base if tier == default_strength(code_base) else f"{code_base}_{tier}"
     outcome = MappableConcept(

@@ -29,13 +29,13 @@
     ```
 
     ````bash
-    JOB_ID=$(curl -s -X POST http://localhost:8000/v1/variant \
+    JOB_ID=$(curl -s -X POST http://localhost:8000/v1/classify_criteria \
       -H "Content-Type: application/json" \
       -d @democase/case1_api_input_case1-noise2.json | jq -r .job_id)
     ````
 
     ````bash
-    curl -s http://localhost:8000/v1/variant/$JOB_ID | jq .
+    curl -s http://localhost:8000/v1/classify_criteria/$JOB_ID | jq .
     ```
 
 4. 停止

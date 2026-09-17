@@ -8,6 +8,9 @@ NOT_EVALUATEDとして保持し、1変異につき全28基準のVA-Spec Evidence
 設計方針・検証結果の詳細は [`ps3_bs3_ps4_implementation_v10.md`](ps3_bs3_ps4_implementation_v10.md)
 を参照してください。
 
+外部データの現在の取得経路、未対応・review待ちの情報、TogoVarへ置換する場合の
+境界は [`doc/external_data_coverage_ja.md`](doc/external_data_coverage_ja.md) に分けて整理しています。
+
 ## ディレクトリ構成
 
 ```
@@ -178,13 +181,36 @@ criterionでも、呼び出し境界を揃えるため空の `ClinicalNoteExtrac
     ```
 
     ````bash
-    JOB_ID=$(curl -s -X POST http://localhost:8000/v1/variant \
+    JOB_ID=$(curl -s -X POST http://localhost:8000/v1/classify_criteria \
       -H "Content-Type: application/json" \
       -d @democase/case1_api_input_case1-noise2.json | jq -r .job_id)
     ````
 
     ````bash
-    curl -s http://localhost:8000/v1/variant/$JOB_ID | jq .
+    curl -s http://localhost:8000/v1/classify_criteria/$JOB_ID | jq .
+    ```
+
+    `/v1/get_evidence_line_by_target_criteria` は指定した基準だけを評価する。
+    自動判定/未実装の基準のみなら同期で即座に結果が返る(`jq`でdemoケースの
+    JSONに`criteria`を足して投げる)。
+
+    ```bash
+    curl -s -X POST http://localhost:8000/v1/get_evidence_line_by_target_criteria \
+      -H "Content-Type: application/json" \
+      -d "$(jq '. + {criteria: ["PM2", "BA1"]}' democase/case1_api_input_case1-noise2.json)" | jq .
+    ```
+
+    文献(LLM)判定基準(`PS3`/`BS3`/`PS4`)を1つでも含めると、
+    `/v1/classify_criteria` と同様にjob_id + pollingになる。
+
+    ```bash
+    JOB_ID=$(curl -s -X POST http://localhost:8000/v1/get_evidence_line_by_target_criteria \
+      -H "Content-Type: application/json" \
+      -d "$(jq '. + {criteria: ["PS3", "BS3"]}' democase/case1_api_input_case1-noise2.json)" | jq -r .job_id)
+    ```
+
+    ```bash
+    curl -s http://localhost:8000/v1/get_evidence_line_by_target_criteria/$JOB_ID | jq .
     ```
 
 4. 停止
@@ -196,17 +222,39 @@ criterionでも、呼び出し境界を揃えるため空の `ClinicalNoteExtrac
 上記1〜2の代わりに [`compose.yaml`](compose.yaml) を使ってもよい
 (`docker compose up -d --build` / 停止は `docker compose down`)。
 
+## APIエンドポイント仕様
+
+各エンドポイントのリクエスト/レスポンス形・エラー条件は
+[`doc/api_spec_ja.md`](doc/api_spec_ja.md) を参照してください。
+
 ## APIクライアントの例
 
 APIクライアントの実装例は以下にあります。
 
-* [`examples/client_example.py`](examples/client_example.py) 
+* [`examples/client_example.py`](examples/client_example.py) — `/v1/classify_criteria`
+  (全28基準を評価しACMG分類まで出す。常に非同期)
 
-APIサーバー起動後に以下のコマンドを実行してください。
+  APIサーバー起動後に以下のコマンドを実行してください。
 
-```bash
-python3 examples/client_example.py democase/case1_api_input_case1-noise2.json
-```
+  ```bash
+  python3 examples/client_example.py democase/case1_api_input_case1-noise2.json
+  ```
+
+* [`examples/target_criteria_client_example.py`](examples/target_criteria_client_example.py) —
+  `/v1/get_evidence_line_by_target_criteria`
+  (指定した基準だけを評価しVA-Spec EvidenceLineを返す。分類は行わない)
+
+  自動判定/未実装の基準のみを指定した場合は同期で即座に結果が返ります。
+
+  ```bash
+  python3 examples/target_criteria_client_example.py democase/case1_api_input_case1-noise2.json PM2 BA1
+  ```
+
+  文献(LLM)判定基準(`PS3`/`BS3`/`PS4`)を1つでも含めると非同期(job_id + ポーリング)になります。
+
+  ```bash
+  python3 examples/target_criteria_client_example.py democase/case1_api_input_case1-noise2.json PS3 BS3
+  ```
 
 ## ライセンス・注意事項
 

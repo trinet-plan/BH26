@@ -87,12 +87,10 @@ class SplicingCalibrationTests(unittest.TestCase):
                         "mechanism": "protein", "score": 0.1}
         self.splicing = {**common, "evidence_id": "test:splicing", "category": "computational",
                          "source": "Ensembl VEP SpliceAI", "predictor": "SpliceAI",
-                         "predictor_version": "unreported-Ensembl-116", "mechanism": "splicing",
+                         "predictor_version": "UNKNOWN", "version_status": "UNKNOWN", "mechanism": "splicing",
                          "score": 0.0, "calibration_eligible": False}
-        self.assertion = {
-            "source": "Ensembl VEP SpliceAI", "unreported_version": "unreported-Ensembl-116",
-            "asserted_version": "SpliceAI served by Ensembl VEP release 116",
-            "asserted_by": "test", "justification": "test"}
+        self.unknown_version_policy = {
+            "source": "Ensembl VEP SpliceAI", "accepted_by": "test", "justification": "test"}
         self.config = {"computational": {
             "selected_calibrations": ["protein", "splicing"],
             "calibrations": {
@@ -105,7 +103,7 @@ class SplicingCalibrationTests(unittest.TestCase):
                              "source": "synthetic", "version": "1", "mechanism": "splicing",
                              "consequences": ["missense_variant", "synonymous_variant"],
                              "score_min": 0, "score_max": 1,
-                             "version_assertion": self.assertion,
+                             "unknown_version_policy": self.unknown_version_policy,
                              "bands": {"PP3": [{"min": 0.2, "max": 1, "strength": "supporting"}],
                                        "BP4": [{"min": 0, "max": 0.1, "strength": "supporting"}]}}}}}
 
@@ -152,8 +150,8 @@ class SplicingCalibrationTests(unittest.TestCase):
         # A calibration outside its consequence scope is not a missing predictor.
         self.assertNotIn("unavailable_predictors", value.provenance)
 
-    def test_unversioned_score_needs_a_declared_assumption(self):
-        del self.config["computational"]["calibrations"]["splicing"]["version_assertion"]
+    def test_unknown_version_score_needs_an_explicit_policy(self):
+        del self.config["computational"]["calibrations"]["splicing"]["unknown_version_policy"]
         value = self.run_rule(bp4)
         self.assertEqual(value.status, CriterionStatus.MET)
         # Without the assumption the splicing score is simply not used.
@@ -161,13 +159,15 @@ class SplicingCalibrationTests(unittest.TestCase):
                          ["REVEL"])
         self.assertEqual(value.provenance["unavailable_predictors"], ["SpliceAI"])
 
-    def test_the_assumption_is_recorded_with_the_result(self):
+    def test_unknown_version_is_recorded_with_the_result(self):
         value = self.run_rule(bp4)
-        self.assertEqual(value.provenance["version_assertions"], [self.assertion])
+        used = value.provenance["version_assertions"]
+        self.assertEqual(used[0]["version_status"], "UNKNOWN")
+        self.assertEqual(used[0]["accepted_by"], "test")
 
-    def test_an_incomplete_assumption_is_refused(self):
-        self.config["computational"]["calibrations"]["splicing"]["version_assertion"] = {
-            "source": "Ensembl VEP SpliceAI", "unreported_version": "unreported-Ensembl-116"}
+    def test_an_incomplete_unknown_version_policy_is_refused(self):
+        self.config["computational"]["calibrations"]["splicing"]["unknown_version_policy"] = {
+            "source": "Ensembl VEP SpliceAI"}
         value = self.run_rule(bp4)
         self.assertEqual([item["predictor"] for item in value.provenance["applied_calibrations"]],
                          ["REVEL"])

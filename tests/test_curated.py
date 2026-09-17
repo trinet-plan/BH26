@@ -24,10 +24,19 @@ class CuratedCriteriaTests(unittest.TestCase):
         return evaluate_prepared_record(self.input, make_services([self.annotation, *items]), {}, [code])[0]
 
     def test_all_sixteen_without_evidence(self):
+        # Before c5b303f this counted NOT_APPLICABLE against NOT_EVALUATED, two members of
+        # the six-value Status enum that the merge folded into a single UNKNOWN - which left
+        # the count asserting 2 of 16 and the set literal holding UNKNOWN twice. With no
+        # evidence at all nothing is decided AND nothing is inapplicable: every criterion
+        # stalls on the missing annotation, so none may be written off as out of scope.
         values = evaluate_prepared_record(self.input, make_services([]), {})
         self.assertEqual([v.criterion for v in values], list(CRITERIA))
-        self.assertEqual(sum(v.status == CriterionStatus.UNKNOWN for v in values), 2)
-        self.assertTrue(all(v.status in {CriterionStatus.UNKNOWN, CriterionStatus.UNKNOWN} for v in values))
+        self.assertTrue(all(v.status == CriterionStatus.UNKNOWN for v in values))
+        self.assertEqual(
+            [v.criterion for v in values
+             if v.provenance.get("assessment_outcome") == "not_applicable"],
+            [],
+        )
 
     def test_mechanism_is_disease_specific(self):
         item = self.item("gene_disease", gene="TEST", missense_mechanism_established=True,
@@ -49,7 +58,7 @@ class CuratedCriteriaTests(unittest.TestCase):
         value = evaluate_prepared_record(input_data, services, {}, ["PP2"])[0]
         self.assertEqual(value.status, CriterionStatus.MET)
         self.assertEqual(value.provenance["assessment_scope"], "gene_level")
-        self.assertEqual(value.provenance["condition_assessment"], "unknown")
+        self.assertEqual(value.provenance["condition_assessment"], "NOT_EVALUATED")
         self.assertTrue(value.review_points)
         # BP1 reads the same record in the opposite direction and stays unmet here.
         bp1 = evaluate_prepared_record(input_data, services, {}, ["BP1"])[0]
@@ -187,7 +196,7 @@ class CuratedCriteriaTests(unittest.TestCase):
         value = self.run_pm1(item, input_data=input_data, annotation=annotation)
         self.assertEqual(value.status, CriterionStatus.MET)
         self.assertEqual(value.provenance["assessment_scope"], "protein_level")
-        self.assertEqual(value.provenance["condition_assessment"], "unknown")
+        self.assertEqual(value.provenance["condition_assessment"], "NOT_EVALUATED")
         self.assertTrue(value.review_points)
         item["benign_depletion"] = False
         value = self.run_pm1(item, input_data=input_data, annotation=annotation)
@@ -260,7 +269,7 @@ class CuratedCriteriaTests(unittest.TestCase):
         value = evaluate_prepared_record(input_data, make_services([annotation, comparator]), {}, ["PS1"])[0]
         self.assertEqual(value.status, CriterionStatus.MET)
         self.assertEqual(value.provenance["assessment_scope"], "protein_level")
-        self.assertEqual(value.provenance["condition_assessment"], "unknown")
+        self.assertEqual(value.provenance["condition_assessment"], "NOT_EVALUATED")
         self.assertTrue(value.review_points)
 
     def test_search_absence_requires_completeness(self):
@@ -310,7 +319,7 @@ class CuratedCriteriaTests(unittest.TestCase):
         value = evaluate_prepared_record(input_data, make_services([annotation, comparator]), {}, ["PM5"])[0]
         self.assertEqual(value.status, CriterionStatus.MET)
         self.assertEqual(value.strength, "moderate")
-        self.assertEqual(value.provenance["condition_assessment"], "unknown")
+        self.assertEqual(value.provenance["condition_assessment"], "NOT_EVALUATED")
         # Without the provider's residue confirmation, and without a complete human review,
         # the same record only raises a review point.
         del comparator["residue_match"]
