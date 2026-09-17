@@ -92,7 +92,13 @@ async def main() -> None:
 
     automated_config = json.loads((ROOT / "config" / "demo-rules.json").read_text(encoding="utf-8"))
     automated_config["evidence_cache_dir"] = str(ROOT / "tests" / "fixtures" / "external-cache")
-    automated_config["offline"] = True
+    # Live for this run (2026-09-17), not the usual offline/cached demo
+    # convention: population_sources just switched from gnomAD to TogoVar
+    # (h.muroda, "Add configurable TogoVar population frequency providers"),
+    # and tests/fixtures/external-cache has zero TogoVar entries yet. A live
+    # fetch here also warms that cache (CachedHttpClient writes through),
+    # so a later run can go back to offline=True and still see this data.
+    automated_config["offline"] = False
     automated_config["ensembl_release"] = "116"
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)

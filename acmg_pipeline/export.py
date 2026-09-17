@@ -259,6 +259,19 @@ def _integrated_line_schema() -> dict:
     return schema
 
 
+# PS3/BS3 share one literature judgment (acmg_pipeline.criteria.ps3_bs3):
+# the LLM decides the direction actually ESTABLISHED by the evidence (PS3,
+# BS3, or not_clear) independent of which of the pair is being tested right
+# now - _strength_blocks()'s own docstring is explicit that "testing PS3 but
+# finding BS3-direction evidence must be coded BS3_moderate, not
+# PS3_moderate". So a "BS3" line whose evidenceOutcome code starts with
+# "PS3" (or vice versa) is not a bug, it is the correct way to record "this
+# disputes BS3 - the evidence actually shows PS3". Found 2026-09-17 when a
+# real demo case (DSG2 c.1592T>G) had clear PS3-direction literature
+# evidence and building its BS3 line crashed here.
+_ACMG_DISPUTE_SIBLINGS = {"PS3": "BS3", "BS3": "PS3"}
+
+
 def _check_acmg_semantics(line: dict, criterion: str) -> None:
     """The cross-field ACMG rules from validate_1_0_1(), for any line that scores.
 
@@ -272,11 +285,16 @@ def _check_acmg_semantics(line: dict, criterion: str) -> None:
     direction = line["directionOfEvidenceProvided"]
     if line["specifiedBy"]["methodType"] != criterion or not OUTCOME_PATTERN.fullmatch(outcome):
         raise ValueError(f"VA-Spec ACMG criterion mapping mismatch for {criterion}")
-    if outcome.split("_", 1)[0] != criterion:
+    outcome_code = outcome.split("_", 1)[0]
+    sibling = _ACMG_DISPUTE_SIBLINGS.get(criterion)
+    if outcome_code != criterion and outcome_code != sibling:
         raise ValueError(f"VA-Spec methodType/evidenceOutcome mismatch for {criterion}")
-    expected = "neutral" if outcome.endswith("_not_met") else (
-        "disputes" if criterion.startswith("B") else "supports"
-    )
+    if outcome_code == sibling:
+        expected = "disputes"
+    else:
+        expected = "neutral" if outcome.endswith("_not_met") else (
+            "disputes" if criterion.startswith("B") else "supports"
+        )
     if direction != expected:
         raise ValueError(
             f"VA-Spec direction/evidenceOutcome mismatch for {criterion}: "
