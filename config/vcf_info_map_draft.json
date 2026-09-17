@@ -1,0 +1,71 @@
+{
+  "schema_version": "1.0",
+  "registry_status": "DRAFT",
+  "purpose": "Maps an annotated VCF's INFO fields onto evidence fields for acmg_pipeline.providers.vcf_annotation. Which field means what is a property of the annotator that wrote the file, so this MUST be checked against a real header from the annotator actually in use before it is applied. Nothing here has been validated against an operational file.",
+  "limitations": [
+    "The VEP entry is derived from VEP's documented CSQ layout, not from an output file this project has seen. VEP's field set depends on which plugins and --fields were used, so the subfield names present in a real header may differ.",
+    "The bcftools entry assumes gnomAD-prefixed field names from `bcftools annotate -a gnomad.vcf.gz -c INFO/gnomAD_AF,...`. The names are whatever the -c argument assigned, so they are installation-specific.",
+    "Both are starting points for reading a real header, not defaults to apply unseen.",
+    "Fields a curator already concluded (CLNSIG, ACMG_CODES and the rest of providers.vcf_annotation.REFUSED) cannot appear here; the provider raises if they do."
+  ],
+  "annotators": {
+    "ensembl-vep-vcf": {
+      "note": "`vep --vcf` packs every subfield into CSQ and declares the order in the ##INFO header's Format clause. The provider reads that clause, so the order below is not relied on - only the names are. One entry per transcript is present; only the entry matching the transcript being evaluated is read.",
+      "reference": "https://www.ensembl.org/info/docs/tools/vep/vep_formats.html",
+      "mapping": {
+        "CSQ": {
+          "category": "annotation",
+          "group": "Ensembl VEP",
+          "compound": {
+            "transcript_subfield": "Feature",
+            "list_separator": "&",
+            "list_fields": ["consequences"],
+            "fields": {
+              "Consequence": "consequences",
+              "SYMBOL": "gene",
+              "Feature": "transcript",
+              "EXON": "exon",
+              "INTRON": "intron",
+              "HGVSc": "hgvsc",
+              "HGVSp": "hgvsp",
+              "Protein_position": "protein_start",
+              "ENSP": "protein_id"
+            }
+          }
+        }
+      }
+    },
+    "snpeff-vcf": {
+      "note": "SnpEff's ANN field has the same shape with different subfield names, declared as \"Functional annotations: 'Allele | Annotation | ...'\". Included to show the second shape the provider handles; the field list is illustrative.",
+      "reference": "https://pcingola.github.io/SnpEff/snpeff/inputoutput/",
+      "mapping": {
+        "ANN": {
+          "category": "annotation",
+          "group": "SnpEff",
+          "compound": {
+            "transcript_subfield": "Feature_ID",
+            "list_separator": "&",
+            "list_fields": ["consequences"],
+            "fields": {
+              "Annotation": "consequences",
+              "Gene_Name": "gene",
+              "Feature_ID": "transcript",
+              "HGVS.c": "hgvsc",
+              "HGVS.p": "hgvsp"
+            }
+          }
+        }
+      }
+    },
+    "bcftools-annotate-gnomad": {
+      "note": "Flat one-field-per-value output. Fields sharing a `group` become one evidence record, so AF, AC and AN arrive together as a single population observation. `callable` is not derivable from these fields and is deliberately absent - usable_observations() requires it for an AC of 0, so an absent variant still cannot be read as AF 0.",
+      "reference": "https://samtools.github.io/bcftools/bcftools.html#annotate",
+      "mapping": {
+        "gnomAD_AF": {"category": "population", "group": "gnomAD", "field": "AF"},
+        "gnomAD_AC": {"category": "population", "group": "gnomAD", "field": "AC"},
+        "gnomAD_AN": {"category": "population", "group": "gnomAD", "field": "AN"},
+        "gnomAD_popmax": {"category": "population", "group": "gnomAD", "field": "population"}
+      }
+    }
+  }
+}

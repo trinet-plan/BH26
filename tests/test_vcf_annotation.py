@@ -13,7 +13,7 @@ from acmg_pipeline.automated_core.models import Variant
 from acmg_pipeline.automated_core.vcf_adapter import parse_vcf as adapter_parse_vcf
 from acmg_pipeline.services.evidence import EvidenceService
 from acmg_pipeline.providers.vcf_annotation import (
-    REFUSED, VcfEvidenceProvider, field_provenance,
+    REFUSED, VcfEvidenceProvider, compound_entries, field_provenance, subfield_order,
 )
 from acmg_pipeline.vcf_record import InfoFieldDef, ParsedVcf, VariantRecord
 
@@ -189,3 +189,106 @@ class AnnotatedVcfTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+CSQ_MAPPING = {"CSQ": {"category": "annotation", "group": "VEP", "compound": {
+    "transcript_subfield": "Feature",
+    "fields": {"Consequence": "consequences", "SYMBOL": "gene", "Feature": "transcript",
+               "EXON": "exon", "HGVSc": "hgvsc", "HGVSp": "hgvsp"},
+    "list_fields": ["consequences"],
+}}}
+
+
+class SubfieldOrderTests(unittest.TestCase):
+    """The header states the order, which is what makes the compound form readable."""
+
+    def test_a_vep_format_clause_is_read(self):
+        definition = info_def("CSQ", "Consequence annotations from Ensembl VEP. "
+                                     "Format: Allele|Consequence|IMPACT|SYMBOL|Feature")
+        self.assertEqual(subfield_order(definition),
+                         ["Allele", "Consequence", "IMPACT", "SYMBOL", "Feature"])
+
+    def test_a_snpeff_annotations_clause_is_read(self):
+        definition = info_def("ANN", "Functional annotations: "
+                                     "'Allele | Annotation | Annotation_Impact | Feature_ID '")
+        self.assertEqual(subfield_order(definition),
+                         ["Allele", "Annotation", "Annotation_Impact", "Feature_ID"])
+
+    def test_a_header_stating_no_order_gives_none(self):
+        self.assertIsNone(subfield_order(info_def("CSQ", "Consequence annotations")))
+        self.assertIsNone(subfield_order(None))
+
+    def test_entries_are_split_per_transcript_and_keyed_by_name(self):
+        order = ["Allele", "Consequence", "Feature"]
+        entries = compound_entries("A|missense_variant|ENST1,A|intron_variant|ENST2", order)
+        self.assertEqual([entry["Feature"] for entry in entries], ["ENST1", "ENST2"])
+        self.assertEqual(entries[0]["Consequence"], "missense_variant")
+
+    def test_a_short_entry_leaves_the_trailing_subfields_empty(self):
+        entries = compound_entries("A|intron_variant", ["Allele", "Consequence", "Feature"])
+        self.assertEqual(entries[0]["Feature"], "")
+
+
+class CompoundFieldTests(unittest.TestCase):
+    """A CSQ field carries one entry per transcript; choosing among them is not this
+    provider's question, so only an exact match on the evaluated transcript is read."""
+
+    FIXTURE = Path(__file__).resolve().parent / "fixtures" / "vep-annotated-example.vcf"
+
+    def setUp(self):
+        self.parsed = adapter_parse_vcf(self.FIXTURE)[0]
+        self.variant = Variant("GRCh38", "11", 47352561, "G", "A")
+        self.provider = VcfEvidenceProvider(CSQ_MAPPING)
+
+    def evidence(self, transcript):
+        return self.provider.get_evidence(self.variant, self.parsed, transcript=transcript)
+
+    def test_the_entry_for_the_evaluated_transcript_is_the_one_read(self):
+        records, skipped = self.evidence("NM_000256.3")
+        self.assertEqual(skipped, [])
+        self.assertEqual(records[0]["consequences"],
+                         ["missense_variant", "splice_region_variant"])
+        self.assertEqual(records[0]["exon"], "2/34")
+        self.assertEqual(records[0]["hgvsc"], "NM_000256.3:c.278G>A")
+
+    def test_a_different_transcript_reads_its_own_entry(self):
+        records, _ = self.evidence("NM_001321226.2")
+        self.assertEqual(records[0]["consequences"], ["intron_variant"])
+        self.assertNotIn("exon", records[0])  # empty subfields are absent, not blank
+
+    def test_a_transcript_with_no_entry_yields_nothing(self):
+        records, skipped = self.evidence("NM_999999.1")
+        self.assertEqual(records, [])
+        self.assertEqual(skipped, [{"info": "CSQ", "reason": "NO_SINGLE_TRANSCRIPT_ENTRY"}])
+
+    def test_without_a_transcript_the_choice_is_not_made_here(self):
+        records, skipped = self.evidence(None)
+        self.assertEqual(records, [])
+        self.assertEqual(skipped, [{"info": "CSQ", "reason": "NO_TRANSCRIPT_TO_MATCH"}])
+
+    def test_a_version_difference_still_matches_the_entry(self):
+        records, _ = self.evidence("NM_000256.9")
+        self.assertEqual(records[0]["transcript"], "NM_000256.3")
+
+    def test_a_compound_field_whose_header_declares_no_order_is_skipped(self):
+        """Positions would be guesswork, which is the one thing this must not do."""
+        record = VariantRecord(chrom="11", pos=47352561, id="v", ref="G", alt="A", qual=".",
+                               filter="PASS", info={"CSQ": "A|missense_variant|NM_000256.3"})
+        undeclared = ParsedVcf(meta={"source": "x", "fileDate": "20260917"},
+                               info_defs={"CSQ": info_def("CSQ", "Consequence annotations")},
+                               record=record)
+        records, skipped = self.provider.get_evidence(self.variant, undeclared,
+                                                      transcript="NM_000256.3")
+        self.assertEqual(records, [])
+        self.assertEqual(skipped, [{"info": "CSQ", "reason": "NO_DECLARED_FORMAT"}])
+
+    def test_the_clinical_significance_beside_it_is_still_never_read(self):
+        records, _ = self.evidence("NM_000256.3")
+        self.assertIn("CLNSIG", self.parsed.record.info)
+        for record in records:
+            self.assertNotIn("CLNSIG", record["info_fields"])
+
+    def test_the_record_still_says_it_came_from_the_submitted_file(self):
+        records, _ = self.evidence("NM_000256.3")
+        self.assertEqual(records[0]["origin"], "vcf_input")
+        self.assertEqual(records[0]["source"], "ensembl-vep-116")

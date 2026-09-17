@@ -13,6 +13,9 @@
   anything that cannot meet them. It does not relax the contract; it declines the fields
   that do not fit it.
 
+  (VEP's own VCF output packs everything into one CSQ field rather than writing flat ones;
+  both shapes are handled - see below.)
+
 [Three refusals, each answering one line of that decision]
   No version, no evidence. Every INFO field must be declared with a Source and Version in
   its ##INFO header, or name a header the file states elsewhere. A field whose release
@@ -26,6 +29,18 @@
   Uncalibrated scores stay uncalibrated. A predictor score is emitted with the version its
   header names; computational.py then accepts it only if a calibration matches that version.
   Nothing here makes an unusable score usable.
+
+[Two shapes of INFO, and why the compound one is safe to read]
+  bcftools annotate writes one field per value - gnomAD_AF, gnomAD_AC - and a mapping names
+  each. VEP and SnpEff instead pack every subfield into one value, CSQ or ANN, pipe
+  separated, and declare the order in the ##INFO header's own "Format:" clause. That header
+  is what makes the compound form readable without guessing: the file states which position
+  holds the consequence and which holds the transcript, so nothing is inferred from the data.
+
+  A compound field also carries one entry per transcript, and picking among them is the
+  question MANE Select answers elsewhere. It is not answered here. Only the entry whose
+  feature matches the transcript being evaluated is read; no match, more than one match, or
+  no transcript to match against all yield nothing.
 
 [The one thing a fetched record has that this cannot]
   A provider queried a source; a VCF was handed to us by whoever submitted the variant. That
@@ -52,6 +67,34 @@ REFUSED = frozenset({
 
 _SOURCE = re.compile(r'Source="([^"]*)"')
 _VERSION = re.compile(r'Version="([^"]*)"')
+# VEP writes "... Format: Allele|Consequence|...", SnpEff "Functional annotations: 'Allele |
+# Annotation | ...'". Both state the order; this finds whichever clause the file used.
+_FORMAT = re.compile(r"(?:Format|Functional annotations)\s*:\s*(.+)$", re.IGNORECASE)
+
+
+def subfield_order(definition):
+    """The subfield names a compound INFO field declares, in order, or None."""
+    match = _FORMAT.search((definition.description or "") if definition else "")
+    if not match:
+        return None
+    names = [name.strip().strip("'\"").strip() for name in match.group(1).split("|")]
+    return [name for name in names if name] or None
+
+
+def compound_entries(value, order):
+    """One dict per transcript entry, keyed by the declared subfield names."""
+    entries = []
+    for chunk in str(value).split(","):
+        parts = chunk.split("|")
+        if len(parts) < 2:
+            continue
+        entries.append({name: parts[index].strip() if index < len(parts) else ""
+                        for index, name in enumerate(order)})
+    return entries
+
+
+def _accession(value):
+    return str(value).split(".")[0] if value else None
 
 
 def field_provenance(definition, meta):
@@ -94,8 +137,13 @@ class VcfEvidenceProvider:
                 f"evidence: {sorted(refused)}")
         self.mapping = mapping
 
-    def get_evidence(self, variant, parsed):
-        """Every record the file supports, grouped and provenanced per category."""
+    def get_evidence(self, variant, parsed, transcript=None):
+        """Every record the file supports, grouped and provenanced per category.
+
+        `transcript` is the accession being evaluated. A compound field carries one entry per
+        transcript, and choosing among them is not this provider's question, so without it
+        such a field is skipped.
+        """
         info = parsed.record.info
         digest = None
         grouped: dict[str, dict] = {}
@@ -104,9 +152,10 @@ class VcfEvidenceProvider:
             if info_id not in info:
                 continue
             category = rule.get("category")
+            compound = rule.get("compound")
             field = rule.get("field")
             if category not in {CATEGORY_POPULATION, CATEGORY_ANNOTATION,
-                                CATEGORY_COMPUTATIONAL} or not field:
+                                CATEGORY_COMPUTATIONAL} or not (field or compound):
                 skipped.append({"info": info_id, "reason": "UNSUPPORTED_MAPPING"})
                 continue
             provenance = field_provenance(parsed.info_defs.get(info_id), parsed.meta)
@@ -139,9 +188,50 @@ class VcfEvidenceProvider:
                     "info_fields": [],
                     "response_sha256": digest,
                 }
-            record[field] = info[info_id]
+            if compound:
+                values, reason = self._compound_values(
+                    info[info_id], parsed.info_defs.get(info_id), compound, transcript)
+                if reason:
+                    skipped.append({"info": info_id, "reason": reason})
+                    if not record["info_fields"]:
+                        del grouped[key]
+                    continue
+                record.update(values)
+                record["compound_format"] = "declared_in_header"
+            else:
+                record[field] = info[info_id]
             record["info_fields"].append(info_id)
         return list(grouped.values()), skipped
+
+    @staticmethod
+    def _compound_values(value, definition, compound, transcript):
+        """(evidence fields, skip reason) for the entry matching `transcript`."""
+        order = subfield_order(definition)
+        if not order:
+            # Without the header's Format clause the positions would be guesswork.
+            return None, "NO_DECLARED_FORMAT"
+        feature = compound.get("transcript_subfield")
+        fields = compound.get("fields") or {}
+        if not feature or not fields:
+            return None, "UNSUPPORTED_MAPPING"
+        if not transcript:
+            return None, "NO_TRANSCRIPT_TO_MATCH"
+        entries = [entry for entry in compound_entries(value, order)
+                   if _accession(entry.get(feature)) == _accession(transcript)]
+        if len(entries) != 1:
+            # No entry for this transcript, or several - choosing is not this question.
+            return None, "NO_SINGLE_TRANSCRIPT_ENTRY"
+        entry = entries[0]
+        separator = compound.get("list_separator") or "&"
+        lists = set(compound.get("list_fields") or [])
+        values = {}
+        for subfield, target in fields.items():
+            raw = entry.get(subfield, "")
+            if raw == "":
+                continue
+            values[target] = ([part for part in raw.split(separator) if part]
+                              if target in lists else raw)
+        return values, None
 
 
 def _slug(value):
