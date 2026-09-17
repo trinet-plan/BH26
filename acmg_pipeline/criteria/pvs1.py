@@ -460,7 +460,8 @@ def _evaluate_input(input_data, services, config):
         state["trace"].append(_node("V01", "variant_type", "NOT_APPLICABLE", variant_type,
                                     [annotation]))
         return _finish(input_data, state, CriterionStatus.UNKNOWN,
-                       "Variant type is not eligible for PVS1")
+                       "PVS1 is not applicable: the annotation does not indicate a truncating, "
+                       "canonical-splice, start-loss, or RNA-confirmed loss-of-function consequence.")
     if variant_type == "OTHER_LOF":
         state["trace"].append(_node("V01", "variant_type", "UNKNOWN", variant_type, [annotation]))
         return _finish(input_data, state, CriterionStatus.UNKNOWN,

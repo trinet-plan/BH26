@@ -22,10 +22,14 @@ def evaluate_region(code, input_data, services, config):
     consequences = set(annotation["consequences"])
     indel = bool(consequences & {"inframe_insertion", "inframe_deletion"})
     if code == "PM4" and not (indel or "stop_lost" in consequences):
-        return result(code, input_data, CriterionStatus.UNKNOWN, "Requires in-frame indel or stop loss",
+        return result(code, input_data, CriterionStatus.UNKNOWN,
+                      "PM4 is not applicable: the annotation does not indicate an in-frame insertion, "
+                      "in-frame deletion, or stop-loss consequence.",
                       evidence=[annotation])
     if code == "BP3" and not indel:
-        return result(code, input_data, CriterionStatus.UNKNOWN, "Requires in-frame indel",
+        return result(code, input_data, CriterionStatus.UNKNOWN,
+                      "BP3 is not applicable: the annotation does not indicate an in-frame insertion "
+                      "or deletion, which BP3 requires before repeat-region assessment.",
                       evidence=[annotation])
     # PM1 is a protein-level statement about the region itself, so a condition-agnostic
     # reviewed assessment is usable; the disease relevance is reported separately.
