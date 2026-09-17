@@ -1,0 +1,113 @@
+{
+  "id": "urn:bh26:evidence-line:f16f436f901abc4e107de814339df075c98df813fd91ecb02a68b81d4fd2194c",
+  "type": "EvidenceLine",
+  "name": "PM2 assessment for GRCh38:1:100:A:G",
+  "description": "Variant is sufficiently rare",
+  "extensions": [
+    {
+      "name": "bh26AssessmentDetails",
+      "value": {
+        "criterion": "PM2",
+        "status": "met",
+        "summary": "Variant is sufficiently rare",
+        "evidenceItemIds": [
+          "https://grch38.togovar.org/variant/tgv-example#frequency:tommo"
+        ],
+        "provenance": {},
+        "strength": "supporting",
+        "direction": "supports",
+        "evidenceOutcome": "PM2_supporting"
+      }
+    },
+    {
+      "name": "curatorHints",
+      "value": [
+        {
+          "severity": "warning",
+          "category": "conflict",
+          "message": "Conflicting automated assessments"
+        },
+        {
+          "severity": "caution",
+          "category": "review",
+          "message": "Confirm disease-specific frequency threshold"
+        },
+        {
+          "severity": "warning",
+          "category": "warning",
+          "message": "Population coverage is limited"
+        }
+      ]
+    }
+  ],
+  "specifiedBy": {
+    "type": "Method",
+    "name": "ACMG/AMP 2015 with ClinGen General Guidance",
+    "methodType": "PM2",
+    "reportedIn": {
+      "type": "Document",
+      "name": "Richards et al., 2015, Genet Med.",
+      "urls": [
+        "https://pubmed.ncbi.nlm.nih.gov/25741868/"
+      ],
+      "doi": "10.1038/gim.2015.30",
+      "pmid": "25741868"
+    }
+  },
+  "hasEvidenceItems": [
+    {
+      "id": "https://grch38.togovar.org/variant/tgv-example#frequency:tommo",
+      "type": "CohortAlleleFrequencyStudyResult",
+      "name": "TogoVar tommo:global allele frequency for GRCh38:1:100:A:G",
+      "focusAllele": "urn:bh26:variant:637d1d480e54f1e00a0ef53beffa56bc911be349bcc0aecaf5b7013270b91c44",
+      "focusAlleleFrequency": 1e-05,
+      "focusAlleleCount": 1,
+      "locusAlleleCount": 100000,
+      "sourceDataSet": {
+        "id": "https://grch38.togovar.org/",
+        "type": "DataSet",
+        "name": "TogoVar vAPI 0.9.1",
+        "version": "API 0.9.1"
+      },
+      "cohort": {
+        "id": "urn:bh26:cohort:9c7a4e4a86da7c41553126575df40b400e632bc2849b40f3b87b1f993e5660dd",
+        "type": "StudyGroup",
+        "name": "tommo:global"
+      },
+      "specifiedBy": {
+        "type": "Method",
+        "name": "TogoVar API allele frequency aggregation",
+        "reportedIn": {
+          "type": "Document",
+          "name": "TogoVar API documentation",
+          "urls": [
+            "https://grch38.togovar.org/api/"
+          ]
+        }
+      },
+      "qualityMeasures": {
+        "qualityStatus": "PASS",
+        "callable": true,
+        "filters": [
+          "PASS"
+        ],
+        "variantFlags": [],
+        "retrievedAt": "2026-09-15T00:00:00Z"
+      }
+    }
+  ],
+  "directionOfEvidenceProvided": "supports",
+  "strengthOfEvidenceProvided": {
+    "primaryCoding": {
+      "system": "ACMG Guidelines, 2015",
+      "code": "supporting"
+    }
+  },
+  "evidenceOutcome": {
+    "name": "ACMG 2015 PM2 criterion met",
+    "primaryCoding": {
+      "system": "ACMG Guidelines, 2015",
+      "code": "PM2_supporting"
+    }
+  }
+}

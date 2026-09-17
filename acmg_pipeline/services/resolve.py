@@ -12,15 +12,8 @@ searches, the PM1 hotspot search), so that logic exists once.
     each record's coordinates before any Variant exists, and needs the
     returned candidate for `reconcile()`. That is an identity step, not an
     evidence step.
-  * The gnomAD batch. `GnomadProvider.get_frequencies` issues ONE GraphQL
-    request covering every variant in the run. Splitting it into
-    per-variant `get_frequency` calls would change the request body, and
-    the HTTP cache is keyed on that body - the committed offline fixture
-    cache holds the batched response, and `cache_set_sha256` in the
-    identity manifest pins the exact cache-entry set. Per-variant calls
-    would miss the cache entirely and move that hash, so the batch stays.
-  `ProviderEvidenceResolver` therefore does those two itself, per variant,
-  for the single-variant case the integrated pipeline has.
+  * Batch preparation. The CLI owns batching across demo variants; the
+    integrated pipeline resolves one variant at a time through TogoVar.
 
 [Why the caller no longer supplies evidence]
   An evidence record is only usable if it carries `evidence_id` (a
@@ -35,7 +28,7 @@ searches, the PM1 hotspot search), so that logic exists once.
   source version for anything. INFO stays identity and context only.
 
 [Absent is not zero]
-  A variant missing from gnomAD yields no population record at all, so
+  A variant missing from TogoVar yields no population record at all, so
   PM2/BA1/BS1 report NOT_EVALUATED ("no reliable population observation")
   rather than being handed AF=0.
 
@@ -55,8 +48,8 @@ from acmg_pipeline.providers.clinvar import (
 )
 from acmg_pipeline.providers.dbnsfp import DbnsfpProvider
 from acmg_pipeline.providers.ensembl import EnsemblIdentityProvider
-from acmg_pipeline.providers.gnomad import GnomadProvider
 from acmg_pipeline.providers.http import CachedHttpClient, FetchError
+from acmg_pipeline.providers.population_registry import build_population_providers
 
 PROVIDER_ERRORS = (ValueError, FetchError)
 
@@ -182,7 +175,7 @@ class StaticEvidenceResolver:
 
 
 class ProviderEvidenceResolver:
-    """Query Ensembl, gnomAD, dbNSFP and ClinVar for one variant.
+    """Query Ensembl, TogoVar, dbNSFP and ClinVar for one variant.
 
     Every request goes through `CachedHttpClient`, so a run against a
     populated cache directory is reproducible offline and byte-identical -
@@ -196,7 +189,7 @@ class ProviderEvidenceResolver:
         *,
         offline: bool = False,
         ensembl_release: str | None = None,
-        gnomad_release: str = "4.1.1",
+        population_sources: list[dict] | None = None,
         clinvar_release: str | None = None,
         evidence_cache_dir=None,
         hotspot_policy: dict | None = None,
@@ -207,7 +200,8 @@ class ProviderEvidenceResolver:
             if evidence_cache_dir else self._client
         )
         self._ensembl_release = ensembl_release
-        self._gnomad_release = gnomad_release
+        self._population_sources = population_sources
+        self._population = None
         self._clinvar_release = (
             clinvar_release or datetime.now(timezone.utc).date().isoformat()
         )
@@ -227,6 +221,13 @@ class ProviderEvidenceResolver:
             ensembl_provider=self._ensembl_provider(),
             hotspot_policy=self._hotspot_policy,
         )
+
+    def _population_providers(self):
+        if self._population is None:
+            self._population = build_population_providers(
+                self._external, self._population_sources
+            )
+        return self._population
 
     def resolve(self, identity: dict, variant: Variant) -> ResolvedEvidence:
         """`identity` is the VCF INFO view: GENE/TRANSCRIPT/HGVSC/CLNVARIATIONID."""
@@ -284,11 +285,11 @@ class ProviderEvidenceResolver:
         return annotation, predictions
 
     def _add_population(self, variant, resolved):
-        provider = GnomadProvider(self._external, release=self._gnomad_release)
-        try:
-            observations = provider.get_frequency(variant)
-        except PROVIDER_ERRORS as exc:
-            resolved.failures.append({"provider": provider.name, "error": str(exc)})
-            return
-        if observations:  # None = not in gnomAD; contribute nothing, never AF=0
-            resolved.records.extend(observations)
+        for provider in self._population_providers():
+            try:
+                observations = provider.get_frequency(variant)
+            except PROVIDER_ERRORS as exc:
+                resolved.failures.append({"provider": provider.name, "error": str(exc)})
+                continue
+            if observations:  # Provider absence contributes nothing, never AF=0.
+                resolved.records.extend(observations)

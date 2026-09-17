@@ -876,6 +876,7 @@ async def evaluate_variant_evidence_lines(
         automated_config.get("evidence_cache_dir", "cache/evidence"),
         offline=bool(automated_config.get("offline")),
         ensembl_release=automated_config.get("ensembl_release"),
+        population_sources=automated_config.get("population_sources"),
     )
     resolved = resolver.resolve(_identity_from_info(variant), _automated_variant(variant))
     services = make_services(
@@ -1009,6 +1010,7 @@ async def evaluate_selected_criteria(
             automated_config.get("evidence_cache_dir", "cache/evidence"),
             offline=bool(automated_config.get("offline")),
             ensembl_release=automated_config.get("ensembl_release"),
+            population_sources=automated_config.get("population_sources"),
         )
         resolved = resolver.resolve(_identity_from_info(variant), _automated_variant(variant))
         services = make_services(resolved.records, automated_config.get("population_providers"))

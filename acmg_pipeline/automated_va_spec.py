@@ -73,7 +73,7 @@ def stable_urn(kind, value):
 
 
 def population_study_result(item, variant):
-    """Represent a normalized population observation like the official gnomAD example."""
+    """Represent a normalized population observation as a VA-Spec StudyResult."""
     try:
         ac = int(item["AC"])
         an = int(item["AN"])
@@ -89,8 +89,23 @@ def population_study_result(item, variant):
                (source, source_version, population)):
         raise ValueError("Population Evidence provenance is incomplete")
     variant_key = f"{variant['assembly']}:{variant['chrom']}:{variant['pos']}:{variant['ref']}:{variant['alt']}"
-    dataset_iri = ("https://gnomad.broadinstitute.org/"
-                   f"?dataset=gnomad_r4&version={source_version}")
+    if source == "TogoVar":
+        dataset_iri = "https://grch38.togovar.org/"
+        method_name = "TogoVar API allele frequency aggregation"
+        method_document = {
+            "type": "Document",
+            "name": "TogoVar API documentation",
+            "urls": ["https://grch38.togovar.org/api/"],
+        }
+    else:
+        dataset_iri = ("https://gnomad.broadinstitute.org/"
+                       f"?dataset=gnomad_r4&version={source_version}")
+        method_name = "gnomAD browser allele frequency calculation"
+        method_document = {
+            "type": "Document",
+            "name": "gnomAD browser help",
+            "urls": ["https://gnomad.broadinstitute.org/help"],
+        }
     return {
         "id": evidence_reference(item),
         "type": "CohortAlleleFrequencyStudyResult",
@@ -108,11 +123,8 @@ def population_study_result(item, variant):
             "type": "StudyGroup", "name": population,
         },
         "specifiedBy": {
-            "type": "Method", "name": "gnomAD browser allele frequency calculation",
-            "reportedIn": {
-                "type": "Document", "name": "gnomAD browser help",
-                "urls": ["https://gnomad.broadinstitute.org/help"],
-            },
+            "type": "Method", "name": method_name,
+            "reportedIn": method_document,
         },
         "qualityMeasures": {
             "qualityStatus": item.get("quality_status"),

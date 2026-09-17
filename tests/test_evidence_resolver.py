@@ -14,7 +14,11 @@ os.environ.setdefault("VLLM_BASE_URL", "http://127.0.0.1:8000/v1")
 os.environ.setdefault("VLLM_API_KEY", "test-only")
 
 from acmg_pipeline.automated_core.models import Variant
-from acmg_pipeline.services.resolve import ProviderEvidenceResolver, StaticEvidenceResolver
+from acmg_pipeline.services.resolve import (
+    ProviderEvidenceResolver,
+    ResolvedEvidence,
+    StaticEvidenceResolver,
+)
 from acmg_pipeline.pipeline import _automated_variant, _identity_from_info
 from acmg_pipeline.vcf_record import VariantRecord
 
@@ -82,7 +86,8 @@ def _resolver(**providers) -> ProviderEvidenceResolver:
     resolver._client = object()
     resolver._external = object()
     resolver._ensembl_release = "116"
-    resolver._gnomad_release = "4.1.1"
+    resolver._population_sources = None
+    resolver._population = None
     resolver._clinvar_release = "2026-09-15"
     resolver._ensembl = object()
     for name, value in providers.items():
@@ -90,12 +95,12 @@ def _resolver(**providers) -> ProviderEvidenceResolver:
     return resolver
 
 
-def test_absent_from_gnomad_contributes_no_population_record(monkeypatch):
+def test_absent_from_togovar_contributes_no_population_record():
     """None means 'not observed', which must never become AF=0."""
     import acmg_pipeline.services.resolve as resolve
 
     class _Absent:
-        name = "gnomAD"
+        name = "TogoVar"
 
         def __init__(self, *args, **kwargs):
             pass
@@ -103,8 +108,7 @@ def test_absent_from_gnomad_contributes_no_population_record(monkeypatch):
         def get_frequency(self, variant):
             return None
 
-    monkeypatch.setattr(resolve, "GnomadProvider", _Absent)
-    resolver = _resolver()
+    resolver = _resolver(_population=[_Absent()])
     resolved = resolve.ResolvedEvidence()
     resolver._add_population(VARIANT, resolved)
 
@@ -112,26 +116,57 @@ def test_absent_from_gnomad_contributes_no_population_record(monkeypatch):
     assert resolved.failures == []  # absence is not a failure
 
 
-def test_provider_error_is_recorded_not_silently_empty(monkeypatch):
+def test_provider_error_is_recorded_not_silently_empty():
     """An unreachable provider must be distinguishable from 'no such evidence'."""
     import acmg_pipeline.services.resolve as resolve
 
     class _Broken:
-        name = "gnomAD"
+        name = "TogoVar"
 
         def __init__(self, *args, **kwargs):
             pass
 
         def get_frequency(self, variant):
-            raise ValueError("gnomAD query failed")
+            raise ValueError("TogoVar query failed")
 
-    monkeypatch.setattr(resolve, "GnomadProvider", _Broken)
-    resolver = _resolver()
+    resolver = _resolver(_population=[_Broken()])
     resolved = resolve.ResolvedEvidence()
     resolver._add_population(VARIANT, resolved)
 
     assert resolved.records == []
-    assert resolved.failures == [{"provider": "gnomAD", "error": "gnomAD query failed"}]
+    assert resolved.failures == [{"provider": "TogoVar", "error": "TogoVar query failed"}]
+
+
+def test_independent_population_databases_are_aggregated_with_failure_isolation():
+    observation = {
+        "category": "population", "variant_key": VARIANT.key,
+        "evidence_id": "https://other.example/evidence/1",
+        "source": "OtherFrequencyDB", "source_version": "2026.1",
+        "retrieved_at": "2026-09-17T00:00:00Z", "population": "global",
+        "AC": 1, "AN": 10000, "AF": "0.0001", "callable": True,
+        "quality_status": "PASS", "filters": [], "variant_flags": [],
+    }
+
+    class _Good:
+        name = "OtherFrequencyDB"
+
+        def get_frequency(self, variant):
+            return [observation]
+
+    class _Broken:
+        name = "UnavailableFrequencyDB"
+
+        def get_frequency(self, variant):
+            raise ValueError("service unavailable")
+
+    resolver = _resolver(_population=[_Good(), _Broken()])
+    resolved = ResolvedEvidence()
+    resolver._add_population(VARIANT, resolved)
+
+    assert resolved.records == [observation]
+    assert resolved.failures == [{
+        "provider": "UnavailableFrequencyDB", "error": "service unavailable",
+    }]
 
 
 def test_annotation_for_a_different_variant_is_rejected():
