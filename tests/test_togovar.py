@@ -20,6 +20,20 @@ class Client:
         }
 
 
+class LocationClient:
+    def __init__(self, bodies):
+        self.bodies = bodies
+        self.locations = []
+
+    def fetch(self, url, **kwargs):
+        position = kwargs["data"]["query"]["location"]["position"]
+        self.locations.append(position)
+        return {
+            "body": self.bodies[position],
+            "retrieved_at": "2026-09-17T00:00:00Z",
+        }
+
+
 class TogoVarProviderTests(unittest.TestCase):
     def test_curator_reference_uses_togovar_coordinate_url(self):
         variant = VariantRecord(
@@ -131,6 +145,27 @@ class TogoVarProviderTests(unittest.TestCase):
             "https://grch38.togovar.org/variant/1-68431328-T-C#frequency:gnomad_exomes",
         )
         self.assertEqual(result[0]["AF"], str(Decimal(14) / Decimal(1461704)))
+
+    def test_anchored_vcf_deletion_matches_togovar_deleted_base_representation(self):
+        client = LocationClient({
+            100: {"data": []},
+            101: {"data": [{
+                "chromosome": "1", "position": 101, "reference": "A",
+                "frequencies": [{
+                    "source": "gnomad_exomes", "ac": 2, "an": 10000, "af": 0.0002,
+                    "filter": ["PASS"],
+                }],
+            }]},
+        })
+        result = TogoVarProvider(client, frequency_sources=["gnomad"]).get_frequency(
+            Variant("GRCh38", "1", 100, "TA", "T")
+        )
+        self.assertEqual(client.locations, [100, 101])
+        self.assertEqual(result[0]["variant_key"], "GRCh38:1:100:TA:T")
+        self.assertEqual(
+            result[0]["evidence_id"],
+            "https://grch38.togovar.org/variant/1-100-TA-T#frequency:gnomad_exomes",
+        )
 
     def test_non_pass_frequency_is_retained_but_marked_filtered(self):
         body = {"data": [{

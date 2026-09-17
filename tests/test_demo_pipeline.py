@@ -180,9 +180,12 @@ class DemoPipelineTests(unittest.TestCase):
                             for item in line["hasEvidenceItems"]))
 
         # case2-var2 is not returned by gnomAD. A missing variant response has no AN or
-        # callability evidence, so it must not be silently converted to AF=0.
-        self.assertEqual(by_id["case2:25:1"]["status"], "unknown")
-        self.assertIn("population", by_id["case2:25:1"]["missing_inputs"])
+        # callability evidence, so it must not be silently converted to a confirmed AF=0 -
+        # but (2026-09-17 policy change) PM2 now scores that total absence as a flagged
+        # supporting-strength prediction rather than withholding a call outright.
+        self.assertEqual(by_id["case2:25:1"]["status"], "met")
+        self.assertEqual(by_id["case2:25:1"]["evidence_outcome"], "PM2_supporting")
+        self.assertTrue(by_id["case2:25:1"]["review_points"])
 
 
 if __name__ == "__main__":

@@ -12,7 +12,25 @@ from acmg_pipeline.automated_core.interface import criterion_input
 from acmg_pipeline.automated_core.models import Variant
 from acmg_pipeline.criteria.common import annotation_context, result as _base_result, reviewed_or_automated
 from acmg_pipeline.clinical_note import ClinicalNoteExtraction
+from acmg_pipeline.providers.initiation import IC01_METHOD as INITIATION_IC01_METHOD
+from acmg_pipeline.providers.protein_region import UNIPROT_METHOD
+from acmg_pipeline.providers.splice_default import METHOD as SPLICE_DEFAULT_METHOD
 from acmg_pipeline.vcf_record import VariantRecord
+
+
+def _region_relevance_review(region):
+    """The "this is a flagged prediction, not a curator review" caveat for
+    NF04/NF06, only when protein_region.py's UniProt-derived first pass (not a
+    curator) is what actually answered critical_region_disrupted/
+    region_biologically_relevant - see that module's own docstring.
+    """
+    if not region or region.get("region_relevance_method") != UNIPROT_METHOD:
+        return []
+    return [
+        "NF04/NF06 (critical/biologically relevant region) answered from UniProt feature "
+        f"overlap ({region.get('region_relevance_source_version')}), not a curator's own "
+        "review - confirm before this MET is used in a classification."
+    ]
 
 
 TRUNCATING = {"stop_gained": "STOP_GAINED", "frameshift_variant": "FRAMESHIFT"}
@@ -151,7 +169,7 @@ def _finish(input_data, state, status, summary, *, strength=None, missing=(), re
     return result(
         "PVS1", input_data, status, summary, strength=strength,
         evidence=_deduplicate([*state["evidence"], *extra_evidence]), missing=unresolved,
-        review=list(review),
+        review=list(dict.fromkeys([*state.get("pending_review", []), *review])),
         provenance={
             "assessment_scope": assessment_scope,
             "condition_assessment": condition_assessment,
@@ -217,8 +235,11 @@ def _region_path(input_data, services, annotation, state):
         "NF04", "critical_functional_region", critical_result,
         critical, [region] if region else []))
     if critical is True:
-        return _finish(input_data, state, CriterionStatus.MET,
-                       "LoF disrupts a reviewed critical functional region", strength="strong")
+        summary = ("LoF disrupts a UniProt-annotated critical functional region"
+                   if region.get("region_relevance_method") == UNIPROT_METHOD
+                   else "LoF disrupts a reviewed critical functional region")
+        return _finish(input_data, state, CriterionStatus.MET, summary, strength="strong",
+                       review=_region_relevance_review(region))
 
     population, pop_issue = _select_context_record(
         "population_lof", input_data, services, annotation["transcript"])
@@ -275,7 +296,8 @@ def _region_path(input_data, services, annotation, state):
         note=f"Threshold is > {threshold}"))
     return _finish(input_data, state, CriterionStatus.MET,
                    "NMD-escaping LoF affects a biologically relevant protein region",
-                   strength=strength, provenance={"protein_loss_fraction": fraction})
+                   strength=strength, review=_region_relevance_review(region),
+                   provenance={"protein_loss_fraction": fraction})
 
 
 def _truncating_path(input_data, services, annotation, state):
@@ -334,6 +356,12 @@ def _splice_path(input_data, services, annotation, state, rna):
                 "expected_splice_consequence")
         source = "clingen_pvs1_2018"
     state["evidence"].append(assessment)
+    if assessment.get("method") == SPLICE_DEFAULT_METHOD:
+        state["pending_review"].append(
+            "SP01/SP02 (expected splice consequence/reading frame) answered from a default "
+            "policy for canonical splice donor/acceptor variants, not a curator's own review "
+            "or a variant-specific RNA/sequence finding - confirm before this result is used "
+            "in a classification.")
     rescue = assessment.get("alternative_rescue")
     if rescue is True:
         state["trace"].append(_node(
@@ -385,6 +413,13 @@ def _start_loss_path(input_data, services, annotation, state):
             input_data, state, "initiation_assessment", assessment, "IC01",
             "intact_alternative_transcript")
     state["evidence"].append(assessment)
+    if assessment.get("alternative_transcript_method") == INITIATION_IC01_METHOD:
+        state["pending_review"].append(
+            "IC01 (intact alternative transcript) answered from an Ensembl-derived "
+            "prediction (does another protein_coding transcript's start codon sit at a "
+            "different genomic position), not a curator's own review, and not validated "
+            "against a known real case - confirm before this result is used in a "
+            "classification.")
     alternative = assessment.get("intact_alternative_transcript")
     if alternative is True:
         state["trace"].append(_node(
@@ -440,6 +475,11 @@ def _evaluate_input(input_data, services, config):
         "rules_used": [],
         "ruleset": None,
         "policy": {},
+        # Caveats raised partway through the tree (e.g. "SP01 answered from a default
+        # policy, not a curator") that must survive into whichever _finish() call
+        # actually returns, even several path functions later - see
+        # _region_relevance_review()'s and the splice-default caveat's own call sites.
+        "pending_review": [],
     }
 
     early, annotation = annotation_context("PVS1", input_data, services)
