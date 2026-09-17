@@ -158,15 +158,20 @@ def _resolve_mechanism(input_data, services, annotation, context):
         scope = "GENE_LEVEL"
     if not selected:
         return None, [], "missing"
-    values = {item.get("lof_mechanism_established") for item in selected}
+    # Source precedence: a reviewed assessment outranks a derived signal, so a derived record
+    # that disagrees with one is superseded by it rather than in conflict with it. Both stay
+    # in the evidence, because a curator should see that the two disagreed and on what.
+    reviewed = [item for item in selected if item.get("assessment_method") != "automated"]
+    deciding = reviewed or selected
+    values = {item.get("lof_mechanism_established") for item in deciding}
     if len(values) > 1:
         return None, selected, "conflict"
     context["mechanism_scope"] = scope
     context["condition_specific"] = scope == "CONDITION_SPECIFIC"
     context["disease_match"] = "EXACT" if scope == "CONDITION_SPECIFIC" else "UNKNOWN"
-    context["moi_match"] = ("MATCHED" if any(item.get("inheritance") for item in selected)
+    context["moi_match"] = ("MATCHED" if any(item.get("inheritance") for item in deciding)
                             else "NOT_SCOPED")
-    return selected[0], selected, None
+    return deciding[0], selected, None
 
 
 def _deduplicate(items):

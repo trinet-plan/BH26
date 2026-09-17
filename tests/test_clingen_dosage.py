@@ -101,11 +101,22 @@ class ClinGenDosageTests(unittest.TestCase):
             self.assertTrue(record[field], field)
         self.assertTrue(record["evidence_id"].startswith("urn:sha256:"))
 
-    def test_the_disease_id_is_provenance_not_a_condition(self):
-        """A `condition` would make _resolve_mechanism() read this as condition-specific."""
+    def test_the_curated_disease_scopes_the_record(self):
+        """ClinGen curates haploinsufficiency against a named disease, so the record says
+        which one. Scope and weight are separate: this stays an automated assessment."""
         record = self.mechanism([row("MYBPC3", "3", disease="MONDO:0005045")], "MYBPC3")[0]
+        self.assertEqual(record["condition"], "MONDO:0005045")
         self.assertEqual(record["haploinsufficiency_disease_id"], "MONDO:0005045")
+        self.assertEqual(record["assessment_method"], "automated")
+        self.assertNotIn("curator", record)
+
+    def test_a_row_naming_no_disease_stays_unscoped(self):
+        """The score still says something about the gene, so the record is still emitted -
+        it simply cannot settle a mechanism for a disease the list does not name."""
+        record = self.mechanism([row("MYBPC3", "3")], "MYBPC3")[0]
         self.assertNotIn("condition", record)
+        self.assertIsNone(record["haploinsufficiency_disease_id"])
+        self.assertIs(record["lof_mechanism_established"], True)
 
     def test_two_variants_in_one_gene_get_distinct_evidence_ids(self):
         """automated_cli deduplicates evidence by evidence_id, so a gene-only id collapsed
