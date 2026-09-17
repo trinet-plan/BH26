@@ -19,6 +19,9 @@ from acmg_pipeline.providers.clinvar import (
 from acmg_pipeline.providers.ensembl import EnsemblIdentityProvider
 from acmg_pipeline.providers.gnomad import GnomadProvider
 from acmg_pipeline.providers.mane import METHOD as MANE_METHOD, ManeTranscriptProvider
+from acmg_pipeline.providers.initiation import (
+    METHOD as INITIATION_METHOD, START_LOST, InitiationProvider,
+)
 from acmg_pipeline.providers.protein_region import (
     METHOD as REGION_METHOD, ProteinRegionProvider,
 )
@@ -463,6 +466,26 @@ def main(argv=None):
                         "method": REGION_METHOD,
                         "evidence": len(region_records), "errors": region_errors,
                         "use_restriction": "PVS1_PROTEIN_LOSS_MEASUREMENT_ONLY",
+                    })
+                    # PVS1's IC02 gate. IC01 and IC03 stay unanswered - see
+                    # providers/initiation.py.
+                    initiation = InitiationProvider(external_client, nmd.release)
+                    init_records, init_errors = [], []
+                    for annotation in annotations:
+                        if START_LOST not in (annotation.get("consequences") or []):
+                            continue
+                        try:
+                            init_records.extend(initiation.get_initiation_assessment(
+                                variants[annotation["variant_key"]], annotation.get("gene"),
+                                annotation.get("transcript"), annotation.get("hgvsc")))
+                        except (FetchError, ValueError) as exc:
+                            init_errors.append(f"{annotation.get('hgvsc')}: {exc}")
+                    evidence.extend(init_records)
+                    external_manifest.append({
+                        "provider": initiation.name, "provider_version": initiation.release,
+                        "method": INITIATION_METHOD,
+                        "evidence": len(init_records), "errors": init_errors,
+                        "use_restriction": "PVS1_DOWNSTREAM_START_ONLY",
                     })
             args.output_dir.mkdir(parents=True, exist_ok=False)
             output = args.output_dir / "audit.json"

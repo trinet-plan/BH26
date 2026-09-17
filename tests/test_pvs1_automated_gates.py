@@ -214,6 +214,57 @@ class Pvs1AutomatedGateTests(unittest.TestCase):
         result = self.evaluate(self.dosage(), self.mane(exon="3/3"), self.nmd("3/3"), curated)
         self.assertEqual(result.strength, "strong")
 
+    def initiation(self, cds=None):
+        """The IC02 answer, with IC01 and IC03 left unset as the provider leaves them."""
+        from tests.test_initiation import CDS_WITH_RESTART, FakeClient as InitClient
+        from tests.test_initiation import consequence as start_lost_consequence
+        from acmg_pipeline.providers.initiation import InitiationProvider
+        client = InitClient([start_lost_consequence(gene_symbol=GENE,
+                                                    mane_select=TRANSCRIPT)],
+                            cds or CDS_WITH_RESTART)
+        return InitiationProvider(client, "116").get_initiation_assessment(
+            self.variant, GENE, TRANSCRIPT, HGVSC)
+
+    def curated_initiation(self, **values):
+        """The judgments IC01 and IC03 need, as a curator would supply them."""
+        return [{
+            "category": "initiation_assessment", "variant_key": self.variant.key,
+            "evidence_id": f"curated:initiation:{self.variant.key}",
+            "source": "curator", "source_version": "1", "retrieved_at": "2026-09-17",
+            "quality_status": "PASS", "curator": "test", "reviewed_at": "2026-09-17",
+            "transcript": TRANSCRIPT, "intact_alternative_transcript": False,
+            "downstream_in_frame_start": True, **values,
+        }]
+
+    def test_the_downstream_start_alone_still_stops_at_the_curator_judgment(self):
+        """IC01 is read first, so answering IC02 does not advance the path by itself."""
+        result = self.evaluate(self.dosage(), self.mane(exon="1/2"), self.initiation(),
+                               consequence_term="start_lost")
+        nodes = self.nodes(result)
+        self.assertEqual(nodes["V01"], "PASS")
+        self.assertEqual(nodes["IC00"], "PASS")
+        self.assertEqual(nodes["IC01"], "UNKNOWN")
+        self.assertIn("intact_alternative_transcript", result.missing_inputs)
+
+    def test_an_intact_alternative_transcript_makes_pvs1_inapplicable(self):
+        result = self.evaluate(
+            self.dosage(), self.mane(exon="1/2"),
+            self.curated_initiation(intact_alternative_transcript=True),
+            consequence_term="start_lost")
+        self.assertEqual(self.nodes(result)["IC01"], "NOT_APPLICABLE")
+        self.assertEqual(result.status, CriterionStatus.UNKNOWN)
+
+    def test_upstream_pathogenic_evidence_decides_moderate_against_supporting(self):
+        for pathogenic, strength in ((True, "moderate"), (False, "supporting")):
+            with self.subTest(upstream_pathogenic_evidence=pathogenic):
+                result = self.evaluate(
+                    self.dosage(), self.mane(exon="1/2"),
+                    self.curated_initiation(upstream_pathogenic_evidence=pathogenic),
+                    consequence_term="start_lost")
+                self.assertEqual(result.status, CriterionStatus.MET)
+                self.assertEqual(result.strength, strength)
+                self.assertEqual(self.nodes(result)["IC03"], "PASS")
+
     def test_automated_records_are_marked_as_such_in_the_evidence(self):
         """A curator reading the result has to see which gates were answered by derivation."""
         result = self.evaluate(self.dosage(), self.mane(exon="2/34"), self.nmd())
