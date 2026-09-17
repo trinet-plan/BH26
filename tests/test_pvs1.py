@@ -142,7 +142,12 @@ class PVS1DecisionTreeTests(unittest.TestCase):
         other = self.mechanism(True, condition="MONDO:2")
         value = self.evaluate_result(self.annotation(), other, input_data=input_data)
         self.assertEqual(value.status, CriterionStatus.UNKNOWN)
-        self.assertIn("loss-of-function disease mechanism", value.unresolved_requirements)
+        self.assertIsNone(value.strength)
+        # Not borrowed - but not discarded either: the curation is named and handed over.
+        self.assertIn("disease-specific loss-of-function mechanism",
+                      value.unresolved_requirements)
+        self.assertEqual(value.evaluation_context["applicability"], "MANUAL_REVIEW")
+        self.assertIn("MONDO:2", " ".join(value.review_points))
 
         unknown = self.mechanism(None, condition="MONDO:1")
         value = self.evaluate_result(self.annotation(), unknown, input_data=input_data)
@@ -311,14 +316,38 @@ class PVS1DecisionTreeTests(unittest.TestCase):
         self.assertEqual(value.status, CriterionStatus.MET)
         self.assertEqual(value.evaluation_context["disease_match"], "EXACT")
 
-    def test_unrelated_diseases_stay_unrelated(self):
+    def test_unrelated_diseases_stay_unrelated_and_reach_a_curator(self):
+        """No relation is invented, and the curation on file is still named: an expert panel
+        has said what loss of function does in this gene, and whether that carries to another
+        disease entity is a question for a person."""
         input_data = {**self.input, "condition": "MONDO:0007268",
                       "condition_ancestors": ["MONDO:0005045"]}
         items = [self.annotation(), self.transcript(), self.nmd(),
                  self.mechanism(True, condition="MONDO:0009861")]
         value = self.evaluate_result(*items, input_data=input_data)
         self.assertEqual(value.evaluation_context["disease_match"], "UNKNOWN")
+        self.assertEqual(value.evaluation_context["applicability"], "MANUAL_REVIEW")
+        self.assertEqual(
+            {node["node_id"]: node["value"] for node in value.decision_trace},
+            {"C01": "PROVIDED", "D01": "OTHER_DISEASE_CURATED"})
+        self.assertIn("MONDO:0009861", {item.get("condition") for item in value.evidence})
+        self.assertEqual(value.provenance["preliminary_assessment"]["candidate_strength"],
+                         "very_strong")
+
+    def test_a_gene_with_no_curation_at_all_is_not_a_review(self):
+        """Nothing on file is a different situation from something on file that may not
+        apply, and a curator can only act on the second."""
+        input_data = {**self.input, "condition": "MONDO:0007268"}
+        items = [self.annotation(), self.transcript(), self.nmd()]
+        value = self.evaluate_result(*items, input_data=input_data)
         self.assertEqual(value.evaluation_context["applicability"], "NOT_EVALUATED")
+        self.assertEqual(value.review_points, [])
+
+    def test_an_unscoped_record_alone_is_still_not_a_review(self):
+        value = self.evaluate_result(*self.gene_level_evidence(),
+                                     input_data={**self.input, "condition": "MONDO:0007268"})
+        self.assertEqual(value.evaluation_context["applicability"], "NOT_EVALUATED")
+        self.assertEqual(value.review_points, [])
 
     def test_an_unqualified_x_linked_mode_is_compatible_with_either_qualification(self):
         """A source that records "X-linked" without saying which zygosity is affected has

@@ -211,6 +211,14 @@ def _resolve_mechanism(input_data, services, annotation, context, precedence=())
             if related:
                 context["disease_match"] = "PARENT_CHILD"
                 return None, related, "parent_child"
+            # The gene is curated, but for diseases none of the match levels tie to this one.
+            # That is not the same as having nothing: an expert panel has said what loss of
+            # function does in this gene, and whether that carries to the disease being
+            # assessed is a question about disease entities, which is a curator's to answer.
+            # Both the scoped and unscoped records go with it, so the answer is decidable
+            # from what the result carries.
+            if any(value for _, (value, _) in considered):
+                return None, [item for item, _ in considered], "other_disease"
         selected = exact or included or [item for item in applicable
                                          if not item.get("condition")]
         scope = "CONDITION_SPECIFIC" if (exact or included) else "GENE_LEVEL"
@@ -726,6 +734,20 @@ def _evaluate_input(input_data, services, config):
             f"whose expert panel explicitly excluded {input_data['condition']!r} from it",
             "disease-specific loss-of-function mechanism",
             evidence=mechanism_records)
+    if mechanism_issue == "other_disease":
+        diseases = sorted({str(item["condition"]) for item in mechanism_records
+                           if item.get("condition")})
+        return _not_evaluated(
+            input_data, services, annotation, variant_type, state, confirmed_rna,
+            _node("D01", "disease_match", "MANUAL_REVIEW", "OTHER_DISEASE_CURATED",
+                  mechanism_records),
+            f"Loss-of-function mechanism evidence exists for this gene under "
+            f"{', '.join(diseases)}, and none of those is {input_data['condition']!r} or "
+            f"relates to it in MONDO",
+            "disease-specific loss-of-function mechanism",
+            evidence=mechanism_records,
+            review=[f"Decide whether the mechanism curated for {', '.join(diseases)} "
+                    f"applies to {input_data['condition']!r}"])
     if mechanism_issue == "parent_child":
         return _not_evaluated(
             input_data, services, annotation, variant_type, state, confirmed_rna,
