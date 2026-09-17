@@ -18,13 +18,21 @@ CONFLICTS = (
 )
 
 
-def make_services(evidence, population_providers=None):
+def make_services(evidence, population_providers=None, *, failures=None):
+    """`failures` is what the resolver could not retrieve, and why.
+
+    A record that was never fetched and a record that came back empty look identical once
+    only the records are passed on, so a criterion left without evidence could say nothing
+    beyond "unavailable". Carrying the resolver's failures alongside them lets it say which.
+    """
     observations = [item for item in evidence if item.get("category") == "population"]
     names = population_providers if population_providers is not None else sorted({
         item.get("source", "unknown") for item in observations})
     providers = [LocalPopulationProvider(name, [o for o in observations if o.get("source") == name])
                  for name in names]
-    return SimpleNamespace(population=PopulationService(providers), evidence=EvidenceService(evidence))
+    return SimpleNamespace(population=PopulationService(providers),
+                           evidence=EvidenceService(evidence),
+                           failures=list(failures or []))
 
 
 def evaluate_record(variant_record, clinical_note, services, config, criteria=CRITERIA):

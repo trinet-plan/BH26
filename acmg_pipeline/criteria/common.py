@@ -72,11 +72,30 @@ def get_evidence(category, input_data, services):
     return services.evidence.get(category, Variant(**input_data["variant"]), input_data)
 
 
+def retrieval_failures(services, provider=None):
+    """What the resolver could not retrieve, so a criterion can say why it has nothing.
+
+    Without this, a provider that errored and a provider that legitimately returned nothing
+    are indistinguishable downstream, and the curator is told only that evidence is absent -
+    which is the one thing they could already see.
+    """
+    failures = getattr(services, "failures", None) or []
+    if provider is None:
+        return list(failures)
+    return [item for item in failures if item.get("provider") == provider]
+
+
 def annotation_context(code, input_data, services):
     annotations = get_evidence("annotation", input_data, services)
     if not annotations:
-        return result(code, input_data, CriterionStatus.UNKNOWN, "Transcript annotation unavailable",
-                      missing=["annotation", "transcript"]), None
+        failures = retrieval_failures(services)
+        detail = "; ".join(f"{item.get('provider')}: {item.get('error')}" for item in failures)
+        return result(code, input_data, CriterionStatus.UNKNOWN,
+                      f"Transcript annotation unavailable - {detail}" if detail
+                      else "Transcript annotation unavailable; no provider reported an error, "
+                           "so the annotation source returned nothing for this variant",
+                      missing=["annotation", "transcript"],
+                      provenance={"provider_failures": failures}), None
     if len(annotations) != 1:
         return result(code, input_data, CriterionStatus.UNKNOWN, "Multiple transcript annotations require resolution",
                       evidence=annotations, review=["Select disease-relevant transcript"]), None

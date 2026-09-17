@@ -254,7 +254,15 @@ class ProviderEvidenceResolver:
         self._add_population(variant, resolved)
         self._add_lof_mechanism(annotation, variant, resolved)
 
-        suite = self._suite()
+        try:
+            suite = self._suite()
+        except PROVIDER_ERRORS as exc:
+            # Building the suite asks Ensembl which release is current, and that lookup can
+            # fail on its own. Outside a guard it escaped resolve() entirely, taking the
+            # population evidence already gathered with it and surfacing to the API as an
+            # ExceptionGroup with the cause buried. It is a provider failure like any other.
+            resolved.failures.append({"provider": "Ensembl", "error": str(exc)})
+            return resolved
         transcript = annotation.get("transcript") if annotation else None
         resolved.absorb(DbnsfpProvider.name, suite.predictions(variant, transcript))
         outcome, _identity_evidence = suite.clinvar_record(

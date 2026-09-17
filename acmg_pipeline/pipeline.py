@@ -882,6 +882,7 @@ async def evaluate_variant_evidence_lines(
     services = make_services(
         resolved.records,
         automated_config.get("population_providers"),
+        failures=resolved.failures,
     )
     automated_results = evaluate_automated_record(
         variant,
@@ -1013,7 +1014,8 @@ async def evaluate_selected_criteria(
             population_sources=automated_config.get("population_sources"),
         )
         resolved = resolver.resolve(_identity_from_info(variant), _automated_variant(variant))
-        services = make_services(resolved.records, automated_config.get("population_providers"))
+        services = make_services(resolved.records, automated_config.get("population_providers"),
+                                 failures=resolved.failures)
         automated_results = evaluate_automated_record(
             variant, clinical_note, services, automated_config, criteria=automated_subset,
         )
