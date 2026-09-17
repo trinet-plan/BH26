@@ -42,6 +42,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from acmg_pipeline.api_input import ApiCaseInput
 from acmg_pipeline.fulltext_cache import DiskBackedFullTextCache
 from acmg_pipeline.gate import ERepoClient
+from acmg_pipeline.llm_cache import DiskBackedLLMCache
 import acmg_pipeline.pipeline as pl
 
 _VCF_HEADER = """##fileformat=VCFv4.2
@@ -78,6 +79,7 @@ _SCENARIOS = {
 
 async def main() -> None:
     full_text_cache = DiskBackedFullTextCache("cache/pubmed_fulltext")
+    llm_cache = DiskBackedLLMCache("cache/llm_judgments")
 
     async with AsyncExitStack() as stack:
         mcp = await pl.connect_pubmed(stack)
@@ -96,7 +98,7 @@ async def main() -> None:
                     f"vcf={len(case_input.vcf)} chars, clinical_note={len(case_input.clinical_note)} chars")
 
             await pl.classify_variant_from_structured_input(
-                case_input, mcp, erepo_client, full_text_cache=full_text_cache,
+                case_input, mcp, erepo_client, full_text_cache=full_text_cache, llm_cache=llm_cache,
             )
 
 
