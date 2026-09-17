@@ -16,7 +16,10 @@
   "BS1": {
     "minimum_an": 2000,
     "policy_source": "BH26 demo population evidence QC policy",
-    "policy_version": "2026-09-15"
+    "policy_version": "2026-09-15",
+    "default_max_credible_af": 0.01,
+    "default_source": "BH26 provisional default BS1 threshold (PLACEHOLDER - not a reviewed clinical value)",
+    "default_source_version": "2026-09-17-provisional"
   },
   "PVS1": {
     "ruleset": {
