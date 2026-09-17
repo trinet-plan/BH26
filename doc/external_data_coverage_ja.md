@@ -2,6 +2,28 @@
 
 この文書は、criterion の**判定実装の有無**と、判定に必要な**外部データを取得できるか**を分けて記録する。`UNKNOWN` は「陰性」ではなく、必要な根拠を安全に取得・確認できなかった状態である。
 
+## 設計思想
+
+**機械的に判断できないところは、その理由と判断材料を書いて人に渡す。**
+
+推測で埋めない。既定値で黙って通さない。「データが無い」を「陰性」に読み替えない。
+出力には、どこで止まったか・何が足りないか・何を仮定したかが残り、キュレーターがそれを
+見て判断できる状態にする。
+
+この原則が具体的にどう現れているか:
+
+- `UNKNOWN` は陰性ではなく「決められなかった」。`missing_inputs` に何が足りないかを、
+  `review_points` に何を確認すべきかを列挙する
+- 自動導出した値は `assessment_method: "automated"` と `method` / `policy_version` を
+  名乗り、キュレート済み判断と取り違えられないようにする（[1-4](#1-4-pvs1のゲートを公開データで開けた範囲と開けなかった理由)のPVS1ゲート、PP3/BP4の較正、PM1のhotspot）
+- 仮定を置いた場合は仮定したことを出力に残す（BS1の統計量・比較演算子、
+  `unknown_version_policy` による予測器バージョン不明の受け入れ）
+- 判断が臨床的なものは、暫定値を入れる場合も `PLACEHOLDER` と明記する
+  （`BS1.default_max_credible_af`、`PM2.max_af`）
+
+以下の「未対応事項」は、この原則に照らして**まだ人に渡せていない**か、**人に渡す形は
+できているが判断そのものが未了**かを区別して記録する。
+
 ## 現在の外部データ経路
 
 `acmg_pipeline.services.resolve.ProviderEvidenceResolver` が、VCFの座標を起点に次のプロバイダから normalised evidence を組み立てる。VCF INFO は監査用入力であり、版・assembly・transcript・取得元が明示された根拠へ自動変換しない。
@@ -115,6 +137,68 @@ coverageを返さない。`usable_observations()` は `AC == 0` の観測に `ca
 
 1は3件、3は2件の不一致に対応する。1は暫定値を設定済みで、キュレーター一致率は
 8/15 から 11/15 になった。残る2件は閾値では解消せず、3が必要。
+
+### 1-4. PVS1のゲートを公開データで開けた範囲と、開けなかった理由
+
+PVS1の決定木（545行）は、実データに対して長く動いていなかった。ERepoで
+`PVS1=met` とされた変異でも全件が `G01`（LoF機序）で停止し、変異型を読む `V01` にすら
+到達していなかった。必要な値がすべてキュレーター判断で、まだ存在しなかったため。
+
+公開データで埋められるゲートを埋めた結果、実変異3件が終端まで到達し、ClinGen専門家パネル
+の判断・強度と一致した（`RUNX1 c.601C>T`、`MYBPC3 c.278delA`、`MYBPC3 c.836del` =
+`MET / very_strong`）。
+
+| ゲート | 埋めた方法 | 種別 |
+|---|---|---|
+| `G01`/`G02` LoF機序 | ClinGen Dosage の haploinsufficiency スコア（3 → 確立） | 公開データの参照 |
+| `NF01` transcript関連性 | MANE Select 一致 | 公開データの参照 |
+| `NF02` NMD予測 | ClinGen PVS1 2018 の規則 + VEP エクソン番号 | 規則の適用 |
+| `NF03` exon関連性 | `NF01` の帰結（関連transcript上で番号が付く = そのtranscriptに存在する） | 論理的帰結 |
+
+いずれも `assessment_method: "automated"` を名乗り、`method` と `policy_version` を持つ。
+キュレート済みレコードがあればそちらが優先される。
+
+#### 機械的に決めない箇所（意図的に未解決のまま返す）
+
+| 状況 | 返り値 | 理由 |
+|---|---|---|
+| haploinsufficiency = 30（常染色体劣性） | レコードを出さない | 「ハプロ不全でない」であって「LoF機序でない」ではない。PAHは30だがPKU VCEPは `PAH c.806delT` にPVS1を適用している |
+| 評価対象transcriptがMANE Selectでない | レコードを出さない | キュレーションは正当に別transcriptを使う（TNNT2の実例、`test_data/resolve_erepo_transcripts.py`） |
+| PTCが最終2エクソン内 | レコードを出さない | 「最終前エクソンの末端50nt以内」の距離はエクソン番号に含まれない |
+| エクソン番号が取れない | `exon_relevance` を付けない | 番号が無いことは「エクソンが存在しない」を意味しない |
+
+#### `SP01`（スプライス経路）は自動化しない — 実測による判断
+
+`SP01` は `alternative_rescue` / `splice_outcome` / `reading_frame_disrupted` を要求する。
+このうち `splice_outcome` は「エクソンスキップが読み枠を壊すか」なので、エクソン長から
+計算できるように見える。AutoPVS1もこの計算を行う。
+
+**実測すると、この素朴な規則は手元の唯一の実スプライス症例で専門家判断と食い違う。**
+
+```
+MYBPC3 c.2905+1G>A   ClinGen判定: PVS1 very_strong
+  VEP:      intron 27/34  (ENST00000545968 = MANE NM_000256.3)
+  Ensembl:  exon 27 の長さ = 168 bp  ->  168 % 3 == 0  ->  IN_FRAME
+```
+
+素朴な規則なら `IN_FRAME` → `reading_frame_disrupted = False` → `_region_path` へ分岐し、
+`very_strong` にならない。スプライス供与部位の喪失は単純なエクソンスキップとは限らず、
+イントロン保持（多くはframeshift）や隠れスプライス部位の使用など複数の帰結があり、配列
+だけでは決まらない。ClinGenのスプライス仕様(2023)がRNA解析を重視するのはこのため。
+
+`alternative_rescue`（代替スプライシングがLoFを回避するか）はさらに導出元がない。組織
+特異的アイソフォームの知識を要するキュレーター判断で、`False` を既定にすればPVS1は進むが、
+それは過剰判定の方向であり、上表の保守的な選択と逆になる。
+
+**`G01`〜`NF03` は「既に決まっていることを引いてくる」だったが、`SP01` は「予測する」。**
+自動化するなら次のいずれかで、いずれも方針決定が要る（未決）:
+
+- SpliceAI の delta score を使う（取得済みだが `calibration_eligible: False`、モデル版不明）
+- RNA解析データを入力として受け取る（PVS1は `rna` 経路を実装済み: `lof_effect_confirmed`）
+- `alternative_rescue` の扱いを設定でポリシーとして明示する
+
+現状 `MYBPC3 c.2905+1G>A` は `SP01` で停止し、`missing: ['splice_assessment']` を返す。
+キュレーターには「何が足りないか」が出るので、判断の材料は渡せている。
 
 ### 2. 現在はstubとして残すcriterion
 
