@@ -148,6 +148,11 @@ class ClinicalNoteExtraction:
     proband: Proband = field(default_factory=Proband)
     family: Family = field(default_factory=Family)
     de_novo: DeNovo = field(default_factory=DeNovo)
+    # 自由文の診断名(例: "hypertrophic cardiomyopathy")。VA-Spec Statementの
+    # objectCondition(対象疾患)に使う - see z_tmp_va_spec_statement_decisions.md。
+    # コード体系(MedGen/OMIM等)への変換は行わず、この自由文をそのまま
+    # MappableConcept.name に載せる想定。
+    diagnosis: Optional[str] = None
 
     @staticmethod
     def from_json(data: dict) -> "ClinicalNoteExtraction":
@@ -155,6 +160,7 @@ class ClinicalNoteExtraction:
             proband=Proband.from_json(data.get("proband") or {}),
             family=Family.from_json(data.get("family") or {}),
             de_novo=DeNovo.from_json(data.get("de_novo") or {}),
+            diagnosis=data.get("diagnosis"),
         )
 
 

@@ -1,0 +1,812 @@
+answered synchronously (automated/stub criteria only)
+{
+  "PM2": {
+    "id": "evline:MYBPC3_c_1144C_T_PM2",
+    "type": "EvidenceLine",
+    "name": "PM2 assessment for GRCh38:11:47343571:G:A",
+    "description": "Observed AF exceeds configured rarity cutoff",
+    "extensions": [
+      {
+        "name": "bh26AssessmentDetails",
+        "value": {
+          "criterion": "PM2",
+          "status": "not_met",
+          "summary": "Observed AF exceeds configured rarity cutoff",
+          "evidenceItemIds": [
+            "https://gnomad.broadinstitute.org/variant/11-47343571-G-A?dataset=gnomad_r4#exome:global",
+            "https://gnomad.broadinstitute.org/variant/11-47343571-G-A?dataset=gnomad_r4#exome:remaining",
+            "https://gnomad.broadinstitute.org/variant/11-47343571-G-A?dataset=gnomad_r4#exome:amr",
+            "https://gnomad.broadinstitute.org/variant/11-47343571-G-A?dataset=gnomad_r4#exome:fin",
+            "https://gnomad.broadinstitute.org/variant/11-47343571-G-A?dataset=gnomad_r4#exome:mid",
+            "https://gnomad.broadinstitute.org/variant/11-47343571-G-A?dataset=gnomad_r4#exome:nfe",
+            "https://gnomad.broadinstitute.org/variant/11-47343571-G-A?dataset=gnomad_r4#exome:sas",
+            "https://gnomad.broadinstitute.org/variant/11-47343571-G-A?dataset=gnomad_r4#exome:asj",
+            "https://gnomad.broadinstitute.org/variant/11-47343571-G-A?dataset=gnomad_r4#exome:eas",
+            "https://gnomad.broadinstitute.org/variant/11-47343571-G-A?dataset=gnomad_r4#exome:afr",
+            "https://gnomad.broadinstitute.org/variant/11-47343571-G-A?dataset=gnomad_r4#genome:global",
+            "https://gnomad.broadinstitute.org/variant/11-47343571-G-A?dataset=gnomad_r4#genome:remaining",
+            "https://gnomad.broadinstitute.org/variant/11-47343571-G-A?dataset=gnomad_r4#genome:amr",
+            "https://gnomad.broadinstitute.org/variant/11-47343571-G-A?dataset=gnomad_r4#genome:fin",
+            "https://gnomad.broadinstitute.org/variant/11-47343571-G-A?dataset=gnomad_r4#genome:eas",
+            "https://gnomad.broadinstitute.org/variant/11-47343571-G-A?dataset=gnomad_r4#genome:sas",
+            "https://gnomad.broadinstitute.org/variant/11-47343571-G-A?dataset=gnomad_r4#genome:asj",
+            "https://gnomad.broadinstitute.org/variant/11-47343571-G-A?dataset=gnomad_r4#genome:afr",
+            "https://gnomad.broadinstitute.org/variant/11-47343571-G-A?dataset=gnomad_r4#genome:nfe"
+          ],
+          "provenance": {
+            "rule_version": "PM2-v1",
+            "policy_source": "BH26 demo population evidence QC policy",
+            "policy_version": "2026-09-15",
+            "rejected_observations": [
+              {
+                "evidence_id": "https://gnomad.broadinstitute.org/variant/11-47343571-G-A?dataset=gnomad_r4#genome:ami",
+                "reasons": [
+                  "INSUFFICIENT_AN"
+                ]
+              },
+              {
+                "evidence_id": "https://gnomad.broadinstitute.org/variant/11-47343571-G-A?dataset=gnomad_r4#genome:mid",
+                "reasons": [
+                  "INSUFFICIENT_AN"
+                ]
+              }
+            ],
+            "provider_failures": []
+          },
+          "direction": "none",
+          "evidenceOutcome": "PM2_not_met"
+        }
+      },
+      {
+        "name": "referenceLink",
+        "value": "https://gnomad.broadinstitute.org/variant/11-47343571-G-A?dataset=gnomad_r4"
+      }
+    ],
+    "specifiedBy": {
+      "type": "Method",
+      "name": "ACMG/AMP 2015 with ClinGen General Guidance",
+      "methodType": "PM2",
+      "reportedIn": {
+        "type": "Document",
+        "name": "Richards et al., 2015, Genet Med.",
+        "urls": [
+          "https://pubmed.ncbi.nlm.nih.gov/25741868/"
+        ],
+        "doi": "10.1038/gim.2015.30",
+        "pmid": "25741868"
+      }
+    },
+    "hasEvidenceItems": [
+      {
+        "id": "https://gnomad.broadinstitute.org/variant/11-47343571-G-A?dataset=gnomad_r4#exome:global",
+        "type": "CohortAlleleFrequencyStudyResult",
+        "name": "gnomAD exome:global allele frequency for GRCh38:11:47343571:G:A",
+        "focusAllele": "urn:bh26:variant:c6f7737a77997b5f18d631aa225a72abaee0a9f4837ecbb037bdb27688372786",
+        "focusAlleleFrequency": 0.0014212640277047168,
+        "focusAlleleCount": 2075,
+        "locusAlleleCount": 1459968,
+        "sourceDataSet": {
+          "id": "https://gnomad.broadinstitute.org/?dataset=gnomad_r4&version=4.1.1",
+          "type": "DataSet",
+          "name": "gnomAD v4.1.1",
+          "version": "4.1.1"
+        },
+        "cohort": {
+          "id": "urn:bh26:cohort:31ffa85cec6a26a96fb8a8a9cb29e2848578647b544021c4b364583b39d78549",
+          "type": "StudyGroup",
+          "name": "exome:global"
+        },
+        "specifiedBy": {
+          "type": "Method",
+          "name": "gnomAD browser allele frequency calculation",
+          "reportedIn": {
+            "type": "Document",
+            "name": "gnomAD browser help",
+            "urls": [
+              "https://gnomad.broadinstitute.org/help"
+            ]
+          }
+        },
+        "qualityMeasures": {
+          "qualityStatus": "PASS",
+          "callable": true,
+          "filters": [],
+          "variantFlags": [],
+          "retrievedAt": "2026-09-17T02:45:20.615481+00:00"
+        }
+      },
+      {
+        "id": "https://gnomad.broadinstitute.org/variant/11-47343571-G-A?dataset=gnomad_r4#exome:remaining",
+        "type": "CohortAlleleFrequencyStudyResult",
+        "name": "gnomAD exome:remaining allele frequency for GRCh38:11:47343571:G:A",
+        "focusAllele": "urn:bh26:variant:c6f7737a77997b5f18d631aa225a72abaee0a9f4837ecbb037bdb27688372786",
+        "focusAlleleFrequency": 0.0034343166207651725,
+        "focusAlleleCount": 207,
+        "locusAlleleCount": 60274,
+        "sourceDataSet": {
+          "id": "https://gnomad.broadinstitute.org/?dataset=gnomad_r4&version=4.1.1",
+          "type": "DataSet",
+          "name": "gnomAD v4.1.1",
+          "version": "4.1.1"
+        },
+        "cohort": {
+          "id": "urn:bh26:cohort:f24958af9379a5d4400c4ea5d424ea5f26607d1f39b10c1aa8e6966e6e97c7d3",
+          "type": "StudyGroup",
+          "name": "exome:remaining"
+        },
+        "specifiedBy": {
+          "type": "Method",
+          "name": "gnomAD browser allele frequency calculation",
+          "reportedIn": {
+            "type": "Document",
+            "name": "gnomAD browser help",
+            "urls": [
+              "https://gnomad.broadinstitute.org/help"
+            ]
+          }
+        },
+        "qualityMeasures": {
+          "qualityStatus": "PASS",
+          "callable": true,
+          "filters": [],
+          "variantFlags": [],
+          "retrievedAt": "2026-09-17T02:45:20.615481+00:00"
+        }
+      },
+      {
+        "id": "https://gnomad.broadinstitute.org/variant/11-47343571-G-A?dataset=gnomad_r4#exome:amr",
+        "type": "CohortAlleleFrequencyStudyResult",
+        "name": "gnomAD exome:amr allele frequency for GRCh38:11:47343571:G:A",
+        "focusAllele": "urn:bh26:variant:c6f7737a77997b5f18d631aa225a72abaee0a9f4837ecbb037bdb27688372786",
+        "focusAlleleFrequency": 0.0019507601237723664,
+        "focusAlleleCount": 87,
+        "locusAlleleCount": 44598,
+        "sourceDataSet": {
+          "id": "https://gnomad.broadinstitute.org/?dataset=gnomad_r4&version=4.1.1",
+          "type": "DataSet",
+          "name": "gnomAD v4.1.1",
+          "version": "4.1.1"
+        },
+        "cohort": {
+          "id": "urn:bh26:cohort:1abfbe9284c83a8892328606a66b4986285e1af08222c0254bff21a96c1d72aa",
+          "type": "StudyGroup",
+          "name": "exome:amr"
+        },
+        "specifiedBy": {
+          "type": "Method",
+          "name": "gnomAD browser allele frequency calculation",
+          "reportedIn": {
+            "type": "Document",
+            "name": "gnomAD browser help",
+            "urls": [
+              "https://gnomad.broadinstitute.org/help"
+            ]
+          }
+        },
+        "qualityMeasures": {
+          "qualityStatus": "PASS",
+          "callable": true,
+          "filters": [],
+          "variantFlags": [],
+          "retrievedAt": "2026-09-17T02:45:20.615481+00:00"
+        }
+      },
+      {
+        "id": "https://gnomad.broadinstitute.org/variant/11-47343571-G-A?dataset=gnomad_r4#exome:fin",
+        "type": "CohortAlleleFrequencyStudyResult",
+        "name": "gnomAD exome:fin allele frequency for GRCh38:11:47343571:G:A",
+        "focusAllele": "urn:bh26:variant:c6f7737a77997b5f18d631aa225a72abaee0a9f4837ecbb037bdb27688372786",
+        "focusAlleleFrequency": 1.881679963871745e-05,
+        "focusAlleleCount": 1,
+        "locusAlleleCount": 53144,
+        "sourceDataSet": {
+          "id": "https://gnomad.broadinstitute.org/?dataset=gnomad_r4&version=4.1.1",
+          "type": "DataSet",
+          "name": "gnomAD v4.1.1",
+          "version": "4.1.1"
+        },
+        "cohort": {
+          "id": "urn:bh26:cohort:497f035e0870c356069a4cba85f05520dcc78cf4890fe846b7e3d360506cd181",
+          "type": "StudyGroup",
+          "name": "exome:fin"
+        },
+        "specifiedBy": {
+          "type": "Method",
+          "name": "gnomAD browser allele frequency calculation",
+          "reportedIn": {
+            "type": "Document",
+            "name": "gnomAD browser help",
+            "urls": [
+              "https://gnomad.broadinstitute.org/help"
+            ]
+          }
+        },
+        "qualityMeasures": {
+          "qualityStatus": "PASS",
+          "callable": true,
+          "filters": [],
+          "variantFlags": [],
+          "retrievedAt": "2026-09-17T02:45:20.615481+00:00"
+        }
+      },
+      {
+        "id": "https://gnomad.broadinstitute.org/variant/11-47343571-G-A?dataset=gnomad_r4#exome:mid",
+        "type": "CohortAlleleFrequencyStudyResult",
+        "name": "gnomAD exome:mid allele frequency for GRCh38:11:47343571:G:A",
+        "focusAllele": "urn:bh26:variant:c6f7737a77997b5f18d631aa225a72abaee0a9f4837ecbb037bdb27688372786",
+        "focusAlleleFrequency": 0.0020855057351407717,
+        "focusAlleleCount": 12,
+        "locusAlleleCount": 5754,
+        "sourceDataSet": {
+          "id": "https://gnomad.broadinstitute.org/?dataset=gnomad_r4&version=4.1.1",
+          "type": "DataSet",
+          "name": "gnomAD v4.1.1",
+          "version": "4.1.1"
+        },
+        "cohort": {
+          "id": "urn:bh26:cohort:a675e438bc7a0a7e7b565d48e52bb0e0cf266c27fa76d0b88de6c90a5fcdd957",
+          "type": "StudyGroup",
+          "name": "exome:mid"
+        },
+        "specifiedBy": {
+          "type": "Method",
+          "name": "gnomAD browser allele frequency calculation",
+          "reportedIn": {
+            "type": "Document",
+            "name": "gnomAD browser help",
+            "urls": [
+              "https://gnomad.broadinstitute.org/help"
+            ]
+          }
+        },
+        "qualityMeasures": {
+          "qualityStatus": "PASS",
+          "callable": true,
+          "filters": [],
+          "variantFlags": [],
+          "retrievedAt": "2026-09-17T02:45:20.615481+00:00"
+        }
+      },
+      {
+        "id": "https://gnomad.broadinstitute.org/variant/11-47343571-G-A?dataset=gnomad_r4#exome:nfe",
+        "type": "CohortAlleleFrequencyStudyResult",
+        "name": "gnomAD exome:nfe allele frequency for GRCh38:11:47343571:G:A",
+        "focusAllele": "urn:bh26:variant:c6f7737a77997b5f18d631aa225a72abaee0a9f4837ecbb037bdb27688372786",
+        "focusAlleleFrequency": 8.279859242392879e-05,
+        "focusAlleleCount": 92,
+        "locusAlleleCount": 1111130,
+        "sourceDataSet": {
+          "id": "https://gnomad.broadinstitute.org/?dataset=gnomad_r4&version=4.1.1",
+          "type": "DataSet",
+          "name": "gnomAD v4.1.1",
+          "version": "4.1.1"
+        },
+        "cohort": {
+          "id": "urn:bh26:cohort:a3ce46c7329a4acbfbfdeb7f701252700573b7254874df6fbcce1cbaa187ef11",
+          "type": "StudyGroup",
+          "name": "exome:nfe"
+        },
+        "specifiedBy": {
+          "type": "Method",
+          "name": "gnomAD browser allele frequency calculation",
+          "reportedIn": {
+            "type": "Document",
+            "name": "gnomAD browser help",
+            "urls": [
+              "https://gnomad.broadinstitute.org/help"
+            ]
+          }
+        },
+        "qualityMeasures": {
+          "qualityStatus": "PASS",
+          "callable": true,
+          "filters": [],
+          "variantFlags": [],
+          "retrievedAt": "2026-09-17T02:45:20.615481+00:00"
+        }
+      },
+      {
+        "id": "https://gnomad.broadinstitute.org/variant/11-47343571-G-A?dataset=gnomad_r4#exome:sas",
+        "type": "CohortAlleleFrequencyStudyResult",
+        "name": "gnomAD exome:sas allele frequency for GRCh38:11:47343571:G:A",
+        "focusAllele": "urn:bh26:variant:c6f7737a77997b5f18d631aa225a72abaee0a9f4837ecbb037bdb27688372786",
+        "focusAlleleFrequency": 0.00023278009264647687,
+        "focusAlleleCount": 20,
+        "locusAlleleCount": 85918,
+        "sourceDataSet": {
+          "id": "https://gnomad.broadinstitute.org/?dataset=gnomad_r4&version=4.1.1",
+          "type": "DataSet",
+          "name": "gnomAD v4.1.1",
+          "version": "4.1.1"
+        },
+        "cohort": {
+          "id": "urn:bh26:cohort:6bc9c41acd71e24fe5842f05cdcc402577e27fbeaae87ac86ece6fe3de34dba0",
+          "type": "StudyGroup",
+          "name": "exome:sas"
+        },
+        "specifiedBy": {
+          "type": "Method",
+          "name": "gnomAD browser allele frequency calculation",
+          "reportedIn": {
+            "type": "Document",
+            "name": "gnomAD browser help",
+            "urls": [
+              "https://gnomad.broadinstitute.org/help"
+            ]
+          }
+        },
+        "qualityMeasures": {
+          "qualityStatus": "PASS",
+          "callable": true,
+          "filters": [],
+          "variantFlags": [],
+          "retrievedAt": "2026-09-17T02:45:20.615481+00:00"
+        }
+      },
+      {
+        "id": "https://gnomad.broadinstitute.org/variant/11-47343571-G-A?dataset=gnomad_r4#exome:asj",
+        "type": "CohortAlleleFrequencyStudyResult",
+        "name": "gnomAD exome:asj allele frequency for GRCh38:11:47343571:G:A",
+        "focusAllele": "urn:bh26:variant:c6f7737a77997b5f18d631aa225a72abaee0a9f4837ecbb037bdb27688372786",
+        "focusAlleleFrequency": 0.0,
+        "focusAlleleCount": 0,
+        "locusAlleleCount": 26070,
+        "sourceDataSet": {
+          "id": "https://gnomad.broadinstitute.org/?dataset=gnomad_r4&version=4.1.1",
+          "type": "DataSet",
+          "name": "gnomAD v4.1.1",
+          "version": "4.1.1"
+        },
+        "cohort": {
+          "id": "urn:bh26:cohort:63f004c9216d49eb57af2cdd00a39dbed3efd85533ce81b6e2d36a9ed872efb2",
+          "type": "StudyGroup",
+          "name": "exome:asj"
+        },
+        "specifiedBy": {
+          "type": "Method",
+          "name": "gnomAD browser allele frequency calculation",
+          "reportedIn": {
+            "type": "Document",
+            "name": "gnomAD browser help",
+            "urls": [
+              "https://gnomad.broadinstitute.org/help"
+            ]
+          }
+        },
+        "qualityMeasures": {
+          "qualityStatus": "PASS",
+          "callable": true,
+          "filters": [],
+          "variantFlags": [],
+          "retrievedAt": "2026-09-17T02:45:20.615481+00:00"
+        }
+      },
+      {
+        "id": "https://gnomad.broadinstitute.org/variant/11-47343571-G-A?dataset=gnomad_r4#exome:eas",
+        "type": "CohortAlleleFrequencyStudyResult",
+        "name": "gnomAD exome:eas allele frequency for GRCh38:11:47343571:G:A",
+        "focusAllele": "urn:bh26:variant:c6f7737a77997b5f18d631aa225a72abaee0a9f4837ecbb037bdb27688372786",
+        "focusAlleleFrequency": 0.0,
+        "focusAlleleCount": 0,
+        "locusAlleleCount": 39636,
+        "sourceDataSet": {
+          "id": "https://gnomad.broadinstitute.org/?dataset=gnomad_r4&version=4.1.1",
+          "type": "DataSet",
+          "name": "gnomAD v4.1.1",
+          "version": "4.1.1"
+        },
+        "cohort": {
+          "id": "urn:bh26:cohort:afad8d7ffdfbfc3e3ea25b8904bb54ca8fe65777f424f81881d034d9282162b1",
+          "type": "StudyGroup",
+          "name": "exome:eas"
+        },
+        "specifiedBy": {
+          "type": "Method",
+          "name": "gnomAD browser allele frequency calculation",
+          "reportedIn": {
+            "type": "Document",
+            "name": "gnomAD browser help",
+            "urls": [
+              "https://gnomad.broadinstitute.org/help"
+            ]
+          }
+        },
+        "qualityMeasures": {
+          "qualityStatus": "PASS",
+          "callable": true,
+          "filters": [],
+          "variantFlags": [],
+          "retrievedAt": "2026-09-17T02:45:20.615481+00:00"
+        }
+      },
+      {
+        "id": "https://gnomad.broadinstitute.org/variant/11-47343571-G-A?dataset=gnomad_r4#exome:afr",
+        "type": "CohortAlleleFrequencyStudyResult",
+        "name": "gnomAD exome:afr allele frequency for GRCh38:11:47343571:G:A",
+        "focusAllele": "urn:bh26:variant:c6f7737a77997b5f18d631aa225a72abaee0a9f4837ecbb037bdb27688372786",
+        "focusAlleleFrequency": 0.04951560818083961,
+        "focusAlleleCount": 1656,
+        "locusAlleleCount": 33444,
+        "sourceDataSet": {
+          "id": "https://gnomad.broadinstitute.org/?dataset=gnomad_r4&version=4.1.1",
+          "type": "DataSet",
+          "name": "gnomAD v4.1.1",
+          "version": "4.1.1"
+        },
+        "cohort": {
+          "id": "urn:bh26:cohort:21ea24355132ca65b81390de73939561a6451f9872d94736e533fa6985dd812f",
+          "type": "StudyGroup",
+          "name": "exome:afr"
+        },
+        "specifiedBy": {
+          "type": "Method",
+          "name": "gnomAD browser allele frequency calculation",
+          "reportedIn": {
+            "type": "Document",
+            "name": "gnomAD browser help",
+            "urls": [
+              "https://gnomad.broadinstitute.org/help"
+            ]
+          }
+        },
+        "qualityMeasures": {
+          "qualityStatus": "PASS",
+          "callable": true,
+          "filters": [],
+          "variantFlags": [],
+          "retrievedAt": "2026-09-17T02:45:20.615481+00:00"
+        }
+      },
+      {
+        "id": "https://gnomad.broadinstitute.org/variant/11-47343571-G-A?dataset=gnomad_r4#genome:global",
+        "type": "CohortAlleleFrequencyStudyResult",
+        "name": "gnomAD genome:global allele frequency for GRCh38:11:47343571:G:A",
+        "focusAllele": "urn:bh26:variant:c6f7737a77997b5f18d631aa225a72abaee0a9f4837ecbb037bdb27688372786",
+        "focusAlleleFrequency": 0.01300018439977872,
+        "focusAlleleCount": 1974,
+        "locusAlleleCount": 151844,
+        "sourceDataSet": {
+          "id": "https://gnomad.broadinstitute.org/?dataset=gnomad_r4&version=4.1.1",
+          "type": "DataSet",
+          "name": "gnomAD v4.1.1",
+          "version": "4.1.1"
+        },
+        "cohort": {
+          "id": "urn:bh26:cohort:f1d746ccb108d715ab2979683eafda6551cf95bbef41ebd36f00e03c1f77934a",
+          "type": "StudyGroup",
+          "name": "genome:global"
+        },
+        "specifiedBy": {
+          "type": "Method",
+          "name": "gnomAD browser allele frequency calculation",
+          "reportedIn": {
+            "type": "Document",
+            "name": "gnomAD browser help",
+            "urls": [
+              "https://gnomad.broadinstitute.org/help"
+            ]
+          }
+        },
+        "qualityMeasures": {
+          "qualityStatus": "PASS",
+          "callable": true,
+          "filters": [],
+          "variantFlags": [],
+          "retrievedAt": "2026-09-17T02:45:20.615481+00:00"
+        }
+      },
+      {
+        "id": "https://gnomad.broadinstitute.org/variant/11-47343571-G-A?dataset=gnomad_r4#genome:remaining",
+        "type": "CohortAlleleFrequencyStudyResult",
+        "name": "gnomAD genome:remaining allele frequency for GRCh38:11:47343571:G:A",
+        "focusAllele": "urn:bh26:variant:c6f7737a77997b5f18d631aa225a72abaee0a9f4837ecbb037bdb27688372786",
+        "focusAlleleFrequency": 0.012844909609895337,
+        "focusAlleleCount": 27,
+        "locusAlleleCount": 2102,
+        "sourceDataSet": {
+          "id": "https://gnomad.broadinstitute.org/?dataset=gnomad_r4&version=4.1.1",
+          "type": "DataSet",
+          "name": "gnomAD v4.1.1",
+          "version": "4.1.1"
+        },
+        "cohort": {
+          "id": "urn:bh26:cohort:13583e74ae6837116eb2966d016416dbaa9936e16019808408359f6d5f4da59f",
+          "type": "StudyGroup",
+          "name": "genome:remaining"
+        },
+        "specifiedBy": {
+          "type": "Method",
+          "name": "gnomAD browser allele frequency calculation",
+          "reportedIn": {
+            "type": "Document",
+            "name": "gnomAD browser help",
+            "urls": [
+              "https://gnomad.broadinstitute.org/help"
+            ]
+          }
+        },
+        "qualityMeasures": {
+          "qualityStatus": "PASS",
+          "callable": true,
+          "filters": [],
+          "variantFlags": [],
+          "retrievedAt": "2026-09-17T02:45:20.615481+00:00"
+        }
+      },
+      {
+        "id": "https://gnomad.broadinstitute.org/variant/11-47343571-G-A?dataset=gnomad_r4#genome:amr",
+        "type": "CohortAlleleFrequencyStudyResult",
+        "name": "gnomAD genome:amr allele frequency for GRCh38:11:47343571:G:A",
+        "focusAllele": "urn:bh26:variant:c6f7737a77997b5f18d631aa225a72abaee0a9f4837ecbb037bdb27688372786",
+        "focusAlleleFrequency": 0.004656348373557188,
+        "focusAlleleCount": 71,
+        "locusAlleleCount": 15248,
+        "sourceDataSet": {
+          "id": "https://gnomad.broadinstitute.org/?dataset=gnomad_r4&version=4.1.1",
+          "type": "DataSet",
+          "name": "gnomAD v4.1.1",
+          "version": "4.1.1"
+        },
+        "cohort": {
+          "id": "urn:bh26:cohort:cf028ca0f29fb103cf120011946411602607e595c4ba18841b3735383290b727",
+          "type": "StudyGroup",
+          "name": "genome:amr"
+        },
+        "specifiedBy": {
+          "type": "Method",
+          "name": "gnomAD browser allele frequency calculation",
+          "reportedIn": {
+            "type": "Document",
+            "name": "gnomAD browser help",
+            "urls": [
+              "https://gnomad.broadinstitute.org/help"
+            ]
+          }
+        },
+        "qualityMeasures": {
+          "qualityStatus": "PASS",
+          "callable": true,
+          "filters": [],
+          "variantFlags": [],
+          "retrievedAt": "2026-09-17T02:45:20.615481+00:00"
+        }
+      },
+      {
+        "id": "https://gnomad.broadinstitute.org/variant/11-47343571-G-A?dataset=gnomad_r4#genome:fin",
+        "type": "CohortAlleleFrequencyStudyResult",
+        "name": "gnomAD genome:fin allele frequency for GRCh38:11:47343571:G:A",
+        "focusAllele": "urn:bh26:variant:c6f7737a77997b5f18d631aa225a72abaee0a9f4837ecbb037bdb27688372786",
+        "focusAlleleFrequency": 0.0,
+        "focusAlleleCount": 0,
+        "locusAlleleCount": 10526,
+        "sourceDataSet": {
+          "id": "https://gnomad.broadinstitute.org/?dataset=gnomad_r4&version=4.1.1",
+          "type": "DataSet",
+          "name": "gnomAD v4.1.1",
+          "version": "4.1.1"
+        },
+        "cohort": {
+          "id": "urn:bh26:cohort:26cf85e578f89ef090489db14a3467d41ed185c6f73defc95166702f7b5a087f",
+          "type": "StudyGroup",
+          "name": "genome:fin"
+        },
+        "specifiedBy": {
+          "type": "Method",
+          "name": "gnomAD browser allele frequency calculation",
+          "reportedIn": {
+            "type": "Document",
+            "name": "gnomAD browser help",
+            "urls": [
+              "https://gnomad.broadinstitute.org/help"
+            ]
+          }
+        },
+        "qualityMeasures": {
+          "qualityStatus": "PASS",
+          "callable": true,
+          "filters": [],
+          "variantFlags": [],
+          "retrievedAt": "2026-09-17T02:45:20.615481+00:00"
+        }
+      },
+      {
+        "id": "https://gnomad.broadinstitute.org/variant/11-47343571-G-A?dataset=gnomad_r4#genome:eas",
+        "type": "CohortAlleleFrequencyStudyResult",
+        "name": "gnomAD genome:eas allele frequency for GRCh38:11:47343571:G:A",
+        "focusAllele": "urn:bh26:variant:c6f7737a77997b5f18d631aa225a72abaee0a9f4837ecbb037bdb27688372786",
+        "focusAlleleFrequency": 0.0,
+        "focusAlleleCount": 0,
+        "locusAlleleCount": 5150,
+        "sourceDataSet": {
+          "id": "https://gnomad.broadinstitute.org/?dataset=gnomad_r4&version=4.1.1",
+          "type": "DataSet",
+          "name": "gnomAD v4.1.1",
+          "version": "4.1.1"
+        },
+        "cohort": {
+          "id": "urn:bh26:cohort:ec027b753cbc8e268808ecdceafa30f3cd85daa0ca195463c907850f004e4be9",
+          "type": "StudyGroup",
+          "name": "genome:eas"
+        },
+        "specifiedBy": {
+          "type": "Method",
+          "name": "gnomAD browser allele frequency calculation",
+          "reportedIn": {
+            "type": "Document",
+            "name": "gnomAD browser help",
+            "urls": [
+              "https://gnomad.broadinstitute.org/help"
+            ]
+          }
+        },
+        "qualityMeasures": {
+          "qualityStatus": "PASS",
+          "callable": true,
+          "filters": [],
+          "variantFlags": [],
+          "retrievedAt": "2026-09-17T02:45:20.615481+00:00"
+        }
+      },
+      {
+        "id": "https://gnomad.broadinstitute.org/variant/11-47343571-G-A?dataset=gnomad_r4#genome:sas",
+        "type": "CohortAlleleFrequencyStudyResult",
+        "name": "gnomAD genome:sas allele frequency for GRCh38:11:47343571:G:A",
+        "focusAllele": "urn:bh26:variant:c6f7737a77997b5f18d631aa225a72abaee0a9f4837ecbb037bdb27688372786",
+        "focusAlleleFrequency": 0.0006239600665557404,
+        "focusAlleleCount": 3,
+        "locusAlleleCount": 4808,
+        "sourceDataSet": {
+          "id": "https://gnomad.broadinstitute.org/?dataset=gnomad_r4&version=4.1.1",
+          "type": "DataSet",
+          "name": "gnomAD v4.1.1",
+          "version": "4.1.1"
+        },
+        "cohort": {
+          "id": "urn:bh26:cohort:372de64417e265e9830de74ae806e2a571148d5c771f431ff56895e87195771d",
+          "type": "StudyGroup",
+          "name": "genome:sas"
+        },
+        "specifiedBy": {
+          "type": "Method",
+          "name": "gnomAD browser allele frequency calculation",
+          "reportedIn": {
+            "type": "Document",
+            "name": "gnomAD browser help",
+            "urls": [
+              "https://gnomad.broadinstitute.org/help"
+            ]
+          }
+        },
+        "qualityMeasures": {
+          "qualityStatus": "PASS",
+          "callable": true,
+          "filters": [],
+          "variantFlags": [],
+          "retrievedAt": "2026-09-17T02:45:20.615481+00:00"
+        }
+      },
+      {
+        "id": "https://gnomad.broadinstitute.org/variant/11-47343571-G-A?dataset=gnomad_r4#genome:asj",
+        "type": "CohortAlleleFrequencyStudyResult",
+        "name": "gnomAD genome:asj allele frequency for GRCh38:11:47343571:G:A",
+        "focusAllele": "urn:bh26:variant:c6f7737a77997b5f18d631aa225a72abaee0a9f4837ecbb037bdb27688372786",
+        "focusAlleleFrequency": 0.0,
+        "focusAlleleCount": 0,
+        "locusAlleleCount": 3468,
+        "sourceDataSet": {
+          "id": "https://gnomad.broadinstitute.org/?dataset=gnomad_r4&version=4.1.1",
+          "type": "DataSet",
+          "name": "gnomAD v4.1.1",
+          "version": "4.1.1"
+        },
+        "cohort": {
+          "id": "urn:bh26:cohort:efafcc7090c99471fe0ee83c83a6bc1373825c63691a9916770f05c1d1822ca5",
+          "type": "StudyGroup",
+          "name": "genome:asj"
+        },
+        "specifiedBy": {
+          "type": "Method",
+          "name": "gnomAD browser allele frequency calculation",
+          "reportedIn": {
+            "type": "Document",
+            "name": "gnomAD browser help",
+            "urls": [
+              "https://gnomad.broadinstitute.org/help"
+            ]
+          }
+        },
+        "qualityMeasures": {
+          "qualityStatus": "PASS",
+          "callable": true,
+          "filters": [],
+          "variantFlags": [],
+          "retrievedAt": "2026-09-17T02:45:20.615481+00:00"
+        }
+      },
+      {
+        "id": "https://gnomad.broadinstitute.org/variant/11-47343571-G-A?dataset=gnomad_r4#genome:afr",
+        "type": "CohortAlleleFrequencyStudyResult",
+        "name": "gnomAD genome:afr allele frequency for GRCh38:11:47343571:G:A",
+        "focusAllele": "urn:bh26:variant:c6f7737a77997b5f18d631aa225a72abaee0a9f4837ecbb037bdb27688372786",
+        "focusAlleleFrequency": 0.045013047260075385,
+        "focusAlleleCount": 1863,
+        "locusAlleleCount": 41388,
+        "sourceDataSet": {
+          "id": "https://gnomad.broadinstitute.org/?dataset=gnomad_r4&version=4.1.1",
+          "type": "DataSet",
+          "name": "gnomAD v4.1.1",
+          "version": "4.1.1"
+        },
+        "cohort": {
+          "id": "urn:bh26:cohort:668f741d07056218cf822498a8dc8830e2344e5090a38d119ac1022d8d90b427",
+          "type": "StudyGroup",
+          "name": "genome:afr"
+        },
+        "specifiedBy": {
+          "type": "Method",
+          "name": "gnomAD browser allele frequency calculation",
+          "reportedIn": {
+            "type": "Document",
+            "name": "gnomAD browser help",
+            "urls": [
+              "https://gnomad.broadinstitute.org/help"
+            ]
+          }
+        },
+        "qualityMeasures": {
+          "qualityStatus": "PASS",
+          "callable": true,
+          "filters": [],
+          "variantFlags": [],
+          "retrievedAt": "2026-09-17T02:45:20.615481+00:00"
+        }
+      },
+      {
+        "id": "https://gnomad.broadinstitute.org/variant/11-47343571-G-A?dataset=gnomad_r4#genome:nfe",
+        "type": "CohortAlleleFrequencyStudyResult",
+        "name": "gnomAD genome:nfe allele frequency for GRCh38:11:47343571:G:A",
+        "focusAllele": "urn:bh26:variant:c6f7737a77997b5f18d631aa225a72abaee0a9f4837ecbb037bdb27688372786",
+        "focusAlleleFrequency": 0.00010301692420897719,
+        "focusAlleleCount": 7,
+        "locusAlleleCount": 67950,
+        "sourceDataSet": {
+          "id": "https://gnomad.broadinstitute.org/?dataset=gnomad_r4&version=4.1.1",
+          "type": "DataSet",
+          "name": "gnomAD v4.1.1",
+          "version": "4.1.1"
+        },
+        "cohort": {
+          "id": "urn:bh26:cohort:7e240970f96d3e8fa4ec14c1ee419ff656f797b4520665e456172d2eb707c9a9",
+          "type": "StudyGroup",
+          "name": "genome:nfe"
+        },
+        "specifiedBy": {
+          "type": "Method",
+          "name": "gnomAD browser allele frequency calculation",
+          "reportedIn": {
+            "type": "Document",
+            "name": "gnomAD browser help",
+            "urls": [
+              "https://gnomad.broadinstitute.org/help"
+            ]
+          }
+        },
+        "qualityMeasures": {
+          "qualityStatus": "PASS",
+          "callable": true,
+          "filters": [],
+          "variantFlags": [],
+          "retrievedAt": "2026-09-17T02:45:20.615481+00:00"
+        }
+      }
+    ],
+    "directionOfEvidenceProvided": "neutral",
+    "evidenceOutcome": {
+      "name": "ACMG 2015 PM2 criterion not met",
+      "primaryCoding": {
+        "system": "ACMG Guidelines, 2015",
+        "code": "PM2_not_met"
+      }
+    }
+  }
+}
