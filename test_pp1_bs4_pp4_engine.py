@@ -4,27 +4,26 @@ test_pp1_bs4_pp4_engine.py
 Tests acmg_pipeline.criteria.pp1_bs4_pp4_engine - the glue connecting
 pp4_pp1_bs4.py's judgment logic (pulled in from r-kobayashi's branch,
 unmodified, already covered by test_pp4_pp1_bs4.py) to this project's
-classify()/VA-Spec pipeline. This file tests the ENGINE (curated-reference
-lookup, points-to-Strength mapping, EvidenceLine construction), not the
-judgment logic itself - see test_pp4_pp1_bs4.py for that.
+classify()/VA-Spec pipeline. PP4's diagnostic-yield input always comes
+from a live acmg_pipeline.pp4_literature_search call now (2026-09-17, no
+curated registry - see pp1_bs4_pp4_engine.py's own docstring for why).
+This file fakes that call to stay offline/deterministic, the same way it
+fakes hpo_extraction.normalize_hpo().
 """
 
 import asyncio
-import json
 import sys
-import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import acmg_pipeline.hpo_extraction as hpo_extraction
-import acmg_pipeline.pubcasefinder as pubcasefinder
+import acmg_pipeline.pp4_literature_search as pp4_literature_search
 from acmg_pipeline.classification import CriterionStatus, Strength
 from acmg_pipeline.clinical_note import (
     ClinicalFeature, ClinicalNoteExtraction, Family, Proband, ProbandPhenotype, Relative,
 )
 from acmg_pipeline.criteria import pp1_bs4_pp4_engine as engine
-from acmg_pipeline.criteria.pp4_pp1_bs4 import evaluate_locus_evidence
 from acmg_pipeline.vcf_record import VariantRecord
 from test_harness import Harness
 
@@ -33,52 +32,49 @@ check = h.check
 
 
 async def _identity_normalize_hpo(extraction):
-    # engine.evaluate() now calls hpo_extraction.normalize_hpo() (a real
-    # TogoMCP + LLM round trip) before evaluate_locus_evidence(). This
-    # test's fixtures already hand-set ClinicalFeature.hpo_id to synthetic
-    # values (HP:0000001/HP:0000002) matching the synthetic reference
-    # records below, purely to test the ENGINE's own logic - not TogoMCP
-    # resolution of real phenotype labels, which is hpo_extraction.py's own
-    # concern (exercised directly, live, in the earlier manual check of
-    # resolve_hpo_labels()). Patching normalize_hpo() to a pass-through
-    # keeps this file fast, deterministic, and offline, as it was before
-    # engine.evaluate() became async.
+    # engine.evaluate() calls hpo_extraction.normalize_hpo() (a real
+    # TogoMCP + LLM round trip) before evaluate_locus_evidence(). Patching
+    # it to a pass-through keeps this file fast, deterministic, and
+    # offline - the phenotype_match itself no longer depends on HPO terms
+    # at all (see [3] below), so there is nothing left to fake there.
     return extraction
 
 
 hpo_extraction.normalize_hpo = _identity_normalize_hpo
 
 
-def _fake_rank_genes_by_phenotype(*, top_gene: str = "GENE1"):
-    # engine.evaluate() now also calls pubcasefinder.rank_genes_by_phenotype()
-    # (a real TogoMCP round trip to PubCaseFinder) for PP4's phenotype_match
-    # gate instead of matching reference.phenotype_hpo directly. Faking the
-    # ranking here keeps this file offline/deterministic, the same way
-    # _identity_normalize_hpo() stands in for the real TogoMCP HPO lookup.
-    # `top_gene` is whichever gene this fixture puts at rank 1; the other
-    # gene of the pair is always ranked 2, to test both PP4's matched=True
-    # (rank 1) and matched=False (ranked, but not rank 1) paths.
-    async def _fake(hpo_ids):
-        other = "OTHER_GENE" if top_gene != "OTHER_GENE" else "GENE1"
-        return {"results": [
-            {"rank": 1, "score": 1.0, "gene_symbol": top_gene, "matched_hpo_ids": hpo_ids},
-            {"rank": 2, "score": 0.5, "gene_symbol": other, "matched_hpo_ids": []},
-        ]}
-
+def _fake_search(*, found, yield_fraction=None, sample_size=None,
+                  denominator="all patients tested with this phenotype",
+                  pmid="99999999", quote=None):
+    """Builds a fake acmg_pipeline.pp4_literature_search.search_diagnostic_yield()."""
+    async def _fake(gene, phenotype_description):
+        if not found:
+            return pp4_literature_search.LiteratureYieldResult(found=False, reason="test_not_found")
+        return pp4_literature_search.LiteratureYieldResult(
+            found=True, yield_fraction=yield_fraction, sample_size=sample_size,
+            denominator_description=denominator, pmid=pmid, quote=quote,
+        )
     return _fake
 
 
-pubcasefinder.rank_genes_by_phenotype = _fake_rank_genes_by_phenotype()
+def _counting(fake):
+    """Wraps a fake search coroutine to also record how many times it ran."""
+    async def _wrapped(gene, phenotype_description):
+        search_call_count["n"] += 1
+        return await fake(gene, phenotype_description)
+    return _wrapped
 
 
-def run_evaluate(variant, note, config):
-    # engine.evaluate() became async on 2026-09-17 once it started calling
-    # acmg_pipeline.hpo_extraction.normalize_hpo() (a TogoMCP + LLM round
-    # trip) for genes with a curated reference record - this test file
+search_call_count = {"n": 0}
+pp4_literature_search.search_diagnostic_yield = _fake_search(found=True, yield_fraction=0.70, sample_size=100)
+
+
+def run_evaluate(variant, note, config=None):
+    # engine.evaluate() is async (hpo_extraction/pp4_literature_search are
+    # both real TogoMCP/PubMed round trips in production) - this test file
     # stays plain top-to-bottom script style (test_harness.py convention),
-    # so each call site just drives its own event loop instead of the
-    # whole file becoming async.
-    return asyncio.run(engine.evaluate(variant, note, config))
+    # so each call site just drives its own event loop.
+    return asyncio.run(engine.evaluate(variant, note, config or {}))
 
 
 def _variant(gene: str) -> VariantRecord:
@@ -86,89 +82,93 @@ def _variant(gene: str) -> VariantRecord:
                          info={"GENE": gene, "HGVSC": "c.1A>G"})
 
 
-def _note(relatives=None, inheritance="autosomal dominant") -> ClinicalNoteExtraction:
-    # HPO IDs must match the synthetic reference's phenotype_hpo (see
-    # section [2] below) for match_phenotype_constellation() to return
-    # matched=True - without any patient HPO terms at all it returns
-    # matched=None ("not evaluable"), same as test_pp4_pp1_bs4.py's own
-    # case (5) fixture.
+def _note(relatives=None, inheritance="autosomal dominant", diagnosis="some well-studied disease") -> ClinicalNoteExtraction:
     return ClinicalNoteExtraction(
-        proband=Proband(phenotype=ProbandPhenotype(
-            affected_status=True,
-            clinical_features=[
-                ClinicalFeature("feature A", "HP:0000001"),
-                ClinicalFeature("feature B", "HP:0000002"),
-            ],
-        )),
+        proband=Proband(phenotype=ProbandPhenotype(affected_status=True)),
         family=Family(inheritance_pattern=inheritance, relatives=relatives or []),
+        diagnosis=diagnosis,
     )
 
 
 # ============================================================================
-# [1] No curated reference record for this gene -> all three UNKNOWN
+# [1] No diagnosis at all -> UNKNOWN, search never attempted
 # ============================================================================
-print("[1] No curated reference -> UNKNOWN")
-empty_registry = Path(tempfile.mkdtemp()) / "empty.json"
-empty_registry.write_text(json.dumps({"schema_version": "1.0", "entries": []}), encoding="utf-8")
-
-results = run_evaluate(
-    _variant("UNCURATED_GENE"), _note(),
-    {"pp4_reference_records_path": str(empty_registry)},
+print("[1] No diagnosis -> PP4 UNKNOWN, search never attempted")
+pp4_literature_search.search_diagnostic_yield = _counting(
+    _fake_search(found=True, yield_fraction=0.70, sample_size=100)
 )
-check("all 3 codes returned", set(results) == {"PP1", "BS4", "PP4"})
-check("PP4 is UNKNOWN", results["PP4"].status == CriterionStatus.UNKNOWN)
-check("PP1 is UNKNOWN", results["PP1"].status == CriterionStatus.UNKNOWN)
-check("BS4 is UNKNOWN", results["BS4"].status == CriterionStatus.UNKNOWN)
+no_diagnosis_results = run_evaluate(_variant("NO_DIAGNOSIS_GENE"), _note(diagnosis=None))
+check("PP4 is UNKNOWN with no diagnosis", no_diagnosis_results["PP4"].status == CriterionStatus.UNKNOWN)
+check("PP1 is UNKNOWN too (no family data in this fixture)", no_diagnosis_results["PP1"].status == CriterionStatus.UNKNOWN)
+check("BS4 is UNKNOWN too (no family data in this fixture)", no_diagnosis_results["BS4"].status == CriterionStatus.UNKNOWN)
+check("search was never attempted", search_call_count["n"] == 0)
 
-# A DRAFT (not APPROVED) entry must not load either.
-draft_registry = Path(tempfile.mkdtemp()) / "draft.json"
-draft_registry.write_text(json.dumps({
-    "schema_version": "1.0",
-    "entries": [{
-        "status": "DRAFT", "id": "draft-1", "gene": "GENE1",
-        "phenotype_label": "x", "phenotype_hpo": [], "locus_model": "heterogeneous",
-        "diagnostic_yield": 0.7, "testing_method": "sequencing", "source_citation": "x",
-    }],
-}), encoding="utf-8")
-draft_results = run_evaluate(_variant("GENE1"), _note(), {"pp4_reference_records_path": str(draft_registry)})
-check("a DRAFT (unapproved) entry does not load", draft_results["PP4"].status == CriterionStatus.UNKNOWN)
+# The important case: PP1/BS4 must NOT be dragged down to UNKNOWN just
+# because PP4's literature search has nothing to work with - family
+# co-segregation (Table 3) is independent of PP4's diagnostic yield.
+no_diagnosis_with_family_results = run_evaluate(
+    _variant("NO_DIAGNOSIS_WITH_FAMILY_GENE"),
+    _note(diagnosis=None, relatives=[Relative("sister", affected_status=True, variant_status=True)]),
+)
+check("PP4 UNKNOWN with no diagnosis (still true)",
+      no_diagnosis_with_family_results["PP4"].status == CriterionStatus.UNKNOWN)
+check("PP1 is MET from family data alone, despite PP4 having no diagnosis to search for",
+      no_diagnosis_with_family_results["PP1"].status == CriterionStatus.MET
+      and no_diagnosis_with_family_results["PP1"].strength == Strength.SUPPORTING)
 
 
 # ============================================================================
-# [2] Curated reference present -> real evidence, via a synthetic APPROVED entry
+# [2] Diagnosis present, search finds nothing usable -> PP4 UNKNOWN, PP1/BS4 unaffected
 # ============================================================================
-print("\n[2] Curated (synthetic) reference -> real MET/NOT_MET evidence")
-approved_registry = Path(tempfile.mkdtemp()) / "approved.json"
-approved_registry.write_text(json.dumps({
-    "schema_version": "1.0",
-    "entries": [{
-        "status": "APPROVED", "id": "test-gene1-v1", "gene": "GENE1",
-        "phenotype_label": "Demo phenotype", "phenotype_hpo": ["HP:0000001", "HP:0000002"],
-        "locus_model": "heterogeneous", "diagnostic_yield": 0.70,
-        "testing_method": "sequencing", "source_citation": "demo source",
-        "gates": {"method_comparable": True},
-    }],
-}), encoding="utf-8")
+print("\n[2] Diagnosis present, nothing found -> PP4 UNKNOWN, PP1/BS4 still scored")
+pp4_literature_search.search_diagnostic_yield = _fake_search(found=False)
+not_found_results = run_evaluate(_variant("NOTHING_FOUND_GENE"), _note())
+check("PP4 UNKNOWN when nothing usable is found", not_found_results["PP4"].status == CriterionStatus.UNKNOWN)
+check("PP1 UNKNOWN too (no family data in this fixture)", not_found_results["PP1"].status == CriterionStatus.UNKNOWN)
 
-config = {"pp4_reference_records_path": str(approved_registry)}
+not_found_with_family_results = run_evaluate(
+    _variant("NOTHING_FOUND_WITH_FAMILY_GENE"),
+    _note(relatives=[Relative("sister", affected_status=True, variant_status=True)]),
+)
+check("PP4 UNKNOWN when nothing usable is found (with family data present)",
+      not_found_with_family_results["PP4"].status == CriterionStatus.UNKNOWN)
+check("PP1 is MET from family data alone, despite PP4's search finding nothing",
+      not_found_with_family_results["PP1"].status == CriterionStatus.MET
+      and not_found_with_family_results["PP1"].strength == Strength.SUPPORTING)
 
-# Reproduces test_pp4_pp1_bs4.py case (2): heterogeneous disease, PP4 + PP1, capped at +5 -
-# but here going through the FULL engine.evaluate() -> to_criterion_evidence() path, not
-# evaluate_locus_evidence() directly.
+
+# ============================================================================
+# [3] Diagnosis present, search finds a confirmed overall yield -> real evidence
+# ============================================================================
+print("\n[3] Confirmed yield found -> real MET/NOT_MET evidence")
+pp4_literature_search.search_diagnostic_yield = _fake_search(
+    found=True, yield_fraction=0.70, sample_size=100, pmid="99999999",
+    quote="70 of 100 patients tested had a pathogenic variant.",
+)
+
+# 70% -> 4.0 points (PP4) + one co-segregating sibling, autosomal dominant
+# -> +1.0 (PP1), combined and capped at +5 - reproduces test_pp4_pp1_bs4.py's
+# own case (2), through the full engine.evaluate() -> to_criterion_evidence()
+# path. phenotype_match is assumed true (the search query WAS "this gene +
+# this diagnosis"), so locus_model="heterogeneous" (always assumed for a
+# literature-derived reference) keeps PP1 from being suppressed.
 note_with_relative = _note(relatives=[Relative("sister", affected_status=True, variant_status=True)])
-sibling_results = run_evaluate(_variant("GENE1"), note_with_relative, config)
-check("PP4 MET (matches case (1)'s 4.0 points -> Strength tier below 8, at/above 4 -> STRONG)",
+sibling_results = run_evaluate(_variant("GENE1"), note_with_relative)
+check("PP4 MET (4.0 points -> STRONG)",
       sibling_results["PP4"].status == CriterionStatus.MET
       and sibling_results["PP4"].strength == Strength.STRONG)
-check("PP1 MET (1.0 point of family segregation, at/above 1 -> SUPPORTING)",
+check("PP1 MET (1.0 point of family segregation -> SUPPORTING)",
       sibling_results["PP1"].status == CriterionStatus.MET
       and sibling_results["PP1"].strength == Strength.SUPPORTING)
 check("BS4 NOT_MET (no non-segregation observed)",
       sibling_results["BS4"].status == CriterionStatus.NOT_MET)
+check("disclosure is present in PP4's source",
+      "auto-extracted via literature search" in sibling_results["PP4"].source)
+check("PMID is present in PP4's source", "99999999" in sibling_results["PP4"].source)
 
 # No family data at all -> PP4 alone (segregation not evaluable).
 note_no_family = _note(relatives=[])
-solo_results = run_evaluate(_variant("GENE1"), note_no_family, config)
+solo_results = run_evaluate(_variant("GENE1"), note_no_family)
 check("PP4 still MET without family data", solo_results["PP4"].status == CriterionStatus.MET)
 check("PP1 UNKNOWN without family data (not evaluable, not a fabricated NOT_MET)",
       solo_results["PP1"].status == CriterionStatus.UNKNOWN)
@@ -176,69 +176,43 @@ check("BS4 UNKNOWN without family data", solo_results["BS4"].status == Criterion
 
 
 # ============================================================================
-# [2b] PubCaseFinder is a selectable matcher, but no longer the default
+# [4] Small sample size gets a caution note, without being blocked
 # ============================================================================
-print("\n[2b] PubCaseFinder phenotype-specificity gate (opt-in via config)")
-
-pubcasefinder_config = {**config, "pp4_phenotype_matcher": "pubcasefinder"}
-
-# GENE1 ranks below OTHER_GENE for this phenotype profile -> not a phenotype
-# match, even though reference.phenotype_hpo (still present in the fixture
-# above, and what the DEFAULT "curated_hpo_list" matcher would have used)
-# would have matched.
-pubcasefinder.rank_genes_by_phenotype = _fake_rank_genes_by_phenotype(top_gene="OTHER_GENE")
-not_top_ranked_results = run_evaluate(_variant("GENE1"), note_no_family, pubcasefinder_config)
-check("PP4 NOT_MET when GENE1 is not PubCaseFinder's top-ranked gene",
-      not_top_ranked_results["PP4"].status == CriterionStatus.NOT_MET)
-check("reason cites PubCaseFinder, not the curated HPO list",
-      "pubcasefinder" in not_top_ranked_results["PP4"].source)
-
-# PubCaseFinder itself unavailable (rate limit / no recognized HPO IDs / HTTP
-# error) -> "not evaluable", not a fabricated non-match.
-async def _raising_rank(hpo_ids):
-    raise ValueError("PUBCASEFINDER_RATE_LIMIT_EXCEEDED")
-
-
-pubcasefinder.rank_genes_by_phenotype = _raising_rank
-unavailable_results = run_evaluate(_variant("GENE1"), note_no_family, pubcasefinder_config)
-check("PP4 UNKNOWN when PubCaseFinder raises",
-      unavailable_results["PP4"].status == CriterionStatus.UNKNOWN)
-check("reason cites pubcasefinder_unavailable",
-      "pubcasefinder_unavailable" in unavailable_results["PP4"].source)
-
-pubcasefinder.rank_genes_by_phenotype = _fake_rank_genes_by_phenotype()
-
-# A registry entry's own gates.phenotype_matcher overrides config - same
-# effect as passing pp4_phenotype_matcher above, but per-gene.
-per_gene_registry = Path(tempfile.mkdtemp()) / "per_gene.json"
-per_gene_registry.write_text(json.dumps({
-    "schema_version": "1.0",
-    "entries": [{
-        "status": "APPROVED", "id": "test-gene1-pcf", "gene": "GENE1",
-        "phenotype_label": "Demo phenotype", "phenotype_hpo": [],
-        "locus_model": "heterogeneous", "diagnostic_yield": 0.70,
-        "testing_method": "sequencing", "source_citation": "demo source",
-        "gates": {"method_comparable": True, "phenotype_matcher": "pubcasefinder"},
-    }],
-}), encoding="utf-8")
-per_gene_results = run_evaluate(
-    _variant("GENE1"), note_no_family, {"pp4_reference_records_path": str(per_gene_registry)},
+print("\n[4] Small sample size -> caution note, not blocked")
+pp4_literature_search.search_diagnostic_yield = _fake_search(
+    found=True, yield_fraction=0.70, sample_size=3, pmid="11111111",
 )
-check("gates.phenotype_matcher='pubcasefinder' is honored with no config override",
-      per_gene_results["PP4"].status == CriterionStatus.MET)
-
-# An unknown matcher name is an honest UNKNOWN, not a crash or a silent
-# fallback to the default.
-check("unknown pp4_phenotype_matcher name -> UNKNOWN, not a crash",
-      run_evaluate(_variant("GENE1"), note_no_family,
-                   {**config, "pp4_phenotype_matcher": "not_a_real_matcher"})["PP4"].status
-      == CriterionStatus.UNKNOWN)
+small_n_results = run_evaluate(_variant("SMALL_N_GENE"), _note(relatives=[]))
+check("small sample size still produces a result (not blocked)",
+      small_n_results["PP4"].status == CriterionStatus.MET)
+check("small sample size gets a caution note in the source",
+      "CAUTION" in small_n_results["PP4"].source and "n=3" in small_n_results["PP4"].source)
 
 
 # ============================================================================
-# [3] build_evidence_line() produces a valid, real VA-Spec EvidenceLine
+# [5] Every call re-searches - no persistent cache (deliberate, 2026-09-17)
 # ============================================================================
-print("\n[3] EvidenceLine construction")
+print("\n[5] Every call re-searches; nothing is persisted to disk")
+# An earlier design persisted found entries back into a config/ registry so
+# a later call for the same gene would skip re-searching. The user's
+# explicit direction (2026-09-17, after weighing PS3/BS3/PS4's own
+# per-call, non-persistent pattern against the maintenance cost of any
+# registry) was to drop persistence entirely: every call searches live,
+# same as PS3/BS3/PS4 already do.
+search_call_count["n"] = 0
+pp4_literature_search.search_diagnostic_yield = _counting(
+    _fake_search(found=True, yield_fraction=0.70, sample_size=100)
+)
+run_evaluate(_variant("GENE1"), note_no_family)
+run_evaluate(_variant("GENE1"), note_no_family)
+check("the same gene is searched again on a second call (no caching)",
+      search_call_count["n"] == 2)
+
+
+# ============================================================================
+# [6] build_evidence_line() produces a valid, real VA-Spec EvidenceLine
+# ============================================================================
+print("\n[6] EvidenceLine construction")
 variant = _variant("GENE1")
 pp4_line = engine.build_evidence_line("PP4", sibling_results["PP4"], variant)
 check("PP4 line has the right criterion id", pp4_line["specifiedBy"]["methodType"] == "PP4")
@@ -254,16 +228,16 @@ bs4_line = engine.build_evidence_line("BS4", sibling_results["BS4"], variant)
 check("BS4 (NOT_MET) line direction is 'neutral'", bs4_line["directionOfEvidenceProvided"] == "neutral")
 check("BS4 (NOT_MET) line has no strengthOfEvidenceProvided", "strengthOfEvidenceProvided" not in bs4_line)
 
-unknown_line = engine.build_evidence_line("PP1", results["PP1"], _variant("UNCURATED_GENE"))
+unknown_line = engine.build_evidence_line("PP1", no_diagnosis_results["PP1"], _variant("NO_DIAGNOSIS_GENE"))
 check("UNKNOWN line direction is 'neutral'", unknown_line["directionOfEvidenceProvided"] == "neutral")
 check("UNKNOWN line has no evidenceOutcome", "evidenceOutcome" not in unknown_line)
 
 
 # ============================================================================
-# [4] Full pipeline wiring: evaluate_variant_evidence_lines()/evaluate_
+# [7] Full pipeline wiring: evaluate_variant_evidence_lines()/evaluate_
 #     selected_criteria() actually call this engine for PP1/BS4/PP4
 # ============================================================================
-print("\n[4] Wired into acmg_pipeline.constants.IMPLEMENTED_CODES")
+print("\n[7] Wired into acmg_pipeline.constants.IMPLEMENTED_CODES")
 from acmg_pipeline.constants import IMPLEMENTED_CODES, PHENOTYPE_SEGREGATION_CODES, STUB_CODES
 
 check("PP1/BS4/PP4 are in PHENOTYPE_SEGREGATION_CODES",

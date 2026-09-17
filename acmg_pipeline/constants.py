@@ -22,11 +22,13 @@ AUTOMATED_CODES = frozenset({
 # Connected 2026-09-17 via acmg_pipeline.criteria.pp1_bs4_pp4_engine (the
 # ClinGen 2024 PP4+PP1/BS4 Bayesian-points evaluator pulled in from
 # r-kobayashi's pp4_pp1_bs4 branch, see that module's own docstring). Real
-# evidence for these 3 requires a curated PP4 reference record
-# (config/pp4_reference_records.json) - absent one, they correctly
-# evaluate to UNKNOWN, the same "honest gap" behavior every other
-# unimplemented code already uses, so keeping them in IMPLEMENTED_CODES
-# (as opposed to STUB_CODES) does not overstate today's real coverage.
+# evidence for these 3 requires a diagnostic-yield statistic that
+# acmg_pipeline.pp4_literature_search finds via a live PubMed+LLM search -
+# with no diagnosis to search for, or nothing confirmed found, they
+# correctly evaluate to UNKNOWN, the same "honest gap" behavior every
+# other unimplemented code already uses, so keeping them in
+# IMPLEMENTED_CODES (as opposed to STUB_CODES) does not overstate today's
+# real coverage.
 PHENOTYPE_SEGREGATION_CODES = frozenset({"PP1", "BS4", "PP4"})
 IMPLEMENTED_CODES = LITERATURE_CODES | AUTOMATED_CODES | PHENOTYPE_SEGREGATION_CODES
 STUB_CODES = frozenset(ALL_ACMG_CODES) - IMPLEMENTED_CODES

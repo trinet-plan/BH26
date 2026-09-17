@@ -437,12 +437,12 @@ def evaluate_locus_evidence(
     phenotype_match_override:
         When supplied, used instead of calling ``match_phenotype_constellation``
         against ``reference.phenotype_hpo``. This is the seam
-        ``acmg_pipeline.pubcasefinder`` hooks into: PubCaseFinder's HPO-based
-        gene ranking (Layer 2 in the BH26 ACMG criteria definition, v2 2026-09-14)
-        answers "is this gene the best phenotype match" directly from the
-        patient's own HPO profile, so callers with that signal available no
-        longer need a hand-curated ``phenotype_hpo`` required-term list per
-        reference record.
+        ``acmg_pipeline.criteria.pp1_bs4_pp4_engine`` hooks into for a
+        literature-search-derived reference (see that module's own
+        docstring): the search query was itself "this gene + this
+        patient's diagnosis," so phenotype_match is true by construction
+        and there is no curated ``phenotype_hpo`` required-term list to
+        check against.
 
     [candidate_variants_on_allele also divides PP1's Table 3 points, not just
      PP4's Table 2 points - added 2026-09-17]
