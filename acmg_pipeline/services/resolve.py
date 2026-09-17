@@ -59,6 +59,9 @@ from acmg_pipeline.providers.clinvar import (
     VCV, ClinVarComparatorProvider, ClinVarHotspotProvider, ClinVarProvider,
 )
 from acmg_pipeline.providers.clingen_dosage import ClinGenDosageProvider
+from acmg_pipeline.providers.clingen_gene_validity import ClinGenGeneValidityProvider
+from acmg_pipeline.providers.gene_disease_draft import GeneDiseaseDraftProvider
+from acmg_pipeline.providers.gnomad_constraint import GnomadConstraintProvider
 from acmg_pipeline.providers.dbnsfp import DbnsfpProvider
 from acmg_pipeline.providers.ensembl import EnsemblIdentityProvider
 from acmg_pipeline.providers.http import CachedHttpClient, FetchError
@@ -207,6 +210,8 @@ class ProviderEvidenceResolver:
         evidence_cache_dir=None,
         hotspot_policy: dict | None = None,
         with_clingen_dosage: bool = False,
+        with_gene_disease_draft: bool = False,
+        gene_disease_draft_policy: dict | None = None,
     ):
         self._client = CachedHttpClient(cache_dir, offline=offline)
         self._external = (
@@ -221,6 +226,10 @@ class ProviderEvidenceResolver:
         )
         self._hotspot_policy = hotspot_policy
         self._with_clingen_dosage = with_clingen_dosage
+        self._with_gene_disease_draft = with_gene_disease_draft
+        self._gene_disease_draft_policy = gene_disease_draft_policy
+        self._clingen_gene_validity = None
+        self._gnomad_constraint = None
         self._ensembl = None
 
     def _ensembl_provider(self) -> EnsemblIdentityProvider:
@@ -245,7 +254,7 @@ class ProviderEvidenceResolver:
         return self._population
 
     def resolve(self, identity: dict, variant: Variant) -> ResolvedEvidence:
-        """`identity` is the VCF INFO view: GENE/TRANSCRIPT/HGVSC/CLNVARIATIONID."""
+        """`identity` is the VCF INFO view: GENE/TRANSCRIPT/HGVSC/CLNVARIATIONID/CONDITION."""
         resolved = ResolvedEvidence()
         annotation, predictions = self._annotate(identity, variant, resolved)
         if annotation is not None:
@@ -253,6 +262,7 @@ class ProviderEvidenceResolver:
             resolved.records.extend(predictions)
         self._add_population(variant, resolved)
         self._add_lof_mechanism(annotation, variant, resolved)
+        self._add_gene_disease_draft(annotation, variant, identity, resolved)
 
         try:
             suite = self._suite()
@@ -298,6 +308,71 @@ class ProviderEvidenceResolver:
             resolved.records.extend(provider.get_mechanism(variant, annotation.get("gene")))
         except PROVIDER_ERRORS as exc:
             resolved.failures.append({"provider": ClinGenDosageProvider.name, "error": str(exc)})
+
+    def _clingen_gene_validity_provider(self) -> ClinGenGeneValidityProvider:
+        if self._clingen_gene_validity is None:
+            self._clingen_gene_validity = ClinGenGeneValidityProvider(self._external)
+        return self._clingen_gene_validity
+
+    def _gnomad_constraint_provider(self) -> GnomadConstraintProvider:
+        if self._gnomad_constraint is None:
+            self._gnomad_constraint = GnomadConstraintProvider(self._external)
+        return self._gnomad_constraint
+
+    def _add_gene_disease_draft(self, annotation, variant, identity, resolved):
+        """PP2/BP1/PVS1's gene-disease mechanism, as a statistical suggestion.
+
+        Off unless asked for, same convention as _add_lof_mechanism(): a
+        ClinGen Gene-Disease Validity + gnomAD constraint suggestion is a
+        lower bar than a curator's own reviewed gene_disease record, so a
+        run has to opt in. Always produced under category
+        "gene_disease_draft", never "gene_disease" -
+        GeneDiseaseDraftProvider's own docstring is explicit that renaming
+        it is a reviewer's decision, not this resolver's - a criterion that
+        wants it (acmg_pipeline.criteria.mechanism's evaluate_mechanism())
+        reads that category as an explicitly flagged fallback.
+
+        Needs a disease context to pick the right one of a gene's several
+        ClinGen-curated diseases (e.g. MYH7 has separate curations for
+        cardiomyopathy and skeletal myopathy) - `identity["CONDITION"]`
+        (a MONDO ID, from _IDENTITY_INFO_KEYS) supplies it. Without one,
+        GeneDiseaseDraftProvider.build() still runs, but its own matching
+        (no condition on the request side) cannot select a single disease
+        out of several, so it correctly comes back as a low-confidence
+        suggestion rather than guessing which disease was meant.
+        """
+        if not self._with_gene_disease_draft or annotation is None:
+            return
+        gene = annotation.get("gene")
+        if not gene:
+            return
+        condition = identity.get("CONDITION") if isinstance(identity, dict) else None
+        try:
+            validity = self._clingen_gene_validity_provider().get_validity(gene)
+        except PROVIDER_ERRORS as exc:
+            resolved.failures.append(
+                {"provider": ClinGenGeneValidityProvider.name, "error": str(exc)})
+            return
+        if not validity:
+            return
+        try:
+            constraint = self._gnomad_constraint_provider().get_constraint(gene)
+        except PROVIDER_ERRORS as exc:
+            resolved.failures.append(
+                {"provider": GnomadConstraintProvider.name, "error": str(exc)})
+            constraint = None
+        try:
+            provider = GeneDiseaseDraftProvider(self._gene_disease_draft_policy or {})
+            drafts = provider.build(
+                variant_keys=[variant.key], gene=gene,
+                transcript=annotation.get("transcript"),
+                generated_at=datetime.now(timezone.utc).isoformat(),
+                validity=validity, condition=condition, constraint=constraint,
+            )
+        except ValueError as exc:
+            resolved.failures.append({"provider": GeneDiseaseDraftProvider.name, "error": str(exc)})
+            return
+        resolved.records.extend(drafts)
 
     def _annotate(self, identity, variant, resolved):
         record = {"identity": identity}

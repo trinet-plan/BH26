@@ -806,7 +806,7 @@ async def judge_variant_from_shared_input(
     return results
 
 
-_IDENTITY_INFO_KEYS = ("GENE", "TRANSCRIPT", "HGVSC", "HGVSP", "CLNVARIATIONID")
+_IDENTITY_INFO_KEYS = ("GENE", "TRANSCRIPT", "HGVSC", "HGVSP", "CLNVARIATIONID", "CONDITION")
 
 
 def _identity_from_info(variant: VariantRecord) -> dict:
@@ -815,6 +815,11 @@ def _identity_from_info(variant: VariantRecord) -> dict:
     Deliberately an allowlist, not the whole INFO dict: CLNSIG and
     ACMG_CODES sit in the same column and are conclusions, not lookup
     keys - nothing downstream should be able to reach them by accident.
+    CONDITION (a MONDO ID) is included so the resolver's optional
+    gene-disease-draft step (ClinGen Gene-Disease Validity + gnomAD
+    constraint, see services/resolve.py's _add_gene_disease_draft()) can
+    tell which of a gene's several curated diseases applies - it is
+    identity/context the same way GENE/TRANSCRIPT are, not a conclusion.
     """
     wanted = {key.casefold(): key for key in _IDENTITY_INFO_KEYS}
     identity = {}
@@ -878,6 +883,8 @@ async def evaluate_variant_evidence_lines(
         ensembl_release=automated_config.get("ensembl_release"),
         population_sources=automated_config.get("population_sources"),
         hotspot_policy=automated_config.get("PM1", {}).get("hotspot"),
+        with_gene_disease_draft=bool(automated_config.get("gene_disease_draft")),
+        gene_disease_draft_policy=automated_config.get("gene_disease_draft"),
     )
     resolved = resolver.resolve(_identity_from_info(variant), _automated_variant(variant))
     services = make_services(
@@ -1014,6 +1021,8 @@ async def evaluate_selected_criteria(
             ensembl_release=automated_config.get("ensembl_release"),
             population_sources=automated_config.get("population_sources"),
             hotspot_policy=automated_config.get("PM1", {}).get("hotspot"),
+            with_gene_disease_draft=bool(automated_config.get("gene_disease_draft")),
+            gene_disease_draft_policy=automated_config.get("gene_disease_draft"),
         )
         resolved = resolver.resolve(_identity_from_info(variant), _automated_variant(variant))
         services = make_services(resolved.records, automated_config.get("population_providers"),

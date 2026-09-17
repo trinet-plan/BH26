@@ -88,6 +88,16 @@
       "policy_version": "PM1-hotspot-v1"
     }
   },
+  "gene_disease_draft": {
+    "policy_version": "gene-disease-draft-v1",
+    "policy_source": "BH26 provisional PP2/BP1/PVS1 gene-disease mechanism suggestion policy (from ClinGen Gene-Disease Validity + gnomAD gene constraint); not a ClinGen VCEP specification. Thresholds are the commonly cited ExAC/gnomAD constraint cutoffs (Lek et al. 2016; Karczewski et al. 2020), not a formal per-gene review - see acmg_pipeline.criteria.mechanism's evaluate_mechanism() for how the suggestion is flagged in curatorHints rather than treated as a reviewed record.",
+    "pp2_min_mis_z": 3.09,
+    "bp1_min_p_li": 0.9,
+    "bp1_max_mis_z": 3.09,
+    "bp1_max_pathogenic_missense": 5,
+    "pvs1_min_p_li": 0.9,
+    "pvs1_max_loeuf": 0.35
+  },
   "computational": {
     "calibrations": {
       "revel-pejaver-2022": {
