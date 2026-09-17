@@ -19,6 +19,11 @@ class PopulationTests(unittest.TestCase):
         # "Absent from controls" is stated, not defaulted: pm2.evaluate() reports an unset
         # max_af as an unconfigured policy rather than running as the strictest threshold.
         self.config["PM2"]["max_af"] = 0
+        # BS1 falls back to this when no disease-specific threshold applies. Like every other
+        # threshold in this project it lives in the policy, not in the code.
+        self.config["BS1"].update({"default_max_credible_af": 0.0001,
+                                   "default_source": "synthetic-default-policy",
+                                   "default_source_version": "1"})
 
     def observation(self, ac=0, an=10000, **extra):
         return {"variant_key": self.variant.key, "evidence_id": "test:frequency",
@@ -106,10 +111,7 @@ class PopulationTests(unittest.TestCase):
         self.assertEqual(line["directionOfEvidenceProvided"], "disputes")
 
     def test_bs1_requires_matching_disease(self):
-        self.assertEqual(
-            self.evaluate(bs1, self.services([self.observation(100)])).status,
-            CriterionStatus.UNKNOWN,
-        )
+        """A matching threshold is used as itself, and is reported as disease-specific."""
         self.input.update({"condition": "test:disease", "inheritance": "autosomal_dominant",
                            "disease_frequency_threshold": {
                                "condition": "test:disease", "inheritance": "autosomal_dominant",
@@ -118,6 +120,8 @@ class PopulationTests(unittest.TestCase):
         value = self.evaluate(bs1, self.services([self.observation(100)]))
         self.assertEqual(value.status, CriterionStatus.MET)
         self.assertEqual(value.provenance["disease_frequency_threshold"]["max_credible_af"], 0.001)
+        self.assertEqual(value.provenance["threshold_scope"], "disease_specific")
+        self.assertEqual(value.review_points, [])
 
     # BS1's maximum credible frequency is a per-disease policy, so it is reached through a
     # chain of gates before any observation is compared. Each gate is a different job for a
@@ -136,25 +140,45 @@ class PopulationTests(unittest.TestCase):
         self.input.update({"condition": "test:disease", "inheritance": "autosomal_dominant",
                            "disease_frequency_threshold": threshold})
 
-    def test_bs1_without_a_disease_context_names_the_condition(self):
-        value = self.evaluate(bs1, self.services([self.observation(100)]))
-        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
-        self.assertEqual(value.missing_inputs, ["condition"])
+    def assertFellBackToDefault(self, value, *, because):
+        """A default-threshold verdict must say so, and must not pass as disease-specific."""
+        self.assertEqual(value.provenance["threshold_scope"], "default")
+        self.assertIn(because, value.summary)
+        self.assertIn("not a disease-specific threshold", value.summary)
+        self.assertEqual(value.review_points,
+                         ["Confirm BS1 against a disease-specific maximum credible frequency"])
 
-    def test_bs1_without_a_curated_threshold_asks_for_one(self):
+    def test_bs1_without_a_disease_context_uses_the_default_threshold(self):
+        value = self.evaluate(bs1, self.services([self.observation(100)]))
+        self.assertEqual(value.status, CriterionStatus.MET)
+        self.assertFellBackToDefault(value, because="no disease context was supplied")
+
+    def test_bs1_without_a_curated_threshold_uses_the_default_threshold(self):
         self.input["condition"] = "test:disease"
         value = self.evaluate(bs1, self.services([self.observation(100)]))
-        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
-        self.assertEqual(value.missing_inputs, ["disease_frequency_threshold"])
+        self.assertEqual(value.status, CriterionStatus.MET)
+        self.assertFellBackToDefault(value, because="no curated maximum credible allele frequency")
 
-    def test_bs1_threshold_for_another_disease_is_not_missing_evidence(self):
-        """The threshold exists; it is aimed at the wrong disease, so it is a review point."""
+    def test_bs1_threshold_for_another_disease_does_not_apply_to_this_one(self):
         self.with_threshold(condition="test:other-disease")
         value = self.evaluate(bs1, self.services([self.observation(100)]))
+        self.assertFellBackToDefault(value, because="test:other-disease")
+
+    def test_bs1_reports_an_unconfigured_default_instead_of_inventing_one(self):
+        """No disease-specific threshold and no configured default is not a verdict."""
+        for key in ("default_max_credible_af", "default_source", "default_source_version"):
+            del self.config["BS1"][key]
+        value = self.evaluate(bs1, self.services([self.observation(100)]))
         self.assertEqual(value.status, CriterionStatus.UNKNOWN)
-        self.assertEqual(value.missing_inputs, [])
-        self.assertTrue(value.review_points)
-        self.assertIn("test:other-disease", value.summary)
+        self.assertEqual(value.missing_inputs, ["BS1.default_max_credible_af",
+                                                "BS1.default_source",
+                                                "BS1.default_source_version"])
+
+    def test_bs1_rejects_a_default_outside_zero_to_one(self):
+        self.config["BS1"]["default_max_credible_af"] = 5
+        value = self.evaluate(bs1, self.services([self.observation(100)]))
+        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
+        self.assertEqual(value.missing_inputs, ["BS1.default_max_credible_af"])
 
     def test_bs1_rejects_a_threshold_outside_zero_to_one(self):
         for bad in (5, 0, -0.1, "high"):
@@ -166,18 +190,18 @@ class PopulationTests(unittest.TestCase):
                                  ["disease_frequency_threshold.max_credible_af"])
 
     def test_bs1_names_only_the_provenance_fields_actually_absent(self):
+        """An unprovenanced threshold is not disease-specific, and the summary says which
+        fields would make it so - `inheritance`, which is present, is not named."""
         self.with_threshold(source=None, reviewed_at=None)
         value = self.evaluate(bs1, self.services([self.observation(100)]))
-        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
-        self.assertEqual(value.missing_inputs, ["disease_frequency_threshold.source",
-                                                "disease_frequency_threshold.reviewed_at"])
+        self.assertFellBackToDefault(value, because="does not record source, reviewed_at")
+        self.assertNotIn("inheritance", value.summary)
 
     def test_bs1_will_not_apply_a_threshold_from_another_inheritance_mode(self):
         self.with_threshold(inheritance="autosomal_recessive")
         self.input["inheritance"] = "autosomal_dominant"
         value = self.evaluate(bs1, self.services([self.observation(100)]))
-        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
-        self.assertTrue(value.review_points)
+        self.assertFellBackToDefault(value, because="'autosomal_recessive' inheritance")
 
     def test_bs1_stops_on_an_unconfigured_population_policy(self):
         """A disease threshold does not substitute for the population quality policy."""
