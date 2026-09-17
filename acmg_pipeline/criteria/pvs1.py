@@ -182,7 +182,10 @@ def _resolve_mechanism(input_data, services, annotation, context, precedence=())
     applicable = [item for item in gene_records if _moi_applicable(item, inheritance)]
     other_mode = [item for item in gene_records if item not in applicable]
     if other_mode and not applicable:
-        context["moi_match"] = "MISMATCH"
+        # Unstated and contradicted are different questions for a curator - one is a field
+        # nobody filled in, the other is a judgment about whether a mode's curation carries -
+        # so the result says which, and neither is silently treated as the other.
+        context["moi_match"] = "UNSTATED" if inheritance is None else "MISMATCH"
         return None, other_mode, "moi_mismatch"
     condition, case_via = resolved_condition(input_data)
     if condition:
@@ -765,17 +768,26 @@ def _evaluate_input(input_data, services, config):
         # nobody filled in. The message says which.
         declared = (f"{context['inheritance']!r}" if context["inheritance"]
                     else f"unrecognized {raw!r}" if raw else "unstated")
-        # The records are attached even though they were not used: a curator who cannot see
-        # what was rejected has no way to tell a genuinely absent mechanism from one that is
-        # present under another inheritance mode, and those need opposite actions.
-        state["trace"].append(_node(
-            "G01", "lof_mechanism_available", "UNKNOWN", declared, mechanism_records))
-        return _finish(
-            input_data, state, CriterionStatus.UNKNOWN,
+        # Not borrowed, and not buried either. A mechanism curated for another mode is
+        # material a curator can act on, and the two ways of failing to match call for
+        # different actions: record the mode this case was assessed under, or decide whether
+        # the curated mode's mechanism carries to the one it was. Withholding quietly would
+        # be the safer-looking choice and the less useful one - the records are attached, the
+        # variant-level tree is reported, and the question goes to the person who can answer
+        # it. PVS1 is still not applied.
+        question = ("Record the inheritance mode this case was assessed under, or decide "
+                    f"whether the mechanism curated for {', '.join(modes)} applies to it"
+                    if context["inheritance"] is None else
+                    f"Decide whether the mechanism curated for {', '.join(modes)} applies to "
+                    f"a case assessed as {declared}")
+        return _not_evaluated(
+            input_data, services, annotation, variant_type, state, confirmed_rna,
+            _node("G01", "lof_mechanism_available", "MANUAL_REVIEW", declared,
+                  mechanism_records),
             f"The available loss-of-function mechanism evidence is curated for "
             f"{', '.join(modes)} inheritance; this case's inheritance mode is {declared}",
-            missing=["loss-of-function disease mechanism for this inheritance mode"],
-            extra_evidence=mechanism_records)
+            "loss-of-function disease mechanism for this inheritance mode",
+            evidence=mechanism_records, review=[question])
     if mechanism_issue == "missing":
         state["trace"].append(_node("G01", "lof_mechanism_available", "UNKNOWN"))
         return _finish(input_data, state, CriterionStatus.UNKNOWN,

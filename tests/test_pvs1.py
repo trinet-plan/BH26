@@ -376,6 +376,7 @@ class PVS1DecisionTreeTests(unittest.TestCase):
         value = self.evaluate_result(*items, input_data=input_data)
         self.assertEqual(value.status, CriterionStatus.UNKNOWN)
         self.assertEqual(value.evaluation_context["moi_match"], "MISMATCH")
+        self.assertEqual(value.evaluation_context["applicability"], "MANUAL_REVIEW")
         self.assertIn("loss-of-function disease mechanism for this inheritance mode",
                       value.missing_inputs)
         # The rejected record is still reported, so a curator can tell a mechanism that is
@@ -385,11 +386,29 @@ class PVS1DecisionTreeTests(unittest.TestCase):
         self.assertTrue(any(item.get("inheritance") == "AD" for item in value.evidence))
 
     def test_mode_scoped_mechanism_is_not_used_when_the_case_declares_no_mode(self):
+        """Not borrowed, and not buried either: an unrecorded mode is a field somebody can
+        fill in, so the curation is named and the question goes to a person."""
         items = [self.annotation(), self.transcript(), self.nmd(),
                  self.mechanism(True, inheritance="AR")]
         value = self.evaluate_result(*items)
         self.assertEqual(value.status, CriterionStatus.UNKNOWN)
+        self.assertIsNone(value.strength)
+        self.assertEqual(value.evaluation_context["moi_match"], "UNSTATED")
+        self.assertEqual(value.evaluation_context["applicability"], "MANUAL_REVIEW")
+        self.assertIn("Record the inheritance mode", " ".join(value.review_points))
+        self.assertEqual(value.provenance["preliminary_assessment"]["candidate_strength"],
+                         "very_strong")
+
+    def test_a_contradicted_mode_asks_a_different_question_from_an_unstated_one(self):
+        """Both fail to match; a curator fixes them differently, so they are not merged."""
+        input_data = {**self.input, "inheritance": "AR"}
+        items = [self.annotation(), self.transcript(), self.nmd(),
+                 self.mechanism(True, inheritance="AD")]
+        value = self.evaluate_result(*items, input_data=input_data)
         self.assertEqual(value.evaluation_context["moi_match"], "MISMATCH")
+        self.assertEqual(value.evaluation_context["applicability"], "MANUAL_REVIEW")
+        self.assertNotIn("Record the inheritance mode", " ".join(value.review_points))
+        self.assertIn("autosomal_recessive", " ".join(value.review_points))
 
     def test_unscoped_mechanism_stays_usable_under_any_declared_mode(self):
         input_data = {**self.input, "inheritance": "AD"}
