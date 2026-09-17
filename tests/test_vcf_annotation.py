@@ -9,6 +9,7 @@ and a score keeps the version that decides whether a calibration can use it.
 import unittest
 from pathlib import Path
 
+from acmg_pipeline.automated_core.input import audit_vcf
 from acmg_pipeline.automated_core.models import Variant
 from acmg_pipeline.automated_core.vcf_adapter import parse_vcf as adapter_parse_vcf
 from acmg_pipeline.services.evidence import EvidenceService
@@ -400,3 +401,49 @@ class ExporterVcfTests(unittest.TestCase):
         self.assertIn("CLNSIG", self.parsed.record.info)
         for record in self.evidence(DECLARATION)[0]:
             self.assertNotIn("CLNSIG", record["info_fields"])
+
+
+class DeclaredAssemblyTests(unittest.TestCase):
+    """A build cannot be guessed: the same coordinates are different variants on GRCh37 and
+    GRCh38, and the mistake is undetectable afterwards. So a file that states none is
+    rejected until a deployment declares one."""
+
+    FIXTURE = Path(__file__).resolve().parent / "fixtures" / "exporter-vcf-example.vcf"
+
+    def test_a_file_stating_no_reference_yields_no_variants(self):
+        records = audit_vcf(self.FIXTURE, case_id="t")
+        self.assertTrue(records)
+        self.assertTrue(all(record["parsed_variant"] is None for record in records))
+        self.assertTrue(all("INVALID_VARIANT: Only GRCh38 is supported" in record["issues"]
+                            for record in records))
+
+    def test_declaring_the_build_lets_the_rows_through(self):
+        records = audit_vcf(self.FIXTURE, case_id="t", assembly="GRCh38")
+        self.assertTrue(all(record["parsed_variant"] for record in records))
+        self.assertTrue(all(not record["issues"] for record in records))
+        self.assertEqual(records[0]["parsed_variant"]["assembly"], "GRCh38")
+
+    def test_the_declared_build_is_the_one_the_variant_carries(self):
+        """The row does not look different for having been declared rather than read, so the
+        declaration has to be legible in the configuration and the run manifest, not here."""
+        record = audit_vcf(self.FIXTURE, case_id="t", assembly="GRCh38")[0]
+        self.assertEqual(record["raw_variant"]["assembly"], "GRCh38")
+
+    def test_a_declaration_contradicting_the_file_is_flagged(self):
+        """A file that does state its build is the authority; audit_vcf keeps the row and
+        marks the disagreement rather than dropping it."""
+        stated = Path(__file__).resolve().parent / "fixtures" / "annotated-vcf-example.vcf"
+        agreeing = audit_vcf(stated, case_id="t", assembly="GRCh38")
+        self.assertTrue(all("ASSEMBLY_CONFLICT" not in record["issues"] for record in agreeing))
+        conflicting = audit_vcf(stated, case_id="t", assembly="GRCh37")
+        self.assertTrue(conflicting)
+        self.assertTrue(all("ASSEMBLY_CONFLICT" in record["issues"] for record in conflicting))
+
+    def test_the_config_declares_the_build_for_this_exporter(self):
+        import json
+        config = json.loads((Path(__file__).resolve().parents[1] / "config" /
+                             "vcf_info_map_draft.json").read_text(encoding="utf-8"))
+        declared = config["annotators"]["cross-gene-annotation-explorer"]["declared_assembly"]
+        self.assertEqual(declared["assembly"], "GRCh38")
+        for field in ("declared_by", "declared_at", "justification"):
+            self.assertTrue(declared[field], field)

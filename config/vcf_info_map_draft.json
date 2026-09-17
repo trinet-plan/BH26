@@ -155,7 +155,15 @@
         "population": "GNOMAD_AF is gnomAD 4.1.1's exome global frequency (verified, see the declaration) but arrives with no AC or AN, and usable_observations() needs both - so PM2, BA1 and BS1 cannot run on it, and BS1's filtering allele frequency cannot be computed either. An AF of 0 also cannot be read as absence, because nothing in the file states callability. GNOMAD_AF_GRPMAX is a second statistic over the same release rather than a population observation of its own, so it is mapped to its own field rather than joining the AF record as though it were one.",
         "transcript": "VEP_TRANSCRIPT holds an Ensembl accession (ENST...) while the pipeline evaluates RefSeq (NM_...). The MANE summary carries both, so a translation step is possible, but none exists yet.",
         "AM_CLASS": "A classification with no score, and computational.py scores against calibrated intervals.",
-        "biotype": "Some rows are annotated on retained_intron or nonsense_mediated_decay transcripts, which may not be the transcript to evaluate."
+        "biotype": "Some rows are annotated on retained_intron or nonsense_mediated_decay transcripts, which may not be the transcript to evaluate.",
+        "assembly": "No ##reference and no ASSEMBLY in INFO. Without an assembly passed in, all 44 rows fail as INVALID_VARIANT and none reaches the pipeline. See declared_assembly."
+      },
+      "declared_assembly": {
+        "assembly": "GRCh38",
+        "declared_by": "BH26 project configuration",
+        "declared_at": "2026-09-17",
+        "justification": "The file states no ##reference and carries no ASSEMBLY in INFO, so audit_vcf() rejects every row with INVALID_VARIANT - the same coordinates mean different variants on GRCh37 and GRCh38, and guessing is not detectable after the fact. GRCh38 is not a guess here: the file's GNOMAD_AF matched gnomAD 4.1.1, which is GRCh38-only, to six significant figures on four variants (see version_declaration). Pass it as audit_vcf(path, assembly=\"GRCh38\"). The declaration is not visible in the row itself - a declared build looks exactly like a read one - so it is legible only here and in the run manifest, and it applies only to files matching applies_when. A file that does state its own ##reference stays the authority: audit_vcf keeps the row and marks it ASSEMBLY_CONFLICT rather than letting the declaration overwrite it.",
+        "applies_when": "The file's ##source matches version_declaration.matches_source and it states no ##reference of its own."
       }
     }
   }
