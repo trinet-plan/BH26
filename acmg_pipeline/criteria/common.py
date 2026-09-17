@@ -11,6 +11,43 @@ DEFAULT_STRENGTH = {
 }
 
 
+# Human-readable scope is included in every automated-criterion summary.  The
+# structured fields (status, missing_inputs, review_points and decision_trace)
+# remain the machine-readable source of truth; this text makes an exported
+# EvidenceLine understandable without requiring a curator to reconstruct the
+# ACMG definition from the criterion code alone.
+CRITERION_SCOPE = {
+    "PVS1": "PVS1 evaluates predicted loss-of-function variants only when loss of function is an established disease mechanism for the gene.",
+    "PS1": "PS1 compares a missense variant with an independently established pathogenic variant producing the same amino-acid substitution.",
+    "PM1": "PM1 evaluates a variant in a reviewed mutational hotspot or critical functional domain with no conflicting benign variation.",
+    "PM2": "PM2 evaluates whether reliable population observations satisfy the configured rarity threshold.",
+    "PM4": "PM4 evaluates protein-length changes caused by an in-frame insertion, in-frame deletion, or stop-loss variant.",
+    "PM5": "PM5 compares a missense variant with an independently established pathogenic variant causing a different amino-acid substitution at the same residue.",
+    "PP2": "PP2 evaluates missense variants in genes where missense is an established disease mechanism and benign missense variation is constrained.",
+    "PP3": "PP3 evaluates calibrated computational evidence supporting a damaging effect.",
+    "PP5": "PP5 is not scored from external assertions alone; primary evidence must be reviewed instead.",
+    "BA1": "BA1 evaluates whether population allele frequency exceeds the stand-alone benign threshold after exception review.",
+    "BS1": "BS1 evaluates whether population allele frequency exceeds the reviewed maximum credible frequency for the disease context.",
+    "BP1": "BP1 evaluates missense variants in genes where disease is predominantly caused by truncating variants rather than missense variation.",
+    "BP3": "BP3 evaluates in-frame insertions or deletions in a repetitive region without known function.",
+    "BP4": "BP4 evaluates calibrated computational evidence supporting a benign effect.",
+    "BP6": "BP6 is not scored from an external assertion alone; primary evidence must be reviewed instead.",
+    "BP7": "BP7 evaluates synonymous variants outside splice-critical regions when splice prediction and conservation evidence support a benign interpretation.",
+}
+
+
+def _summary_with_context(code, status, summary):
+    """Add a stable criterion definition and an explicit three-state outcome."""
+    text = summary.rstrip(".") + "."
+    scope = CRITERION_SCOPE.get(code, "")
+    outcome = {
+        CriterionStatus.MET: "Outcome: MET; the available evidence satisfies this criterion.",
+        CriterionStatus.NOT_MET: "Outcome: NOT_MET; the criterion was evaluated but its requirements were not satisfied.",
+        CriterionStatus.UNKNOWN: "Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
+    }[status]
+    return " ".join(part for part in (text, scope, outcome) if part)
+
+
 def result(code, input_data, status, summary, *, strength=None, evidence=None,
            missing=None, review=None, provenance=None, evaluation_context=None,
            decision_trace=None, rules_used=None, warnings=None, unresolved_requirements=None):
@@ -21,7 +58,7 @@ def result(code, input_data, status, summary, *, strength=None, evidence=None,
     elif status == CriterionStatus.NOT_MET:
         direction, outcome = "none", f"{code}_not_met"
     return CriterionResult(
-        code, status, input_data["variant"], summary, strength, direction, outcome,
+        code, status, input_data["variant"], _summary_with_context(code, status, summary), strength, direction, outcome,
         evidence=evidence or [], missing_inputs=missing or [], review_points=review or [],
         provenance={"rule_version": f"{code}-v1", **(provenance or {})},
         evaluation_context=evaluation_context, decision_trace=decision_trace or [],
