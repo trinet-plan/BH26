@@ -35,12 +35,14 @@ RULES = {"PVS1": {
 GENE = "MYBPC3"
 TRANSCRIPT = "NM_000256.3"
 HGVSC = "NM_000256.3:c.278delA"
+CONDITION = "MONDO:0005045"
 
 
 class Pvs1AutomatedGateTests(unittest.TestCase):
     def setUp(self):
         self.variant = Variant("GRCh38", "11", 47351252, "CT", "C")
-        self.input = {"variant": self.variant.to_dict(), "transcript": TRANSCRIPT}
+        self.input = {"variant": self.variant.to_dict(), "transcript": TRANSCRIPT,
+                      "condition": CONDITION}
 
     def annotation(self, consequence_term="frameshift_variant"):
         """Shaped like the record the Ensembl provider emits - note it has no exon."""
@@ -57,6 +59,24 @@ class Pvs1AutomatedGateTests(unittest.TestCase):
     def dosage(self, score="3", gene=GENE):
         provider = ClinGenDosageProvider(DosageClient(curation_list([row(gene, score)])))
         return provider.get_mechanism(self.variant, gene)
+
+    def curated_mechanism(self, established=True):
+        """A disease-scoped mechanism, as an expert-panel specification supplies one.
+
+        ClinGen dosage sensitivity scores a gene, not a gene-and-disease, so its records can
+        no longer carry PVS1 past the disease gate on their own. The seams these tests are
+        about are the MANE, NMD, region and initiation providers, so the mechanism is
+        supplied here in the scoped form the gate requires, and the dosage provider has its
+        own tests for what it can and cannot settle.
+        """
+        return [{
+            "category": "gene_disease", "variant_key": self.variant.key,
+            "evidence_id": f"curated:mechanism:{self.variant.key}",
+            "source": "curator", "source_version": "1", "retrieved_at": "2026-09-17",
+            "quality_status": "PASS", "curator": "test", "reviewed_at": "2026-09-17",
+            "gene": GENE, "condition": CONDITION,
+            "lof_mechanism_established": established,
+        }]
 
     def mane(self, exon="2/34", accession=TRANSCRIPT):
         provider = ManeTranscriptProvider.from_directory(
@@ -82,14 +102,32 @@ class Pvs1AutomatedGateTests(unittest.TestCase):
 
     def test_the_three_providers_together_carry_pvs1_to_very_strong(self):
         exon = self.exon_from_vep()
-        result = self.evaluate(self.dosage(), self.mane(exon=exon), self.nmd())
+        result = self.evaluate(self.curated_mechanism(), self.mane(exon=exon), self.nmd())
         self.assertEqual(result.status, CriterionStatus.MET)
         self.assertEqual(result.strength, "very_strong")
         self.assertEqual(
             self.nodes(result),
-            {"C01": "PASS", "G01": "PASS", "G02": "PASS", "V01": "PASS",
+            {"C01": "PASS", "D01": "PASS", "G01": "PASS", "G02": "PASS", "V01": "PASS",
              "NF01": "PASS", "NF02": "PASS", "NF03": "PASS"},
         )
+
+    def test_dosage_sensitivity_alone_no_longer_reaches_a_verdict(self):
+        """Dosage scores a gene, and PVS1 needs a mechanism for the disease being assessed.
+
+        The finding is not discarded: the record is attached and the variant-level tree still
+        runs, so a curator sees both the haploinsufficiency score and what PVS1 would have
+        concluded once a disease-scoped mechanism is supplied.
+        """
+        exon = self.exon_from_vep()
+        result = self.evaluate(self.dosage(), self.mane(exon=exon), self.nmd())
+        self.assertEqual(result.status, CriterionStatus.UNKNOWN)
+        self.assertEqual(result.evaluation_context["applicability"], "NOT_EVALUATED")
+        self.assertEqual(self.nodes(result)["D01"], "UNKNOWN")
+        self.assertIn("disease-specific loss-of-function mechanism", result.missing_inputs)
+        self.assertTrue(any(item["source"].startswith("ClinGen") for item in result.evidence))
+        preliminary = result.provenance["preliminary_assessment"]
+        self.assertEqual(preliminary["candidate_strength"], "very_strong")
+        self.assertEqual(preliminary["decision_path"], "NF03")
 
     def test_one_provider_supplies_the_transcript_assessment(self):
         """Two records in that category make _select_context_record() report a conflict, so
@@ -119,25 +157,36 @@ class Pvs1AutomatedGateTests(unittest.TestCase):
         result = self.evaluate(self.dosage(score="30"), self.mane(), self.nmd())
         self.assertEqual(self.nodes(result)["G01"], "UNKNOWN")
 
-    def test_a_gene_scored_against_dosage_sensitivity_is_denied_at_g02(self):
+    def test_a_gene_scored_against_dosage_sensitivity_stops_before_the_mechanism_gate(self):
+        """Score 40 says loss of function is not this *gene's* mechanism, which is a weaker
+        statement than the gate needs, so the path stops at the disease match rather than at
+        G02. PVS1 is withheld either way; only the reason a curator is given changes."""
         result = self.evaluate(self.dosage(score="40"), self.mane(), self.nmd())
+        self.assertEqual(self.nodes(result)["D01"], "UNKNOWN")
+        self.assertNotIn("G02", self.nodes(result))
+        self.assertEqual(result.status, CriterionStatus.UNKNOWN)
+
+    def test_a_scoped_mechanism_that_denies_loss_of_function_is_read_at_g02(self):
+        result = self.evaluate(self.curated_mechanism(established=False), self.mane(),
+                               self.nmd())
         self.assertEqual(self.nodes(result)["G02"], "NOT_APPLICABLE")
+        self.assertEqual(result.evaluation_context["applicability"], "NOT_APPLICABLE")
         self.assertEqual(result.status, CriterionStatus.UNKNOWN)
 
     def test_without_the_mane_record_the_tree_stops_at_nf01(self):
-        result = self.evaluate(self.dosage(), self.nmd())
+        result = self.evaluate(self.curated_mechanism(), self.nmd())
         self.assertEqual(self.nodes(result)["NF01"], "UNKNOWN")
         self.assertIn("transcript_assessment", result.missing_inputs)
 
     def test_without_the_nmd_record_the_tree_stops_at_nf02(self):
-        result = self.evaluate(self.dosage(), self.mane())
+        result = self.evaluate(self.curated_mechanism(), self.mane())
         self.assertEqual(self.nodes(result)["NF02"], "UNKNOWN")
         self.assertIn("nmd_prediction", result.missing_inputs)
 
     def test_without_an_exon_the_tree_stops_at_nf03_undenied(self):
         """NF03 must read this as unresolved, not NOT_RELEVANT: the exon being unnumbered
         says nothing about whether it is in the transcript."""
-        result = self.evaluate(self.dosage(), self.mane(exon=None), self.nmd())
+        result = self.evaluate(self.curated_mechanism(), self.mane(exon=None), self.nmd())
         self.assertEqual(self.nodes(result)["NF03"], "UNKNOWN")
         self.assertEqual(result.status, CriterionStatus.UNKNOWN)
         self.assertIn("exon_relevance", result.missing_inputs)
@@ -146,14 +195,14 @@ class Pvs1AutomatedGateTests(unittest.TestCase):
         """The NMD rule declines the boundary case while NF03's question stays answerable."""
         exon = self.exon_from_vep("33/34")
         self.assertEqual(exon, "33/34")
-        result = self.evaluate(self.dosage(), self.mane(exon=exon), self.nmd("33/34"))
+        result = self.evaluate(self.curated_mechanism(), self.mane(exon=exon), self.nmd("33/34"))
         self.assertEqual(self.nodes(result)["NF02"], "UNKNOWN")
 
     def test_a_ptc_in_the_last_exon_takes_the_region_path_and_stops_at_nf06(self):
         """NMD is escaped, so PVS1 weighs the region instead - and the two gates that ask
         what the lost residues *do* are judgments no coordinate answers."""
         exon = self.exon_from_vep("34/34")
-        result = self.evaluate(self.dosage(), self.mane(exon=exon), self.nmd("34/34"))
+        result = self.evaluate(self.curated_mechanism(), self.mane(exon=exon), self.nmd("34/34"))
         nodes = self.nodes(result)
         self.assertEqual(nodes["NF02"], "PASS")
         self.assertEqual(nodes["NF04"], "UNKNOWN")   # critical region - curator
@@ -163,12 +212,12 @@ class Pvs1AutomatedGateTests(unittest.TestCase):
         self.assertIn("region_biological_relevance", result.missing_inputs)
 
     def test_a_non_mane_transcript_stops_at_nf01_undenied(self):
-        result = self.evaluate(self.dosage(), self.mane(accession="NM_999999.1"), self.nmd())
+        result = self.evaluate(self.curated_mechanism(), self.mane(accession="NM_999999.1"), self.nmd())
         self.assertEqual(self.nodes(result)["NF01"], "UNKNOWN")
 
     def test_a_stop_gained_variant_takes_the_same_route(self):
         exon = self.exon_from_vep()
-        result = self.evaluate(self.dosage(), self.mane(exon=exon), self.nmd(),
+        result = self.evaluate(self.curated_mechanism(), self.mane(exon=exon), self.nmd(),
                                consequence_term="stop_gained")
         self.assertEqual(result.status, CriterionStatus.MET)
         self.assertEqual(self.nodes(result)["V01"], "PASS")
@@ -192,7 +241,7 @@ class Pvs1AutomatedGateTests(unittest.TestCase):
         }]
 
     def test_the_measurement_alone_still_stops_at_the_curator_judgment(self):
-        result = self.evaluate(self.dosage(), self.mane(exon="3/3"), self.nmd("3/3"),
+        result = self.evaluate(self.curated_mechanism(), self.mane(exon="3/3"), self.nmd("3/3"),
                                self.region())
         nodes = self.nodes(result)
         self.assertEqual(nodes["NF02"], "PASS")
@@ -204,14 +253,14 @@ class Pvs1AutomatedGateTests(unittest.TestCase):
         """VHL c.610G>T: 10 residues of 213 is 4.7%, under the 10% the rule set splits on,
         which is the PVS1_Moderate its expert panel recorded."""
         curated = self.relevance(lost_residues=10, total_protein_length=213)
-        result = self.evaluate(self.dosage(), self.mane(exon="3/3"), self.nmd("3/3"), curated)
+        result = self.evaluate(self.curated_mechanism(), self.mane(exon="3/3"), self.nmd("3/3"), curated)
         self.assertEqual(result.status, CriterionStatus.MET)
         self.assertEqual(result.strength, "moderate")
         self.assertEqual(self.nodes(result)["NF07"], "PASS")
 
     def test_losing_more_than_a_tenth_of_the_protein_is_strong(self):
         curated = self.relevance(lost_residues=100, total_protein_length=213)
-        result = self.evaluate(self.dosage(), self.mane(exon="3/3"), self.nmd("3/3"), curated)
+        result = self.evaluate(self.curated_mechanism(), self.mane(exon="3/3"), self.nmd("3/3"), curated)
         self.assertEqual(result.strength, "strong")
 
     def initiation(self, cds=None):
@@ -238,7 +287,7 @@ class Pvs1AutomatedGateTests(unittest.TestCase):
 
     def test_the_downstream_start_alone_still_stops_at_the_curator_judgment(self):
         """IC01 is read first, so answering IC02 does not advance the path by itself."""
-        result = self.evaluate(self.dosage(), self.mane(exon="1/2"), self.initiation(),
+        result = self.evaluate(self.curated_mechanism(), self.mane(exon="1/2"), self.initiation(),
                                consequence_term="start_lost")
         nodes = self.nodes(result)
         self.assertEqual(nodes["V01"], "PASS")
@@ -248,7 +297,7 @@ class Pvs1AutomatedGateTests(unittest.TestCase):
 
     def test_an_intact_alternative_transcript_makes_pvs1_inapplicable(self):
         result = self.evaluate(
-            self.dosage(), self.mane(exon="1/2"),
+            self.curated_mechanism(), self.mane(exon="1/2"),
             self.curated_initiation(intact_alternative_transcript=True),
             consequence_term="start_lost")
         self.assertEqual(self.nodes(result)["IC01"], "NOT_APPLICABLE")
@@ -258,7 +307,7 @@ class Pvs1AutomatedGateTests(unittest.TestCase):
         for pathogenic, strength in ((True, "moderate"), (False, "supporting")):
             with self.subTest(upstream_pathogenic_evidence=pathogenic):
                 result = self.evaluate(
-                    self.dosage(), self.mane(exon="1/2"),
+                    self.curated_mechanism(), self.mane(exon="1/2"),
                     self.curated_initiation(upstream_pathogenic_evidence=pathogenic),
                     consequence_term="start_lost")
                 self.assertEqual(result.status, CriterionStatus.MET)
@@ -287,13 +336,13 @@ class Pvs1AutomatedGateTests(unittest.TestCase):
         self.assertEqual(len(records), 1)
         self.assertIs(records[0]["downstream_in_frame_start"], True)
         self.assertIs(records[0]["upstream_pathogenic_evidence"], True)
-        result = self.evaluate(self.dosage(), self.mane(exon="1/2"), records,
+        result = self.evaluate(self.curated_mechanism(), self.mane(exon="1/2"), records,
                                consequence_term="start_lost")
         self.assertNotIn("Conflicting", result.summary)
 
     def test_the_derived_answers_carry_the_path_to_ic03(self):
         """Only IC01 is left, and it is the judgment - the two derivable gates are done."""
-        result = self.evaluate(self.dosage(), self.mane(exon="1/2"),
+        result = self.evaluate(self.curated_mechanism(), self.mane(exon="1/2"),
                                self.initiation_with_upstream(),
                                consequence_term="start_lost")
         self.assertEqual(self.nodes(result)["IC01"], "UNKNOWN")
@@ -305,7 +354,7 @@ class Pvs1AutomatedGateTests(unittest.TestCase):
                 records = self.initiation_with_upstream(
                     upstream=upstream, intact_alternative_transcript=False,
                     curator="test", reviewed_at="2026-09-17")
-                result = self.evaluate(self.dosage(), self.mane(exon="1/2"), records,
+                result = self.evaluate(self.curated_mechanism(), self.mane(exon="1/2"), records,
                                        consequence_term="start_lost")
                 self.assertEqual(result.status, CriterionStatus.MET)
                 self.assertEqual(result.strength, strength)
@@ -314,12 +363,14 @@ class Pvs1AutomatedGateTests(unittest.TestCase):
 
     def test_automated_records_are_marked_as_such_in_the_evidence(self):
         """A curator reading the result has to see which gates were answered by derivation."""
-        result = self.evaluate(self.dosage(), self.mane(exon="2/34"), self.nmd())
+        result = self.evaluate(self.curated_mechanism(), self.mane(exon="2/34"), self.nmd())
         derived = [item for item in result.evidence
                    if item.get("assessment_method") == "automated"]
+        # The mechanism is curated here, because a derived one no longer passes the disease
+        # gate; the two gates that are still answered by derivation have to say so.
         self.assertEqual(
             {item["category"] for item in derived},
-            {"gene_disease", "transcript_assessment", "nmd_prediction"},
+            {"transcript_assessment", "nmd_prediction"},
         )
         for item in derived:
             self.assertTrue(item["method"] and item["policy_version"])

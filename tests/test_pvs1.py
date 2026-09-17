@@ -22,7 +22,9 @@ RULES = {"PVS1": {
 class PVS1DecisionTreeTests(unittest.TestCase):
     def setUp(self):
         self.variant = Variant("GRCh38", "1", 2, "C", "T")
-        self.input = {"variant": self.variant.to_dict(), "transcript": "NM_TEST.1"}
+        self.condition = "MONDO:TEST"
+        self.input = {"variant": self.variant.to_dict(), "transcript": "NM_TEST.1",
+                      "condition": self.condition}
         self.serial = 0
 
     def item(self, category, **values):
@@ -45,6 +47,13 @@ class PVS1DecisionTreeTests(unittest.TestCase):
                          consequences=[consequence], protein_id="NP_TEST.1")
 
     def mechanism(self, established=True, **values):
+        """Curated for this case's disease unless a test says otherwise.
+
+        A mechanism curated for no disease in particular no longer carries PVS1 to a verdict,
+        so leaving this unscoped would stop every decision-tree test at the disease gate
+        instead of testing the tree.
+        """
+        values.setdefault("condition", self.condition)
         return self.item("gene_disease", gene="TEST",
                          lof_mechanism_established=established, **values)
 
@@ -77,17 +86,37 @@ class PVS1DecisionTreeTests(unittest.TestCase):
             self.nmd(**scoped),
         ]
 
-    def test_condition_missing_uses_gene_level_mechanism_and_can_be_met(self):
-        value = self.evaluate_result(*self.truncating_evidence())
-        self.assertEqual((value.status, value.strength), (CriterionStatus.MET, "very_strong"))
+    def gene_level_evidence(self, consequence="frameshift_variant"):
+        """Truncating evidence whose mechanism names no disease."""
+        return [self.annotation(consequence),
+                self.item("gene_disease", gene="TEST", lof_mechanism_established=True),
+                self.transcript(), self.nmd()]
+
+    def test_condition_missing_stops_before_a_verdict_but_keeps_the_variant_work(self):
+        input_data = {key: value for key, value in self.input.items() if key != "condition"}
+        value = self.evaluate_result(*self.truncating_evidence(), input_data=input_data)
+        self.assertEqual((value.status, value.strength), (CriterionStatus.UNKNOWN, None))
         self.assertEqual(value.evaluation_context["condition_status"], "NOT_PROVIDED")
-        self.assertEqual(value.evaluation_context["mechanism_scope"], "GENE_LEVEL")
-        self.assertFalse(value.evaluation_context["condition_specific"])
+        self.assertEqual(value.evaluation_context["applicability"], "NOT_EVALUATED")
+        self.assertIn("condition", value.missing_inputs)
         self.assertTrue(value.warnings)
-        self.assertEqual(value.missing_inputs, value.unresolved_requirements)
-        self.assertEqual([node["node_id"] for node in value.decision_trace],
-                         ["C01", "G01", "G02", "V01", "NF01", "NF02", "NF03"])
+        self.assertEqual([node["node_id"] for node in value.decision_trace], ["C01", "D01"])
         self.assertEqual(len(value.rules_used), 3)
+
+        # The variant-level tree still ran, and says what PVS1 would have concluded.
+        preliminary = value.provenance["preliminary_assessment"]
+        self.assertTrue(preliminary["eligible_lof_variant"])
+        self.assertEqual(preliminary["candidate_strength"], "very_strong")
+        self.assertEqual(preliminary["decision_path"], "NF03")
+        self.assertEqual([node["node_id"] for node in preliminary["decision_trace"]],
+                         ["NF01", "NF02", "NF03"])
+
+    def test_a_preliminary_strength_never_becomes_the_criterion_strength(self):
+        input_data = {key: value for key, value in self.input.items() if key != "condition"}
+        value = self.evaluate_result(*self.truncating_evidence(), input_data=input_data)
+        self.assertIsNone(value.strength)
+        self.assertIsNone(value.direction)
+        self.assertIsNone(value.evidence_outcome)
 
     def test_condition_specific_mechanism_precedes_gene_level_fallback(self):
         input_data = {**self.input, "condition": "MONDO:1", "condition_label": "Disease"}
@@ -98,11 +127,14 @@ class PVS1DecisionTreeTests(unittest.TestCase):
         self.assertTrue(value.evaluation_context["condition_specific"])
         self.assertEqual(value.evaluation_context["mechanism_scope"], "CONDITION_SPECIFIC")
 
-        fallback = self.evaluate_result(*self.truncating_evidence(), input_data=input_data)
-        self.assertEqual(fallback.status, CriterionStatus.MET)
+        fallback = self.evaluate_result(*self.gene_level_evidence(), input_data=input_data)
+        self.assertEqual(fallback.status, CriterionStatus.UNKNOWN)
         self.assertEqual(fallback.evaluation_context["condition_status"], "PROVIDED")
         self.assertFalse(fallback.evaluation_context["condition_specific"])
-        self.assertEqual(fallback.evaluation_context["mechanism_scope"], "GENE_LEVEL")
+        self.assertEqual(fallback.evaluation_context["applicability"], "NOT_EVALUATED")
+        self.assertIn("disease-specific loss-of-function mechanism", fallback.missing_inputs)
+        self.assertEqual(fallback.provenance["preliminary_assessment"]["candidate_strength"],
+                         "very_strong")
 
     def test_other_condition_is_not_borrowed_and_unknown_is_not_negative(self):
         input_data = {**self.input, "condition": "MONDO:1"}
@@ -124,14 +156,11 @@ class PVS1DecisionTreeTests(unittest.TestCase):
         self.assertEqual(value.status, CriterionStatus.MET)
         self.assertEqual(value.evaluation_context["disease_match"], "EXACT")
 
-        # A gene-level record carries no disease identifier, so nothing was matched: the
-        # fallback must not be reported as if the disease had been confirmed.
-        fallback = self.evaluate_result(*self.truncating_evidence(), input_data=input_data)
-        self.assertEqual(fallback.status, CriterionStatus.MET)
+        # A gene-level record carries no disease identifier, so nothing was matched and the
+        # criterion must not be reported as if the disease had been confirmed.
+        fallback = self.evaluate_result(*self.gene_level_evidence(), input_data=input_data)
+        self.assertEqual(fallback.status, CriterionStatus.UNKNOWN)
         self.assertEqual(fallback.evaluation_context["disease_match"], "UNKNOWN")
-
-        no_condition = self.evaluate_result(*self.truncating_evidence())
-        self.assertEqual(no_condition.evaluation_context["disease_match"], "UNKNOWN")
 
     def test_inheritance_is_normalized_across_vocabularies(self):
         for declared, supplied in (("AR", "autosomal recessive"),

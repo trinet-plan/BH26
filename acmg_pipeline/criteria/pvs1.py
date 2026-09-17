@@ -69,6 +69,7 @@ def _base_context(input_data, gene=None):
         "disease_match": "UNKNOWN",
         "inheritance": normalize_inheritance(input_data.get("inheritance")),
         "moi_match": "UNKNOWN",
+        "applicability": "NOT_EVALUATED",
     }
 
 
@@ -175,9 +176,32 @@ def _deduplicate(items):
     return list(values.values())
 
 
+def _applicability(status, missing, review):
+    """Which of ACMG's non-judgments this is, without widening CriterionStatus.
+
+    MET is a judgment. Everything else here is UNKNOWN, and UNKNOWN covers three situations a
+    curator acts on differently: the criterion does not apply to this variant or disease, the
+    information needed to decide it was not available, or the information conflicts and a
+    person has to choose. Each exit already records which of those it is - an unresolved
+    requirement, a review point, or neither - so this reads what is there rather than asking
+    every exit to restate itself and risking the two drifting apart.
+    """
+    if status == CriterionStatus.MET:
+        return "APPLICABLE"
+    if review:
+        return "MANUAL_REVIEW"
+    if missing:
+        return "NOT_EVALUATED"
+    return "NOT_APPLICABLE"
+
+
 def _finish(input_data, state, status, summary, *, strength=None, missing=(), review=(),
             extra_evidence=(), provenance=None):
     unresolved = list(missing)
+    state["context"]["applicability"] = _applicability(status, unresolved, review)
+    # Kept unwrapped for the preliminary assessment, whose reader must not be handed the
+    # criterion-level wording ("Outcome: MET") for a run that reached no verdict.
+    state["summary"] = summary
     scope = state["context"]["mechanism_scope"]
     condition_assessment = "MATCHED" if state["context"]["condition_specific"] else "NOT_EVALUATED"
     assessment_scope = {
@@ -460,18 +484,74 @@ def _start_loss_path(input_data, services, annotation, state):
                    strength=strength)
 
 
+def _preliminary_assessment(input_data, services, annotation, variant_type, state, rna):
+    """What the variant-level tree concludes before any disease mechanism is established.
+
+    Transcript relevance, NMD, exon and region significance, splice rescue and alternative
+    initiation are decidable from the variant alone. Discarding that work because no disease
+    mechanism was established would throw away exactly what a curator needs in order to
+    supply the missing context, so it is computed and kept.
+
+    It runs on its own state so nothing it records reaches the criterion's evidence, trace or
+    warnings. What comes back is what PVS1 *would* conclude if loss of function were an
+    established mechanism for the disease - which is not a claim that it is, and is why the
+    strength it carries is named `candidate_strength` and never becomes the result's own.
+    """
+    scratch = {
+        "context": dict(state["context"]),
+        "trace": [],
+        "evidence": [],
+        "warnings": [],
+        "rules_used": state["rules_used"],
+        "ruleset": state["ruleset"],
+        "policy": state["policy"],
+        "summary": None,
+    }
+    if variant_type in {"STOP_GAINED", "FRAMESHIFT"}:
+        outcome = _truncating_path(input_data, services, annotation, scratch)
+    elif variant_type in {"CANONICAL_SPLICE", "SPLICE_LOF_CONFIRMED"}:
+        outcome = _splice_path(input_data, services, annotation, scratch, rna)
+    else:
+        outcome = _start_loss_path(input_data, services, annotation, scratch)
+    return {
+        "eligible_lof_variant": True,
+        "variant_type": variant_type,
+        # The node the variant-level tree stopped at is the decision path, read from the
+        # trace rather than tracked separately so it cannot disagree with it.
+        "decision_path": outcome.decision_trace[-1]["node_id"] if outcome.decision_trace else None,
+        "candidate_strength": outcome.strength,
+        "candidate_applicability": outcome.evaluation_context["applicability"],
+        "conclusion_if_mechanism_established": scratch["summary"],
+        "unresolved_requirements": list(outcome.unresolved_requirements),
+        "decision_trace": outcome.decision_trace,
+    }
+
+
+def _not_evaluated(input_data, services, annotation, variant_type, state, rna, node, summary,
+                   missing, *, evidence=()):
+    """Stop short of a PVS1 verdict, keeping the variant-level work that is still valid."""
+    state["trace"].append(node)
+    return _finish(
+        input_data, state, CriterionStatus.UNKNOWN, summary, missing=[missing],
+        extra_evidence=evidence,
+        provenance={"preliminary_assessment": _preliminary_assessment(
+            input_data, services, annotation, variant_type, state, rna)})
+
+
 def _evaluate_input(input_data, services, config):
     context = _base_context(input_data)
     warnings = []
     if not input_data.get("condition"):
         warnings.extend([
             "Condition was not provided.",
-            "PVS1 was evaluated using gene-level loss-of-function mechanism evidence.",
+            "Variant-level loss-of-function assessment was retained as a preliminary result; "
+            "PVS1 itself was not evaluated.",
         ])
     state = {
         "context": context,
-        "trace": [_node("C01", "condition_status", "PASS", context["condition_status"],
-                        source="acmg_amp_2015")],
+        "trace": [_node("C01", "condition_status",
+                        "PASS" if input_data.get("condition") else "UNKNOWN",
+                        context["condition_status"], source="acmg_amp_2015")],
         "evidence": [],
         "warnings": warnings,
         "rules_used": [],
@@ -529,6 +609,19 @@ def _evaluate_input(input_data, services, config):
         "name": policy["ruleset"]["name"], "version": policy["ruleset"]["version"]}
     state["rules_used"] = policy["ruleset"]["sources"]
 
+    # A gene can carry loss of function for one disease and gain of function for another, so
+    # the gene alone never settles whether PVS1 applies. Without a condition there is no
+    # disease whose mechanism could be checked, and a mechanism record curated for no disease
+    # in particular does not become disease-specific by being the only one on file. Both stop
+    # short of a verdict; neither discards the variant-level work.
+    if not input_data.get("condition"):
+        return _not_evaluated(
+            input_data, services, annotation, variant_type, state, confirmed_rna,
+            _node("D01", "disease_match", "UNKNOWN", "NOT_PROVIDED"),
+            "Condition was not provided, so no disease-specific loss-of-function mechanism "
+            "could be established",
+            "condition")
+
     mechanism, mechanism_records, mechanism_issue = _resolve_mechanism(
         input_data, services, annotation, context)
     if mechanism_issue == "gene_mismatch":
@@ -567,6 +660,18 @@ def _evaluate_input(input_data, services, config):
         return _finish(input_data, state, CriterionStatus.UNKNOWN,
                        "Loss-of-function disease mechanism unavailable",
                        missing=["loss-of-function disease mechanism"])
+    if context["mechanism_scope"] == "GENE_LEVEL":
+        return _not_evaluated(
+            input_data, services, annotation, variant_type, state, confirmed_rna,
+            _node("D01", "disease_match", "UNKNOWN", context["disease_match"],
+                  mechanism_records),
+            f"The available loss-of-function mechanism evidence is not curated for "
+            f"{input_data['condition']!r}, so no disease-specific mechanism could be "
+            f"established",
+            "disease-specific loss-of-function mechanism",
+            evidence=mechanism_records)
+    state["trace"].append(_node(
+        "D01", "disease_match", "PASS", context["disease_match"], mechanism_records))
     state["evidence"].extend(mechanism_records)
     state["trace"].append(_node(
         "G01", "lof_mechanism_available", "PASS", True, mechanism_records))
