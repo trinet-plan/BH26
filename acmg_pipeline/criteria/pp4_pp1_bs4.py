@@ -409,6 +409,7 @@ def evaluate_locus_evidence(
     ar_case_mode: Optional[str] = None,
     candidate_variants_on_allele: int = 1,
     adjusted_diagnostic_yield: Optional[float] = None,
+    phenotype_match_override: Optional[PhenotypeMatchResult] = None,
 ) -> LocusEvidenceResult:
     """Evaluate PP4 and patient-family PP1/BS4 in one coordinated pass.
 
@@ -433,11 +434,24 @@ def evaluate_locus_evidence(
     adjusted_diagnostic_yield:
         Optional externally curated/recalculated yield after other loci have
         been excluded. The function does not invent this value.
+    phenotype_match_override:
+        When supplied, used instead of calling ``match_phenotype_constellation``
+        against ``reference.phenotype_hpo``. This is the seam
+        ``acmg_pipeline.pubcasefinder`` hooks into: PubCaseFinder's HPO-based
+        gene ranking (Layer 2 in the BH26 ACMG criteria definition, v2 2026-09-14)
+        answers "is this gene the best phenotype match" directly from the
+        patient's own HPO profile, so callers with that signal available no
+        longer need a hand-curated ``phenotype_hpo`` required-term list per
+        reference record.
     """
     if adjusted_diagnostic_yield is not None and not 0.0 <= adjusted_diagnostic_yield <= 1.0:
         raise ValueError("adjusted_diagnostic_yield must be between 0 and 1")
 
-    phenotype = match_phenotype_constellation(extraction, reference)
+    phenotype = (
+        phenotype_match_override
+        if phenotype_match_override is not None
+        else match_phenotype_constellation(extraction, reference)
+    )
 
     pp4_reference = (
         replace(reference, diagnostic_yield=adjusted_diagnostic_yield)
