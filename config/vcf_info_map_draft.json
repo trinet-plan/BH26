@@ -94,12 +94,15 @@
       "version_declaration": {
         "matches_source": "Cross-Gene Annotation Explorer",
         "declared_versions": {
-          "gnomAD": "REPLACE-WITH-THE-RELEASE-THIS-EXPORTER-ACTUALLY-USED",
-          "Ensembl VEP": "REPLACE-WITH-THE-RELEASE-THIS-EXPORTER-ACTUALLY-USED"
+          "gnomAD": "4.1.1"
         },
-        "declared_by": "REPLACE-WITH-WHO-IS-STATING-THIS",
-        "justification": "The exporter reports that it annotated with VEP and gnomAD but names no release in the file, so the releases it was configured with are declared here instead. Every record built under this declaration carries version_status=DECLARED with this text, so a curator can see the version was assumed rather than read.",
-        "declared_at": "REPLACE-WITH-THE-DATE-THIS-WAS-CONFIRMED"
+        "declared_by": "BH26 project configuration",
+        "justification": "The exporter reports that it annotated with VEP and gnomAD but names no release in the file, so the releases are declared here instead. gnomAD 4.1.1 is not a guess: the GNOMAD_AF of four variants was compared against the gnomAD 4.1.1 API and matched its exome global allele frequency to six significant figures (CHRNA1 2-174757593-C-T 1.094500e-05, MBD4 3-129437103-G-A 1.094720e-05, IDUA 4-1001742-T-C 1.589390e-05, OSGEP 14-20449182-G-A 1.851240e-05); the genome frequencies of the same release differ, so the field is the exome subset specifically. The VEP release is still unconfirmed - consequence terms are stable across releases, so the file's own values cannot date it - and must come from the exporter's configuration. Every record built under this declaration carries version_status=DECLARED with this text, so a curator can see which version was verified and which was asserted.",
+        "declared_at": "2026-09-17",
+        "undeclared": {
+          "Ensembl VEP": "Unconfirmed. Left out of declared_versions on purpose rather than left as a placeholder, because a placeholder string would satisfy the declaration and pass as a version. While it is absent, VEP_* fields stay unpinned and the Ensembl provider fetches the annotation instead. Add it once the exporter's configured release is known.",
+          "dbNSFP": "Never stated by the file and not verifiable from it."
+        }
       },
       "mapping": {
         "GNOMAD_AF": {
@@ -149,7 +152,7 @@
         }
       },
       "not_usable_from_this_file": {
-        "population": "GNOMAD_AF has no AC or AN beside it, and usable_observations() needs both - so PM2, BA1 and BS1 cannot run on it, and BS1's filtering allele frequency cannot be computed either. An AF of 0 also cannot be read as absence, because nothing in the file states callability.",
+        "population": "GNOMAD_AF is gnomAD 4.1.1's exome global frequency (verified, see the declaration) but arrives with no AC or AN, and usable_observations() needs both - so PM2, BA1 and BS1 cannot run on it, and BS1's filtering allele frequency cannot be computed either. An AF of 0 also cannot be read as absence, because nothing in the file states callability. GNOMAD_AF_GRPMAX is a second statistic over the same release rather than a population observation of its own, so it is mapped to its own field rather than joining the AF record as though it were one.",
         "transcript": "VEP_TRANSCRIPT holds an Ensembl accession (ENST...) while the pipeline evaluates RefSeq (NM_...). The MANE summary carries both, so a translation step is possible, but none exists yet.",
         "AM_CLASS": "A classification with no score, and computational.py scores against calibrated intervals.",
         "biotype": "Some rows are annotated on retained_intron or nonsense_mediated_decay transcripts, which may not be the transcript to evaluate."

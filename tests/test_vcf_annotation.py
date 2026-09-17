@@ -324,6 +324,14 @@ class DeclaredVersionTests(unittest.TestCase):
         self.assertEqual(declared_version(DECLARATION, EXPORTER_META, "dbNSFP"), (None, None))
         self.assertEqual(declared_version(DECLARATION, EXPORTER_META, None), (None, None))
 
+    def test_a_group_left_out_is_unpinned_rather_than_placeheld(self):
+        """A placeholder string would satisfy the declaration and pass as a version, so an
+        unconfirmed group belongs out of declared_versions entirely."""
+        partial = {**DECLARATION, "declared_versions": {"gnomAD": "4.1.1"}}
+        self.assertEqual(declared_version(partial, EXPORTER_META, "gnomAD")[0], "4.1.1")
+        self.assertEqual(declared_version(partial, EXPORTER_META, "Ensembl VEP"),
+                         (None, None))
+
     def test_an_incomplete_declaration_is_not_usable(self):
         for missing in ("matches_source", "declared_by", "justification"):
             with self.subTest(missing=missing):
