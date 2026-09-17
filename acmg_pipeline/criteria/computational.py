@@ -22,9 +22,9 @@ def selected_calibrations(config):
 def accepts(calibration, prediction):
     """A calibration applies only to the release it was derived from.
 
-    Ensembl REST serves some predictors without naming the release behind them. Such a score
-    is usable only when the calibration itself names that source and states which release is
-    being assumed, so the assumption travels with the result instead of disappearing.
+    An unknown predictor version is never silently treated as the calibration version.  A
+    deployment may nevertheless elect to use it through an explicit, source-bound policy;
+    the UNKNOWN state and the policy then travel with the result for curator review.
     """
     if prediction.get("predictor") != calibration["predictor"]:
         return False, None
@@ -33,6 +33,26 @@ def accepts(calibration, prediction):
     if (prediction.get("predictor_version") == calibration["predictor_version"]
             and prediction.get("calibration_eligible") is not False):
         return True, None
+    unknown_policy = calibration.get("unknown_version_policy")
+    if not isinstance(unknown_policy, dict):
+        # Compatibility with pre-existing cached evidence/configuration.  New provider
+        # evidence uses predictor_version=UNKNOWN and the policy below.
+        unknown_policy = None
+    if unknown_policy is not None:
+        if any(not unknown_policy.get(field) for field in
+               ("source", "accepted_by", "justification")):
+            return False, None
+        if (prediction.get("source") == unknown_policy["source"]
+                and prediction.get("predictor_version") == "UNKNOWN"):
+            return True, {
+                "version_status": "UNKNOWN",
+                "predictor_version": "UNKNOWN",
+                "source": prediction["source"],
+                "source_version": prediction.get("source_version"),
+                "retrieved_at": prediction.get("retrieved_at"),
+                "accepted_by": unknown_policy["accepted_by"],
+                "justification": unknown_policy["justification"],
+            }
     assertion = calibration.get("version_assertion")
     if not isinstance(assertion, dict):
         return False, None

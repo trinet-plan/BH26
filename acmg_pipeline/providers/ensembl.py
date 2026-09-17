@@ -227,10 +227,11 @@ class EnsemblIdentityProvider:
                 "source": "Ensembl VEP REVEL",
                 "predictor": "REVEL",
                 # Ensembl REST does not expose the backing REVEL file version.
-                "predictor_version": f"unreported-Ensembl-{self.release}",
+                "predictor_version": "UNKNOWN",
+                "version_status": "UNKNOWN",
                 "mechanism": "protein", "score": revel,
                 "calibration_eligible": False,
-                "version_note": "Backing REVEL data version is not exposed by Ensembl REST",
+                "version_note": "Backing REVEL data version is not exposed by Ensembl REST; Ensembl release is recorded as source_version",
             })
 
         splice = consequence.get("spliceai")
@@ -243,12 +244,13 @@ class EnsemblIdentityProvider:
                     "evidence_id": f"urn:sha256:{response_sha256}:prediction:spliceai:{transcript}",
                     "source": "Ensembl VEP SpliceAI",
                     "predictor": "SpliceAI",
-                    "predictor_version": f"unreported-Ensembl-{self.release}",
+                    "predictor_version": "UNKNOWN",
+                    "version_status": "UNKNOWN",
                     "mechanism": "splicing", "score": max(valid),
                     "delta_scores": deltas,
                     "dataset": "Ensembl/GENCODE v37 MANE raw scores (REST SpliceAI=2)",
                     "calibration_eligible": False,
-                    "version_note": "SpliceAI model version is not exposed by Ensembl REST",
+                    "version_note": "SpliceAI model version is not exposed by Ensembl REST; Ensembl release is recorded as source_version",
                 })
 
         conservation = _number(consequence.get("conservation"))

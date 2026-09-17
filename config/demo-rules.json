@@ -144,12 +144,10 @@
         "score_min": 0,
         "score_max": 1,
         "scope_note": "Applies outside the donor/acceptor +/-1,2 dinucleotides, where PVS1 is used instead",
-        "version_assertion": {
+        "unknown_version_policy": {
           "source": "Ensembl VEP SpliceAI",
-          "unreported_version": "unreported-Ensembl-116",
-          "asserted_version": "SpliceAI precomputed masked=0 scores served by Ensembl VEP release 116",
-          "asserted_by": "BH26 project configuration",
-          "justification": "Ensembl REST does not expose the SpliceAI model version; the release serving the score is recorded instead so the assumption is auditable"
+          "accepted_by": "BH26 project configuration",
+          "justification": "Ensembl REST does not expose the SpliceAI model version. Use the score with predictor_version=UNKNOWN, retaining Ensembl source_version and retrieved_at for audit; do not represent it as SpliceAI-1.3."
         },
         "bands": {
           "PP3": [

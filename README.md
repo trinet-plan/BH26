@@ -8,6 +8,9 @@ NOT_EVALUATEDとして保持し、1変異につき全28基準のVA-Spec Evidence
 設計方針・検証結果の詳細は [`ps3_bs3_ps4_implementation_v10.md`](ps3_bs3_ps4_implementation_v10.md)
 を参照してください。
 
+外部データの現在の取得経路、未対応・review待ちの情報、TogoVarへ置換する場合の
+境界は [`doc/external_data_coverage_ja.md`](doc/external_data_coverage_ja.md) に分けて整理しています。
+
 ## ディレクトリ構成
 
 ```

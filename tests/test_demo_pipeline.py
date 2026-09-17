@@ -98,10 +98,10 @@ class DemoPipelineTests(unittest.TestCase):
                              result["provenance"]["applied_calibrations"]] == ["SpliceAI"]]
         self.assertTrue(splicing_only)
         self.assertTrue(all(result["criterion"] == "BP4" for result in splicing_only))
-        # The unreported SpliceAI release travels with the result as a declared assumption.
-        assertions = {item["asserted_version"] for result in met
+        # Unknown SpliceAI model version travels with the result as an explicit policy.
+        assertions = {item["version_status"] for result in met
                       for item in result["provenance"].get("version_assertions", [])}
-        self.assertEqual(len(assertions), 1)
+        self.assertEqual(assertions, {"UNKNOWN"})
 
         # The committed BA1 exception list resolves the high-frequency records either way.
         ba1 = [result for record in results["records"] for result in record["results"]
