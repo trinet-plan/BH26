@@ -13,7 +13,9 @@ import unittest
 
 from acmg_pipeline.automated_engine import evaluate_prepared_record, make_services
 from acmg_pipeline.constants import CriterionStatus
-from acmg_pipeline.criteria.common import annotation_context, retrieval_failures
+from acmg_pipeline.criteria.common import (
+    annotation_context, curated_context, retrieval_failures,
+)
 
 VARIANT = {"assembly": "GRCh38", "chrom": "14", "pos": 23417200, "ref": "G", "alt": "C"}
 INPUT = {"variant": VARIANT, "transcript": "NM_000257.4"}
@@ -90,3 +92,73 @@ class RetrievalFailureTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+ANNOTATION = {
+    "category": "annotation", "variant_key": "GRCh38:14:23417200:G:C",
+    "evidence_id": "urn:test:annotation", "source": "Ensembl VEP HGVS", "source_version": "116",
+    "retrieved_at": "2026-09-17T00:00:00+00:00", "quality_status": "PASS",
+    "transcript": "NM_000257.4", "gene": "MYH7", "consequences": ["missense_variant"],
+    "protein_id": "NP_000248.2", "protein_start": 1491, "protein_end": 1491,
+    "ref_aa": "S", "alt_aa": "C",
+}
+HOTSPOT_FAILED = [{"provider": "ClinVar protein hotspot density", "error": "HTTPError: 503"}]
+PS1_SEARCH_FAILED = [{"provider": "ClinVar protein comparator search:PS1",
+                      "error": "HTTPError: 503"}]
+
+
+class HotspotFailureTests(unittest.TestCase):
+    """PM1's region assessment comes from one provider, so 'nothing was retrieved' and 'the
+    provider broke' are different things to tell a curator."""
+
+    def evaluate(self, records, failures):
+        return curated_context("PM1", "region", INPUT,
+                               make_services([ANNOTATION, *records], failures=failures),
+                               ANNOTATION, disease_required=False)[0]
+
+    def test_the_failed_provider_is_named(self):
+        outcome = self.evaluate([], HOTSPOT_FAILED)
+        self.assertIn("ClinVar protein hotspot density", outcome.summary)
+        self.assertIn("503", outcome.summary)
+        self.assertEqual(outcome.provenance["provider_failures"], HOTSPOT_FAILED)
+
+    def test_nothing_retrieved_and_nothing_failed_is_unchanged(self):
+        outcome = self.evaluate([], [])
+        self.assertEqual(outcome.summary,
+                         "No region assessment was retrieved for this variant")
+        self.assertNotIn("provider_failures", outcome.provenance)
+
+    def test_an_unrelated_failure_is_not_blamed(self):
+        """Naming a provider that has nothing to do with this category would send a curator
+        after the wrong thing."""
+        outcome = self.evaluate([], [{"provider": "TogoVar", "error": "timeout"}])
+        self.assertNotIn("TogoVar", outcome.summary)
+
+    def test_records_that_were_retrieved_and_rejected_keep_their_own_reason(self):
+        """unusable_reason already says which rejection route they took; a provider failing
+        elsewhere in the run did not cause that."""
+        rejected = {**ANNOTATION, "category": "region", "evidence_id": "urn:test:region",
+                    "protein_id": "NP_000248.2", "start": 1, "end": 10}
+        outcome = self.evaluate([rejected], HOTSPOT_FAILED)
+        self.assertNotIn("ClinVar protein hotspot density", outcome.summary)
+
+
+class ComparatorFailureTests(unittest.TestCase):
+    """The comparator search is absorbed per criterion, so the failures must be matched
+    exactly - PS1's search failing is not PM5's reason for having nothing."""
+
+    def evaluate(self, code, failures):
+        from acmg_pipeline.criteria.comparator import evaluate_comparator
+        return evaluate_comparator(code, INPUT,
+                                   make_services([ANNOTATION], failures=failures), {})
+
+    def test_ps1_reports_its_own_failed_search(self):
+        outcome = self.evaluate("PS1", PS1_SEARCH_FAILED)
+        self.assertEqual(outcome.status, CriterionStatus.UNKNOWN)
+        self.assertIn("ClinVar protein comparator search:PS1", outcome.summary)
+        self.assertEqual(outcome.provenance["provider_failures"], PS1_SEARCH_FAILED)
+
+    def test_pm5_is_not_blamed_for_ps1s_failure(self):
+        outcome = self.evaluate("PM5", PS1_SEARCH_FAILED)
+        self.assertEqual(outcome.summary, "Comparator search incomplete")
+        self.assertNotIn("provider_failures", outcome.provenance)

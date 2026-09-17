@@ -72,24 +72,47 @@ def get_evidence(category, input_data, services):
     return services.evidence.get(category, Variant(**input_data["variant"]), input_data)
 
 
-def retrieval_failures(services, provider=None):
+# Which provider supplies each evidence category, so a criterion left with nothing can name
+# the one that failed rather than every failure of the run. The comparator search is absorbed
+# per criterion ("ClinVar protein comparator search:PS1"), so these match on the name before
+# the colon as well as on the whole.
+CATEGORY_PROVIDERS = {
+    "region": ("ClinVar protein hotspot density",),
+    "comparator_search": ("ClinVar protein comparator search",),
+}
+
+
+def retrieval_failures(services, provider=None, *, exact=False):
     """What the resolver could not retrieve, so a criterion can say why it has nothing.
 
     Without this, a provider that errored and a provider that legitimately returned nothing
     are indistinguishable downstream, and the curator is told only that evidence is absent -
     which is the one thing they could already see.
+
+    `provider` is a name or names. By default a failure also matches that provider's
+    per-criterion entries ("<name>:PS1"); with `exact`, only the names given match - PS1's
+    search failing is not PM5's reason for having nothing.
     """
     failures = getattr(services, "failures", None) or []
     if provider is None:
         return list(failures)
-    return [item for item in failures if item.get("provider") == provider]
+    names = (provider,) if isinstance(provider, str) else tuple(provider)
+    return [item for item in failures
+            if any(str(item.get("provider")) == name
+                   or (not exact and str(item.get("provider")).startswith(f"{name}:"))
+                   for name in names)]
+
+
+def failure_detail(failures):
+    """The failures as one readable clause, or "" when nothing failed."""
+    return "; ".join(f"{item.get('provider')}: {item.get('error')}" for item in failures)
 
 
 def annotation_context(code, input_data, services):
     annotations = get_evidence("annotation", input_data, services)
     if not annotations:
         failures = retrieval_failures(services)
-        detail = "; ".join(f"{item.get('provider')}: {item.get('error')}" for item in failures)
+        detail = failure_detail(failures)
         return result(code, input_data, CriterionStatus.UNKNOWN,
                       f"Transcript annotation unavailable - {detail}" if detail
                       else "Transcript annotation unavailable; no provider reported an error, "
@@ -163,8 +186,16 @@ def curated_context(code, category, input_data, services, annotation, *, disease
     if not records:
         summary, missing, review = unusable_reason(category, retrieved, annotation, condition,
                                                    disease_required)
-        return result(code, input_data, CriterionStatus.UNKNOWN, summary,
-                      evidence=[annotation, *retrieved], missing=missing, review=review), None
+        # Only when nothing came back at all: if records were retrieved and rejected,
+        # unusable_reason already says which rejection route they took, and a provider that
+        # failed elsewhere in the run did not cause that.
+        failures = (retrieval_failures(services, CATEGORY_PROVIDERS.get(category, ()))
+                    if not retrieved else [])
+        detail = failure_detail(failures)
+        return result(code, input_data, CriterionStatus.UNKNOWN,
+                      f"{summary} - {detail}" if detail else summary,
+                      evidence=[annotation, *retrieved], missing=missing, review=review,
+                      provenance={"provider_failures": failures} if failures else None), None
     if len(records) != 1:
         return result(code, input_data, CriterionStatus.UNKNOWN, f"Multiple {category} assessments",
                       evidence=[annotation, *records], review=[f"Resolve {category} assessments"]), None
