@@ -20,8 +20,15 @@
   A criterion is recorded "Applicable" when at least one of its evidence strengths is, and
   "Not applicable" when every strength says it is not. The registry's other rendering of the
   same document (/cspec/SequenceVariantInterpretation/id/<numeric>) states one `applicability`
-  per criterion directly; the two were compared on GN180 (DYSF) and agree on all 28, which is
-  why folding the strengths this way is safe.
+  per criterion directly, and the two agree on all 28 of GN180 (DYSF).
+
+  That comparison alone is NOT enough to trust the fold, and a first version of this file got
+  it wrong by relying on it. GN180 writes every affirmative as the bare word "Applicable", so
+  matching that word exactly passed there while silently turning GN010's "Applicable with VCEP
+  specification" into "Not applicable" - which reported the Lysosomal Diseases VCEP as having
+  struck out all 28 criteria for GAA, including the PVS1 it actually applies. The six wordings
+  the registry really uses are listed at APPLICABLE_PREFIX below, counted across all 208
+  documents rather than read off one.
 
 [What this is NOT]
   A VCEP marking PVS1 "Applicable" is a statement about its own specification, not the
@@ -64,8 +71,14 @@ SVIS_URL = "https://cspec.genome.network/cspec/api/svis"
 DOC_URL = "https://cspec.genome.network/cspec/api/SequenceVariantInterpretation/id/{}"
 HEADERS = {"Accept": "application/json", "User-Agent": "BH26-cspec-applicability-collector/1.0"}
 
-# The registry mixes "Not Applicable" and "Not applicable"; compare case-folded.
-APPLICABLE = "applicable"
+# The registry states applicability in six wordings, and a VCEP that specified or adopted a
+# criterion says so in the value rather than in a separate field:
+#   Applicable / Applicable with VCEP specification / Applicable as originally described
+#   Not applicable / Not Applicable / Not Applicable for this VCEP
+# So a strength is applicable when its value BEGINS with "applicable" once case-folded -
+# exact equality against "applicable" silently drops the two qualified affirmatives, and
+# "Not Applicable for this VCEP" must not be caught by a substring test.
+APPLICABLE_PREFIX = "applicable"
 ALL_CODES = (
     "PVS1", "PS1", "PS2", "PS3", "PS4", "PM1", "PM2", "PM3", "PM4", "PM5", "PM6",
     "PP1", "PP2", "PP3", "PP4", "PP5", "BA1", "BS1", "BS2", "BS3", "BS4",
@@ -98,7 +111,9 @@ def applicability(code: dict) -> str | None:
     values = [value for value in values if value]
     if not values:
         return None
-    return "Applicable" if any(value.casefold() == APPLICABLE for value in values) else "Not applicable"
+    return ("Applicable"
+            if any(value.casefold().startswith(APPLICABLE_PREFIX) for value in values)
+            else "Not applicable")
 
 
 def gene_entries(rule_set: dict):
