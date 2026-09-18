@@ -36,11 +36,13 @@ from acmg_pipeline.classification import (
     ALL_ACMG_CODES,
     AUTOMATED_CODES,
     LITERATURE_CODES,
+    PHENOTYPE_SEGREGATION_CODES,
 )
 from acmg_pipeline.clinical_note import ClinicalNoteExtraction
 from acmg_pipeline.common import MatchStatus, PaperContribution, VariantMatchingResult
 from acmg_pipeline.criteria import ps3_bs3
 from acmg_pipeline.pipeline import evaluate_variant_evidence_lines
+from acmg_pipeline.pp1_segregation_search import LiteratureSegregationResult
 from acmg_pipeline.vcf_record import VariantRecord
 
 GENE = "MYH7"
@@ -163,6 +165,10 @@ def _run_both_stacks() -> list[dict]:
             side_effect=lambda code, _variant: [f"https://example.test/{code}"],
         ),
         patch.dict("acmg_pipeline.export._CODE_CURATOR_INFO_FETCHERS", {}, clear=True),
+        patch(
+            "acmg_pipeline.pp1_segregation_search.search_family_segregation",
+            new=AsyncMock(return_value=LiteratureSegregationResult(found=False)),
+        ),
     ):
         return asyncio.run(
             evaluate_variant_evidence_lines(
@@ -312,8 +318,19 @@ def test_outcome_code_omits_the_default_strength_suffix():
 
 
 def test_unimplemented_codes_stay_placeholders(lines_by_code):
-    """PS2/PM3/BP2 and the rest belong to neither side and must not be faked."""
-    for code in set(ALL_ACMG_CODES) - AUTOMATED_CODES - LITERATURE_CODES:
+    """PS2/PM3/BP2 and the rest belong to no implemented side and must not be faked.
+
+    PP1/BS4/PP4 (PHENOTYPE_SEGREGATION_CODES) are excluded from this check:
+    they ARE implemented (see IMPLEMENTED_CODES), and since
+    pp1_bs4_pp4_engine.evaluate() gained its own live literature search for
+    family segregation (2026-09-18, acmg_pipeline.pp1_segregation_search),
+    PP1 can legitimately come back MET here even from this fixture's empty
+    ClinicalNoteExtraction - MYH7 c.1594T>C really does have a published
+    family segregation study. A truly unimplemented (STUB_CODES) code has
+    no evaluator to find real evidence with, so it can never legitimately
+    become MET no matter what a caller supplies.
+    """
+    for code in set(ALL_ACMG_CODES) - AUTOMATED_CODES - LITERATURE_CODES - PHENOTYPE_SEGREGATION_CODES:
         assert _details(lines_by_code[code])["status"] != "met"
 
 

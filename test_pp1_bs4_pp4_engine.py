@@ -18,6 +18,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import acmg_pipeline.hpo_mondo_extraction as hpo_mondo_extraction
+import acmg_pipeline.pp1_segregation_search as pp1_segregation_search
 import acmg_pipeline.pp4_literature_search as pp4_literature_search
 from acmg_pipeline.classification import CriterionStatus, Strength
 from acmg_pipeline.clinical_note import (
@@ -67,6 +68,28 @@ def _counting(fake):
 
 search_call_count = {"n": 0}
 pp4_literature_search.search_diagnostic_yield = _fake_search(found=True, yield_fraction=0.70, sample_size=100)
+
+
+def _fake_segregation_search(*, found, inheritance_pattern="autosomal dominant",
+                              ar_case_mode=None, relatives=None, pmid="88888888"):
+    """Builds a fake acmg_pipeline.pp1_segregation_search.search_family_segregation()
+    (added 2026-09-18 alongside the live search itself) - same offline/
+    deterministic-by-default convention as _fake_search() above, so every
+    existing "no family data" fixture in this file keeps meaning exactly
+    that, rather than silently making a real PubMed/LLM call."""
+    async def _fake(gene, hgvsc):
+        if not found:
+            return pp1_segregation_search.LiteratureSegregationResult(found=False, reason="test_not_found")
+        return pp1_segregation_search.LiteratureSegregationResult(
+            found=True, inheritance_pattern=inheritance_pattern, ar_case_mode=ar_case_mode,
+            relatives=relatives or [], pmid=pmid,
+        )
+    return _fake
+
+
+# Default: no segregation study found, so a fixture with relatives=[] means
+# exactly that (not "a live search hasn't been mocked yet").
+pp1_segregation_search.search_family_segregation = _fake_segregation_search(found=False)
 
 
 def run_evaluate(variant, note, config=None):
@@ -270,6 +293,41 @@ check("PP1/BS4/PP4 are in PHENOTYPE_SEGREGATION_CODES",
 check("PP1/BS4/PP4 are now IMPLEMENTED, not STUB",
       PHENOTYPE_SEGREGATION_CODES <= IMPLEMENTED_CODES
       and PHENOTYPE_SEGREGATION_CODES.isdisjoint(STUB_CODES))
+
+
+# ============================================================================
+# [8] PP1/BS4's own live literature search (added 2026-09-18): when the
+#     caller supplies no family.relatives at all, engine.evaluate() tries
+#     acmg_pipeline.pp1_segregation_search before giving up as UNKNOWN -
+#     the same "search live rather than stay UNKNOWN forever" pattern PP4
+#     already uses for diagnostic yield.
+# ============================================================================
+print("\n[8] PP1/BS4 fall back to a live family-segregation search")
+from acmg_pipeline.pp1_segregation_search import SegregationRelative
+
+pp4_literature_search.search_diagnostic_yield = _fake_search(found=False)
+
+pp1_segregation_search.search_family_segregation = _fake_segregation_search(found=False)
+no_segregation_results = run_evaluate(_variant("NO_SEGREGATION_PAPER_GENE"), _note(relatives=[]))
+check("PP1 stays UNKNOWN when the segregation search also finds nothing",
+      no_segregation_results["PP1"].status == CriterionStatus.UNKNOWN)
+
+pp1_segregation_search.search_family_segregation = _fake_segregation_search(
+    found=True, inheritance_pattern="autosomal dominant",
+    relatives=[SegregationRelative("sister", affected_status=True, variant_status=True)],
+)
+found_segregation_results = run_evaluate(_variant("SEGREGATION_PAPER_GENE"), _note(relatives=[]))
+check("PP1 is MET once a literature search finds a segregating relative",
+      found_segregation_results["PP1"].status == CriterionStatus.MET
+      and found_segregation_results["PP1"].strength == Strength.SUPPORTING)
+
+# Caller-supplied family data always wins - the search only fills a gap,
+# never overrides real input the caller already has.
+pp1_segregation_search.search_family_segregation = _counting(_fake_segregation_search(found=True))
+search_call_count["n"] = 0
+run_evaluate(_variant("GENE1"), note_with_relative)
+check("the search is skipped when the caller already supplied family.relatives",
+      search_call_count["n"] == 0)
 
 
 h.report_and_exit()

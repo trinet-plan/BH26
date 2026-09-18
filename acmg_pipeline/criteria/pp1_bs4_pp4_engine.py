@@ -401,6 +401,43 @@ async def evaluate(
     from acmg_pipeline import hpo_mondo_extraction
     clinical_note = await hpo_mondo_extraction.normalize_hpo(clinical_note)
 
+    # PP1/BS4 need clinical_note.family.relatives, which (like PP4's
+    # diagnostic yield above) this project has no curated source for. When
+    # nothing is already known, try a live literature search for a family
+    # study of this variant (acmg_pipeline.pp1_segregation_search, added
+    # 2026-09-18) instead of leaving PP1/BS4 permanently UNKNOWN whenever
+    # the caller has no pedigree data of its own to supply.
+    ar_case_mode = None
+    if not clinical_note.family.relatives:
+        from dataclasses import replace as _replace
+
+        from acmg_pipeline import pp1_segregation_search
+        from acmg_pipeline.clinical_note import Relative
+        from acmg_pipeline.inputs import variant_identity
+
+        _, hgvsc, _, _ = variant_identity(variant)
+        segregation = await pp1_segregation_search.search_family_segregation(gene, hgvsc)
+        if segregation.found:
+            ar_case_mode = segregation.ar_case_mode
+            clinical_note = _replace(
+                clinical_note,
+                family=_replace(
+                    clinical_note.family,
+                    inheritance_pattern=(
+                        segregation.inheritance_pattern or clinical_note.family.inheritance_pattern
+                    ),
+                    relatives=[
+                        Relative(
+                            relationship=r.relationship,
+                            affected_status=r.affected_status,
+                            variant_status=r.variant_status,
+                            zygosity=r.zygosity,
+                        )
+                        for r in segregation.relatives
+                    ],
+                ),
+            )
+
     result = evaluate_locus_evidence(
         clinical_note,
         reference,
@@ -408,7 +445,7 @@ async def evaluate(
         inheritance_mode=None,  # falls back to clinical_note.family.inheritance_pattern
         fully_penetrant=None,
         low_phenocopy=None,
-        ar_case_mode=None,
+        ar_case_mode=ar_case_mode,
         phenotype_match_override=phenotype_match_override,
     )
     return to_criterion_evidence(result)

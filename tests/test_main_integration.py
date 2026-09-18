@@ -20,6 +20,7 @@ from acmg_pipeline.constants import CriterionStatus
 from acmg_pipeline.criteria import segregation
 from acmg_pipeline.export import build_automated_evidence_line, build_evidence_line
 from acmg_pipeline.pipeline import evaluate_variant_evidence_lines, judge_variant_from_shared_input
+from acmg_pipeline.pp1_segregation_search import LiteratureSegregationResult
 from acmg_pipeline.vcf_record import VariantRecord
 
 
@@ -50,6 +51,10 @@ def test_integrated_entrypoint_returns_one_ordered_line_per_acmg_code():
             ],
         ),
         patch.dict("acmg_pipeline.export._CODE_CURATOR_INFO_FETCHERS", {}, clear=True),
+        patch(
+            "acmg_pipeline.pp1_segregation_search.search_family_segregation",
+            new=AsyncMock(return_value=LiteratureSegregationResult(found=False)),
+        ),
     ):
         lines = asyncio.run(
             evaluate_variant_evidence_lines(
