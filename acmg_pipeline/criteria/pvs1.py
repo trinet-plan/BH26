@@ -655,15 +655,58 @@ def _preliminary_assessment(input_data, services, annotation, variant_type, stat
     }
 
 
+def _candidate_conditions(input_data, services, annotation):
+    """The diseases this gene is curated for, as a list to show a curator - never a choice.
+
+    With no condition supplied there is no disease whose mechanism could be checked, and PVS1
+    stops. What it can still say is which diseases the gene has curated mechanism evidence
+    for, because that is the information a curator needs in order to supply the one this case
+    is about, and it is already in hand.
+
+    It is offered and never taken. In ClinGen's curation set 85% of curated genes have a
+    single disease, which is exactly the shape that invites picking it automatically - and the
+    remaining genes are why that would be wrong: among genes curated for more than one
+    disease, mechanisms disagree often enough (ABCC9, ACTB, ATP1A2 and CACNA1D each carry both
+    gain and loss of function) that choosing for the curator would sometimes choose the
+    mechanism too. A single candidate is not evidence that the case is about that disease
+    either; it is evidence about what has been curated.
+    """
+    records = _candidates("gene_disease", input_data, services, annotation["transcript"])
+    gene = annotation.get("gene")
+    seen, candidates = set(), []
+    for item in records:
+        condition = item.get("condition")
+        if item.get("gene") != gene or not condition:
+            continue
+        key = (condition, item.get("source"))
+        if key in seen:
+            continue
+        seen.add(key)
+        candidates.append({
+            "condition": condition,
+            "condition_label": item.get("condition_label"),
+            "lof_mechanism_established": item.get("lof_mechanism_established"),
+            # Normalized so it reads the same as everywhere else, and kept as written so the
+            # source's own wording is not lost behind this pipeline's vocabulary.
+            "inheritance": normalize_inheritance(item.get("inheritance")),
+            "inheritance_as_recorded": item.get("inheritance"),
+            "source": item.get("source"),
+            "source_version": item.get("source_version"),
+            "assessment_method": item.get("assessment_method"),
+        })
+    return sorted(candidates, key=lambda item: (item["condition"], str(item["source"])))
+
+
 def _not_evaluated(input_data, services, annotation, variant_type, state, rna, node, summary,
-                   missing, *, evidence=(), review=()):
+                   missing, *, evidence=(), review=(), candidates=()):
     """Stop short of a PVS1 verdict, keeping the variant-level work that is still valid."""
     state["trace"].append(node)
     return _finish(
         input_data, state, CriterionStatus.UNKNOWN, summary, missing=[missing],
         extra_evidence=evidence, review=review,
         provenance={"preliminary_assessment": _preliminary_assessment(
-            input_data, services, annotation, variant_type, state, rna)})
+            input_data, services, annotation, variant_type, state, rna),
+            **({"candidate_conditions": list(candidates)} if candidates else {})})
 
 
 def _evaluate_input(input_data, services, config):
@@ -748,12 +791,19 @@ def _evaluate_input(input_data, services, config):
     # in particular does not become disease-specific by being the only one on file. Both stop
     # short of a verdict; neither discards the variant-level work.
     if not input_data.get("condition"):
+        candidates = _candidate_conditions(input_data, services, annotation)
+        # Named so a curator can supply the disease context, not so the criterion can pick
+        # one - see _candidate_conditions() for why a single candidate is still not a choice.
+        review = ([f"Supply the disease context; {annotation.get('gene')} has curated "
+                   f"mechanism evidence for "
+                   f"{', '.join(sorted({item['condition'] for item in candidates}))}"]
+                  if candidates else [])
         return _not_evaluated(
             input_data, services, annotation, variant_type, state, confirmed_rna,
             _node("D01", "disease_match", "UNKNOWN", "NOT_PROVIDED"),
             "Condition was not provided, so no disease-specific loss-of-function mechanism "
             "could be established",
-            "condition")
+            "condition", review=review, candidates=candidates)
 
     mechanism, mechanism_records, mechanism_issue = _resolve_mechanism(
         input_data, services, annotation, context,

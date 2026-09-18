@@ -98,7 +98,7 @@ class PVS1DecisionTreeTests(unittest.TestCase):
         value = self.evaluate_result(*self.truncating_evidence(), input_data=input_data)
         self.assertEqual((value.status, value.strength), (CriterionStatus.UNKNOWN, None))
         self.assertEqual(value.evaluation_context["condition_status"], "NOT_PROVIDED")
-        self.assertEqual(value.evaluation_context["applicability"], "NOT_EVALUATED")
+        self.assertEqual(value.evaluation_context["applicability"], "MANUAL_REVIEW")
         self.assertIn("condition", value.missing_inputs)
         self.assertTrue(value.warnings)
         self.assertEqual([node["node_id"] for node in value.decision_trace], ["C01", "D01"])
@@ -111,6 +111,51 @@ class PVS1DecisionTreeTests(unittest.TestCase):
         self.assertEqual(preliminary["decision_path"], "NF03")
         self.assertEqual([node["node_id"] for node in preliminary["decision_trace"]],
                          ["NF01", "NF02", "NF03"])
+
+    def test_the_genes_curated_diseases_are_offered_when_none_was_supplied(self):
+        """Named so a curator can supply the disease context, not so PVS1 can pick one."""
+        input_data = {key: value for key, value in self.input.items() if key != "condition"}
+        items = [self.annotation(), self.transcript(), self.nmd(),
+                 self.mechanism(True, condition="MONDO:1", inheritance="AD"),
+                 self.mechanism(False, condition="MONDO:2", evidence_id="second")]
+        value = self.evaluate_result(*items, input_data=input_data)
+        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
+        self.assertIsNone(value.strength)
+        offered = value.provenance["candidate_conditions"]
+        self.assertEqual([item["condition"] for item in offered], ["MONDO:1", "MONDO:2"])
+        # The mechanism each one carries goes with it, because that is what differs between
+        # a gene's diseases and what the curator is choosing between.
+        self.assertEqual([item["lof_mechanism_established"] for item in offered], [True, False])
+        self.assertEqual(offered[0]["inheritance"], "autosomal_dominant")
+        self.assertEqual(offered[0]["inheritance_as_recorded"], "AD")
+        self.assertIn("MONDO:1", " ".join(value.review_points))
+        self.assertIn("MONDO:2", " ".join(value.review_points))
+
+    def test_a_single_candidate_is_offered_and_still_not_taken(self):
+        """85% of curated genes have one disease, which is exactly the shape that invites
+        picking it - and a curated disease is not evidence that this case is about it."""
+        input_data = {key: value for key, value in self.input.items() if key != "condition"}
+        value = self.evaluate_result(*self.truncating_evidence(), input_data=input_data)
+        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
+        self.assertEqual([item["condition"] for item in
+                          value.provenance["candidate_conditions"]], [self.condition])
+        self.assertEqual(value.evaluation_context["disease_match"], "UNKNOWN")
+        self.assertIsNone(value.evaluation_context["mechanism_source"])
+
+    def test_nothing_is_offered_when_the_gene_has_no_curated_disease(self):
+        input_data = {key: value for key, value in self.input.items() if key != "condition"}
+        value = self.evaluate_result(*self.gene_level_evidence(), input_data=input_data)
+        self.assertNotIn("candidate_conditions", value.provenance)
+        self.assertEqual(value.evaluation_context["applicability"], "NOT_EVALUATED")
+        self.assertEqual(value.review_points, [])
+
+    def test_another_genes_diseases_are_not_offered(self):
+        input_data = {key: value for key, value in self.input.items() if key != "condition"}
+        items = [self.annotation(), self.transcript(), self.nmd(),
+                 self.item("gene_disease", gene="OTHER", condition="MONDO:9",
+                           lof_mechanism_established=True)]
+        value = self.evaluate_result(*items, input_data=input_data)
+        self.assertNotIn("candidate_conditions", value.provenance)
 
     def test_a_preliminary_strength_never_becomes_the_criterion_strength(self):
         input_data = {key: value for key, value in self.input.items() if key != "condition"}
