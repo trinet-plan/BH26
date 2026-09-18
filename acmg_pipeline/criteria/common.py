@@ -157,23 +157,82 @@ def reviewed_or_automated(record):
     return bool(record.get("curator") and record.get("reviewed_at"))
 
 
-def unusable_reason(category, records, annotation, condition, disease_required):
+def transcript_compatible(record, annotation):
+    """Whether this record's scope covers the annotated transcript.
+
+    A record that names no transcript is not a record about a different one: a gene-level
+    mechanism statement (ClinGen Dosage, Gene2Phenotype) has no transcript to name, and
+    reading its absence as a mismatch told curators to "resolve the transcript" of a record
+    that never had one. This is the same rule PVS1's own _candidates() already applies -
+    the two matchers disagreeing was accidental, not a policy.
+
+    What actually keeps a gene-level record out of a criterion that cannot use it is
+    `required_fields`, which asks whether the record answers this criterion's question.
+    """
+    return not record.get("transcript") or record.get("transcript") == annotation["transcript"]
+
+
+def answers_criterion(record, required_fields, answered_by=()):
+    """Whether this record answers the question the criterion is about to ask.
+
+    One evidence category can have several producers with different scopes. `gene_disease`
+    carries both a gene-level LoF statement (which answers PVS1's mechanism gate and nothing
+    else) and a transcript-scoped mechanism and spectrum review (which answers PP2/BP1 too).
+    Selecting on the fields a criterion actually reads says which records can answer it,
+    instead of leaning on a proxy - and lets both producers be supplied at once without the
+    ones that cannot answer being counted as competing assessments.
+
+    `answered_by` names the fields that answer the criterion on their own. An expert panel
+    that marks a criterion not applicable to its gene-disease pair has answered it outright,
+    and deliberately records no mechanism or spectrum finding to go with that - requiring
+    the fields of a judgment the panel said not to make would discard the panel's decision.
+
+    Presence is the test here, not type: require_boolean_fields() still rules on whether a
+    present value is an explicit true/false, so a half-filled record keeps its own, more
+    specific message rather than being silently dropped here.
+    """
+    if any(record.get(field) is not None for field in answered_by):
+        return True
+    return all(record.get(field) is not None for field in required_fields)
+
+
+def unusable_reason(category, records, annotation, condition, disease_required,
+                    required_fields=(), answered_by=()):
     """Why every retrieved `category` record was rejected - one cause per rejection route.
 
-    "No usable assessment" covers four situations a curator has to act on differently:
+    "No usable assessment" covers five situations a curator has to act on differently:
     nothing was retrieved at all (produce the assessment), records exist but name no
     reviewer or policy version (record the provenance), records were reviewed against a
-    different transcript (resolve the transcript), or against a different disease (resolve
-    the disease context).  Reporting them as one message would tell a curator to create
-    evidence that already exists.  Returns (summary, missing, review).
+    different transcript (resolve the transcript), against a different disease (resolve the
+    disease context), or they are a different kind of assessment that does not carry what
+    this criterion reads (produce the assessment this criterion needs - the transcript and
+    the disease are not the problem).  Reporting them as one message would tell a curator to
+    create evidence that already exists, or to fix a field that is not what stopped the run.
+    Returns (summary, missing, review).
     """
     if not records:
         return (f"No {category} assessment was retrieved for this variant", [category], [])
     unreviewed = [r for r in records if not reviewed_or_automated(r)]
     reviewed = [r for r in records if reviewed_or_automated(r)]
-    transcript_mismatch = [r for r in reviewed if r.get("transcript") != annotation["transcript"]]
-    condition_mismatch = [r for r in reviewed if r.get("transcript") == annotation["transcript"]
-                          and disease_required and r.get("condition") != condition]
+    transcript_mismatch = [r for r in reviewed if not transcript_compatible(r, annotation)]
+    in_scope = [r for r in reviewed if transcript_compatible(r, annotation)]
+    condition_mismatch = [r for r in in_scope
+                          if disease_required and r.get("condition") != condition]
+    # Reported before the two mismatches: these records are in the right transcript and
+    # disease context and were still rejected, so they got furthest and theirs is the
+    # specific cause. A curator sent after a transcript here would find nothing wrong.
+    wrong_kind = [r for r in in_scope
+                  if (not disease_required or r.get("condition") == condition)
+                  and not answers_criterion(r, required_fields, answered_by)]
+    if wrong_kind:
+        absent = sorted({field for r in wrong_kind for field in required_fields
+                         if r.get(field) is None})
+        sources = sorted({str(r.get("source")) for r in wrong_kind})
+        return (f"{len(wrong_kind)} {category} assessment(s) apply to this variant "
+                f"({', '.join(sources)}) but are a different kind of assessment: they do not "
+                f"record {', '.join(absent)}, which this criterion reads",
+                list(absent),
+                [f"Supply a {category} assessment that records {', '.join(absent)}"])
     if condition_mismatch:
         seen = sorted({str(r.get("condition")) for r in condition_mismatch})
         return (f"{len(condition_mismatch)} reviewed {category} assessment(s) cover the requested "
@@ -190,19 +249,30 @@ def unusable_reason(category, records, annotation, condition, disease_required):
             [f"Record review provenance for the {category} assessment"])
 
 
-def curated_context(code, category, input_data, services, annotation, *, disease_required=True):
-    """One reviewed assessment in the exact disease/transcript context, never a DB label."""
+def curated_context(code, category, input_data, services, annotation, *, disease_required=True,
+                   required_fields=(), answered_by=()):
+    """One reviewed assessment in this disease/transcript scope that answers this criterion.
+
+    `required_fields` are the fields the caller's judgment reads. They select, not just
+    validate: a category can hold assessments of different kinds, and one that does not
+    record what the criterion reads is not a competing assessment of the same question - it
+    is an assessment of a different one. Passing them here keeps such a record from being
+    counted as a conflicting second opinion, and makes the rejection say what is actually
+    missing (see answers_criterion() and unusable_reason()).
+    """
     if disease_required and not input_data.get("condition"):
         return result(code, input_data, CriterionStatus.UNKNOWN, "Disease context required",
                       evidence=[annotation], missing=["condition"]), None
     condition = input_data.get("condition")
     retrieved = get_evidence(category, input_data, services)
     records = [r for r in retrieved if reviewed_or_automated(r)
-               and r.get("transcript") == annotation["transcript"]
-               and (not disease_required or r.get("condition") == condition)]
+               and transcript_compatible(r, annotation)
+               and (not disease_required or r.get("condition") == condition)
+               and answers_criterion(r, required_fields, answered_by)]
     if not records:
         summary, missing, review = unusable_reason(category, retrieved, annotation, condition,
-                                                   disease_required)
+                                                   disease_required, required_fields,
+                                                   answered_by)
         # Only when nothing came back at all: if records were retrieved and rejected,
         # unusable_reason already says which rejection route they took, and a provider that
         # failed elsewhere in the run did not cause that.

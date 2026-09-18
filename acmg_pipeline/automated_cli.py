@@ -386,3 +386,13 @@ def main(argv=None):
         return 0
     except (ValueError, OSError) as exc:
         parser.exit(2, f"acmg: {exc}\n")
+
+
+# Without this, `python -m acmg_pipeline.automated_cli ...` imports the module, defines
+# main(), runs nothing and exits 0 - a silent success that looks like a completed run and
+# leaves no output directory. Every documented invocation goes through -m, so the entry
+# point has to exist here.
+if __name__ == "__main__":
+    import sys
+
+    sys.exit(main(sys.argv[1:]))

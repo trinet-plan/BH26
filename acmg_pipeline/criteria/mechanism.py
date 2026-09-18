@@ -7,6 +7,19 @@ from acmg_pipeline.criteria.common import (
 )
 
 
+# What PP2 and BP1 read out of a gene_disease assessment. Used twice, for two different
+# jobs: selecting the records that can answer this criterion at all (curated_context), and
+# then ruling on whether the selected record states each of them as an explicit true/false
+# (require_boolean_fields). Keeping one list means the second can never ask for a field the
+# first did not require a producer to carry.
+_MECHANISM_FIELDS = {
+    "PP2": ["missense_mechanism_established", "spectrum_review_complete",
+            "low_benign_missense_variation"],
+    "BP1": ["missense_mechanism_established", "spectrum_review_complete",
+            "predominantly_truncating"],
+}
+
+
 def _gene_disease_draft_record(input_data, services, gene):
     """The gene_disease_draft record for this gene, if resolve.py's optional
     ClinGen Gene-Disease Validity + gnomAD constraint step produced one.
@@ -71,8 +84,16 @@ def evaluate_mechanism(code, input_data, services, config):
                       evidence=[annotation], provenance=NOT_APPLICABLE)
     # The mechanism statement is about the gene, so a condition-agnostic assessment is
     # usable and the disease relevance is reported instead of being required up front.
+    #
+    # The same category also carries gene-level loss-of-function statements (ClinGen Dosage,
+    # Gene2Phenotype) that exist for PVS1's mechanism gate. They answer whether LoF is a
+    # mechanism, never whether missense is, so they cannot decide PP2 or BP1 - naming the
+    # fields this judgment reads is what leaves them to PVS1 instead of rejecting them for a
+    # transcript they never claimed, and lets both producers be supplied in one run.
     early, mechanism = curated_context(code, "gene_disease", input_data, services, annotation,
-                                       disease_required=False)
+                                       disease_required=False,
+                                       required_fields=_MECHANISM_FIELDS[code],
+                                       answered_by=[f"{code.lower()}_applicable"])
     if early:
         draft_result = _mechanism_from_draft(code, input_data, services, annotation)
         return draft_result if draft_result is not None else early
@@ -104,9 +125,8 @@ def evaluate_mechanism(code, input_data, services, config):
         return result(code, input_data, CriterionStatus.UNKNOWN,
                       "Criterion applicability assessment is invalid", evidence=evidence,
                       missing=[applicability_field])
-    fields = ["missense_mechanism_established", "spectrum_review_complete"]
-    fields += ["low_benign_missense_variation"] if code == "PP2" else ["predominantly_truncating"]
-    early = require_boolean_fields(code, input_data, evidence, mechanism, fields)
+    early = require_boolean_fields(code, input_data, evidence, mechanism,
+                                   _MECHANISM_FIELDS[code])
     if early:
         return early
     if not mechanism["spectrum_review_complete"]:
