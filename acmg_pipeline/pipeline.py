@@ -948,6 +948,8 @@ async def evaluate_variant_evidence_lines(
         with_initiation_assessment=bool(automated_config.get("PVS1", {}).get("with_initiation_assessment")),
         with_gene2phenotype=bool(automated_config.get("with_gene2phenotype")),
         with_disease_matching=bool(automated_config.get("with_disease_matching")),
+        with_gene_disease_associations=bool(
+            automated_config.get("with_gene_disease_associations")),
     )
     _apply_condition_mapping(variant, resolver)
     resolved = resolver.resolve(_identity_from_info(variant), _automated_variant(variant))
