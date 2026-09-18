@@ -238,12 +238,17 @@ def evidence_catalog_item(item):
 def assessment_details(result):
     """Return the complete workflow explanation shared by all criterion outputs.
 
-    No `summary` key here: it would be a byte-for-byte copy of the emitted
+    No `summary` key here: it would be a byte-for-byte copy of the standard
     EvidenceLine's own top-level `description` (both come from
     `result.summary`) - found 2026-09-18 as reader-visible duplication in
-    every scored/workflow line's JSON. `description` is the standard VA-Spec
-    field, so it stays there; this extension carries only what has no
-    standard-field equivalent (status/decisionTrace/evaluationContext/...).
+    every scored/workflow line's JSON. `criterion` and `evidenceItemIds` also
+    duplicate standard fields (`specifiedBy.methodType`, `hasEvidenceItems`)
+    but stay regardless: export_record()/validate_envelope() below use this
+    exact dict, unkeyed by anything else, as one entry of
+    `criterion_assessments` - `criterion` says which code each entry is for,
+    and `evidenceItemIds` is what validate_envelope() cross-checks against
+    `referenced_evidence` for orphan references. Both real uses, not just
+    convenience copies - unlike `summary`, which nothing reads.
     """
     value = {
         "criterion": result.criterion,

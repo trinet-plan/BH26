@@ -69,7 +69,6 @@ def test_integrated_entrypoint_returns_one_ordered_line_per_acmg_code():
         schema_validator.validate(line)
         extensions = {item["name"]: item["value"] for item in line["extensions"]}
         code = line["specifiedBy"]["methodType"]
-        assert extensions["bh26AssessmentDetails"]["criterion"] == code
         assert extensions["referenceLink"] == f"https://example.test/{code}"
         assert "reportedIn" not in line
 

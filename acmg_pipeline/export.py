@@ -477,12 +477,14 @@ def build_evidence_line(
         else CriterionStatus.MET.value if direction.value == criterion
         else CriterionStatus.NOT_MET.value
     )
-    # No `summary` key: it would duplicate `description` below verbatim (see
-    # automated_va_spec.assessment_details()'s docstring, 2026-09-18).
+    # No `summary`/`criterion` keys: they would duplicate `description` below
+    # and `specifiedBy.methodType` verbatim. Unlike automated_va_spec.
+    # assessment_details() (see its docstring), nothing here needs `criterion`
+    # as a list-disambiguator - this line is never folded into an unkeyed
+    # list of assessments the way export_record()'s criterion_assessments is.
     assessment_ext = Extension(
         name="bh26AssessmentDetails",
         value={
-            "criterion": criterion,
             "status": status,
         },
     )
@@ -608,14 +610,14 @@ def build_workflow_evidence_line(
 ) -> dict:
     """Emit a neutral VA-Spec line for a non-scoreable workflow state.
 
-    `assessment` carries no `summary`: it would duplicate the EvidenceLine's
-    own top-level `description` below verbatim (see automated_va_spec.
-    assessment_details()'s docstring for the same call made on the
-    scored-line side, 2026-09-18).
+    `assessment` carries no `summary`/`criterion`: they would duplicate the
+    EvidenceLine's own top-level `description` and `specifiedBy.methodType`
+    below verbatim (see build_evidence_line()'s own note on the same choice,
+    and automated_va_spec.assessment_details()'s docstring for the one case
+    where `criterion` has to stay, 2026-09-18).
     """
     gene, _hgvsc, safe_hgvsc = _variant_identity(variant)
     assessment = {
-        "criterion": code,
         "status": status,
     }
     if details:
