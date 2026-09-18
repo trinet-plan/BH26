@@ -79,7 +79,7 @@ from acmg_pipeline.classification import (
 from acmg_pipeline.criteria import stubs
 from acmg_pipeline.criteria import pp1_bs4_pp4_engine
 from acmg_pipeline.api_input import ApiCaseInput
-from acmg_pipeline.clinical_note import ClinicalNoteExtraction
+from acmg_pipeline.clinical_note import ClinicalNoteExtraction, extract_clinical_note
 from acmg_pipeline.inputs import empty_clinical_note
 from acmg_pipeline.vcf_record import VariantRecord
 from acmg_pipeline.automated_core.identity import reconcile
@@ -760,8 +760,10 @@ async def judge_variant_from_structured_input(
     evaluate".
     """
     variant = case_input.parse_vcf().record
+    clinical_note = extract_clinical_note(case_input.clinical_note)
     return await judge_variant_from_shared_input(
         variant,
+        clinical_note,
         mcp,
         erepo_client,
         criteria=criteria,
@@ -773,6 +775,7 @@ async def judge_variant_from_structured_input(
 
 async def judge_variant_from_shared_input(
     variant: VariantRecord,
+    clinical_note: ClinicalNoteExtraction,
     mcp: ClientSession,
     erepo_client: ERepoClient,
     criteria: tuple[str, ...] = ("PS3", "BS3", "PS4"),
@@ -783,6 +786,8 @@ async def judge_variant_from_shared_input(
     """Run the five literature criteria directly from main's shared input class."""
     if not isinstance(variant, VariantRecord):
         raise TypeError("variant must be acmg_pipeline.vcf_record.VariantRecord")
+    if not isinstance(clinical_note, ClinicalNoteExtraction):
+        raise TypeError("clinical_note must be acmg_pipeline.clinical_note.ClinicalNoteExtraction")
     unknown = set(criteria) - LITERATURE_CODES
     if unknown:
         raise ValueError(f"Unsupported literature criteria: {sorted(unknown)}")
@@ -791,7 +796,7 @@ async def judge_variant_from_shared_input(
     hgvsp = variant.info.get("HGVSP", "N/A")
     equivalents = list(_protein_equivalents(hgvsp)) if hgvsp and hgvsp != "N/A" else [hgvsc]
 
-    disease = variant.info.get("DISEASE_ASSOCIATION")
+    disease = clinical_note.diagnosis
     pmids, _pmid_source = await resolve_pmids_for_variant(mcp, erepo_client, gene, hgvsc, hgvsp, disease)
     if not pmids:
         return {}
@@ -807,7 +812,7 @@ async def judge_variant_from_shared_input(
     return results
 
 
-_IDENTITY_INFO_KEYS = ("GENE", "TRANSCRIPT", "HGVSC", "HGVSP", "CLNVARIATIONID", "CONDITION")
+_IDENTITY_INFO_KEYS = ("GENE", "TRANSCRIPT", "HGVSC", "HGVSP", "CLNVARIATIONID")
 
 
 def _identity_from_info(variant: VariantRecord) -> dict:
@@ -816,11 +821,8 @@ def _identity_from_info(variant: VariantRecord) -> dict:
     Deliberately an allowlist, not the whole INFO dict: CLNSIG and
     ACMG_CODES sit in the same column and are conclusions, not lookup
     keys - nothing downstream should be able to reach them by accident.
-    CONDITION (a MONDO ID) is included so the resolver's optional
-    gene-disease-draft step (ClinGen Gene-Disease Validity + gnomAD
-    constraint, see services/resolve.py's _add_gene_disease_draft()) can
-    tell which of a gene's several curated diseases applies - it is
-    identity/context the same way GENE/TRANSCRIPT are, not a conclusion.
+    Disease context is deliberately absent: it is supplied separately by the clinical-note
+    parser, so a VCF CONDITION or DISEASE_ASSOCIATION value cannot select the disease.
     """
     wanted = {key.casefold(): key for key in _IDENTITY_INFO_KEYS}
     identity = {}
@@ -831,12 +833,42 @@ def _identity_from_info(variant: VariantRecord) -> dict:
     return identity
 
 
+def _provider_identity(
+    variant: VariantRecord, clinical_note: ClinicalNoteExtraction,
+) -> dict:
+    """Provider lookup identity plus the parser-owned MONDO disease context."""
+    identity = _identity_from_info(variant)
+    if clinical_note.condition_id:
+        identity["CONDITION"] = clinical_note.condition_id
+    return identity
+
+
+_VCF_DISEASE_INFO_KEYS = {
+    "condition", "condition_label", "condition_mapping", "condition_ancestors",
+    "disease_association",
+}
+
+
+def _variant_without_vcf_disease_context(variant: VariantRecord) -> VariantRecord:
+    """Copy a request variant while dropping every VCF-supplied disease field."""
+    return VariantRecord(
+        chrom=variant.chrom,
+        pos=variant.pos,
+        id=variant.id,
+        ref=variant.ref,
+        alt=variant.alt,
+        qual=variant.qual,
+        filter=variant.filter,
+        info={name: value for name, value in variant.info.items()
+              if name.casefold() not in _VCF_DISEASE_INFO_KEYS},
+    )
+
+
 _curated_context_cache: dict[str, dict] = {}
 
 
 def _apply_curated_context(variant: VariantRecord, automated_config: dict) -> None:
-    """Merges config/curated-context.json's BA1 exception check (and any per-variant
-    condition/disease-threshold override it records) into `variant.info`, in place.
+    """Merge non-disease curated context such as the BA1 exception check.
 
     Opt-in via automated_config["curated_context_path"] (unset by default, so existing
     callers are unaffected). Before this, InitiationProvider/UpstreamPathogenicProvider's
@@ -863,8 +895,9 @@ def _apply_curated_context(variant: VariantRecord, automated_config: dict) -> No
         "record_id": variant.id,
     }
     updated = apply_context(record, _curated_context_cache[path])
-    for key in ("condition", "condition_label", "inheritance",
-                "disease_frequency_threshold", "ba1_exception_assessment"):
+    # condition/condition_label entries in legacy documents are intentionally ignored. The
+    # clinical-note parser is the only owner of the disease selected for this case.
+    for key in ("inheritance", "disease_frequency_threshold", "ba1_exception_assessment"):
         if key in updated:
             variant.info[key] = updated[key]
 
@@ -934,21 +967,6 @@ def _resolve_identity(variant: VariantRecord, resolver) -> list[str]:
         variant.info["identity_issues"] = list(outcome["issues"])
 
 
-def _apply_condition_mapping(variant: VariantRecord, resolver) -> None:
-    """Record how the case's condition resolves to MONDO, beside the identifier it came in as.
-
-    PVS1's disease gate compares identifiers, so a case recorded in OMIM never matches a
-    curation recorded in MONDO. The mapping travels as `condition_mapping` in variant.info -
-    which is how criteria read case context on this path - and the original identifier stays
-    exactly as it arrived.
-    """
-    condition = next(
-        (value for name, value in variant.info.items() if name.casefold() == "condition"), None)
-    mapping = getattr(resolver, "normalize_condition", lambda _condition: None)(condition)
-    if mapping:
-        variant.info["condition_mapping"] = mapping
-
-
 def _automated_variant(variant: VariantRecord) -> AutomatedVariant:
     """The evidence-cli Variant for provider lookups (GRCh38 unless INFO says otherwise)."""
     assembly = next(
@@ -979,10 +997,9 @@ async def evaluate_variant_evidence_lines(
     """Return exactly one VA-Spec EvidenceLine for each of the 28 ACMG codes.
 
     Evidence for the automated criteria is retrieved and normalized by the
-    server-side ProviderEvidenceResolver. The VCF INFO column supplies
-    identity and context only - GENE,
-    TRANSCRIPT, HGVSC, CLNVARIATIONID here, the rest via
-    `acmg_pipeline.automated_core.interface.criterion_input`. It is never read as evidence:
+    server-side ProviderEvidenceResolver. The VCF INFO column supplies variant
+    identity only (GENE, TRANSCRIPT, HGVS and ClinVar accession). Disease context
+    comes exclusively from ClinicalNoteExtraction. INFO is never read as evidence:
     the demo VCFs' CLNSIG/ACMG_CODES are already-reached conclusions, the
     AM_*/AG_* scores have no calibration entry, and no population
     frequency is present at all. See acmg/services/resolve.py.
@@ -1019,15 +1036,16 @@ async def evaluate_variant_evidence_lines(
     # request that named its variant only as a transcript HGVS has no key until this runs.
     _resolve_identity(variant, resolver)
     _apply_curated_context(variant, automated_config)
-    _apply_condition_mapping(variant, resolver)
-    resolved = resolver.resolve(_identity_from_info(variant), _automated_variant(variant))
+    resolved = resolver.resolve(
+        _provider_identity(variant, clinical_note), _automated_variant(variant))
     services = make_services(
         resolved.records,
         automated_config.get("population_providers"),
         failures=resolved.failures,
     )
+    criterion_variant = _variant_without_vcf_disease_context(variant)
     automated_results = evaluate_automated_record(
-        variant,
+        criterion_variant,
         clinical_note,
         services,
         automated_config,
@@ -1037,6 +1055,7 @@ async def evaluate_variant_evidence_lines(
 
     literature_results = await judge_variant_from_shared_input(
         variant,
+        clinical_note,
         mcp,
         erepo_client,
         vcep_name=vcep_name,
@@ -1171,12 +1190,13 @@ async def evaluate_selected_criteria(
         # Identity first - see evaluate_variant_evidence_lines() for why.
         _resolve_identity(variant, resolver)
         _apply_curated_context(variant, automated_config)
-        _apply_condition_mapping(variant, resolver)
-        resolved = resolver.resolve(_identity_from_info(variant), _automated_variant(variant))
+        resolved = resolver.resolve(
+            _provider_identity(variant, clinical_note), _automated_variant(variant))
         services = make_services(resolved.records, automated_config.get("population_providers"),
                                  failures=resolved.failures)
+        criterion_variant = _variant_without_vcf_disease_context(variant)
         automated_results = evaluate_automated_record(
-            variant, clinical_note, services, automated_config, criteria=automated_subset,
+            criterion_variant, clinical_note, services, automated_config, criteria=automated_subset,
         )
         automated_by_code = {result.criterion: result for result in automated_results}
         for code in automated_subset:
@@ -1192,7 +1212,7 @@ async def evaluate_selected_criteria(
 
     if literature_subset:
         literature_results = await judge_variant_from_shared_input(
-            variant, mcp, erepo_client, criteria=literature_subset,
+            variant, clinical_note, mcp, erepo_client, criteria=literature_subset,
             vcep_name=vcep_name, full_text_cache=full_text_cache, llm_cache=llm_cache,
         )
         gene = str(variant.info.get("GENE", ""))

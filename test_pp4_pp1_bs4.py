@@ -120,4 +120,45 @@ assert r.segregation.pp1_points_raw == 1.0
 assert r.segregation.pp1_points_used == 0.5
 assert r.combined_positive_locus_points == 2.5
 
-print("6 passed, 0 failed")
+# 7) X-linked recessive: an unaffected female carrier (Table 3 footnote e /
+#    Figure 6's own worked example - an unaffected mother with an affected
+#    brother and son) is scored as PP1 (+1.0), not silently dropped or
+#    routed into the BS4/non-segregation check. Mirrors Figure 6: brother
+#    (affected male, +1.0) + son (affected male, +1.0) + mother (unaffected
+#    carrier female, +1.0) = +3.0. The mother is also a "parent"
+#    relationship, verifying the AD/AR-only parent exclusion (Table 3
+#    footnote a) does not apply to the X-linked recessive row.
+r = evaluate_locus_evidence(
+    case(
+        [
+            Relative("brother", affected_status=True, variant_status=True),
+            Relative("son", affected_status=True, variant_status=True),
+            Relative("mother", affected_status=False, variant_status=True),
+        ],
+        inheritance="x-linked recessive",
+    ),
+    ref(),
+    method_comparable=True,
+)
+assert r.segregation.pp1_points_raw == 3.0
+assert r.segregation.bs4_met is False
+mother_obs = next(o for o in r.segregation.observations if o.relationship == "mother")
+assert mother_obs.role == "PP1"
+assert mother_obs.points == 1.0
+
+# 8) X-linked recessive: an unaffected NON-carrier female is still not
+#    counted (footnote e only covers confirmed/obligate carriers) - this
+#    stays unscored, same as before the fix.
+r = evaluate_locus_evidence(
+    case(
+        [Relative("sister", affected_status=False, variant_status=False)],
+        inheritance="x-linked recessive",
+    ),
+    ref(),
+    method_comparable=True,
+)
+assert r.segregation.pp1_points_raw == 0.0
+sister_obs = next(o for o in r.segregation.observations if o.relationship == "sister")
+assert sister_obs.role != "PP1"
+
+print("8 passed, 0 failed")

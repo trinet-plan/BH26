@@ -6,6 +6,10 @@ from acmg_pipeline.services.population import number
 
 
 STRENGTH_ORDER = {"supporting": 1, "moderate": 2, "strong": 3, "very_strong": 4}
+# The criterion a calibration would support if this score pointed the other way. A
+# calibration states both directions over one score range, so the opposing band is what
+# distinguishes a predictor that contradicts this criterion from one that is simply silent.
+OPPOSING_CRITERION = {"PP3": "BP4", "BP4": "PP3"}
 REQUIRED = ("predictor", "predictor_version", "source", "version", "mechanism", "consequences")
 
 
@@ -122,12 +126,14 @@ def evaluate_prediction(code, input_data, services, config):
             "calibration": name, "mechanism": calibration["mechanism"],
             "predictor": calibration["predictor"], "score": str(score),
             "strength": band_strength(calibration, code, score),
+            "opposing": band_strength(calibration, OPPOSING_CRITERION[code], score),
         })
     if not applied:
         return result(code, input_data, CriterionStatus.UNKNOWN, "Matching predictor score unavailable",
                       missing=sorted(set(missing)), evidence=[annotation])
     provenance = {"applied_calibrations": [
-        {key: item[key] for key in ("calibration", "mechanism", "predictor", "score", "strength")}
+        {key: item[key] for key in ("calibration", "mechanism", "predictor", "score", "strength",
+                                    "opposing")}
         for item in applied]}
     if assertions:
         provenance["version_assertions"] = assertions
@@ -137,21 +143,49 @@ def evaluate_prediction(code, input_data, services, config):
     # A predicted effect on either protein or splicing can carry PP3, but benign computational
     # evidence requires every applicable mechanism to show no effect: a low protein score says
     # nothing about a disrupted splice site (ClinGen SVI, Walker et al. 2023).
-    blocking = [item for item in applied if not item["strength"]] if code == "BP4" else []
+    #
+    # "Shows no effect" is not the same as "produced no evidence", and only the first
+    # contradicts BP4. Both calibrations in use leave an explicit gap between their two
+    # bands - REVEL 0.290-0.644 (Pejaver et al. 2022), SpliceAI 0.1-0.2 (Walker et al. 2023)
+    # - and a score inside it is the calibration declining to call the variant in either
+    # direction. Reading that silence as a contradiction made every indeterminate mechanism
+    # veto BP4, which is how MYH7 c.4472C>G (REVEL 0.398, SpliceAI 0) came back not_met
+    # against a curator's BP4: the protein predictor abstained and was counted as objecting.
+    #
+    # So only a mechanism scoring inside the OPPOSING criterion's own band blocks. An
+    # abstaining mechanism cannot support BP4 either, so it is reported rather than
+    # absorbed: the benign call then rests on the mechanisms that did answer.
+    blocking = [item for item in applied if item["opposing"]] if code == "BP4" else []
     if blocking:
         provenance["benign_blocked_by"] = [
-            {"predictor": item["predictor"], "mechanism": item["mechanism"], "score": item["score"]}
+            {"predictor": item["predictor"], "mechanism": item["mechanism"],
+             "score": item["score"], "opposing_criterion": OPPOSING_CRITERION[code],
+             "opposing_strength": item["opposing"]}
             for item in blocking]
+        names = ", ".join(f"{item['predictor']} {item['score']}" for item in blocking)
         return result(code, input_data, CriterionStatus.NOT_MET,
-                      "Another predicted mechanism does not support benign computational evidence",
+                      f"Another predicted mechanism supports {OPPOSING_CRITERION[code]} rather "
+                      f"than a benign effect ({names})",
                       evidence=evidence, provenance=provenance)
     if not supporting:
         return result(code, input_data, CriterionStatus.NOT_MET, "Score does not meet criterion calibration",
                       evidence=evidence, provenance=provenance)
+    uninformative = [item for item in applied if not item["strength"] and not item["opposing"]]
+    review = []
+    if code == "BP4" and uninformative:
+        # A benign call carried by the mechanisms that answered, while another abstained, is
+        # narrower than "computational evidence suggests no impact" reads. The curator is told
+        # which mechanism was left open rather than having to infer it from the scores.
+        provenance["uninformative_mechanisms"] = [
+            {"predictor": item["predictor"], "mechanism": item["mechanism"],
+             "score": item["score"]} for item in uninformative]
+        review = [f"{item['predictor']} ({item['score']}) falls between this calibration's "
+                  f"{code} and {OPPOSING_CRITERION[code]} intervals, so {item['mechanism']} "
+                  f"impact is neither supported nor excluded" for item in uninformative]
     if code == "BP4" and annotation.get("high_confidence_null_or_splice") is True:
         return result(code, input_data, CriterionStatus.UNKNOWN, "Benign prediction conflicts with null/splice annotation",
                       evidence=evidence, review=["Reconcile null/splice evidence"], provenance=provenance)
     # Mechanisms are alternatives, never additive: the strongest applicable interval is used.
     strength = max((item["strength"] for item in supporting), key=STRENGTH_ORDER.get)
     return result(code, input_data, CriterionStatus.MET, "Score meets calibrated interval",
-                  strength=strength, evidence=evidence, provenance=provenance)
+                  strength=strength, evidence=evidence, review=review, provenance=provenance)

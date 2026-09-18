@@ -19,7 +19,13 @@ from acmg_pipeline.services.resolve import (
     ResolvedEvidence,
     StaticEvidenceResolver,
 )
-from acmg_pipeline.pipeline import _automated_variant, _identity_from_info
+from acmg_pipeline.clinical_note import ClinicalNoteExtraction
+from acmg_pipeline.pipeline import (
+    _automated_variant,
+    _identity_from_info,
+    _provider_identity,
+    _variant_without_vcf_disease_context,
+)
 from acmg_pipeline.vcf_record import VariantRecord
 
 VARIANT = Variant(assembly="GRCh38", chrom="14", pos=23883114, ref="G", alt="A")
@@ -62,6 +68,33 @@ def test_identity_is_an_allowlist_not_the_whole_info_column():
 def test_identity_keeps_the_clinvar_accession_when_present():
     identity = _identity_from_info(_vcf_record(CLNVARIATIONID="VCV000042013"))
     assert identity["CLNVARIATIONID"] == "VCV000042013"
+
+
+def test_provider_identity_uses_only_the_clinical_note_condition():
+    record = _vcf_record(CONDITION="MONDO:9999999", DISEASE_ASSOCIATION="wrong_disease")
+    note = ClinicalNoteExtraction(
+        diagnosis="hypertrophic cardiomyopathy", condition_id="MONDO:0005045")
+
+    assert "CONDITION" not in _identity_from_info(record)
+    assert _provider_identity(record, note)["CONDITION"] == "MONDO:0005045"
+
+
+def test_live_criterion_variant_drops_vcf_disease_without_mutating_the_request():
+    record = _vcf_record(
+        CONDITION="MONDO:9999999",
+        condition_label="wrong disease",
+        condition_mapping={"normalized_condition": "MONDO:9999999"},
+        DISEASE_ASSOCIATION="wrong_disease",
+    )
+
+    sanitized = _variant_without_vcf_disease_context(record)
+
+    assert "CONDITION" in record.info
+    assert "CONDITION" not in sanitized.info
+    assert "condition_label" not in sanitized.info
+    assert "condition_mapping" not in sanitized.info
+    assert "DISEASE_ASSOCIATION" not in sanitized.info
+    assert sanitized.info["GENE"] == "MYH7"
 
 
 def test_identity_drops_empty_and_is_case_insensitive():
@@ -263,3 +296,25 @@ def test_no_configured_path_is_a_no_op():
                             qual="", filter="", info={"GENE": "TEST"})
     _apply_curated_context(variant, {})
     assert variant.info == {"GENE": "TEST"}
+
+
+def test_legacy_curated_disease_context_is_ignored(tmp_path):
+    document = {
+        "context_version": "test-1",
+        "source": "test",
+        "records": {},
+        "record_contexts": {
+            "case-1": {
+                "condition": "MONDO:9999999",
+                "condition_label": "wrong curated disease",
+            },
+        },
+    }
+    path = tmp_path / "curated-context.json"
+    path.write_text(json.dumps(document), encoding="utf-8")
+    variant = _vcf_record()
+
+    _apply_curated_context(variant, {"curated_context_path": str(path)})
+
+    assert "condition" not in variant.info
+    assert "condition_label" not in variant.info

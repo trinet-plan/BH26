@@ -31,7 +31,7 @@ acmg_pipeline/            判定パイプライン本体
   criteria/                  基準ごとの判定ロジック(PS3/BS3, PS4, PP1/BS4)
 
 acmg/                     移植した自動判定器(16基準)
-config/                   自動判定の閾値・疾患文脈
+config/                   自動判定の閾値・BA1例外・CLI互換用文脈
 tests/                    自動判定と統合インターフェースのpytest
 
 democase/                 デモ用の臨床ノート・VCF・正解データ
@@ -144,6 +144,38 @@ python3 -m acmg_pipeline.pipeline
 CLI引数は用意されていません。対象の遺伝子/変異を変えたい場合は
 `acmg_pipeline/pipeline.py` の `main()` 内 `test_cases`(505行目付近)を
 直接編集してください。
+
+## 自動判定CLIの実行手順(demo-data)
+
+`acmg_pipeline.automated_cli` が16本の自動化criterionを評価します。**4ステップで、
+3番目を飛ばすとPP2/BP1がミスセンス全件で `unknown` になります。**
+
+```bash
+# 1. 原本VCFを監査(原本は変更しない)
+python3 -m acmg_pipeline.automated_cli audit-demo   --input-dir demo-data --output-dir work/run/audit
+
+# 2. identityを解決し、外部プロバイダから normalised evidence を集める
+python3 -m acmg_pipeline.automated_cli prepare-demo-online   --input-dir demo-data   --cache-dir tests/fixtures/ensembl-cache   --evidence-cache-dir tests/fixtures/external-cache   --output-dir work/run/prepared --ensembl-release 116   --with-gnomad --gnomad-release 4.1.1   --with-clinvar --clinvar-release 2026-09-15   --with-pm1-hotspot --with-dbnsfp   --rules config/demo-rules.json --offline
+
+# 3. 遺伝子--疾患の機序assessmentを展開して evidence に足す(PP2/BP1に必須)
+python3 -m acmg_pipeline.automated_cli build-gene-disease-evidence   --input config/gene-disease-review-decisions.json   --base-evidence work/run/prepared/evidence.json   --output work/run/evidence.json
+
+# 4. 評価する
+python3 -m acmg_pipeline.automated_cli evaluate   --input work/run/prepared/variants.json   --evidence work/run/evidence.json   --config config/demo-rules.json   --context config/curated-context.json   --output-dir work/run/evaluated --offline
+```
+
+**ステップ3を省略できない理由。** ステップ2の `--with-clingen-dosage` /
+`--with-gene2phenotype` が取得するのは遺伝子レベルのLoF機序で、PVS1のゲートには答えますが
+「ミスセンスが疾患機序か」は記録していません。PP2とBP1はそれを読むため、transcriptスコープ
+の機序・変異スペクトラムreviewである `config/gene-disease-review-decisions.json` の展開が
+要ります。投入しない場合、PP2/BP1は推測せず `unknown` を返し、`missing_inputs` に不足
+フィールド名を列挙します。
+
+reviewされた決定が無い遺伝子の変異には assessment が付きません(他遺伝子の判断を一般化
+しないため)。demo-dataでは7グループが28件中15件をカバーします。
+
+`--offline` はキャッシュ済みレスポンスのみを使い、ネットワークへ出ません。実行可能な形の
+同じ手順が `tests/test_demo_pipeline.py` にあります。
 
 ## criterion入力インターフェース
 

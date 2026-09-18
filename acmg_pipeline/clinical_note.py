@@ -28,6 +28,7 @@ rather than guessed.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from typing import Optional
 
@@ -150,9 +151,28 @@ class ClinicalNoteExtraction:
     de_novo: DeNovo = field(default_factory=DeNovo)
     # 自由文の診断名(例: "hypertrophic cardiomyopathy")。VA-Spec Statementの
     # objectCondition(対象疾患)に使う - see z_tmp_va_spec_statement_decisions.md。
-    # コード体系(MedGen/OMIM等)への変換は行わず、この自由文をそのまま
-    # MappableConcept.name に載せる想定。
+    # 表示・文献検索には自由文を、疾患特異的な自動判定にはMONDO IDを使う。
+    # 疾患情報はVariantRecord.infoに書き戻さない。
     diagnosis: Optional[str] = None
+    # diagnosisをMONDOに正規化したID(例: "MONDO:0007739")。
+    #
+    # 生産者は2つある。clinical-note parserが抽出時に埋める経路と、
+    # acmg_pipeline.hpo_mondo_extraction.resolve_diagnosis_mondo()がTogoMCP経由で
+    # 後から埋める経路。どちらも同じ「この症例が対象とする疾患」を指すので、
+    # フィールドは1つに保つ(2026-09-18のマージで mondo_id と condition_id の2案が
+    # 並行実装されたが、読む側 - automated_core.interface.criterion_input() が
+    # data["condition"]へ渡し、PP2/BP1/PM1/PVS1の疾患照合を駆動する - は1つしか
+    # 無いため、下流の`condition`と名前を揃えたこちらに寄せた)。
+    # 解決できない場合はNoneのまま。diagnosisは決して上書きしない。
+    condition_id: Optional[str] = None
+
+    def __post_init__(self) -> None:
+        # どちらの生産者が埋めても、ここを通る。OMIM/Orphanet/MedGen/自由文が
+        # 紛れ込むと疾患照合が静かに外れるので、形式は型の側で強制する。
+        if self.condition_id is not None and not re.fullmatch(r"MONDO:\d+", self.condition_id):
+            raise ValueError(
+                "clinical-note condition_id must be a MONDO identifier such as MONDO:0005045"
+            )
 
     @staticmethod
     def from_json(data: dict) -> "ClinicalNoteExtraction":
@@ -161,6 +181,7 @@ class ClinicalNoteExtraction:
             family=Family.from_json(data.get("family") or {}),
             de_novo=DeNovo.from_json(data.get("de_novo") or {}),
             diagnosis=data.get("diagnosis"),
+            condition_id=data.get("condition_id"),
         )
 
 

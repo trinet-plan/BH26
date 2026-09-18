@@ -16,6 +16,8 @@ class DemoPipelineTests(unittest.TestCase):
         prepared = base / "prepared"
         evaluated = base / "evaluated"
         case2_evaluated = base / "case2-pm2-evaluated"
+        mechanism_evidence = base / "gene-disease" / "evidence.json"
+        mechanism_evaluated = base / "gene-disease-evaluated"
         code = main([
             "prepare-demo-online", "--input-dir", str(ROOT / "demo-data"),
             "--cache-dir", str(ROOT / "tests" / "fixtures" / "ensembl-cache"),
@@ -82,7 +84,17 @@ class DemoPipelineTests(unittest.TestCase):
         computational = [result for record in results["records"] for result in record["results"]
                          if result["criterion"] in ("PP3", "BP4")]
         met = [result for result in computational if result["status"] == "met"]
-        self.assertEqual(len(met), 18)
+        # PP3 6 + BP4 16. Four of the BP4 calls rest on SpliceAI 0 while REVEL (0.398, 0.398,
+        # 0.398, 0.404) sits in Pejaver et al. 2022's gap between the PP3 and BP4 intervals.
+        # Those four were not_met while an abstaining mechanism counted as a contradiction;
+        # each now carries its abstention in provenance.uninformative_mechanisms and a review
+        # point, so the benign call still says which mechanism was left open.
+        self.assertEqual(len(met), 22)
+        abstained = [result for result in met
+                     if "uninformative_mechanisms" in result["provenance"]]
+        self.assertEqual(len(abstained), 4)
+        self.assertTrue(all(result["criterion"] == "BP4" and result["review_points"]
+                            for result in abstained))
         strengths = {result["evidence_outcome"] for result in met}
         self.assertEqual(strengths, {"PP3", "PP3_moderate", "PP3_strong",
                                      "BP4", "BP4_moderate"})
@@ -148,6 +160,57 @@ class DemoPipelineTests(unittest.TestCase):
             # Disease relevance is unresolved without a condition, so it stays a review point.
             self.assertEqual(result["provenance"]["condition_assessment"], "NOT_EVALUATED")
             self.assertTrue(result["review_points"])
+
+        # PP2 and BP1 need a mechanism assessment scoped to a transcript, which the online
+        # providers above do not produce: ClinGen Dosage and Gene2Phenotype state whether
+        # loss of function is a mechanism, which answers PVS1's gate and nothing else. The
+        # transcript-scoped review that also records the missense mechanism and the variant
+        # spectrum comes from build-gene-disease-evidence, and without that step PP2 and BP1
+        # are unknown for every missense record in the demo set. This asserts the step is a
+        # part of the pipeline rather than something a run has to know to add.
+        code = main([
+            "build-gene-disease-evidence",
+            "--input", str(ROOT / "config" / "gene-disease-review-decisions.json"),
+            "--base-evidence", str(prepared / "evidence.json"),
+            "--output", str(mechanism_evidence),
+        ])
+        self.assertEqual(code, 0)
+        code = main([
+            "evaluate", "--input", str(prepared / "variants.json"),
+            "--evidence", str(mechanism_evidence), "--offline",
+            "--config", str(ROOT / "config" / "demo-rules.json"),
+            "--context", str(ROOT / "config" / "curated-context.json"),
+            "--criteria", "PP2,BP1", "--output-dir", str(mechanism_evaluated),
+            "--internal-only",
+        ])
+        self.assertEqual(code, 0)
+        mechanism_results = json.loads(
+            (mechanism_evaluated / "results.json").read_text(encoding="utf-8")
+        )
+        mechanism = [result for record in mechanism_results["records"]
+                     for result in record["results"]]
+        counts = {code_: {status: sum(result["status"] == status for result in mechanism
+                                      if result["criterion"] == code_)
+                          for status in ("met", "not_met", "unknown")}
+                  for code_ in ("PP2", "BP1")}
+        # The 18 unknowns are the non-missense records, which PP2 and BP1 do not evaluate.
+        self.assertEqual(counts["PP2"], {"met": 1, "not_met": 9, "unknown": 18})
+        self.assertEqual(counts["BP1"], {"met": 0, "not_met": 10, "unknown": 18})
+        evaluated_records = [result for result in mechanism if result["status"] != "unknown"]
+        self.assertTrue(all(result["provenance"]["assessment_scope"] == "gene_level"
+                            for result in evaluated_records))
+        # The step adds to the prepared evidence rather than replacing it, so the same
+        # document still carries the population, annotation and ClinVar records the other
+        # criteria read. Whether the gene-level records from --with-clingen-dosage can sit
+        # alongside these without being counted as a competing assessment is covered by
+        # tests/test_curated.py; this recipe does not request those providers.
+        combined = json.loads(mechanism_evidence.read_text(encoding="utf-8"))["evidence"]
+        base = json.loads((prepared / "evidence.json").read_text(encoding="utf-8"))["evidence"]
+        # 7 reviewed gene-disease groups expand to 15 of the 28 demo records - a record in a
+        # gene with no reviewed decision gets no assessment rather than a generalized one.
+        self.assertEqual(len(combined), len(base) + 15)
+        self.assertTrue(all(item.get("transcript")
+                            for item in combined if item["category"] == "gene_disease"))
 
         # Exercise a real case2 record and the committed gnomAD response with an explicit,
         # test-only rarity threshold. This is a regression test, not a clinical policy.

@@ -19,7 +19,7 @@ from acmg_pipeline.common import MatchStatus, PaperContribution, VariantMatching
 from acmg_pipeline.constants import CriterionStatus
 from acmg_pipeline.criteria import segregation
 from acmg_pipeline.export import build_automated_evidence_line, build_evidence_line
-from acmg_pipeline.pipeline import evaluate_variant_evidence_lines
+from acmg_pipeline.pipeline import evaluate_variant_evidence_lines, judge_variant_from_shared_input
 from acmg_pipeline.vcf_record import VariantRecord
 
 
@@ -85,6 +85,32 @@ def test_integrated_entrypoint_requires_shared_input_classes():
                 erepo_client=object(),
             )
         )
+
+
+def test_literature_search_uses_clinical_note_diagnosis_not_vcf_disease():
+    variant = VariantRecord(
+        chrom="1", pos=100, id="case-1", ref="A", alt="G", qual=".", filter="PASS",
+        info={
+            "GENE": "GENE1", "HGVSC": "c.1A>G", "HGVSP": "p.Lys1Arg",
+            "DISEASE_ASSOCIATION": "wrong_vcf_disease",
+        },
+    )
+    clinical_note = ClinicalNoteExtraction(
+        diagnosis="right clinical diagnosis", condition_id="MONDO:0005045")
+    mcp = object()
+    erepo = object()
+
+    with patch(
+        "acmg_pipeline.pipeline.resolve_pmids_for_variant",
+        new=AsyncMock(return_value=([], "pubmed_search")),
+    ) as resolve_pmids:
+        result = asyncio.run(judge_variant_from_shared_input(
+            variant, clinical_note, mcp, erepo, criteria=("PS3",),
+        ))
+
+    assert result == {}
+    resolve_pmids.assert_awaited_once_with(
+        mcp, erepo, "GENE1", "c.1A>G", "p.Lys1Arg", "right clinical diagnosis")
 
 
 def test_pp1_reference_is_attached_to_real_literature_line():

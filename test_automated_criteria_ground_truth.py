@@ -20,15 +20,18 @@ for this project's own 3 literature codes.
   rather than the full 373-entry ERepo dataset.
 
 [Why this uses the CLI's --internal-only path]
-  acmg_pipeline.automated_cli's `evaluate` (without --internal-only) also
-  runs VA-Spec export, which currently raises
-  AttributeError: 'VariantPathogenicityEvidenceLine' object has no
-  attribute 'schema_id' (acmg_pipeline/automated_va_spec.py - a real bug,
-  unrelated to this script, found while building it; not fixed here since
-  it's out of this project's own scope and --internal-only is a supported
-  way to skip it, per automated_cli.py's own --internal-only flag).
-  --internal-only skips VA-Spec and returns just the internal per-
-  criterion results this script actually needs.
+  This script only needs the internal per-criterion results, and
+  --internal-only returns exactly those without also running VA-Spec
+  export, which this comparison does not read.
+
+  This paragraph used to say the export raised AttributeError:
+  'VariantPathogenicityEvidenceLine' object has no attribute 'schema_id'.
+  That is no longer true - as of 2026-09-18 the installed ga4gh.va_spec
+  model defines schema_id(), tests/test_va_spec.py covers it, and
+  tests/test_demo_pipeline.py runs the full export and asserts
+  va_spec_export == "VALIDATED". The note is kept rather than deleted
+  because it was quoted as evidence of an open bug months after it had
+  been fixed.
 
 [Why this only checks MET assertions, not NOT_MET]
   ACMG_CODES= lists only the codes the curator found MET for that variant -
