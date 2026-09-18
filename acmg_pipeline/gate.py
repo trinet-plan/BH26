@@ -168,6 +168,15 @@ class ERepoLookupResult:
     # specifically (some may support other criteria, e.g. PM2 population
     # frequency, PS4 case counts, etc.).
     evidence_pmids: list[str] = field(default_factory=list)
+    # The disease/condition the VCEP curated this classification against
+    # (ERepo's own "condition" field, e.g. {"@id": "MONDO:0015967", "label":
+    # "monogenic diabetes"}) - already a MONDO term, so it can be used
+    # directly as ClinicalNoteExtraction.condition_id for criteria (PVS1's
+    # mechanism gate, PP1/BS4/PP4) that need a diagnosis but have no
+    # free-text clinical note to extract one from (e.g. this project's own
+    # 64-variant ERepo dataset).
+    condition_id: Optional[str] = None
+    condition_label: Optional[str] = None
     raw: Optional[dict] = None     # raw API response (kept for audit purposes)
 
 
@@ -257,12 +266,15 @@ class OfflineERepoClient(ERepoClient):
                         status_map[label] = (
                             CriterionStatus.MET if status == "Met" else CriterionStatus.NOT_MET
                         )
+            condition = interp.get("condition") or {}
             return ERepoLookupResult(
                 found_in_erepo=True,
                 caid=interp.get("caid"),
                 evidence_code_status=status_map,
                 outcome=outcome,
                 evidence_pmids=_extract_pmids_from_evidence_links(interp.get("evidenceLinks", [])),
+                condition_id=condition.get("@id"),
+                condition_label=condition.get("label"),
                 raw=interp,
             )
         return ERepoLookupResult(found_in_erepo=False)

@@ -71,6 +71,7 @@ from acmg_pipeline.automated_core.input import audit_vcf
 from acmg_pipeline.classification import ALL_ACMG_CODES, classification_to_dict, classify
 from acmg_pipeline.fulltext_cache import DiskBackedFullTextCache
 from acmg_pipeline.gate import ERepoClient
+from acmg_pipeline.clinical_note import ClinicalNoteExtraction
 from acmg_pipeline.inputs import empty_clinical_note
 from acmg_pipeline.llm_cache import DiskBackedLLMCache
 from acmg_pipeline.pipeline_interface import _evidence_from_line
@@ -217,9 +218,25 @@ async def main() -> None:
                 info={"GENE": gene, "TRANSCRIPT": entry["transcript"], "HGVSC": hgvsc},
             )
 
+            # This 64-variant ERepo dataset has no free-text clinical note to
+            # extract a diagnosis from, so PP1/BS4/PP4 (and PVS1's mechanism
+            # gate) would otherwise always see condition_id=None and come
+            # back unknown regardless of the variant. ERepo's own API
+            # response already names the condition each variant was curated
+            # against (a MONDO term) - reuse it here instead of passing an
+            # empty clinical note.
+            erepo_lookup = erepo_client.lookup(gene, hgvsc)
+            if erepo_lookup.condition_id:
+                clinical_note = ClinicalNoteExtraction(
+                    diagnosis=erepo_lookup.condition_label,
+                    condition_id=erepo_lookup.condition_id,
+                )
+            else:
+                clinical_note = empty_clinical_note()
+
             try:
                 lines = await pl.evaluate_variant_evidence_lines(
-                    variant, empty_clinical_note(),
+                    variant, clinical_note,
                     automated_config=automated_config,
                     mcp=mcp, erepo_client=erepo_client,
                     full_text_cache=full_text_cache, llm_cache=llm_cache,
