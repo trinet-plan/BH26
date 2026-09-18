@@ -18,8 +18,9 @@ a later VCF INFO field addition needs no signature change here.
 [Where the returned URL ends up in VA-Spec output]
   Every function below just returns a plain `str | None` - none of them
   touch VA-Spec themselves. acmg_pipeline.export.build_reference_extensions()
-  puts that string into ONE specific place on real and stub lines alike:
-  EvidenceLine.extensions, as Extension(name="referenceLink", value=url) -
+  puts each returned string into ONE specific place on real and stub lines
+  alike: EvidenceLine.extensions, as repeated
+  Extension(name="referenceLink", value=url) entries -
   deliberately NOT EvidenceLine.reportedIn (a Document there would be
   spec-valid with just `urls` set, no `pmid` needed, but reportedIn means
   "the source this evidence was reported in", and no evaluation of these
@@ -83,6 +84,7 @@ from urllib.parse import quote
 
 import requests
 
+from acmg_pipeline.constants import ALL_ACMG_CODES
 from acmg_pipeline.vcf_record import VariantRecord
 
 # Fallback for autopvs1_variant_url() below, when the variant's ref/alt
@@ -290,6 +292,25 @@ def togovar_variant_url(variant: VariantRecord) -> str | None:
             f"{variant.chrom}-{variant.pos}-{variant.ref}-{variant.alt}")
 
 
+def franklin_variant_url(variant: VariantRecord, build: str = "hg38") -> str | None:
+    """Return Franklin's page for an exact small variant.
+
+    Franklin uses the ``snp`` route for SNVs and small indels.  This project
+    evaluates GRCh38 variants, represented by the ``-hg38`` suffix.  A link
+    is omitted for placeholder alleles rather than sending the curator to a
+    page that cannot identify a variant.
+    """
+    if not variant.chrom or not variant.pos:
+        return None
+    if not variant.ref or not variant.alt or variant.alt in (".", ""):
+        return None
+    chrom = str(variant.chrom).removeprefix("chr")
+    return (
+        "https://franklin.genoox.com/clinical-db/variant/snp/"
+        f"chr{chrom}-{variant.pos}-{variant.ref}-{variant.alt}-{build}"
+    )
+
+
 def gnomad_gene_url(variant: VariantRecord, dataset: str = "gnomad_r4") -> str | None:
     """
     Criteria: PP2 (doc: "get the gnomAD zscore" - the missense Z-score is a
@@ -311,21 +332,21 @@ def gnomad_gene_url(variant: VariantRecord, dataset: str = "gnomad_r4") -> str |
     return f"https://gnomad.broadinstitute.org/gene/{quote(gene)}?dataset={dataset}"
 
 
-# code -> the reference-link function to call, for codes this module can
-# produce a URL for. PM1/PM5 use a gene->UniProt lookup; PP3/BP4 are absent
-# because their request is a threshold table, not a single reference page.
+# code -> criterion-specific reference-link builders.  Franklin is added
+# separately for every ACMG criterion by reference_urls_for_criterion().
+# Population-frequency criteria intentionally carry both TogoVar and gnomAD.
 _URL_BUILDERS = {
-    "PVS1": autopvs1_variant_url,
-    "PS1": clinvar_position_url,
-    "PM3": clinvar_search_url,
-    "PP1": clinvar_search_url,
-    "PM1": uniprot_page_url,
-    "PM5": uniprot_page_url,
-    "PM2": togovar_variant_url,
-    "BA1": togovar_variant_url,
-    "BS1": togovar_variant_url,
-    "BS2": togovar_variant_url,
-    "PP2": gnomad_gene_url,
+    "PVS1": (autopvs1_variant_url,),
+    "PS1": (clinvar_position_url,),
+    "PM3": (clinvar_search_url,),
+    "PP1": (clinvar_search_url,),
+    "PM1": (uniprot_page_url,),
+    "PM5": (uniprot_page_url,),
+    "PM2": (togovar_variant_url, gnomad_variant_url),
+    "BA1": (togovar_variant_url, gnomad_variant_url),
+    "BS1": (togovar_variant_url, gnomad_variant_url),
+    "BS2": (togovar_variant_url, gnomad_variant_url),
+    "PP2": (gnomad_gene_url,),
 }
 
 # Public: the codes this module can build a reference URL for at all (a
@@ -334,37 +355,57 @@ _URL_BUILDERS = {
 # defined URL strategy). Callers building a UI/EvidenceLine per code (see
 # acmg_pipeline.export.build_reference_extensions()) can use this to know
 # which criteria have a curator-facing reference link worth generating.
-CODES_WITH_REFERENCE_URL = frozenset(_URL_BUILDERS)
+CODES_WITH_REFERENCE_URL = frozenset(ALL_ACMG_CODES)
+
+
+def reference_urls_for_criterion(code: str, variant: VariantRecord) -> list[str]:
+    """Return every curator-facing URL for one criterion.
+
+    Builder failures are isolated so an optional external lookup (for
+    example, gene-to-UniProt resolution) cannot suppress deterministic links
+    such as Franklin. Duplicate URLs are removed while preserving order.
+    """
+    if code not in ALL_ACMG_CODES:
+        return []
+
+    urls: list[str] = []
+    builders = (*_URL_BUILDERS.get(code, ()), franklin_variant_url)
+    for builder in builders:
+        try:
+            url = builder(variant)
+        except Exception:
+            url = None
+        if url is not None and url not in urls:
+            urls.append(url)
+    return urls
 
 
 def reference_url_for_criterion(code: str, variant: VariantRecord) -> str | None:
     """
-    Single entry point: the reference URL doc/recs for expert board.docx
-    asks to show for `code`, given `variant` - or None if this code has no
-    URL-able reference page (see _URL_BUILDERS) or the variant lacks the
-    fields needed to build one (e.g. ALT="." for gnomad_variant_url).
+    Backward-compatible singular accessor for the first available URL.
+
+    New callers should use reference_urls_for_criterion() so additional
+    links, including Franklin and the second population-frequency source,
+    are not discarded.
     Field: EvidenceLine.extensions (Extension(name="referenceLink")) once
       passed through export.build_reference_extensions() (its actual caller)
       - see this module's own docstring, "Where the returned URL ends up
       in VA-Spec output".
     """
-    builder = _URL_BUILDERS.get(code)
-    if builder is None:
-        return None
-    return builder(variant)
+    urls = reference_urls_for_criterion(code, variant)
+    return urls[0] if urls else None
 
 
-def all_reference_urls(variant: VariantRecord) -> dict[str, str]:
+def all_reference_urls(variant: VariantRecord) -> dict[str, list[str]]:
     """
-    Every code -> URL pair this module can build for `variant`, skipping
-    codes where the URL couldn't be constructed (rather than including a
-    None).
+    Every code -> URLs this module can build for `variant`, skipping codes
+    where no URL could be constructed.
     Field: same as reference_url_for_criterion() above - each value here
       lands in that code's own EvidenceLine.extensions, not one shared
       bundle (see export.build_reference_extensions(), called once per code).
     """
     return {
-        code: url
-        for code in _URL_BUILDERS
-        if (url := reference_url_for_criterion(code, variant)) is not None
+        code: urls
+        for code in ALL_ACMG_CODES
+        if (urls := reference_urls_for_criterion(code, variant))
     }

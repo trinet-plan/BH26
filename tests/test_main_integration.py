@@ -43,8 +43,11 @@ def test_integrated_entrypoint_returns_one_ordered_line_per_acmg_code():
             new=AsyncMock(return_value={}),
         ),
         patch(
-            "acmg_pipeline.export.reference_links.reference_url_for_criterion",
-            side_effect=lambda code, _variant: f"https://example.test/{code}",
+            "acmg_pipeline.export.reference_links.reference_urls_for_criterion",
+            side_effect=lambda code, _variant: [
+                f"https://example.test/{code}",
+                f"https://franklin.example/{code}",
+            ],
         ),
         patch.dict("acmg_pipeline.export._CODE_CURATOR_INFO_FETCHERS", {}, clear=True),
     ):
@@ -67,9 +70,15 @@ def test_integrated_entrypoint_returns_one_ordered_line_per_acmg_code():
     for line in lines:
         EvidenceLine.model_validate(line)
         schema_validator.validate(line)
-        extensions = {item["name"]: item["value"] for item in line["extensions"]}
         code = line["specifiedBy"]["methodType"]
-        assert extensions["referenceLink"] == f"https://example.test/{code}"
+        links = [
+            item["value"] for item in line["extensions"]
+            if item["name"] == "referenceLink"
+        ]
+        assert links == [
+            f"https://example.test/{code}",
+            f"https://franklin.example/{code}",
+        ]
         assert "reportedIn" not in line
 
 
@@ -135,15 +144,18 @@ def test_pp1_reference_is_attached_to_real_literature_line():
     ])
 
     with patch(
-        "acmg_pipeline.export.reference_links.reference_url_for_criterion",
-        return_value="https://example.test/PP1",
+        "acmg_pipeline.export.reference_links.reference_urls_for_criterion",
+        return_value=["https://example.test/PP1", "https://franklin.example/PP1"],
     ):
         line = build_evidence_line(
             aggregated, "MYH7", "c.2155C>T", "PP1", variant=variant,
         )
 
-    extensions = {item["name"]: item["value"] for item in line["extensions"]}
-    assert extensions["referenceLink"] == "https://example.test/PP1"
+    links = [
+        item["value"] for item in line["extensions"]
+        if item["name"] == "referenceLink"
+    ]
+    assert links == ["https://example.test/PP1", "https://franklin.example/PP1"]
     assert line["reportedIn"][0]["pmid"] == "12345678"
 
 
@@ -154,7 +166,7 @@ def test_reference_lookup_failure_does_not_remove_criterion_line():
     )
     with (
         patch(
-            "acmg_pipeline.export.reference_links.reference_url_for_criterion",
+            "acmg_pipeline.export.reference_links.reference_urls_for_criterion",
             side_effect=RuntimeError("TogoID unavailable"),
         ),
         patch.dict("acmg_pipeline.export._CODE_CURATOR_INFO_FETCHERS", {}, clear=True),
@@ -183,8 +195,8 @@ def test_unknown_automated_line_keeps_review_points_as_curator_hints():
     )
     with (
         patch(
-            "acmg_pipeline.export.reference_links.reference_url_for_criterion",
-            return_value=None,
+            "acmg_pipeline.export.reference_links.reference_urls_for_criterion",
+            return_value=[],
         ),
         patch.dict("acmg_pipeline.export._CODE_CURATOR_INFO_FETCHERS", {}, clear=True),
     ):
