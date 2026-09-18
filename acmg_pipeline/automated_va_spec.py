@@ -236,11 +236,18 @@ def evidence_catalog_item(item):
 
 
 def assessment_details(result):
-    """Return the complete workflow explanation shared by all criterion outputs."""
+    """Return the complete workflow explanation shared by all criterion outputs.
+
+    No `summary` key here: it would be a byte-for-byte copy of the emitted
+    EvidenceLine's own top-level `description` (both come from
+    `result.summary`) - found 2026-09-18 as reader-visible duplication in
+    every scored/workflow line's JSON. `description` is the standard VA-Spec
+    field, so it stays there; this extension carries only what has no
+    standard-field equivalent (status/decisionTrace/evaluationContext/...).
+    """
     value = {
         "criterion": result.criterion,
         "status": result.status.value,
-        "summary": result.summary,
         "evidenceItemIds": list(dict.fromkeys(
             evidence_reference(item) for item in result.evidence
         )),
@@ -334,6 +341,25 @@ def validate_envelope(document):
     return document
 
 
+def extensions_last(line: dict) -> dict:
+    """Reorder so `extensions` prints last in the serialized JSON.
+
+    `extensions` (bh26AssessmentDetails' decisionTrace, curatorHints, ...) is
+    routinely the largest and most deeply nested field on a line - added
+    2026-09-18 so a human skimming an output file sees the compact,
+    identifying fields (id/description/specifiedBy/evidenceOutcome/...)
+    before that block, on every line regardless of which builder produced
+    it. Key order has no effect on schema validation or dict access, only
+    on how the file reads.
+    """
+    if "extensions" not in line:
+        return line
+    extensions = line["extensions"]
+    reordered = {key: value for key, value in line.items() if key != "extensions"}
+    reordered["extensions"] = extensions
+    return reordered
+
+
 def validate_1_0_1(line, criterion):
     """Validate the emitted subset and ACMG cross-field semantics for VA-Spec 1.0.1."""
     errors = sorted(Draft202012Validator(
@@ -353,7 +379,7 @@ def validate_1_0_1(line, criterion):
     )
     if direction != expected:
         raise ValueError("VA-Spec 1.0.1 direction/evidenceOutcome mismatch")
-    return line
+    return extensions_last(line)
 
 
 def to_evidence_line(result):

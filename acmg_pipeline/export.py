@@ -93,7 +93,7 @@ from typing import Any, Optional
 from jsonschema import Draft202012Validator, FormatChecker
 
 from acmg_pipeline.criteria.common import DEFAULT_STRENGTH
-from acmg_pipeline.automated_va_spec import OUTCOME_PATTERN, output_schema
+from acmg_pipeline.automated_va_spec import OUTCOME_PATTERN, extensions_last, output_schema
 
 from ga4gh.core.models import Coding, Extension, MappableConcept
 from ga4gh.va_spec.base.core import Agent, Contribution, Direction, Document, EvidenceLine, Method
@@ -322,7 +322,7 @@ def validate_integrated_line(line: dict, criterion: str) -> dict:
         )
     if line.get("evidenceOutcome"):
         _check_acmg_semantics(line, criterion)
-    return line
+    return extensions_last(line)
 
 
 def _pubmed_url(pmid: str) -> str:
@@ -606,12 +606,17 @@ def build_workflow_evidence_line(
     description: str,
     details: Optional[dict[str, Any]] = None,
 ) -> dict:
-    """Emit a neutral VA-Spec line for a non-scoreable workflow state."""
+    """Emit a neutral VA-Spec line for a non-scoreable workflow state.
+
+    `assessment` carries no `summary`: it would duplicate the EvidenceLine's
+    own top-level `description` below verbatim (see automated_va_spec.
+    assessment_details()'s docstring for the same call made on the
+    scored-line side, 2026-09-18).
+    """
     gene, _hgvsc, safe_hgvsc = _variant_identity(variant)
     assessment = {
         "criterion": code,
         "status": status,
-        "summary": description,
     }
     if details:
         assessment.update(details)

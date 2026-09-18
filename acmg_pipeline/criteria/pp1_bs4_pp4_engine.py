@@ -253,7 +253,10 @@ def build_evidence_line(code: str, evidence: CriterionEvidence, variant: Variant
         evidence_outcome = None
         strength_block = None
 
-    assessment = {"criterion": code, "status": status.value, "summary": evidence.source or ""}
+    # No `summary` key: it would duplicate `description` below verbatim (both
+    # come from evidence.source) - see automated_va_spec.assessment_details()'s
+    # docstring for the same call made on the other two engines, 2026-09-18.
+    assessment = {"criterion": code, "status": status.value}
     extensions = [Extension(name="bh26AssessmentDetails", value=assessment)]
     extensions.extend(build_reference_extensions(code, variant))
 
