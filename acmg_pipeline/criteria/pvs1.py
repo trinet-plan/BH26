@@ -291,10 +291,14 @@ def _applicability(status, missing, review):
     requirement, a review point, or neither - so this reads what is there rather than asking
     every exit to restate itself and risking the two drifting apart.
     """
+    if review:
+        # Before MET, deliberately. A result carrying a review point has something a person
+        # still has to settle, and that is true whether or not the criterion was applied -
+        # APPLICABLE means applied with nothing outstanding, and a verdict that needs
+        # confirming is not that.
+        return "MANUAL_REVIEW"
     if status == CriterionStatus.MET:
         return "APPLICABLE"
-    if review:
-        return "MANUAL_REVIEW"
     if missing:
         return "NOT_EVALUATED"
     return "NOT_APPLICABLE"
@@ -303,7 +307,11 @@ def _applicability(status, missing, review):
 def _finish(input_data, state, status, summary, *, strength=None, missing=(), review=(),
             extra_evidence=(), provenance=None):
     unresolved = list(missing)
-    state["context"]["applicability"] = _applicability(status, unresolved, review)
+    # The caveats raised partway through the tree count as outstanding too: the providers
+    # that raise them say in their own words to confirm before the result is used in a
+    # classification, which is not a criterion with nothing left to settle.
+    outstanding = list(dict.fromkeys([*state.get("pending_review", []), *review]))
+    state["context"]["applicability"] = _applicability(status, unresolved, outstanding)
     # Kept unwrapped for the preliminary assessment, whose reader must not be handed the
     # criterion-level wording ("Outcome: MET") for a run that reached no verdict.
     state["summary"] = summary
@@ -317,7 +325,7 @@ def _finish(input_data, state, status, summary, *, strength=None, missing=(), re
     return result(
         "PVS1", input_data, status, summary, strength=strength,
         evidence=_deduplicate([*state["evidence"], *extra_evidence]), missing=unresolved,
-        review=list(dict.fromkeys([*state.get("pending_review", []), *review])),
+        review=outstanding,
         provenance={
             "assessment_scope": assessment_scope,
             "condition_assessment": condition_assessment,
@@ -772,15 +780,36 @@ def _candidate_conditions(input_data, services, annotation):
 
 
 def _not_evaluated(input_data, services, annotation, variant_type, state, rna, node, summary,
-                   missing, *, evidence=(), review=(), candidates=()):
-    """Stop short of a PVS1 verdict, keeping the variant-level work that is still valid."""
+                   missing, *, evidence=(), review=(), candidates=(), provisional=True):
+    """Stop short of a confirmed PVS1, keeping the variant-level work that is still valid.
+
+    Where the variant-level tree reaches MET on its own, that verdict is carried out rather
+    than held back: the tree answered its own question, and only the disease mechanism behind
+    it is unsettled. So PVS1 is applied provisionally, with the strength the tree reached and
+    a review point naming exactly what has not been confirmed. `applicability` is
+    MANUAL_REVIEW, never APPLICABLE, so a provisional verdict is never mistaken for a settled
+    one, and `missing_inputs` still names what would settle it.
+
+    `provisional=False` is for exits where an expert panel has already answered the question a
+    review would ask - see the EXCLUDED branch, which is the one such case today.
+    """
     state["trace"].append(node)
+    preliminary = _preliminary_assessment(
+        input_data, services, annotation, variant_type, state, rna)
+    status, strength, review = CriterionStatus.UNKNOWN, None, list(review)
+    if provisional and preliminary["candidate_strength"]:
+        status = CriterionStatus.MET
+        strength = preliminary["candidate_strength"]
+        summary = (f"{summary}. The variant-level decision tree reaches PVS1_{strength} on "
+                   f"its own, so PVS1 is applied provisionally on that basis alone")
+        review.append(
+            f"Confirm the disease mechanism before this provisional PVS1_{strength} is used "
+            f"in a classification; the decision tree reached it without one")
     return _finish(
-        input_data, state, CriterionStatus.UNKNOWN, summary, missing=[missing],
+        input_data, state, status, summary, strength=strength, missing=[missing],
         extra_evidence=evidence, review=review,
-        provenance={"preliminary_assessment": _preliminary_assessment(
-            input_data, services, annotation, variant_type, state, rna),
-            **({"candidate_conditions": list(candidates)} if candidates else {})})
+        provenance={"preliminary_assessment": preliminary,
+                    **({"candidate_conditions": list(candidates)} if candidates else {})})
 
 
 def _evaluate_input(input_data, services, config):
@@ -917,7 +946,7 @@ def _evaluate_input(input_data, services, config):
             f"The available loss-of-function mechanism evidence is curated for a disease "
             f"whose expert panel explicitly excluded {input_data['condition']!r} from it",
             "disease-specific loss-of-function mechanism",
-            evidence=mechanism_records)
+            evidence=mechanism_records, provisional=False)
     if mechanism_issue == "other_disease":
         diseases = sorted({str(item["condition"]) for item in mechanism_records
                            if item.get("condition")})

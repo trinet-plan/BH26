@@ -96,7 +96,8 @@ class PVS1DecisionTreeTests(unittest.TestCase):
     def test_condition_missing_stops_before_a_verdict_but_keeps_the_variant_work(self):
         input_data = {key: value for key, value in self.input.items() if key != "condition"}
         value = self.evaluate_result(*self.truncating_evidence(), input_data=input_data)
-        self.assertEqual((value.status, value.strength), (CriterionStatus.UNKNOWN, None))
+        # Applied provisionally: the tree reached very_strong without a disease mechanism.
+        self.assertEqual((value.status, value.strength), (CriterionStatus.MET, "very_strong"))
         self.assertEqual(value.evaluation_context["condition_status"], "NOT_PROVIDED")
         self.assertEqual(value.evaluation_context["applicability"], "MANUAL_REVIEW")
         self.assertIn("condition", value.missing_inputs)
@@ -119,8 +120,7 @@ class PVS1DecisionTreeTests(unittest.TestCase):
                  self.mechanism(True, condition="MONDO:1", inheritance="AD"),
                  self.mechanism(False, condition="MONDO:2", evidence_id="second")]
         value = self.evaluate_result(*items, input_data=input_data)
-        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
-        self.assertIsNone(value.strength)
+        self.assertEqual(value.evaluation_context["applicability"], "MANUAL_REVIEW")
         offered = value.provenance["candidate_conditions"]
         self.assertEqual([item["condition"] for item in offered], ["MONDO:1", "MONDO:2"])
         # The mechanism each one carries goes with it, because that is what differs between
@@ -136,7 +136,7 @@ class PVS1DecisionTreeTests(unittest.TestCase):
         picking it - and a curated disease is not evidence that this case is about it."""
         input_data = {key: value for key, value in self.input.items() if key != "condition"}
         value = self.evaluate_result(*self.truncating_evidence(), input_data=input_data)
-        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
+        self.assertEqual(value.evaluation_context["applicability"], "MANUAL_REVIEW")
         self.assertEqual([item["condition"] for item in
                           value.provenance["candidate_conditions"]], [self.condition])
         self.assertEqual(value.evaluation_context["disease_match"], "UNKNOWN")
@@ -219,7 +219,7 @@ class PVS1DecisionTreeTests(unittest.TestCase):
         self.assertIn("Dilated cardiomyopathy", " ".join(value.review_points))
         # A resemblance between two strings is not a disease match, and never becomes one.
         self.assertEqual(value.evaluation_context["disease_match"], "UNKNOWN")
-        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
+        self.assertEqual(value.evaluation_context["applicability"], "MANUAL_REVIEW")
 
     def test_a_diagnosis_inside_a_longer_curated_name_is_matched(self):
         input_data = {key: value for key, value in self.input.items() if key != "condition"}
@@ -247,8 +247,7 @@ class PVS1DecisionTreeTests(unittest.TestCase):
         input_data = {key: value for key, value in self.input.items() if key != "condition"}
         value = self.evaluate_result(*self.gene_level_evidence(), input_data=input_data)
         self.assertNotIn("candidate_conditions", value.provenance)
-        self.assertEqual(value.evaluation_context["applicability"], "NOT_EVALUATED")
-        self.assertEqual(value.review_points, [])
+        self.assertNotIn("curated", " ".join(value.review_points))
 
     def test_another_genes_diseases_are_not_offered(self):
         input_data = {key: value for key, value in self.input.items() if key != "condition"}
@@ -258,12 +257,18 @@ class PVS1DecisionTreeTests(unittest.TestCase):
         value = self.evaluate_result(*items, input_data=input_data)
         self.assertNotIn("candidate_conditions", value.provenance)
 
-    def test_a_preliminary_strength_never_becomes_the_criterion_strength(self):
+    def test_a_provisional_verdict_says_so_and_never_reads_as_settled(self):
+        """The tree's strength is carried out, and every reader is told it is unconfirmed."""
         input_data = {key: value for key, value in self.input.items() if key != "condition"}
         value = self.evaluate_result(*self.truncating_evidence(), input_data=input_data)
-        self.assertIsNone(value.strength)
-        self.assertIsNone(value.direction)
-        self.assertIsNone(value.evidence_outcome)
+        self.assertEqual(value.strength, "very_strong")
+        self.assertEqual(value.direction, "supports")
+        self.assertEqual(value.evidence_outcome, "PVS1")
+        # Never APPLICABLE: something is still outstanding, and it is named.
+        self.assertEqual(value.evaluation_context["applicability"], "MANUAL_REVIEW")
+        self.assertIn("Confirm the disease mechanism", " ".join(value.review_points))
+        self.assertIn("condition", value.missing_inputs)
+        self.assertIn("provisionally", value.summary)
 
     def test_condition_specific_mechanism_precedes_gene_level_fallback(self):
         input_data = {**self.input, "condition": "MONDO:1", "condition_label": "Disease"}
@@ -275,10 +280,10 @@ class PVS1DecisionTreeTests(unittest.TestCase):
         self.assertEqual(value.evaluation_context["mechanism_scope"], "CONDITION_SPECIFIC")
 
         fallback = self.evaluate_result(*self.gene_level_evidence(), input_data=input_data)
-        self.assertEqual(fallback.status, CriterionStatus.UNKNOWN)
+        self.assertEqual(fallback.status, CriterionStatus.MET)
         self.assertEqual(fallback.evaluation_context["condition_status"], "PROVIDED")
         self.assertFalse(fallback.evaluation_context["condition_specific"])
-        self.assertEqual(fallback.evaluation_context["applicability"], "NOT_EVALUATED")
+        self.assertEqual(fallback.evaluation_context["applicability"], "MANUAL_REVIEW")
         self.assertIn("disease-specific loss-of-function mechanism", fallback.missing_inputs)
         self.assertEqual(fallback.provenance["preliminary_assessment"]["candidate_strength"],
                          "very_strong")
@@ -311,7 +316,7 @@ class PVS1DecisionTreeTests(unittest.TestCase):
         # A gene-level record carries no disease identifier, so nothing was matched and the
         # criterion must not be reported as if the disease had been confirmed.
         fallback = self.evaluate_result(*self.gene_level_evidence(), input_data=input_data)
-        self.assertEqual(fallback.status, CriterionStatus.UNKNOWN)
+        self.assertEqual(fallback.evaluation_context["applicability"], "MANUAL_REVIEW")
         self.assertEqual(fallback.evaluation_context["disease_match"], "UNKNOWN")
 
     def test_a_mapped_condition_matches_but_is_reported_as_equivalent(self):
@@ -342,7 +347,7 @@ class PVS1DecisionTreeTests(unittest.TestCase):
         disease."""
         input_data = {**self.input, "condition": "OMIM:143890"}
         value = self.evaluate_result(*self.truncating_evidence(), input_data=input_data)
-        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
+        self.assertEqual(value.evaluation_context["applicability"], "MANUAL_REVIEW")
         self.assertEqual(value.evaluation_context["disease_match"], "UNKNOWN")
 
     def test_inheritance_is_normalized_across_vocabularies(self):
@@ -429,8 +434,7 @@ class PVS1DecisionTreeTests(unittest.TestCase):
         items = [self.annotation(), self.transcript(), self.nmd(),
                  self.mechanism(True, condition="MONDO:0005045")]
         value = self.evaluate_result(*items, input_data=input_data)
-        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
-        self.assertIsNone(value.strength)
+        self.assertEqual(value.status, CriterionStatus.MET)
         self.assertEqual(value.evaluation_context["disease_match"], "PARENT_CHILD")
         self.assertEqual(value.evaluation_context["applicability"], "MANUAL_REVIEW")
         self.assertEqual(
@@ -480,20 +484,18 @@ class PVS1DecisionTreeTests(unittest.TestCase):
         self.assertEqual(value.provenance["preliminary_assessment"]["candidate_strength"],
                          "very_strong")
 
-    def test_a_gene_with_no_curation_at_all_is_not_a_review(self):
+    def test_a_gene_with_no_curation_at_all_offers_no_candidates(self):
         """Nothing on file is a different situation from something on file that may not
-        apply, and a curator can only act on the second."""
+        apply, and only the second is a disease a curator can be offered."""
         input_data = {**self.input, "condition": "MONDO:0007268"}
         items = [self.annotation(), self.transcript(), self.nmd()]
         value = self.evaluate_result(*items, input_data=input_data)
-        self.assertEqual(value.evaluation_context["applicability"], "NOT_EVALUATED")
-        self.assertEqual(value.review_points, [])
+        self.assertNotIn("candidate_conditions", value.provenance)
 
-    def test_an_unscoped_record_alone_is_still_not_a_review(self):
+    def test_an_unscoped_record_alone_offers_no_candidates(self):
         value = self.evaluate_result(*self.gene_level_evidence(),
                                      input_data={**self.input, "condition": "MONDO:0007268"})
-        self.assertEqual(value.evaluation_context["applicability"], "NOT_EVALUATED")
-        self.assertEqual(value.review_points, [])
+        self.assertNotIn("candidate_conditions", value.provenance)
 
     def test_an_unqualified_x_linked_mode_is_compatible_with_either_qualification(self):
         """A source that records "X-linked" without saying which zygosity is affected has
@@ -520,7 +522,6 @@ class PVS1DecisionTreeTests(unittest.TestCase):
         items = [self.annotation(), self.transcript(), self.nmd(),
                  self.mechanism(True, inheritance="AD")]
         value = self.evaluate_result(*items, input_data=input_data)
-        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
         self.assertEqual(value.evaluation_context["moi_match"], "MISMATCH")
         self.assertEqual(value.evaluation_context["applicability"], "MANUAL_REVIEW")
         self.assertIn("loss-of-function disease mechanism for this inheritance mode",
@@ -537,8 +538,6 @@ class PVS1DecisionTreeTests(unittest.TestCase):
         items = [self.annotation(), self.transcript(), self.nmd(),
                  self.mechanism(True, inheritance="AR")]
         value = self.evaluate_result(*items)
-        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
-        self.assertIsNone(value.strength)
         self.assertEqual(value.evaluation_context["moi_match"], "UNSTATED")
         self.assertEqual(value.evaluation_context["applicability"], "MANUAL_REVIEW")
         self.assertIn("Record the inheritance mode", " ".join(value.review_points))
@@ -567,7 +566,6 @@ class PVS1DecisionTreeTests(unittest.TestCase):
         items = [self.annotation(), self.transcript(), self.nmd(),
                  self.mechanism(True, inheritance="recessive-ish")]
         value = self.evaluate_result(*items, input_data=input_data)
-        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
         self.assertEqual(value.evaluation_context["moi_match"], "MISMATCH")
 
     def derived(self, established, method, **values):

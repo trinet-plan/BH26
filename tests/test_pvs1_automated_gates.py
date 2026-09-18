@@ -136,8 +136,9 @@ class Pvs1AutomatedGateTests(unittest.TestCase):
         """
         exon = self.exon_from_vep()
         result = self.evaluate(self.dosage(disease=""), self.mane(exon=exon), self.nmd())
-        self.assertEqual(result.status, CriterionStatus.UNKNOWN)
-        self.assertEqual(result.evaluation_context["applicability"], "NOT_EVALUATED")
+        # Applied provisionally on the tree alone, and never as a settled verdict.
+        self.assertEqual(result.status, CriterionStatus.MET)
+        self.assertEqual(result.evaluation_context["applicability"], "MANUAL_REVIEW")
         self.assertEqual(self.nodes(result)["D01"], "UNKNOWN")
         self.assertIn("disease-specific loss-of-function mechanism", result.missing_inputs)
         self.assertTrue(any(item["source"].startswith("ClinGen") for item in result.evidence))
