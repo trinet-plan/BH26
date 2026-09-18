@@ -17,34 +17,135 @@
         "source": "integrated_pipeline"
       }
     ],
-    "not_met": [],
+    "not_met": [
+      {
+        "code": "PS1",
+        "status": "not_met",
+        "strength": null,
+        "source": "integrated_pipeline"
+      },
+      {
+        "code": "PS3",
+        "status": "not_met",
+        "strength": null,
+        "source": "integrated_pipeline"
+      },
+      {
+        "code": "PS4",
+        "status": "not_met",
+        "strength": null,
+        "source": "integrated_pipeline"
+      },
+      {
+        "code": "PM1",
+        "status": "not_met",
+        "strength": null,
+        "source": "integrated_pipeline"
+      },
+      {
+        "code": "PM4",
+        "status": "not_met",
+        "strength": null,
+        "source": "integrated_pipeline"
+      },
+      {
+        "code": "PM5",
+        "status": "not_met",
+        "strength": null,
+        "source": "integrated_pipeline"
+      },
+      {
+        "code": "PP1",
+        "status": "not_met",
+        "strength": null,
+        "source": "integrated_pipeline"
+      },
+      {
+        "code": "PP2",
+        "status": "not_met",
+        "strength": null,
+        "source": "integrated_pipeline"
+      },
+      {
+        "code": "PP3",
+        "status": "not_met",
+        "strength": null,
+        "source": "integrated_pipeline"
+      },
+      {
+        "code": "PP4",
+        "status": "not_met",
+        "strength": null,
+        "source": "integrated_pipeline"
+      },
+      {
+        "code": "PP5",
+        "status": "not_met",
+        "strength": null,
+        "source": "integrated_pipeline"
+      },
+      {
+        "code": "BA1",
+        "status": "not_met",
+        "strength": null,
+        "source": "integrated_pipeline"
+      },
+      {
+        "code": "BS1",
+        "status": "not_met",
+        "strength": null,
+        "source": "integrated_pipeline"
+      },
+      {
+        "code": "BS3",
+        "status": "not_met",
+        "strength": null,
+        "source": "integrated_pipeline"
+      },
+      {
+        "code": "BS4",
+        "status": "not_met",
+        "strength": null,
+        "source": "integrated_pipeline"
+      },
+      {
+        "code": "BP1",
+        "status": "not_met",
+        "strength": null,
+        "source": "integrated_pipeline"
+      },
+      {
+        "code": "BP3",
+        "status": "not_met",
+        "strength": null,
+        "source": "integrated_pipeline"
+      },
+      {
+        "code": "BP4",
+        "status": "not_met",
+        "strength": null,
+        "source": "integrated_pipeline"
+      },
+      {
+        "code": "BP6",
+        "status": "not_met",
+        "strength": null,
+        "source": "integrated_pipeline"
+      },
+      {
+        "code": "BP7",
+        "status": "not_met",
+        "strength": null,
+        "source": "integrated_pipeline"
+      }
+    ],
     "not_evaluated_codes": [
-      "BA1",
-      "BP1",
       "BP2",
-      "BP3",
-      "BP4",
       "BP5",
-      "BP6",
-      "BP7",
-      "BS1",
       "BS2",
-      "BS3",
-      "BS4",
-      "PM1",
       "PM3",
-      "PM4",
-      "PM5",
       "PM6",
-      "PP1",
-      "PP2",
-      "PP3",
-      "PP4",
-      "PP5",
-      "PS1",
-      "PS2",
-      "PS3",
-      "PS4"
+      "PS2"
     ]
   },
   "evidence_lines": [
@@ -70,6 +171,7 @@
       "hasEvidenceItems": [
         "urn:sha256:a04aeca39543cf0e63dbeaa44fa9a14421d6507dd385413440d6fcf6e7391115:annotation:NM_000256.3",
         "urn:sha256:b7aedf994c71dfcc61b4957dcfffb791d75a6bcf8638ebb7e641a3b56a995294:clingen-dosage:MYBPC3:GRCh38:11:47351252:CT:C",
+        "urn:bh26:gene-disease-assessment:8e2d4b8204dfde6375808986c79396ff5800b642d3d8e4ea62b6de9fd96a63b4:17c3776da224220a",
         "urn:sha256:9158ea1eed2a9fd029854642560a930d4cc26938948da2ca9200e1a6bda5e336:mane:NM_000256.3:GRCh38:11:47351252:CT:C",
         "urn:sha256:5638d92ddbb391b7720ea000a475e9206ff26f7d19a00b098790f3522e800f39:nmd:NM_000256.3:GRCh38:11:47351252:CT:C"
       ],
@@ -89,156 +191,163 @@
       },
       "extensions": [
         {
-          "name": "bh26AssessmentDetails",
+          "name": "status",
+          "value": "met"
+        },
+        {
+          "name": "provenance",
           "value": {
-            "criterion": "PVS1",
-            "status": "met",
-            "evidenceItemIds": [
-              "urn:sha256:a04aeca39543cf0e63dbeaa44fa9a14421d6507dd385413440d6fcf6e7391115:annotation:NM_000256.3",
-              "urn:sha256:b7aedf994c71dfcc61b4957dcfffb791d75a6bcf8638ebb7e641a3b56a995294:clingen-dosage:MYBPC3:GRCh38:11:47351252:CT:C",
-              "urn:sha256:9158ea1eed2a9fd029854642560a930d4cc26938948da2ca9200e1a6bda5e336:mane:NM_000256.3:GRCh38:11:47351252:CT:C",
-              "urn:sha256:5638d92ddbb391b7720ea000a475e9206ff26f7d19a00b098790f3522e800f39:nmd:NM_000256.3:GRCh38:11:47351252:CT:C"
-            ],
-            "provenance": {
-              "rule_version": "PVS1-v1",
-              "assessment_scope": "gene_level",
-              "condition_assessment": "NOT_EVALUATED",
-              "pvs1_ruleset": {
-                "name": "clingen_general_pvs1",
-                "version": "2018+2023-splicing"
-              }
-            },
-            "direction": "supports",
-            "evaluationContext": {
-              "gene": "MYBPC3",
-              "condition_id": null,
-              "condition_label": null,
-              "condition_status": "NOT_PROVIDED",
-              "condition_specific": false,
-              "mechanism_scope": "GENE_LEVEL"
-            },
-            "decisionTrace": [
-              {
-                "node_id": "C01",
-                "name": "condition_status",
-                "result": "PASS",
-                "value": "NOT_PROVIDED",
-                "evidence_ids": [],
-                "rule_id": "C01",
-                "rule_source": "acmg_amp_2015",
-                "next_node": null,
-                "note": null
-              },
-              {
-                "node_id": "G01",
-                "name": "lof_mechanism_available",
-                "result": "PASS",
-                "value": true,
-                "evidence_ids": [
-                  "urn:sha256:b7aedf994c71dfcc61b4957dcfffb791d75a6bcf8638ebb7e641a3b56a995294:clingen-dosage:MYBPC3:GRCh38:11:47351252:CT:C"
-                ],
-                "rule_id": "G01",
-                "rule_source": "clingen_pvs1_2018",
-                "next_node": null,
-                "note": null
-              },
-              {
-                "node_id": "G02",
-                "name": "lof_mechanism_established",
-                "result": "PASS",
-                "value": true,
-                "evidence_ids": [
-                  "urn:sha256:b7aedf994c71dfcc61b4957dcfffb791d75a6bcf8638ebb7e641a3b56a995294:clingen-dosage:MYBPC3:GRCh38:11:47351252:CT:C"
-                ],
-                "rule_id": "G02",
-                "rule_source": "clingen_pvs1_2018",
-                "next_node": null,
-                "note": null
-              },
-              {
-                "node_id": "V01",
-                "name": "variant_type",
-                "result": "PASS",
-                "value": "FRAMESHIFT",
-                "evidence_ids": [
-                  "urn:sha256:a04aeca39543cf0e63dbeaa44fa9a14421d6507dd385413440d6fcf6e7391115:annotation:NM_000256.3"
-                ],
-                "rule_id": "V01",
-                "rule_source": "clingen_pvs1_2018",
-                "next_node": null,
-                "note": null
-              },
-              {
-                "node_id": "NF01",
-                "name": "transcript_relevance",
-                "result": "PASS",
-                "value": "RELEVANT",
-                "evidence_ids": [
-                  "urn:sha256:9158ea1eed2a9fd029854642560a930d4cc26938948da2ca9200e1a6bda5e336:mane:NM_000256.3:GRCh38:11:47351252:CT:C"
-                ],
-                "rule_id": "NF01",
-                "rule_source": "clingen_pvs1_2018",
-                "next_node": null,
-                "note": null
-              },
-              {
-                "node_id": "NF02",
-                "name": "nmd_prediction",
-                "result": "PASS",
-                "value": true,
-                "evidence_ids": [
-                  "urn:sha256:5638d92ddbb391b7720ea000a475e9206ff26f7d19a00b098790f3522e800f39:nmd:NM_000256.3:GRCh38:11:47351252:CT:C"
-                ],
-                "rule_id": "NF02",
-                "rule_source": "clingen_pvs1_2018",
-                "next_node": null,
-                "note": null
-              },
-              {
-                "node_id": "NF03",
-                "name": "exon_relevance",
-                "result": "PASS",
-                "value": "RELEVANT",
-                "evidence_ids": [
-                  "urn:sha256:9158ea1eed2a9fd029854642560a930d4cc26938948da2ca9200e1a6bda5e336:mane:NM_000256.3:GRCh38:11:47351252:CT:C"
-                ],
-                "rule_id": "NF03",
-                "rule_source": "clingen_pvs1_2018",
-                "next_node": null,
-                "note": null
-              }
-            ],
-            "rulesUsed": [
-              {
-                "id": "acmg_amp_2015",
-                "doi": "10.1038/gim.2015.30",
-                "pmid": "25741868"
-              },
-              {
-                "id": "clingen_pvs1_2018",
-                "doi": "10.1002/humu.23626",
-                "pmid": "30192042"
-              },
-              {
-                "id": "clingen_splicing_2023",
-                "doi": "10.1016/j.ajhg.2023.06.002",
-                "pmid": "37352859"
-              }
-            ]
+            "rule_version": "PVS1-v1",
+            "assessment_scope": "condition_specific",
+            "condition_assessment": "MATCHED",
+            "pvs1_ruleset": {
+              "name": "clingen_general_pvs1",
+              "version": "2018+2023-splicing"
+            }
           }
         },
         {
-          "name": "curatorHints",
+          "name": "direction",
+          "value": "supports"
+        },
+        {
+          "name": "evaluationContext",
+          "value": {
+            "gene": "MYBPC3",
+            "condition_id": "MONDO:0005045",
+            "condition_label": "hypertrophic cardiomyopathy (HCM) complicated by a left ventricular apical aneurysm",
+            "condition_status": "PROVIDED",
+            "condition_specific": true,
+            "mechanism_scope": "CONDITION_SPECIFIC",
+            "disease_match": "EXACT",
+            "mechanism_source": "ClinGen Dosage Sensitivity Map",
+            "inheritance": null,
+            "moi_match": "NOT_SCOPED",
+            "applicability": "APPLICABLE"
+          }
+        },
+        {
+          "name": "decisionTrace",
           "value": [
             {
-              "severity": "warning",
-              "category": "warning",
-              "message": "Condition was not provided."
+              "node_id": "C01",
+              "name": "condition_status",
+              "result": "PASS",
+              "value": "PROVIDED",
+              "evidence_ids": [],
+              "rule_id": "C01",
+              "rule_source": "acmg_amp_2015",
+              "next_node": null,
+              "note": null
             },
             {
-              "severity": "warning",
-              "category": "warning",
-              "message": "PVS1 was evaluated using gene-level loss-of-function mechanism evidence."
+              "node_id": "D01",
+              "name": "disease_match",
+              "result": "PASS",
+              "value": "EXACT",
+              "evidence_ids": [
+                "urn:sha256:b7aedf994c71dfcc61b4957dcfffb791d75a6bcf8638ebb7e641a3b56a995294:clingen-dosage:MYBPC3:GRCh38:11:47351252:CT:C",
+                "urn:bh26:gene-disease-assessment:8e2d4b8204dfde6375808986c79396ff5800b642d3d8e4ea62b6de9fd96a63b4:17c3776da224220a"
+              ],
+              "rule_id": "D01",
+              "rule_source": "clingen_pvs1_2018",
+              "next_node": null,
+              "note": null
+            },
+            {
+              "node_id": "G01",
+              "name": "lof_mechanism_available",
+              "result": "PASS",
+              "value": true,
+              "evidence_ids": [
+                "urn:sha256:b7aedf994c71dfcc61b4957dcfffb791d75a6bcf8638ebb7e641a3b56a995294:clingen-dosage:MYBPC3:GRCh38:11:47351252:CT:C",
+                "urn:bh26:gene-disease-assessment:8e2d4b8204dfde6375808986c79396ff5800b642d3d8e4ea62b6de9fd96a63b4:17c3776da224220a"
+              ],
+              "rule_id": "G01",
+              "rule_source": "clingen_pvs1_2018",
+              "next_node": null,
+              "note": null
+            },
+            {
+              "node_id": "G02",
+              "name": "lof_mechanism_established",
+              "result": "PASS",
+              "value": true,
+              "evidence_ids": [
+                "urn:sha256:b7aedf994c71dfcc61b4957dcfffb791d75a6bcf8638ebb7e641a3b56a995294:clingen-dosage:MYBPC3:GRCh38:11:47351252:CT:C",
+                "urn:bh26:gene-disease-assessment:8e2d4b8204dfde6375808986c79396ff5800b642d3d8e4ea62b6de9fd96a63b4:17c3776da224220a"
+              ],
+              "rule_id": "G02",
+              "rule_source": "clingen_pvs1_2018",
+              "next_node": null,
+              "note": null
+            },
+            {
+              "node_id": "V01",
+              "name": "variant_type",
+              "result": "PASS",
+              "value": "FRAMESHIFT",
+              "evidence_ids": [
+                "urn:sha256:a04aeca39543cf0e63dbeaa44fa9a14421d6507dd385413440d6fcf6e7391115:annotation:NM_000256.3"
+              ],
+              "rule_id": "V01",
+              "rule_source": "clingen_pvs1_2018",
+              "next_node": null,
+              "note": null
+            },
+            {
+              "node_id": "NF01",
+              "name": "transcript_relevance",
+              "result": "PASS",
+              "value": "RELEVANT",
+              "evidence_ids": [
+                "urn:sha256:9158ea1eed2a9fd029854642560a930d4cc26938948da2ca9200e1a6bda5e336:mane:NM_000256.3:GRCh38:11:47351252:CT:C"
+              ],
+              "rule_id": "NF01",
+              "rule_source": "clingen_pvs1_2018",
+              "next_node": null,
+              "note": null
+            },
+            {
+              "node_id": "NF02",
+              "name": "nmd_prediction",
+              "result": "PASS",
+              "value": true,
+              "evidence_ids": [
+                "urn:sha256:5638d92ddbb391b7720ea000a475e9206ff26f7d19a00b098790f3522e800f39:nmd:NM_000256.3:GRCh38:11:47351252:CT:C"
+              ],
+              "rule_id": "NF02",
+              "rule_source": "clingen_pvs1_2018",
+              "next_node": null,
+              "note": null
+            },
+            {
+              "node_id": "NF03",
+              "name": "exon_relevance",
+              "result": "PASS",
+              "value": "RELEVANT",
+              "evidence_ids": [
+                "urn:sha256:9158ea1eed2a9fd029854642560a930d4cc26938948da2ca9200e1a6bda5e336:mane:NM_000256.3:GRCh38:11:47351252:CT:C"
+              ],
+              "rule_id": "NF03",
+              "rule_source": "clingen_pvs1_2018",
+              "next_node": null,
+              "note": null
+            }
+          ]
+        },
+        {
+          "name": "rulesUsed",
+          "value": [
+            {
+              "id": "clingen_pvs1_2018",
+              "doi": "10.1002/humu.23626",
+              "pmid": "30192042"
+            },
+            {
+              "id": "clingen_splicing_2023",
+              "doi": "10.1016/j.ajhg.2023.06.002",
+              "pmid": "37352859"
             }
           ]
         },
@@ -254,7 +363,7 @@
       "description": "PS1 is not applicable: it compares missense substitutions, and the annotation reports frameshift_variant. PS1 compares a missense variant with an independently established pathogenic variant producing the same amino-acid substitution. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
       "specifiedBy": {
         "type": "Method",
-        "name": "ACMG/AMP PS1 assessment (unknown)",
+        "name": "ACMG/AMP PS1 assessment (not met)",
         "methodType": "PS1",
         "reportedIn": {
           "type": "Document",
@@ -266,21 +375,29 @@
       "directionOfEvidenceProvided": "neutral",
       "extensions": [
         {
-          "name": "bh26AssessmentDetails",
+          "name": "status",
+          "value": "not_met"
+        },
+        {
+          "name": "provenance",
           "value": {
-            "status": "unknown",
-            "evidenceItemIds": [
-              "urn:sha256:a04aeca39543cf0e63dbeaa44fa9a14421d6507dd385413440d6fcf6e7391115:annotation:NM_000256.3"
-            ],
-            "provenance": {
-              "rule_version": "PS1-v1",
-              "assessment_outcome": "not_applicable"
-            }
+            "rule_version": "PS1-v1",
+            "assessment_outcome": "not_applicable"
           }
         },
         {
           "name": "referenceLink",
-          "value": "https://www.ncbi.nlm.nih.gov/clinvar/?term=MYBPC3%5Bgene%5D%20AND%20c.278delA"
+          "value": "https://www.ncbi.nlm.nih.gov/clinvar/?term=MYBPC3%5Bgene%5D%20AND%20Lys93"
+        },
+        {
+          "name": "curatorHints",
+          "value": [
+            {
+              "severity": "caution",
+              "category": "unevaluated",
+              "message": "PS1 could not actually be evaluated from the available data (reported as not_met rather than left unknown)."
+            }
+          ]
         }
       ]
     },
@@ -302,20 +419,21 @@
       "directionOfEvidenceProvided": "neutral",
       "extensions": [
         {
-          "name": "bh26AssessmentDetails",
-          "value": {
-            "status": "unknown",
-            "missingInputs": [
-              "criterion implementation"
-            ]
-          }
+          "name": "status",
+          "value": "unknown"
+        },
+        {
+          "name": "missingInputs",
+          "value": [
+            "criterion implementation"
+          ]
         }
       ]
     },
     {
       "id": "evline:MYBPC3_c_278delA_PS3",
       "type": "EvidenceLine",
-      "description": "None of the 9 paper(s) examined yielded a usable evidence-based judgment for this variant (either the variant could not be identified in the text, or the per-paper judgment was itself inconclusive).",
+      "description": "None of the 10 paper(s) examined yielded a usable evidence-based judgment for this variant (either the variant could not be identified in the text, or the per-paper judgment was itself inconclusive).",
       "specifiedBy": {
         "type": "Method",
         "name": "Unspecified VCEP ACMG/AMP PS3 evidence assessment (LLM-assisted draft)",
@@ -336,45 +454,10 @@
             "name": "ACMG literature-evidence LLM pipeline (gemma-4 via vLLM) - AI-generated draft evidence, requires human curator review before use"
           },
           "activityType": "automated evidence evaluation",
-          "date": "2026-09-18T02:35:17.399760Z"
+          "date": "2026-09-18T14:29:59.221431Z"
         }
       ],
       "reportedIn": [
-        {
-          "type": "Document",
-          "urls": [
-            "https://pubmed.ncbi.nlm.nih.gov/42741831/"
-          ],
-          "pmid": "42741831"
-        },
-        {
-          "type": "Document",
-          "urls": [
-            "https://pubmed.ncbi.nlm.nih.gov/42658137/"
-          ],
-          "pmid": "42658137"
-        },
-        {
-          "type": "Document",
-          "urls": [
-            "https://pubmed.ncbi.nlm.nih.gov/42650075/"
-          ],
-          "pmid": "42650075"
-        },
-        {
-          "type": "Document",
-          "urls": [
-            "https://pubmed.ncbi.nlm.nih.gov/42478525/"
-          ],
-          "pmid": "42478525"
-        },
-        {
-          "type": "Document",
-          "urls": [
-            "https://pubmed.ncbi.nlm.nih.gov/42437345/"
-          ],
-          "pmid": "42437345"
-        },
         {
           "type": "Document",
           "urls": [
@@ -382,212 +465,6 @@
           ],
           "pmid": "42428486"
         },
-        {
-          "type": "Document",
-          "urls": [
-            "https://pubmed.ncbi.nlm.nih.gov/42215316/"
-          ],
-          "pmid": "42215316"
-        },
-        {
-          "type": "Document",
-          "urls": [
-            "https://pubmed.ncbi.nlm.nih.gov/41998504/"
-          ],
-          "pmid": "41998504"
-        },
-        {
-          "type": "Document",
-          "urls": [
-            "https://pubmed.ncbi.nlm.nih.gov/41893039/"
-          ],
-          "pmid": "41893039"
-        }
-      ],
-      "hasEvidenceItems": [
-        {
-          "id": "evline:paper-1-42741831",
-          "type": "EvidenceLine",
-          "description": "The paper does not study the target variant c.278delA; it investigates a different deep-intronic variant c.2308+227G>A. Therefore, no functional evidence can be extracted for the target variant.",
-          "reportedIn": [
-            {
-              "type": "Document",
-              "urls": [
-                "https://pubmed.ncbi.nlm.nih.gov/42741831/"
-              ],
-              "pmid": "42741831"
-            }
-          ],
-          "directionOfEvidenceProvided": "neutral"
-        },
-        {
-          "id": "evline:paper-2-42658137",
-          "type": "EvidenceLine",
-          "description": "The provided text is an abstract describing a genetic association study in a heart failure cohort. It does not provide any experimental functional assay data for the target variant c.278delA.",
-          "reportedIn": [
-            {
-              "type": "Document",
-              "urls": [
-                "https://pubmed.ncbi.nlm.nih.gov/42658137/"
-              ],
-              "pmid": "42658137"
-            }
-          ],
-          "directionOfEvidenceProvided": "neutral"
-        },
-        {
-          "id": "evline:paper-3-42650075",
-          "type": "EvidenceLine",
-          "description": "The paper does not evaluate the target variant c.278delA; it evaluates different variants (c.1458-1G>A and c.3331-1G>A).",
-          "reportedIn": [
-            {
-              "type": "Document",
-              "urls": [
-                "https://pubmed.ncbi.nlm.nih.gov/42650075/"
-              ],
-              "pmid": "42650075"
-            }
-          ],
-          "directionOfEvidenceProvided": "neutral"
-        },
-        {
-          "id": "evline:paper-4-42478525",
-          "type": "EvidenceLine",
-          "description": "The provided text does not mention the target variant c.278delA. Therefore, no functional evidence can be extracted from this paper.",
-          "reportedIn": [
-            {
-              "type": "Document",
-              "urls": [
-                "https://pubmed.ncbi.nlm.nih.gov/42478525/"
-              ],
-              "pmid": "42478525"
-            }
-          ],
-          "directionOfEvidenceProvided": "neutral"
-        },
-        {
-          "id": "evline:paper-5-42437345",
-          "type": "EvidenceLine",
-          "description": "The target variant c.278delA is not explicitly identified or reported in the provided text, which focuses on a large-scale screen and the specific validation of c.1008C>T.",
-          "reportedIn": [
-            {
-              "type": "Document",
-              "urls": [
-                "https://pubmed.ncbi.nlm.nih.gov/42437345/"
-              ],
-              "pmid": "42437345"
-            }
-          ],
-          "directionOfEvidenceProvided": "neutral"
-        },
-        {
-          "id": "evline:paper-6-42428486",
-          "type": "EvidenceLine",
-          "description": "The paper explicitly states that functional validation is lacking for this variant. While the authors discuss the predicted mechanism of pathogenicity (NMD and haploinsufficiency), they do not perform or report any experimental functional assays.",
-          "reportedIn": [
-            {
-              "type": "Document",
-              "urls": [
-                "https://pubmed.ncbi.nlm.nih.gov/42428486/"
-              ],
-              "pmid": "42428486"
-            }
-          ],
-          "directionOfEvidenceProvided": "neutral"
-        },
-        {
-          "id": "evline:paper-7-42215316",
-          "type": "EvidenceLine",
-          "description": "The paper does not test the target variant (c.278delA); it reports an incidental finding of a different MYBPC3 variant (c.989del).",
-          "reportedIn": [
-            {
-              "type": "Document",
-              "urls": [
-                "https://pubmed.ncbi.nlm.nih.gov/42215316/"
-              ],
-              "pmid": "42215316"
-            }
-          ],
-          "directionOfEvidenceProvided": "neutral"
-        },
-        {
-          "id": "evline:paper-8-41998504",
-          "type": "EvidenceLine",
-          "description": "The target variant c.278delA is not specifically identified or evaluated with functional assays in the provided text. While the paper discusses MYBPC3 variants in a large cohort, it does not provide variant-specific functional data required for PS3/BS3 assessment.",
-          "reportedIn": [
-            {
-              "type": "Document",
-              "urls": [
-                "https://pubmed.ncbi.nlm.nih.gov/41998504/"
-              ],
-              "pmid": "41998504"
-            }
-          ],
-          "directionOfEvidenceProvided": "neutral"
-        },
-        {
-          "id": "evline:paper-9-41893039",
-          "type": "EvidenceLine",
-          "description": "The paper does not report functional assay results for the specific target variant. It performs a population-level gene burden analysis rather than individual variant functional characterization.",
-          "reportedIn": [
-            {
-              "type": "Document",
-              "urls": [
-                "https://pubmed.ncbi.nlm.nih.gov/41893039/"
-              ],
-              "pmid": "41893039"
-            }
-          ],
-          "directionOfEvidenceProvided": "neutral"
-        }
-      ],
-      "directionOfEvidenceProvided": "neutral",
-      "extensions": [
-        {
-          "name": "curatorHints",
-          "value": [
-            {
-              "severity": "info",
-              "message": "None of the 9 paper(s) examined yielded a usable evidence-based judgment for this variant (either the variant could not be identified in the text, or the per-paper judgment was itself inconclusive)."
-            }
-          ]
-        },
-        {
-          "name": "bh26AssessmentDetails",
-          "value": {
-            "status": "unknown"
-          }
-        }
-      ]
-    },
-    {
-      "id": "evline:MYBPC3_c_278delA_PS4",
-      "type": "EvidenceLine",
-      "description": "None of the 10 paper(s) examined yielded a usable evidence-based judgment for this variant (either the variant could not be identified in the text, or the per-paper judgment was itself inconclusive).",
-      "specifiedBy": {
-        "type": "Method",
-        "name": "Unspecified VCEP ACMG/AMP PS4 evidence assessment (LLM-assisted draft)",
-        "methodType": "PS4",
-        "reportedIn": {
-          "type": "Document",
-          "name": "Richards et al., 2015, Genet Med.",
-          "doi": "10.1038/gim.2015.30",
-          "pmid": "25741868"
-        }
-      },
-      "contributions": [
-        {
-          "type": "Contribution",
-          "contributor": {
-            "id": "acmg-literature-llm-pipeline",
-            "type": "Agent",
-            "name": "ACMG literature-evidence LLM pipeline (gemma-4 via vLLM) - AI-generated draft evidence, requires human curator review before use"
-          },
-          "activityType": "automated evidence evaluation",
-          "date": "2026-09-18T02:35:17.398644Z"
-        }
-      ],
-      "reportedIn": [
         {
           "type": "Document",
           "urls": [
@@ -633,9 +510,276 @@
         {
           "type": "Document",
           "urls": [
+            "https://pubmed.ncbi.nlm.nih.gov/42215316/"
+          ],
+          "pmid": "42215316"
+        },
+        {
+          "type": "Document",
+          "urls": [
+            "https://pubmed.ncbi.nlm.nih.gov/41998504/"
+          ],
+          "pmid": "41998504"
+        },
+        {
+          "type": "Document",
+          "urls": [
+            "https://pubmed.ncbi.nlm.nih.gov/41893039/"
+          ],
+          "pmid": "41893039"
+        }
+      ],
+      "hasEvidenceItems": [
+        {
+          "id": "evline:paper-1-42428486",
+          "type": "EvidenceLine",
+          "description": "The paper identifies the variant in a patient with a clinical phenotype, but the authors explicitly state that 'functional validation is lacking' and that 'the absence of functional studies to characterize the molecular consequences of these variants' is a limitation.",
+          "reportedIn": [
+            {
+              "type": "Document",
+              "urls": [
+                "https://pubmed.ncbi.nlm.nih.gov/42428486/"
+              ],
+              "pmid": "42428486"
+            }
+          ],
+          "directionOfEvidenceProvided": "neutral"
+        },
+        {
+          "id": "evline:paper-2-42741831",
+          "type": "EvidenceLine",
+          "description": "The paper does not test or report on the target variant (c.278delA). It investigates a different, deep-intronic variant (c.2308+227G>A).",
+          "reportedIn": [
+            {
+              "type": "Document",
+              "urls": [
+                "https://pubmed.ncbi.nlm.nih.gov/42741831/"
+              ],
+              "pmid": "42741831"
+            }
+          ],
+          "directionOfEvidenceProvided": "neutral"
+        },
+        {
+          "id": "evline:paper-3-42698999",
+          "type": "EvidenceLine",
+          "description": "The paper evaluates a TTN variant (c.97493-2_97504del), not the target MYBPC3 variant. No functional data for the target variant is provided.",
+          "reportedIn": [
+            {
+              "type": "Document",
+              "urls": [
+                "https://pubmed.ncbi.nlm.nih.gov/42698999/"
+              ],
+              "pmid": "42698999"
+            }
+          ],
+          "directionOfEvidenceProvided": "neutral"
+        },
+        {
+          "id": "evline:paper-4-42658137",
+          "type": "EvidenceLine",
+          "description": "The provided abstract discusses the identification of pathogenic variants in a heart failure cohort but does not provide specific functional assay data for the target variant c.278delA.",
+          "reportedIn": [
+            {
+              "type": "Document",
+              "urls": [
+                "https://pubmed.ncbi.nlm.nih.gov/42658137/"
+              ],
+              "pmid": "42658137"
+            }
+          ],
+          "directionOfEvidenceProvided": "neutral"
+        },
+        {
+          "id": "evline:paper-5-42650075",
+          "type": "EvidenceLine",
+          "description": "The paper does not evaluate the target variant c.278delA; it investigates different splice-site variants in the MYBPC3 gene.",
+          "reportedIn": [
+            {
+              "type": "Document",
+              "urls": [
+                "https://pubmed.ncbi.nlm.nih.gov/42650075/"
+              ],
+              "pmid": "42650075"
+            }
+          ],
+          "directionOfEvidenceProvided": "neutral"
+        },
+        {
+          "id": "evline:paper-6-42478525",
+          "type": "EvidenceLine",
+          "description": "The target variant was not identified in the provided abstract. Therefore, no functional assays can be evaluated for this specific variant.",
+          "reportedIn": [
+            {
+              "type": "Document",
+              "urls": [
+                "https://pubmed.ncbi.nlm.nih.gov/42478525/"
+              ],
+              "pmid": "42478525"
+            }
+          ],
+          "directionOfEvidenceProvided": "neutral"
+        },
+        {
+          "id": "evline:paper-7-42437345",
+          "type": "EvidenceLine",
+          "description": "The target variant c.278delA is not specifically tested or reported in this study. Although the study is highly relevant to MYBPC3 functional assessment, the specific quantitative data for this variant is missing from the text.",
+          "reportedIn": [
+            {
+              "type": "Document",
+              "urls": [
+                "https://pubmed.ncbi.nlm.nih.gov/42437345/"
+              ],
+              "pmid": "42437345"
+            }
+          ],
+          "directionOfEvidenceProvided": "neutral"
+        },
+        {
+          "id": "evline:paper-8-42215316",
+          "type": "EvidenceLine",
+          "description": "The paper does not test or report any functional data for the target variant c.278delA (p.(Lys93ArgfsTer3)). The MYBPC3 variant mentioned in the text is a different variant (p.Pro330HisfsTer20).",
+          "reportedIn": [
+            {
+              "type": "Document",
+              "urls": [
+                "https://pubmed.ncbi.nlm.nih.gov/42215316/"
+              ],
+              "pmid": "42215316"
+            }
+          ],
+          "directionOfEvidenceProvided": "neutral"
+        },
+        {
+          "id": "evline:paper-9-41998504",
+          "type": "EvidenceLine",
+          "description": "The target variant is not individually identified or tested in the provided text. While the paper discusses the prevalence of MYBPC3 variants in a large cohort, it lacks specific functional evidence for the variant of interest.",
+          "reportedIn": [
+            {
+              "type": "Document",
+              "urls": [
+                "https://pubmed.ncbi.nlm.nih.gov/41998504/"
+              ],
+              "pmid": "41998504"
+            }
+          ],
+          "directionOfEvidenceProvided": "neutral"
+        },
+        {
+          "id": "evline:paper-10-41893039",
+          "type": "EvidenceLine",
+          "description": "The paper does not test the specific variant; it evaluates gene-level associations within population databases. Therefore, no functional evidence for the target variant can be extracted.",
+          "reportedIn": [
+            {
+              "type": "Document",
+              "urls": [
+                "https://pubmed.ncbi.nlm.nih.gov/41893039/"
+              ],
+              "pmid": "41893039"
+            }
+          ],
+          "directionOfEvidenceProvided": "neutral"
+        }
+      ],
+      "directionOfEvidenceProvided": "neutral",
+      "extensions": [
+        {
+          "name": "curatorHints",
+          "value": [
+            {
+              "severity": "info",
+              "category": null,
+              "message": "None of the 10 paper(s) examined yielded a usable evidence-based judgment for this variant (either the variant could not be identified in the text, or the per-paper judgment was itself inconclusive)."
+            },
+            {
+              "severity": "caution",
+              "category": "unevaluated",
+              "message": "PS3 could not actually be evaluated from the available literature (reported as not_met rather than left unknown)."
+            }
+          ]
+        },
+        {
+          "name": "status",
+          "value": "not_met"
+        }
+      ]
+    },
+    {
+      "id": "evline:MYBPC3_c_278delA_PS4",
+      "type": "EvidenceLine",
+      "description": "None of the 10 paper(s) examined yielded a usable evidence-based judgment for this variant (either the variant could not be identified in the text, or the per-paper judgment was itself inconclusive).",
+      "specifiedBy": {
+        "type": "Method",
+        "name": "Unspecified VCEP ACMG/AMP PS4 evidence assessment (LLM-assisted draft)",
+        "methodType": "PS4",
+        "reportedIn": {
+          "type": "Document",
+          "name": "Richards et al., 2015, Genet Med.",
+          "doi": "10.1038/gim.2015.30",
+          "pmid": "25741868"
+        }
+      },
+      "contributions": [
+        {
+          "type": "Contribution",
+          "contributor": {
+            "id": "acmg-literature-llm-pipeline",
+            "type": "Agent",
+            "name": "ACMG literature-evidence LLM pipeline (gemma-4 via vLLM) - AI-generated draft evidence, requires human curator review before use"
+          },
+          "activityType": "automated evidence evaluation",
+          "date": "2026-09-18T14:29:59.218162Z"
+        }
+      ],
+      "reportedIn": [
+        {
+          "type": "Document",
+          "urls": [
             "https://pubmed.ncbi.nlm.nih.gov/42428486/"
           ],
           "pmid": "42428486"
+        },
+        {
+          "type": "Document",
+          "urls": [
+            "https://pubmed.ncbi.nlm.nih.gov/42741831/"
+          ],
+          "pmid": "42741831"
+        },
+        {
+          "type": "Document",
+          "urls": [
+            "https://pubmed.ncbi.nlm.nih.gov/42698999/"
+          ],
+          "pmid": "42698999"
+        },
+        {
+          "type": "Document",
+          "urls": [
+            "https://pubmed.ncbi.nlm.nih.gov/42658137/"
+          ],
+          "pmid": "42658137"
+        },
+        {
+          "type": "Document",
+          "urls": [
+            "https://pubmed.ncbi.nlm.nih.gov/42650075/"
+          ],
+          "pmid": "42650075"
+        },
+        {
+          "type": "Document",
+          "urls": [
+            "https://pubmed.ncbi.nlm.nih.gov/42478525/"
+          ],
+          "pmid": "42478525"
+        },
+        {
+          "type": "Document",
+          "urls": [
+            "https://pubmed.ncbi.nlm.nih.gov/42437345/"
+          ],
+          "pmid": "42437345"
         },
         {
           "type": "Document",
@@ -661,187 +805,31 @@
       ],
       "hasEvidenceItems": [
         {
-          "id": "evline:paper-1-42741831",
+          "id": "evline:paper-1-42428486",
           "type": "EvidenceLine",
-          "description": "The paper does not report on the target variant c.278delA; therefore, no evidence can be extracted for PS4 evaluation.",
+          "description": "The paper is a single case report, not a case-control or cohort study. It does not provide a denominator for an affected group or a comparison group to establish statistical enrichment.",
           "extensions": [
             {
-              "name": "structuredEvidenceItems",
+              "name": "curatorHints",
               "value": [
                 {
-                  "label": "Study design: not_case_control",
-                  "checked": false,
-                  "detail": ""
-                }
-              ]
-            }
-          ],
-          "reportedIn": [
-            {
-              "type": "Document",
-              "urls": [
-                "https://pubmed.ncbi.nlm.nih.gov/42741831/"
-              ],
-              "pmid": "42741831"
-            }
-          ],
-          "directionOfEvidenceProvided": "neutral"
-        },
-        {
-          "id": "evline:paper-2-42698999",
-          "type": "EvidenceLine",
-          "description": "The paper does not report the target variant (MYBPC3 c.278delA); it focuses on a TTN variant. Therefore, no PS4 evidence can be evaluated.",
-          "extensions": [
-            {
-              "name": "structuredEvidenceItems",
-              "value": [
-                {
-                  "label": "Study design: not_case_control",
-                  "checked": false,
-                  "detail": ""
-                }
-              ]
-            }
-          ],
-          "reportedIn": [
-            {
-              "type": "Document",
-              "urls": [
-                "https://pubmed.ncbi.nlm.nih.gov/42698999/"
-              ],
-              "pmid": "42698999"
-            }
-          ],
-          "directionOfEvidenceProvided": "neutral"
-        },
-        {
-          "id": "evline:paper-3-42658137",
-          "type": "EvidenceLine",
-          "description": "The target variant c.278delA is not explicitly identified in the provided text. While MYBPC3 is mentioned as a gene containing causal variants, no specific variant data is available to support PS4 evaluation.",
-          "extensions": [
-            {
-              "name": "structuredEvidenceItems",
-              "value": [
-                {
-                  "label": "Study design: not_case_control",
-                  "checked": false,
-                  "detail": ""
-                }
-              ]
-            }
-          ],
-          "reportedIn": [
-            {
-              "type": "Document",
-              "urls": [
-                "https://pubmed.ncbi.nlm.nih.gov/42658137/"
-              ],
-              "pmid": "42658137"
-            }
-          ],
-          "directionOfEvidenceProvided": "neutral"
-        },
-        {
-          "id": "evline:paper-4-42650075",
-          "type": "EvidenceLine",
-          "description": "The target variant was not identified in the study; therefore, no evidence can be extracted.",
-          "extensions": [
-            {
-              "name": "structuredEvidenceItems",
-              "value": [
-                {
-                  "label": "Study design: not_case_control",
-                  "checked": false,
-                  "detail": ""
-                }
-              ]
-            }
-          ],
-          "reportedIn": [
-            {
-              "type": "Document",
-              "urls": [
-                "https://pubmed.ncbi.nlm.nih.gov/42650075/"
-              ],
-              "pmid": "42650075"
-            }
-          ],
-          "directionOfEvidenceProvided": "neutral"
-        },
-        {
-          "id": "evline:paper-5-42478525",
-          "type": "EvidenceLine",
-          "description": "The target variant was not identified in the provided text, so no evidence for enrichment can be assessed.",
-          "extensions": [
-            {
-              "name": "structuredEvidenceItems",
-              "value": [
-                {
-                  "label": "Study design: case_series",
-                  "checked": false,
-                  "detail": ""
-                }
-              ]
-            }
-          ],
-          "reportedIn": [
-            {
-              "type": "Document",
-              "urls": [
-                "https://pubmed.ncbi.nlm.nih.gov/42478525/"
-              ],
-              "pmid": "42478525"
-            }
-          ],
-          "directionOfEvidenceProvided": "neutral"
-        },
-        {
-          "id": "evline:paper-6-42437345",
-          "type": "EvidenceLine",
-          "description": "The target variant c.278delA was not identified in the provided text; therefore, no case-control evidence can be extracted.",
-          "extensions": [
-            {
-              "name": "structuredEvidenceItems",
-              "value": [
-                {
-                  "label": "Study design: not_case_control",
-                  "checked": false,
-                  "detail": ""
-                }
-              ]
-            }
-          ],
-          "reportedIn": [
-            {
-              "type": "Document",
-              "urls": [
-                "https://pubmed.ncbi.nlm.nih.gov/42437345/"
-              ],
-              "pmid": "42437345"
-            }
-          ],
-          "directionOfEvidenceProvided": "neutral"
-        },
-        {
-          "id": "evline:paper-7-42428486",
-          "type": "EvidenceLine",
-          "description": "This is a single case report rather than a case-control or cohort study; there is no comparison group or denominator provided to evaluate enrichment.",
-          "extensions": [
-            {
-              "name": "structuredEvidenceItems",
-              "value": [
-                {
-                  "label": "Affected-side counts",
+                  "severity": "info",
+                  "category": "evidence_item",
+                  "message": "Affected-side counts",
                   "checked": true,
                   "detail": "1/1 affected individuals carry the variant"
                 },
                 {
-                  "label": "Control-side counts",
+                  "severity": "info",
+                  "category": "evidence_item",
+                  "message": "Control-side counts",
                   "checked": false,
                   "detail": "unaffected_carriers=0, total_unaffected=None"
                 },
                 {
-                  "label": "Study design: case_series",
+                  "severity": "info",
+                  "category": "evidence_item",
+                  "message": "Study design: case_series",
                   "checked": false,
                   "detail": ""
                 }
@@ -860,15 +848,198 @@
           "directionOfEvidenceProvided": "neutral"
         },
         {
-          "id": "evline:paper-8-42215316",
+          "id": "evline:paper-2-42741831",
           "type": "EvidenceLine",
-          "description": "The paper does not report the target variant (c.278delA); it reports an incidental finding of a different MYBPC3 variant in a single case report.",
+          "description": "The study does not evaluate the target variant (c.278delA); it evaluates a different deep-intronic variant (c.2308+227G>A).",
           "extensions": [
             {
-              "name": "structuredEvidenceItems",
+              "name": "curatorHints",
               "value": [
                 {
-                  "label": "Study design: not_case_control",
+                  "severity": "info",
+                  "category": "evidence_item",
+                  "message": "Study design: not_case_control",
+                  "checked": false,
+                  "detail": ""
+                }
+              ]
+            }
+          ],
+          "reportedIn": [
+            {
+              "type": "Document",
+              "urls": [
+                "https://pubmed.ncbi.nlm.nih.gov/42741831/"
+              ],
+              "pmid": "42741831"
+            }
+          ],
+          "directionOfEvidenceProvided": "neutral"
+        },
+        {
+          "id": "evline:paper-3-42698999",
+          "type": "EvidenceLine",
+          "description": "The paper does not report the target MYBPC3 variant; it describes a different variant in the TTN gene. Therefore, no evidence for the target variant can be extracted.",
+          "extensions": [
+            {
+              "name": "curatorHints",
+              "value": [
+                {
+                  "severity": "info",
+                  "category": "evidence_item",
+                  "message": "Study design: not_case_control",
+                  "checked": false,
+                  "detail": ""
+                }
+              ]
+            }
+          ],
+          "reportedIn": [
+            {
+              "type": "Document",
+              "urls": [
+                "https://pubmed.ncbi.nlm.nih.gov/42698999/"
+              ],
+              "pmid": "42698999"
+            }
+          ],
+          "directionOfEvidenceProvided": "neutral"
+        },
+        {
+          "id": "evline:paper-4-42658137",
+          "type": "EvidenceLine",
+          "description": "The paper does not explicitly report or test the specific target variant c.278delA (p.Lys93ArgfsTer3); it only mentions the presence of pathogenic variants in the MYBPC3 gene generally.",
+          "extensions": [
+            {
+              "name": "curatorHints",
+              "value": [
+                {
+                  "severity": "info",
+                  "category": "evidence_item",
+                  "message": "Study design: not_case_control",
+                  "checked": false,
+                  "detail": ""
+                }
+              ]
+            }
+          ],
+          "reportedIn": [
+            {
+              "type": "Document",
+              "urls": [
+                "https://pubmed.ncbi.nlm.nih.gov/42658137/"
+              ],
+              "pmid": "42658137"
+            }
+          ],
+          "directionOfEvidenceProvided": "neutral"
+        },
+        {
+          "id": "evline:paper-5-42650075",
+          "type": "EvidenceLine",
+          "description": "The target variant c.278delA was not reported or tested in this study; therefore, no evidence can be extracted.",
+          "extensions": [
+            {
+              "name": "curatorHints",
+              "value": [
+                {
+                  "severity": "info",
+                  "category": "evidence_item",
+                  "message": "Study design: not_case_control",
+                  "checked": false,
+                  "detail": ""
+                }
+              ]
+            }
+          ],
+          "reportedIn": [
+            {
+              "type": "Document",
+              "urls": [
+                "https://pubmed.ncbi.nlm.nih.gov/42650075/"
+              ],
+              "pmid": "42650075"
+            }
+          ],
+          "directionOfEvidenceProvided": "neutral"
+        },
+        {
+          "id": "evline:paper-6-42478525",
+          "type": "EvidenceLine",
+          "description": "The target variant was not identified in the provided text, so no evidence for enrichment can be assessed.",
+          "extensions": [
+            {
+              "name": "curatorHints",
+              "value": [
+                {
+                  "severity": "info",
+                  "category": "evidence_item",
+                  "message": "Affected-side counts",
+                  "checked": false,
+                  "detail": "affected_carriers=None, total_affected=8"
+                },
+                {
+                  "severity": "info",
+                  "category": "evidence_item",
+                  "message": "Study design: case_series",
+                  "checked": false,
+                  "detail": ""
+                }
+              ]
+            }
+          ],
+          "reportedIn": [
+            {
+              "type": "Document",
+              "urls": [
+                "https://pubmed.ncbi.nlm.nih.gov/42478525/"
+              ],
+              "pmid": "42478525"
+            }
+          ],
+          "directionOfEvidenceProvided": "neutral"
+        },
+        {
+          "id": "evline:paper-7-42437345",
+          "type": "EvidenceLine",
+          "description": "The target variant was not identified in the provided text; therefore, no case-control evidence can be extracted.",
+          "extensions": [
+            {
+              "name": "curatorHints",
+              "value": [
+                {
+                  "severity": "info",
+                  "category": "evidence_item",
+                  "message": "Study design: not_case_control",
+                  "checked": false,
+                  "detail": ""
+                }
+              ]
+            }
+          ],
+          "reportedIn": [
+            {
+              "type": "Document",
+              "urls": [
+                "https://pubmed.ncbi.nlm.nih.gov/42437345/"
+              ],
+              "pmid": "42437345"
+            }
+          ],
+          "directionOfEvidenceProvided": "neutral"
+        },
+        {
+          "id": "evline:paper-8-42215316",
+          "type": "EvidenceLine",
+          "description": "The paper does not report the target variant; it describes a single case report of a different MYBPC3 variant.",
+          "extensions": [
+            {
+              "name": "curatorHints",
+              "value": [
+                {
+                  "severity": "info",
+                  "category": "evidence_item",
+                  "message": "Study design: not_case_control",
                   "checked": false,
                   "detail": ""
                 }
@@ -889,13 +1060,15 @@
         {
           "id": "evline:paper-9-41998504",
           "type": "EvidenceLine",
-          "description": "The specific target variant c.278delA is not reported in the provided text, so no evidence can be assessed.",
+          "description": "The target variant was not identified or reported in this study; therefore, no evidence can be extracted.",
           "extensions": [
             {
-              "name": "structuredEvidenceItems",
+              "name": "curatorHints",
               "value": [
                 {
-                  "label": "Study design: not_case_control",
+                  "severity": "info",
+                  "category": "evidence_item",
+                  "message": "Study design: not_case_control",
                   "checked": false,
                   "detail": ""
                 }
@@ -916,13 +1089,15 @@
         {
           "id": "evline:paper-10-41893039",
           "type": "EvidenceLine",
-          "description": "The study is a gene-level burden analysis and does not report data for the specific target variant, making it impossible to evaluate PS4 evidence for this variant.",
+          "description": "The study utilizes gene-level burden analysis for large biobanks and does not provide data for specific individual variants, making it impossible to evaluate the enrichment of the target variant.",
           "extensions": [
             {
-              "name": "structuredEvidenceItems",
+              "name": "curatorHints",
               "value": [
                 {
-                  "label": "Study design: not_case_control",
+                  "severity": "info",
+                  "category": "evidence_item",
+                  "message": "Study design: not_case_control",
                   "checked": false,
                   "detail": ""
                 }
@@ -948,15 +1123,19 @@
           "value": [
             {
               "severity": "info",
+              "category": null,
               "message": "None of the 10 paper(s) examined yielded a usable evidence-based judgment for this variant (either the variant could not be identified in the text, or the per-paper judgment was itself inconclusive)."
+            },
+            {
+              "severity": "caution",
+              "category": "unevaluated",
+              "message": "PS4 could not actually be evaluated from the available literature (reported as not_met rather than left unknown)."
             }
           ]
         },
         {
-          "name": "bh26AssessmentDetails",
-          "value": {
-            "status": "unknown"
-          }
+          "name": "status",
+          "value": "not_met"
         }
       ]
     },
@@ -966,7 +1145,7 @@
       "description": "No region assessment was retrieved for this variant. PM1 evaluates a variant in a reviewed mutational hotspot or critical functional domain with no conflicting benign variation. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
       "specifiedBy": {
         "type": "Method",
-        "name": "ACMG/AMP PM1 assessment (unknown)",
+        "name": "ACMG/AMP PM1 assessment (not met)",
         "methodType": "PM1",
         "reportedIn": {
           "type": "Document",
@@ -975,26 +1154,67 @@
           "pmid": "25741868"
         }
       },
+      "hasEvidenceItems": [
+        {
+          "id": "urn:bh26:curator-info:c5e6738e78bbbcf79084715ccb0fe318fbc47d5a89d7b420906aae4385c81521",
+          "type": "EvidenceLine",
+          "description": "Structured facts gathered for a curator's own review (PM1) - not a hotspot/domain-relevance verdict.",
+          "extensions": [
+            {
+              "name": "curatorInfo",
+              "value": {
+                "uniprotAccession": "Q14896",
+                "proteinPosition": 93,
+                "coveringDomains": [
+                  {
+                    "type": "Chain",
+                    "start": 1,
+                    "end": 1274,
+                    "description": "Myosin-binding protein C, cardiac-type"
+                  }
+                ],
+                "nearbyVariants": []
+              }
+            }
+          ],
+          "directionOfEvidenceProvided": "neutral"
+        }
+      ],
       "directionOfEvidenceProvided": "neutral",
       "extensions": [
         {
-          "name": "bh26AssessmentDetails",
+          "name": "status",
+          "value": "not_met"
+        },
+        {
+          "name": "provenance",
           "value": {
-            "status": "unknown",
-            "evidenceItemIds": [
-              "urn:sha256:a04aeca39543cf0e63dbeaa44fa9a14421d6507dd385413440d6fcf6e7391115:annotation:NM_000256.3"
-            ],
-            "provenance": {
-              "rule_version": "PM1-v1"
-            },
-            "missingInputs": [
-              "region"
-            ]
+            "rule_version": "PM1-v1"
           }
+        },
+        {
+          "name": "missingInputs",
+          "value": [
+            "region"
+          ]
+        },
+        {
+          "name": "referenceLink",
+          "value": "https://franklin.genoox.com/clinical-db/variant/snp/chr11-47351252-CT-C-hg38"
         },
         {
           "name": "referenceLink",
           "value": "https://www.uniprot.org/uniprotkb/Q14896/entry"
+        },
+        {
+          "name": "curatorHints",
+          "value": [
+            {
+              "severity": "caution",
+              "category": "unevaluated",
+              "message": "PM1 could not actually be evaluated from the available data (reported as not_met rather than left unknown)."
+            }
+          ]
         }
       ]
     },
@@ -1033,20 +1253,22 @@
       },
       "extensions": [
         {
-          "name": "bh26AssessmentDetails",
+          "name": "status",
+          "value": "met"
+        },
+        {
+          "name": "provenance",
           "value": {
-            "criterion": "PM2",
-            "status": "met",
-            "evidenceItemIds": [],
-            "provenance": {
-              "rule_version": "PM2-v1",
-              "policy_source": "BH26 demo population evidence QC policy",
-              "policy_version": "2026-09-15",
-              "rejected_observations": [],
-              "provider_failures": []
-            },
-            "direction": "supports"
+            "rule_version": "PM2-v1",
+            "policy_source": "BH26 demo population evidence QC policy",
+            "policy_version": "2026-09-15",
+            "rejected_observations": [],
+            "provider_failures": []
           }
+        },
+        {
+          "name": "direction",
+          "value": "supports"
         },
         {
           "name": "curatorHints",
@@ -1061,6 +1283,10 @@
         {
           "name": "referenceLink",
           "value": "https://grch38.togovar.org/variant/11-47351252-CT-C"
+        },
+        {
+          "name": "referenceLink",
+          "value": "https://gnomad.broadinstitute.org/variant/11-47351252-CT-C?dataset=gnomad_r4"
         }
       ]
     },
@@ -1082,13 +1308,14 @@
       "directionOfEvidenceProvided": "neutral",
       "extensions": [
         {
-          "name": "bh26AssessmentDetails",
-          "value": {
-            "status": "unknown",
-            "missingInputs": [
-              "criterion implementation"
-            ]
-          }
+          "name": "status",
+          "value": "unknown"
+        },
+        {
+          "name": "missingInputs",
+          "value": [
+            "criterion implementation"
+          ]
         },
         {
           "name": "referenceLink",
@@ -1102,7 +1329,7 @@
       "description": "PM4 is not applicable: the annotation does not indicate an in-frame insertion, in-frame deletion, or stop-loss consequence (annotated: frameshift_variant). PM4 evaluates protein-length changes caused by an in-frame insertion, in-frame deletion, or stop-loss variant. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
       "specifiedBy": {
         "type": "Method",
-        "name": "ACMG/AMP PM4 assessment (unknown)",
+        "name": "ACMG/AMP PM4 assessment (not met)",
         "methodType": "PM4",
         "reportedIn": {
           "type": "Document",
@@ -1114,17 +1341,25 @@
       "directionOfEvidenceProvided": "neutral",
       "extensions": [
         {
-          "name": "bh26AssessmentDetails",
+          "name": "status",
+          "value": "not_met"
+        },
+        {
+          "name": "provenance",
           "value": {
-            "status": "unknown",
-            "evidenceItemIds": [
-              "urn:sha256:a04aeca39543cf0e63dbeaa44fa9a14421d6507dd385413440d6fcf6e7391115:annotation:NM_000256.3"
-            ],
-            "provenance": {
-              "rule_version": "PM4-v1",
-              "assessment_outcome": "not_applicable"
-            }
+            "rule_version": "PM4-v1",
+            "assessment_outcome": "not_applicable"
           }
+        },
+        {
+          "name": "curatorHints",
+          "value": [
+            {
+              "severity": "caution",
+              "category": "unevaluated",
+              "message": "PM4 could not actually be evaluated from the available data (reported as not_met rather than left unknown)."
+            }
+          ]
         }
       ]
     },
@@ -1134,7 +1369,7 @@
       "description": "PM5 is not applicable: it compares missense substitutions, and the annotation reports frameshift_variant. PM5 compares a missense variant with an independently established pathogenic variant causing a different amino-acid substitution at the same residue. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
       "specifiedBy": {
         "type": "Method",
-        "name": "ACMG/AMP PM5 assessment (unknown)",
+        "name": "ACMG/AMP PM5 assessment (not met)",
         "methodType": "PM5",
         "reportedIn": {
           "type": "Document",
@@ -1143,24 +1378,62 @@
           "pmid": "25741868"
         }
       },
+      "hasEvidenceItems": [
+        {
+          "id": "urn:bh26:curator-info:3f337d907240e50cbd800a2cad7d5941fb87b304cc889c1b730c0a023713436d",
+          "type": "EvidenceLine",
+          "description": "Structured facts gathered for a curator's own review (PM5) - not a hotspot/domain-relevance verdict.",
+          "extensions": [
+            {
+              "name": "curatorInfo",
+              "value": {
+                "uniprotAccession": "Q14896",
+                "proteinPosition": 93,
+                "coveringDomains": [
+                  {
+                    "type": "Chain",
+                    "start": 1,
+                    "end": 1274,
+                    "description": "Myosin-binding protein C, cardiac-type"
+                  }
+                ],
+                "nearbyVariants": []
+              }
+            }
+          ],
+          "directionOfEvidenceProvided": "neutral"
+        }
+      ],
       "directionOfEvidenceProvided": "neutral",
       "extensions": [
         {
-          "name": "bh26AssessmentDetails",
+          "name": "status",
+          "value": "not_met"
+        },
+        {
+          "name": "provenance",
           "value": {
-            "status": "unknown",
-            "evidenceItemIds": [
-              "urn:sha256:a04aeca39543cf0e63dbeaa44fa9a14421d6507dd385413440d6fcf6e7391115:annotation:NM_000256.3"
-            ],
-            "provenance": {
-              "rule_version": "PM5-v1",
-              "assessment_outcome": "not_applicable"
-            }
+            "rule_version": "PM5-v1",
+            "assessment_outcome": "not_applicable"
           }
         },
         {
           "name": "referenceLink",
+          "value": "https://franklin.genoox.com/clinical-db/variant/snp/chr11-47351252-CT-C-hg38"
+        },
+        {
+          "name": "referenceLink",
           "value": "https://www.uniprot.org/uniprotkb/Q14896/entry"
+        },
+        {
+          "name": "curatorHints",
+          "value": [
+            {
+              "severity": "caution",
+              "category": "unevaluated",
+              "message": "PM5 could not actually be evaluated from the available data (reported as not_met rather than left unknown)."
+            }
+          ]
         }
       ]
     },
@@ -1182,13 +1455,14 @@
       "directionOfEvidenceProvided": "neutral",
       "extensions": [
         {
-          "name": "bh26AssessmentDetails",
-          "value": {
-            "status": "unknown",
-            "missingInputs": [
-              "criterion implementation"
-            ]
-          }
+          "name": "status",
+          "value": "unknown"
+        },
+        {
+          "name": "missingInputs",
+          "value": [
+            "criterion implementation"
+          ]
         }
       ]
     },
@@ -1210,10 +1484,18 @@
       "directionOfEvidenceProvided": "neutral",
       "extensions": [
         {
-          "name": "bh26AssessmentDetails",
-          "value": {
-            "status": "unknown"
-          }
+          "name": "status",
+          "value": "not_met"
+        },
+        {
+          "name": "curatorHints",
+          "value": [
+            {
+              "severity": "caution",
+              "category": "unevaluated",
+              "message": "PP1 could not actually be evaluated from the available data (reported as not_met rather than left unknown)."
+            }
+          ]
         },
         {
           "name": "referenceLink",
@@ -1227,7 +1509,7 @@
       "description": "PP2 is not applicable: it evaluates missense variants, and the annotation reports frameshift_variant. PP2 evaluates missense variants in genes where missense is an established disease mechanism and benign missense variation is constrained. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
       "specifiedBy": {
         "type": "Method",
-        "name": "ACMG/AMP PP2 assessment (unknown)",
+        "name": "ACMG/AMP PP2 assessment (not met)",
         "methodType": "PP2",
         "reportedIn": {
           "type": "Document",
@@ -1239,21 +1521,29 @@
       "directionOfEvidenceProvided": "neutral",
       "extensions": [
         {
-          "name": "bh26AssessmentDetails",
+          "name": "status",
+          "value": "not_met"
+        },
+        {
+          "name": "provenance",
           "value": {
-            "status": "unknown",
-            "evidenceItemIds": [
-              "urn:sha256:a04aeca39543cf0e63dbeaa44fa9a14421d6507dd385413440d6fcf6e7391115:annotation:NM_000256.3"
-            ],
-            "provenance": {
-              "rule_version": "PP2-v1",
-              "assessment_outcome": "not_applicable"
-            }
+            "rule_version": "PP2-v1",
+            "assessment_outcome": "not_applicable"
           }
         },
         {
           "name": "referenceLink",
           "value": "https://gnomad.broadinstitute.org/gene/MYBPC3?dataset=gnomad_r4"
+        },
+        {
+          "name": "curatorHints",
+          "value": [
+            {
+              "severity": "caution",
+              "category": "unevaluated",
+              "message": "PP2 could not actually be evaluated from the available data (reported as not_met rather than left unknown)."
+            }
+          ]
         }
       ]
     },
@@ -1263,7 +1553,7 @@
       "description": "Outside predictor calibration scope. PP3 evaluates calibrated computational evidence supporting a damaging effect. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
       "specifiedBy": {
         "type": "Method",
-        "name": "ACMG/AMP PP3 assessment (unknown)",
+        "name": "ACMG/AMP PP3 assessment (not met)",
         "methodType": "PP3",
         "reportedIn": {
           "type": "Document",
@@ -1275,23 +1565,35 @@
       "directionOfEvidenceProvided": "neutral",
       "extensions": [
         {
-          "name": "bh26AssessmentDetails",
+          "name": "status",
+          "value": "not_met"
+        },
+        {
+          "name": "provenance",
           "value": {
-            "status": "unknown",
-            "evidenceItemIds": [
-              "urn:sha256:a04aeca39543cf0e63dbeaa44fa9a14421d6507dd385413440d6fcf6e7391115:annotation:NM_000256.3"
-            ],
-            "provenance": {
-              "rule_version": "PP3-v1"
-            }
+            "rule_version": "PP3-v1"
           }
+        },
+        {
+          "name": "referenceLink",
+          "value": "https://pubmed.ncbi.nlm.nih.gov/36413997/"
+        },
+        {
+          "name": "curatorHints",
+          "value": [
+            {
+              "severity": "caution",
+              "category": "unevaluated",
+              "message": "PP3 could not actually be evaluated from the available data (reported as not_met rather than left unknown)."
+            }
+          ]
         }
       ]
     },
     {
       "id": "evline:MYBPC3_c_278delA_PP4",
       "type": "EvidenceLine",
-      "description": "pp1_bs4_pp4_engine: phenotype not evaluable (no_diagnosis_available_to_search_literature_for)",
+      "description": "pp1_bs4_pp4_engine: phenotype not evaluable (literature_search_found_no_confirmed_overall_diagnostic_yield_statistic)",
       "specifiedBy": {
         "type": "Method",
         "name": "ACMG/AMP PP4 assessment (family segregation / phenotype specificity)",
@@ -1306,10 +1608,18 @@
       "directionOfEvidenceProvided": "neutral",
       "extensions": [
         {
-          "name": "bh26AssessmentDetails",
-          "value": {
-            "status": "unknown"
-          }
+          "name": "status",
+          "value": "not_met"
+        },
+        {
+          "name": "curatorHints",
+          "value": [
+            {
+              "severity": "caution",
+              "category": "unevaluated",
+              "message": "PP4 could not actually be evaluated from the available data (reported as not_met rather than left unknown)."
+            }
+          ]
         }
       ]
     },
@@ -1319,7 +1629,7 @@
       "description": "ClinGen General policy: retrieve primary evidence instead of scoring external assertions. PP5 is not scored from an external assertion alone; the primary evidence must be reviewed. Outcome: UNKNOWN; no MET or NOT_MET judgment is made.",
       "specifiedBy": {
         "type": "Method",
-        "name": "ACMG/AMP PP5 assessment (unknown)",
+        "name": "ACMG/AMP PP5 assessment (not met)",
         "methodType": "PP5",
         "reportedIn": {
           "type": "Document",
@@ -1331,14 +1641,24 @@
       "directionOfEvidenceProvided": "neutral",
       "extensions": [
         {
-          "name": "bh26AssessmentDetails",
+          "name": "status",
+          "value": "not_met"
+        },
+        {
+          "name": "provenance",
           "value": {
-            "status": "unknown",
-            "evidenceItemIds": [],
-            "provenance": {
-              "rule_version": "PP5-v1"
-            }
+            "rule_version": "PP5-v1"
           }
+        },
+        {
+          "name": "curatorHints",
+          "value": [
+            {
+              "severity": "caution",
+              "category": "unevaluated",
+              "message": "PP5 could not actually be evaluated from the available data (reported as not_met rather than left unknown)."
+            }
+          ]
         }
       ]
     },
@@ -1348,7 +1668,7 @@
       "description": "No reliable population observation",
       "specifiedBy": {
         "type": "Method",
-        "name": "ACMG/AMP BA1 assessment (unknown)",
+        "name": "ACMG/AMP BA1 assessment (not met)",
         "methodType": "BA1",
         "reportedIn": {
           "type": "Document",
@@ -1360,25 +1680,42 @@
       "directionOfEvidenceProvided": "neutral",
       "extensions": [
         {
-          "name": "bh26AssessmentDetails",
+          "name": "status",
+          "value": "not_met"
+        },
+        {
+          "name": "provenance",
           "value": {
-            "status": "unknown",
-            "evidenceItemIds": [],
-            "provenance": {
-              "rule_version": "BA1-v1",
-              "policy_source": "BH26 demo population evidence QC policy",
-              "policy_version": "2026-09-15",
-              "rejected_observations": [],
-              "provider_failures": []
-            },
-            "missingInputs": [
-              "population"
-            ]
+            "rule_version": "BA1-v1",
+            "policy_source": "BH26 demo population evidence QC policy",
+            "policy_version": "2026-09-15",
+            "rejected_observations": [],
+            "provider_failures": []
           }
+        },
+        {
+          "name": "missingInputs",
+          "value": [
+            "population"
+          ]
         },
         {
           "name": "referenceLink",
           "value": "https://grch38.togovar.org/variant/11-47351252-CT-C"
+        },
+        {
+          "name": "referenceLink",
+          "value": "https://gnomad.broadinstitute.org/variant/11-47351252-CT-C?dataset=gnomad_r4"
+        },
+        {
+          "name": "curatorHints",
+          "value": [
+            {
+              "severity": "caution",
+              "category": "unevaluated",
+              "message": "BA1 could not actually be evaluated from the available data (reported as not_met rather than left unknown)."
+            }
+          ]
         }
       ]
     },
@@ -1388,7 +1725,7 @@
       "description": "No reliable population observation",
       "specifiedBy": {
         "type": "Method",
-        "name": "ACMG/AMP BS1 assessment (unknown)",
+        "name": "ACMG/AMP BS1 assessment (not met)",
         "methodType": "BS1",
         "reportedIn": {
           "type": "Document",
@@ -1400,25 +1737,42 @@
       "directionOfEvidenceProvided": "neutral",
       "extensions": [
         {
-          "name": "bh26AssessmentDetails",
+          "name": "status",
+          "value": "not_met"
+        },
+        {
+          "name": "provenance",
           "value": {
-            "status": "unknown",
-            "evidenceItemIds": [],
-            "provenance": {
-              "rule_version": "BS1-v1",
-              "policy_source": "BH26 demo population evidence QC policy",
-              "policy_version": "2026-09-15",
-              "rejected_observations": [],
-              "provider_failures": []
-            },
-            "missingInputs": [
-              "population"
-            ]
+            "rule_version": "BS1-v1",
+            "policy_source": "BH26 demo population evidence QC policy",
+            "policy_version": "2026-09-15",
+            "rejected_observations": [],
+            "provider_failures": []
           }
+        },
+        {
+          "name": "missingInputs",
+          "value": [
+            "population"
+          ]
         },
         {
           "name": "referenceLink",
           "value": "https://grch38.togovar.org/variant/11-47351252-CT-C"
+        },
+        {
+          "name": "referenceLink",
+          "value": "https://gnomad.broadinstitute.org/variant/11-47351252-CT-C?dataset=gnomad_r4"
+        },
+        {
+          "name": "curatorHints",
+          "value": [
+            {
+              "severity": "caution",
+              "category": "unevaluated",
+              "message": "BS1 could not actually be evaluated from the available data (reported as not_met rather than left unknown)."
+            }
+          ]
         }
       ]
     },
@@ -1440,24 +1794,29 @@
       "directionOfEvidenceProvided": "neutral",
       "extensions": [
         {
-          "name": "bh26AssessmentDetails",
-          "value": {
-            "status": "unknown",
-            "missingInputs": [
-              "criterion implementation"
-            ]
-          }
+          "name": "status",
+          "value": "unknown"
+        },
+        {
+          "name": "missingInputs",
+          "value": [
+            "criterion implementation"
+          ]
         },
         {
           "name": "referenceLink",
           "value": "https://grch38.togovar.org/variant/11-47351252-CT-C"
+        },
+        {
+          "name": "referenceLink",
+          "value": "https://gnomad.broadinstitute.org/variant/11-47351252-CT-C?dataset=gnomad_r4"
         }
       ]
     },
     {
       "id": "evline:MYBPC3_c_278delA_BS3",
       "type": "EvidenceLine",
-      "description": "None of the 9 paper(s) examined yielded a usable evidence-based judgment for this variant (either the variant could not be identified in the text, or the per-paper judgment was itself inconclusive).",
+      "description": "None of the 10 paper(s) examined yielded a usable evidence-based judgment for this variant (either the variant could not be identified in the text, or the per-paper judgment was itself inconclusive).",
       "specifiedBy": {
         "type": "Method",
         "name": "Unspecified VCEP ACMG/AMP BS3 evidence assessment (LLM-assisted draft)",
@@ -1478,16 +1837,30 @@
             "name": "ACMG literature-evidence LLM pipeline (gemma-4 via vLLM) - AI-generated draft evidence, requires human curator review before use"
           },
           "activityType": "automated evidence evaluation",
-          "date": "2026-09-18T02:35:17.395809Z"
+          "date": "2026-09-18T14:29:59.223740Z"
         }
       ],
       "reportedIn": [
         {
           "type": "Document",
           "urls": [
+            "https://pubmed.ncbi.nlm.nih.gov/42428486/"
+          ],
+          "pmid": "42428486"
+        },
+        {
+          "type": "Document",
+          "urls": [
             "https://pubmed.ncbi.nlm.nih.gov/42741831/"
           ],
           "pmid": "42741831"
+        },
+        {
+          "type": "Document",
+          "urls": [
+            "https://pubmed.ncbi.nlm.nih.gov/42698999/"
+          ],
+          "pmid": "42698999"
         },
         {
           "type": "Document",
@@ -1520,13 +1893,6 @@
         {
           "type": "Document",
           "urls": [
-            "https://pubmed.ncbi.nlm.nih.gov/42428486/"
-          ],
-          "pmid": "42428486"
-        },
-        {
-          "type": "Document",
-          "urls": [
             "https://pubmed.ncbi.nlm.nih.gov/42215316/"
           ],
           "pmid": "42215316"
@@ -1548,84 +1914,9 @@
       ],
       "hasEvidenceItems": [
         {
-          "id": "evline:paper-1-42741831",
+          "id": "evline:paper-1-42428486",
           "type": "EvidenceLine",
-          "description": "The paper does not study the target variant c.278delA; it investigates a different deep-intronic variant c.2308+227G>A. Therefore, no functional evidence can be extracted for the target variant.",
-          "reportedIn": [
-            {
-              "type": "Document",
-              "urls": [
-                "https://pubmed.ncbi.nlm.nih.gov/42741831/"
-              ],
-              "pmid": "42741831"
-            }
-          ],
-          "directionOfEvidenceProvided": "neutral"
-        },
-        {
-          "id": "evline:paper-2-42658137",
-          "type": "EvidenceLine",
-          "description": "The provided text is an abstract describing a genetic association study in a heart failure cohort. It does not provide any experimental functional assay data for the target variant c.278delA.",
-          "reportedIn": [
-            {
-              "type": "Document",
-              "urls": [
-                "https://pubmed.ncbi.nlm.nih.gov/42658137/"
-              ],
-              "pmid": "42658137"
-            }
-          ],
-          "directionOfEvidenceProvided": "neutral"
-        },
-        {
-          "id": "evline:paper-3-42650075",
-          "type": "EvidenceLine",
-          "description": "The paper does not evaluate the target variant c.278delA; it evaluates different variants (c.1458-1G>A and c.3331-1G>A).",
-          "reportedIn": [
-            {
-              "type": "Document",
-              "urls": [
-                "https://pubmed.ncbi.nlm.nih.gov/42650075/"
-              ],
-              "pmid": "42650075"
-            }
-          ],
-          "directionOfEvidenceProvided": "neutral"
-        },
-        {
-          "id": "evline:paper-4-42478525",
-          "type": "EvidenceLine",
-          "description": "The provided text does not mention the target variant c.278delA. Therefore, no functional evidence can be extracted from this paper.",
-          "reportedIn": [
-            {
-              "type": "Document",
-              "urls": [
-                "https://pubmed.ncbi.nlm.nih.gov/42478525/"
-              ],
-              "pmid": "42478525"
-            }
-          ],
-          "directionOfEvidenceProvided": "neutral"
-        },
-        {
-          "id": "evline:paper-5-42437345",
-          "type": "EvidenceLine",
-          "description": "The target variant c.278delA is not explicitly identified or reported in the provided text, which focuses on a large-scale screen and the specific validation of c.1008C>T.",
-          "reportedIn": [
-            {
-              "type": "Document",
-              "urls": [
-                "https://pubmed.ncbi.nlm.nih.gov/42437345/"
-              ],
-              "pmid": "42437345"
-            }
-          ],
-          "directionOfEvidenceProvided": "neutral"
-        },
-        {
-          "id": "evline:paper-6-42428486",
-          "type": "EvidenceLine",
-          "description": "The paper explicitly states that functional validation is lacking for this variant. While the authors discuss the predicted mechanism of pathogenicity (NMD and haploinsufficiency), they do not perform or report any experimental functional assays.",
+          "description": "The paper identifies the variant in a patient with a clinical phenotype, but the authors explicitly state that 'functional validation is lacking' and that 'the absence of functional studies to characterize the molecular consequences of these variants' is a limitation.",
           "reportedIn": [
             {
               "type": "Document",
@@ -1638,9 +1929,99 @@
           "directionOfEvidenceProvided": "neutral"
         },
         {
-          "id": "evline:paper-7-42215316",
+          "id": "evline:paper-2-42741831",
           "type": "EvidenceLine",
-          "description": "The paper does not test the target variant (c.278delA); it reports an incidental finding of a different MYBPC3 variant (c.989del).",
+          "description": "The paper does not test or report on the target variant (c.278delA). It investigates a different, deep-intronic variant (c.2308+227G>A).",
+          "reportedIn": [
+            {
+              "type": "Document",
+              "urls": [
+                "https://pubmed.ncbi.nlm.nih.gov/42741831/"
+              ],
+              "pmid": "42741831"
+            }
+          ],
+          "directionOfEvidenceProvided": "neutral"
+        },
+        {
+          "id": "evline:paper-3-42698999",
+          "type": "EvidenceLine",
+          "description": "The paper evaluates a TTN variant (c.97493-2_97504del), not the target MYBPC3 variant. No functional data for the target variant is provided.",
+          "reportedIn": [
+            {
+              "type": "Document",
+              "urls": [
+                "https://pubmed.ncbi.nlm.nih.gov/42698999/"
+              ],
+              "pmid": "42698999"
+            }
+          ],
+          "directionOfEvidenceProvided": "neutral"
+        },
+        {
+          "id": "evline:paper-4-42658137",
+          "type": "EvidenceLine",
+          "description": "The provided abstract discusses the identification of pathogenic variants in a heart failure cohort but does not provide specific functional assay data for the target variant c.278delA.",
+          "reportedIn": [
+            {
+              "type": "Document",
+              "urls": [
+                "https://pubmed.ncbi.nlm.nih.gov/42658137/"
+              ],
+              "pmid": "42658137"
+            }
+          ],
+          "directionOfEvidenceProvided": "neutral"
+        },
+        {
+          "id": "evline:paper-5-42650075",
+          "type": "EvidenceLine",
+          "description": "The paper does not evaluate the target variant c.278delA; it investigates different splice-site variants in the MYBPC3 gene.",
+          "reportedIn": [
+            {
+              "type": "Document",
+              "urls": [
+                "https://pubmed.ncbi.nlm.nih.gov/42650075/"
+              ],
+              "pmid": "42650075"
+            }
+          ],
+          "directionOfEvidenceProvided": "neutral"
+        },
+        {
+          "id": "evline:paper-6-42478525",
+          "type": "EvidenceLine",
+          "description": "The target variant was not identified in the provided abstract. Therefore, no functional assays can be evaluated for this specific variant.",
+          "reportedIn": [
+            {
+              "type": "Document",
+              "urls": [
+                "https://pubmed.ncbi.nlm.nih.gov/42478525/"
+              ],
+              "pmid": "42478525"
+            }
+          ],
+          "directionOfEvidenceProvided": "neutral"
+        },
+        {
+          "id": "evline:paper-7-42437345",
+          "type": "EvidenceLine",
+          "description": "The target variant c.278delA is not specifically tested or reported in this study. Although the study is highly relevant to MYBPC3 functional assessment, the specific quantitative data for this variant is missing from the text.",
+          "reportedIn": [
+            {
+              "type": "Document",
+              "urls": [
+                "https://pubmed.ncbi.nlm.nih.gov/42437345/"
+              ],
+              "pmid": "42437345"
+            }
+          ],
+          "directionOfEvidenceProvided": "neutral"
+        },
+        {
+          "id": "evline:paper-8-42215316",
+          "type": "EvidenceLine",
+          "description": "The paper does not test or report any functional data for the target variant c.278delA (p.(Lys93ArgfsTer3)). The MYBPC3 variant mentioned in the text is a different variant (p.Pro330HisfsTer20).",
           "reportedIn": [
             {
               "type": "Document",
@@ -1653,9 +2034,9 @@
           "directionOfEvidenceProvided": "neutral"
         },
         {
-          "id": "evline:paper-8-41998504",
+          "id": "evline:paper-9-41998504",
           "type": "EvidenceLine",
-          "description": "The target variant c.278delA is not specifically identified or evaluated with functional assays in the provided text. While the paper discusses MYBPC3 variants in a large cohort, it does not provide variant-specific functional data required for PS3/BS3 assessment.",
+          "description": "The target variant is not individually identified or tested in the provided text. While the paper discusses the prevalence of MYBPC3 variants in a large cohort, it lacks specific functional evidence for the variant of interest.",
           "reportedIn": [
             {
               "type": "Document",
@@ -1668,9 +2049,9 @@
           "directionOfEvidenceProvided": "neutral"
         },
         {
-          "id": "evline:paper-9-41893039",
+          "id": "evline:paper-10-41893039",
           "type": "EvidenceLine",
-          "description": "The paper does not report functional assay results for the specific target variant. It performs a population-level gene burden analysis rather than individual variant functional characterization.",
+          "description": "The paper does not test the specific variant; it evaluates gene-level associations within population databases. Therefore, no functional evidence for the target variant can be extracted.",
           "reportedIn": [
             {
               "type": "Document",
@@ -1690,15 +2071,19 @@
           "value": [
             {
               "severity": "info",
-              "message": "None of the 9 paper(s) examined yielded a usable evidence-based judgment for this variant (either the variant could not be identified in the text, or the per-paper judgment was itself inconclusive)."
+              "category": null,
+              "message": "None of the 10 paper(s) examined yielded a usable evidence-based judgment for this variant (either the variant could not be identified in the text, or the per-paper judgment was itself inconclusive)."
+            },
+            {
+              "severity": "caution",
+              "category": "unevaluated",
+              "message": "BS3 could not actually be evaluated from the available literature (reported as not_met rather than left unknown)."
             }
           ]
         },
         {
-          "name": "bh26AssessmentDetails",
-          "value": {
-            "status": "unknown"
-          }
+          "name": "status",
+          "value": "not_met"
         }
       ]
     },
@@ -1720,10 +2105,18 @@
       "directionOfEvidenceProvided": "neutral",
       "extensions": [
         {
-          "name": "bh26AssessmentDetails",
-          "value": {
-            "status": "unknown"
-          }
+          "name": "status",
+          "value": "not_met"
+        },
+        {
+          "name": "curatorHints",
+          "value": [
+            {
+              "severity": "caution",
+              "category": "unevaluated",
+              "message": "BS4 could not actually be evaluated from the available data (reported as not_met rather than left unknown)."
+            }
+          ]
         }
       ]
     },
@@ -1733,7 +2126,7 @@
       "description": "BP1 is not applicable: it evaluates missense variants, and the annotation reports frameshift_variant. BP1 evaluates missense variants in genes where disease is predominantly caused by truncating variants rather than missense variation. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
       "specifiedBy": {
         "type": "Method",
-        "name": "ACMG/AMP BP1 assessment (unknown)",
+        "name": "ACMG/AMP BP1 assessment (not met)",
         "methodType": "BP1",
         "reportedIn": {
           "type": "Document",
@@ -1745,17 +2138,25 @@
       "directionOfEvidenceProvided": "neutral",
       "extensions": [
         {
-          "name": "bh26AssessmentDetails",
+          "name": "status",
+          "value": "not_met"
+        },
+        {
+          "name": "provenance",
           "value": {
-            "status": "unknown",
-            "evidenceItemIds": [
-              "urn:sha256:a04aeca39543cf0e63dbeaa44fa9a14421d6507dd385413440d6fcf6e7391115:annotation:NM_000256.3"
-            ],
-            "provenance": {
-              "rule_version": "BP1-v1",
-              "assessment_outcome": "not_applicable"
-            }
+            "rule_version": "BP1-v1",
+            "assessment_outcome": "not_applicable"
           }
+        },
+        {
+          "name": "curatorHints",
+          "value": [
+            {
+              "severity": "caution",
+              "category": "unevaluated",
+              "message": "BP1 could not actually be evaluated from the available data (reported as not_met rather than left unknown)."
+            }
+          ]
         }
       ]
     },
@@ -1777,13 +2178,14 @@
       "directionOfEvidenceProvided": "neutral",
       "extensions": [
         {
-          "name": "bh26AssessmentDetails",
-          "value": {
-            "status": "unknown",
-            "missingInputs": [
-              "criterion implementation"
-            ]
-          }
+          "name": "status",
+          "value": "unknown"
+        },
+        {
+          "name": "missingInputs",
+          "value": [
+            "criterion implementation"
+          ]
         }
       ]
     },
@@ -1793,7 +2195,7 @@
       "description": "BP3 is not applicable: the annotation does not indicate an in-frame insertion or deletion, which BP3 requires before repeat-region assessment (annotated: frameshift_variant). BP3 evaluates in-frame insertions or deletions in a repetitive region without known function. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
       "specifiedBy": {
         "type": "Method",
-        "name": "ACMG/AMP BP3 assessment (unknown)",
+        "name": "ACMG/AMP BP3 assessment (not met)",
         "methodType": "BP3",
         "reportedIn": {
           "type": "Document",
@@ -1805,17 +2207,25 @@
       "directionOfEvidenceProvided": "neutral",
       "extensions": [
         {
-          "name": "bh26AssessmentDetails",
+          "name": "status",
+          "value": "not_met"
+        },
+        {
+          "name": "provenance",
           "value": {
-            "status": "unknown",
-            "evidenceItemIds": [
-              "urn:sha256:a04aeca39543cf0e63dbeaa44fa9a14421d6507dd385413440d6fcf6e7391115:annotation:NM_000256.3"
-            ],
-            "provenance": {
-              "rule_version": "BP3-v1",
-              "assessment_outcome": "not_applicable"
-            }
+            "rule_version": "BP3-v1",
+            "assessment_outcome": "not_applicable"
           }
+        },
+        {
+          "name": "curatorHints",
+          "value": [
+            {
+              "severity": "caution",
+              "category": "unevaluated",
+              "message": "BP3 could not actually be evaluated from the available data (reported as not_met rather than left unknown)."
+            }
+          ]
         }
       ]
     },
@@ -1825,7 +2235,7 @@
       "description": "Outside predictor calibration scope. BP4 evaluates calibrated computational evidence supporting a benign effect. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
       "specifiedBy": {
         "type": "Method",
-        "name": "ACMG/AMP BP4 assessment (unknown)",
+        "name": "ACMG/AMP BP4 assessment (not met)",
         "methodType": "BP4",
         "reportedIn": {
           "type": "Document",
@@ -1837,16 +2247,28 @@
       "directionOfEvidenceProvided": "neutral",
       "extensions": [
         {
-          "name": "bh26AssessmentDetails",
+          "name": "status",
+          "value": "not_met"
+        },
+        {
+          "name": "provenance",
           "value": {
-            "status": "unknown",
-            "evidenceItemIds": [
-              "urn:sha256:a04aeca39543cf0e63dbeaa44fa9a14421d6507dd385413440d6fcf6e7391115:annotation:NM_000256.3"
-            ],
-            "provenance": {
-              "rule_version": "BP4-v1"
-            }
+            "rule_version": "BP4-v1"
           }
+        },
+        {
+          "name": "referenceLink",
+          "value": "https://pubmed.ncbi.nlm.nih.gov/36413997/"
+        },
+        {
+          "name": "curatorHints",
+          "value": [
+            {
+              "severity": "caution",
+              "category": "unevaluated",
+              "message": "BP4 could not actually be evaluated from the available data (reported as not_met rather than left unknown)."
+            }
+          ]
         }
       ]
     },
@@ -1868,13 +2290,14 @@
       "directionOfEvidenceProvided": "neutral",
       "extensions": [
         {
-          "name": "bh26AssessmentDetails",
-          "value": {
-            "status": "unknown",
-            "missingInputs": [
-              "criterion implementation"
-            ]
-          }
+          "name": "status",
+          "value": "unknown"
+        },
+        {
+          "name": "missingInputs",
+          "value": [
+            "criterion implementation"
+          ]
         }
       ]
     },
@@ -1884,7 +2307,7 @@
       "description": "ClinGen General policy: retrieve primary evidence instead of scoring external assertions. BP6 is not scored from an external assertion alone; the primary evidence must be reviewed. Outcome: UNKNOWN; no MET or NOT_MET judgment is made.",
       "specifiedBy": {
         "type": "Method",
-        "name": "ACMG/AMP BP6 assessment (unknown)",
+        "name": "ACMG/AMP BP6 assessment (not met)",
         "methodType": "BP6",
         "reportedIn": {
           "type": "Document",
@@ -1896,14 +2319,24 @@
       "directionOfEvidenceProvided": "neutral",
       "extensions": [
         {
-          "name": "bh26AssessmentDetails",
+          "name": "status",
+          "value": "not_met"
+        },
+        {
+          "name": "provenance",
           "value": {
-            "status": "unknown",
-            "evidenceItemIds": [],
-            "provenance": {
-              "rule_version": "BP6-v1"
-            }
+            "rule_version": "BP6-v1"
           }
+        },
+        {
+          "name": "curatorHints",
+          "value": [
+            {
+              "severity": "caution",
+              "category": "unevaluated",
+              "message": "BP6 could not actually be evaluated from the available data (reported as not_met rather than left unknown)."
+            }
+          ]
         }
       ]
     },
@@ -1913,7 +2346,7 @@
       "description": "BP7 is not applicable: it evaluates synonymous changes outside splice-critical regions, and the annotation reports frameshift_variant. BP7 evaluates synonymous variants outside splice-critical regions when splice prediction and conservation evidence support a benign interpretation. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
       "specifiedBy": {
         "type": "Method",
-        "name": "ACMG/AMP BP7 assessment (unknown)",
+        "name": "ACMG/AMP BP7 assessment (not met)",
         "methodType": "BP7",
         "reportedIn": {
           "type": "Document",
@@ -1925,17 +2358,25 @@
       "directionOfEvidenceProvided": "neutral",
       "extensions": [
         {
-          "name": "bh26AssessmentDetails",
+          "name": "status",
+          "value": "not_met"
+        },
+        {
+          "name": "provenance",
           "value": {
-            "status": "unknown",
-            "evidenceItemIds": [
-              "urn:sha256:a04aeca39543cf0e63dbeaa44fa9a14421d6507dd385413440d6fcf6e7391115:annotation:NM_000256.3"
-            ],
-            "provenance": {
-              "rule_version": "BP7-v1",
-              "assessment_outcome": "not_applicable"
-            }
+            "rule_version": "BP7-v1",
+            "assessment_outcome": "not_applicable"
           }
+        },
+        {
+          "name": "curatorHints",
+          "value": [
+            {
+              "severity": "caution",
+              "category": "unevaluated",
+              "message": "BP7 could not actually be evaluated from the available data (reported as not_met rather than left unknown)."
+            }
+          ]
         }
       ]
     }
