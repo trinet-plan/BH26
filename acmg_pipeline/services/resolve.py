@@ -64,6 +64,9 @@ from acmg_pipeline.providers.clingen_dosage import (
 )
 from acmg_pipeline.providers.clingen_gene_validity import ClinGenGeneValidityProvider
 from acmg_pipeline.providers.clingen_lumping import ClinGenLumpingProvider
+from acmg_pipeline.providers.cspec_applicability import (
+    METHOD as CSPEC_METHOD, CSpecApplicabilityProvider,
+)
 from acmg_pipeline.providers.gene2phenotype import (
     METHOD as G2P_METHOD, Gene2PhenotypeProvider,
 )
@@ -306,6 +309,7 @@ class ProviderEvidenceResolver:
         with_initiation_assessment: bool = False,
         with_pvs1_transcript_gates: bool = False,
         with_gene2phenotype: bool = False,
+        cspec_applicability_path=None,
         with_disease_matching: bool = False,
         with_gene_disease_associations: bool = False,
     ):
@@ -330,6 +334,10 @@ class ProviderEvidenceResolver:
         self._with_initiation_assessment = with_initiation_assessment
         self._with_pvs1_transcript_gates = with_pvs1_transcript_gates
         self._with_gene2phenotype = with_gene2phenotype
+        # A path rather than a boolean: this producer reads a collected snapshot the project
+        # commits, so a run that wants it has to say which snapshot it means.
+        self._cspec_applicability_path = cspec_applicability_path
+        self._cspec_applicability = None
         self._with_gene_disease_associations = with_gene_disease_associations
         # One switch for the three sources that only ever refine the disease match: mapping
         # OMIM/Orphanet to MONDO, MONDO ancestry, and ClinGen's lumping decisions. They
@@ -396,6 +404,7 @@ class ProviderEvidenceResolver:
         self._add_population(variant, resolved)
         self._add_lof_mechanism(annotation, variant, resolved)
         self._add_gene2phenotype_mechanism(annotation, variant, resolved)
+        self._add_cspec_mechanism(annotation, variant, resolved)
         self._add_gene_disease_associations(annotation, variant, resolved)
         self._add_disease_matching(annotation, identity, resolved)
         self._add_gene_disease_draft(annotation, variant, identity, resolved)
@@ -521,6 +530,37 @@ class ProviderEvidenceResolver:
         resolved.records.extend(records)
         resolved.note(Gene2PhenotypeProvider.name, records=records, genes_queried=1,
                       method=G2P_METHOD,
+                      use_restriction="PVS1_LOF_MECHANISM_GATE_ONLY")
+
+    def _add_cspec_mechanism(self, annotation, variant, resolved):
+        """PVS1's mechanism gate from a VCEP's own criteria specification.
+
+        Off unless a snapshot path is given, like the two producers beside it. Where dosage
+        scores one gene and G2P curates gene-disease pairs it has reached, this answers for
+        any gene a VCEP wrote a specification for - which is how a recessive, non-dosage-
+        scored gene gets an answer at all. Reading PVS1 applicability as the mechanism is a
+        project decision the provider records on every record; see its module docstring.
+        """
+        if not self._cspec_applicability_path or annotation is None:
+            return
+        gene = annotation.get("gene")
+        if not gene:
+            return
+        if self._cspec_applicability is None:
+            self._cspec_applicability = CSpecApplicabilityProvider(
+                self._cspec_applicability_path)
+        try:
+            records = self._cspec_applicability.get_mechanism(variant, gene)
+        except (OSError, ValueError) as exc:
+            resolved.failures.append(
+                {"provider": CSpecApplicabilityProvider.name, "error": str(exc)})
+            resolved.note(CSpecApplicabilityProvider.name, error=str(exc), genes_queried=1,
+                          use_restriction="PVS1_LOF_MECHANISM_GATE_ONLY")
+            return
+        resolved.records.extend(records)
+        resolved.note(CSpecApplicabilityProvider.name, records=records, genes_queried=1,
+                      method=CSPEC_METHOD,
+                      provider_version=records[0]["source_version"] if records else None,
                       use_restriction="PVS1_LOF_MECHANISM_GATE_ONLY")
 
     def _add_gene_disease_associations(self, annotation, variant, resolved):

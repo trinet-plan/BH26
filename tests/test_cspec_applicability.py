@@ -9,11 +9,12 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from acmg_pipeline.providers.cspec_applicability import POLICY_VERSION
 from test_data.collect_cspec_applicability import (
     ALL_CODES, applicability, collect, gene_entries,
 )
 
-DRAFT = Path(__file__).resolve().parent.parent / "config" / "cspec_applicability_draft.json"
+SNAPSHOT = Path(__file__).resolve().parent.parent / "config" / "cspec_applicability.json"
 
 
 def strength(value):
@@ -203,35 +204,46 @@ class CollectTests(unittest.TestCase):
         self.assertIn("PS2", entries["TEST"]["criteria_missing"])
 
 
-class CommittedDraftTests(unittest.TestCase):
-    """What config/cspec_applicability_draft.json must keep being."""
+class CommittedSnapshotTests(unittest.TestCase):
+    """What config/cspec_applicability.json must keep being now that PVS1 reads it."""
 
     @classmethod
     def setUpClass(cls):
-        cls.document = json.loads(DRAFT.read_text(encoding="utf-8"))
+        cls.document = json.loads(SNAPSHOT.read_text(encoding="utf-8"))
         cls.entries = cls.document["entries"]
 
-    def test_it_stays_a_draft_that_names_its_source_and_its_rule(self):
-        self.assertEqual(self.document["registry_status"], "DRAFT")
+    def test_it_names_its_source_its_rule_and_how_it_was_entered(self):
+        self.assertEqual(self.document["registry_status"], "APPROVED")
         self.assertEqual(self.document["entry_method"], "machine_collected")
         self.assertTrue(self.document["retrieved_at"])
         self.assertIn("cspec.genome.network", self.document["source_url"])
-        self.assertIn("MUST NOT", self.document["purpose"])
         self.assertTrue(self.document["not_verified_by_a_second_reader"])
 
-    def test_it_never_states_a_mechanism_in_the_review_files_vocabulary(self):
-        """`PVS1: Applicable` is not `lof_mechanism_established`; the draft must not blur that.
+    def test_the_pvs1_mapping_is_recorded_as_a_decision_with_its_scope(self):
+        """Reading PVS1 applicability as the mechanism is a judgment, not a transcription.
 
-        Deciding whether the two are the same sentence is the curator's call (see the
-        collector's docstring), so a machine-collected file asserting the mechanism directly
-        would have made that call silently.
+        The file has to keep carrying who decided it and that it covers PVS1 alone, because
+        that is what separates it from a reading anyone could have made from the registry.
+        """
+        decision = self.document["pvs1_mapping_decision"]
+        for field in ("decision", "decided_at", "decided_by", "rationale", "policy_version"):
+            self.assertTrue(decision.get(field), field)
+        self.assertIn("PVS1 only", decision["scope"])
+        self.assertEqual(decision["policy_version"], POLICY_VERSION)
+
+    def test_entries_never_state_a_mechanism_in_the_review_files_vocabulary(self):
+        """Only the provider maps PVS1 applicability onto lof_mechanism_established.
+
+        Keeping the data in CSpec's own words means the mapping lives in one place that
+        records its policy_version, rather than being baked into a file that then looks like
+        something the registry said.
         """
         raw = json.dumps(self.entries)
         for field in ("lof_mechanism_established", "pp2_applicable", "bp1_applicable",
                       "missense_mechanism_established", "human_signoff", "reviewed_at"):
             self.assertNotIn(field, raw, f"entries must not speak in {field}")
         # The prose is where the distinction belongs, and it has to keep naming it.
-        self.assertIn("lof_mechanism_established", self.document["purpose"])
+        self.assertIn("pp2_applicable", self.document["purpose"])
 
     def test_every_entry_carries_criteria_and_a_disease_scope(self):
         self.assertTrue(self.entries)
@@ -263,11 +275,12 @@ class CommittedDraftTests(unittest.TestCase):
     def test_it_agrees_with_the_hand_written_review_on_pvs1(self):
         """The three genes where both sources have a disease-scoped answer.
 
-        This is the evidence that reading VCEP applicability reproduces the judgment a curator
-        already made by hand - not a licence to map the two fields onto each other.
+        This is the evidence the mapping decision rests on: reading VCEP applicability
+        reproduces the judgment a curator already made by hand. If the two ever diverge here,
+        the decision recorded in pvs1_mapping_decision needs revisiting, not patching.
         """
         review = json.loads(
-            (DRAFT.parent / "gene-disease-review-decisions.json").read_text(encoding="utf-8"))
+            (SNAPSHOT.parent / "gene-disease-review-decisions.json").read_text(encoding="utf-8"))
         compared = 0
         for group in review["groups"]:
             entry = self.entries.get(group["gene"])

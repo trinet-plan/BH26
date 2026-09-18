@@ -1,6 +1,7 @@
 {
  "curated_context_path": "config/curated-context.json",
  "gene_disease_assessments": "config/gene-disease-review-decisions.json",
+ "cspec_applicability": "config/cspec_applicability.json",
  "ensembl_release": "116",
  "with_clinvar_spectrum": true,
  "with_clingen_dosage": true,

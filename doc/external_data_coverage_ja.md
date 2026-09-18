@@ -471,30 +471,82 @@ GET /cspec/api/SequenceVariantInterpretation/id/GN180  → ruleSets[].criteriaCo
 GitHub上の静的TSVのため `source_version` / `retrieved_at` の根拠が弱く、
 `build_assessment_document()` の provenance 要件を満たしにくい。採らない。
 
-**投入物（この時点ではDRAFT、実行時には読まれない）**
+**採取時の注意（2026-09-18に一度誤った）**
 
-- `test_data/collect_cspec_applicability.py` — 収集スクリプト。ディスクキャッシュ付きで再実行コスト0
-- `config/cspec_applicability_draft.json` — 134遺伝子 × 28基準 + MONDO + 遺伝形式
+`applicability` は `evidenceStrengths[]` にネストしており、registry が使う語彙は
+**6種類**ある（全208文書で集計）。
 
-`config/bs1_thresholds_draft.json` と同じ `registry_status: DRAFT` 規約に従う。provider を
-書き、キュレーターが `reviewed_at` を記録するまで判定には使われない。
+```
+9414 'Not applicable'   4087 'Applicable'   2571 'Not Applicable'
+1168 'Not Applicable for this VCEP'
+ 345 'Applicable with VCEP specification'    85 'Applicable as originally described'
+```
+
+最初の実装は `== "applicable"` の完全一致で畳んだため、後ろ2つ（計430件）の**限定付き
+肯定**を否定へ倒し、21遺伝子のPVS1を誤って `Not applicable` として公開した。GAAで発覚
+（Lysosomal Diseases VCEPはPVS1を適用しているのに28基準すべてNot applicableになっていた）。
+現在は `startswith("applicable")` で畳む（`Not Applicable for this VCEP` は先頭がNotなので
+部分一致にはしない）。
+
+**検証の教訓**: 畳み込み規則をGN180（DYSF）だけで突き合わせて「28基準一致」を確認したが、
+GN180は肯定をすべて素の `Applicable` で書く文書で、**バグを露呈させられない唯一の文書を
+検証に使っていた**。語彙は1文書から読まず、全文書で数えること。
+
+**投入物（実行時に読まれる）**
+
+| ファイル | 役割 |
+|---|---|
+| `test_data/collect_cspec_applicability.py` | 収集スクリプト。ディスクキャッシュ付きで再実行コスト0 |
+| `config/cspec_applicability.json` | 134遺伝子 × 28基準 + MONDO + 遺伝形式（`registry_status: APPROVED`） |
+| `acmg_pipeline/providers/cspec_applicability.py` | **PVS1のG01ゲートだけ**を読むprovider |
+
+`config/demo-rules.json` の `cspec_applicability` にパスを置くと有効になる（CLIは
+`--cspec-applicability PATH`）。ClinGen Dosage / G2P と同じく既定ではオフで、明示的に
+指定した run だけが読む。
+
+**キュレーター判断（2026-09-18）: `PVS1: Applicable` → `lof_mechanism_established: true`**
+
+前者はVCEPが自仕様について述べた適用可否、後者は機序の主張であり、**同じ文ではない**。
+ただしPVS1は「LoFが既知機序である遺伝子のnull変異」の基準なので、VCEPがPVS1を適用可と
+宣言した時点でその前提を認めている。上表3/3の一致を根拠に、この読み替えを採用した。
+
+この判断は次の形で追跡可能にしてある。
+
+- `config/cspec_applicability.json` の `pvs1_mapping_decision`（決定日・決定者・根拠・
+  policy_version・スコープ）
+- 各レコードの `policy_version: "BH26-cspec-pvs1-applicability-v1"` と `policy_note`
+- スナップショット本体は**CSpec自身の語彙のまま**保持し、マッピングはproviderの1箇所だけ
+  で行う（テストがentriesに `lof_mechanism_established` 等が現れないことを固定している）
+
+`Not applicable` は `false` にマップする。`unknown` ではない — VCEPが自仕様からPVS1を
+外したのは前提についての判断であり（MYH7がこれ）、`unknown` にすると専門パネルが既に
+否定した機序をキュレーターに探させることになる。
+
+レコードは `assessment_method: "automated"` のままで、同一遺伝子・疾患のreview済み
+assessmentが優先される（PVS1の `_resolve_mechanism()` がreview済みを採り、CSpec側は
+evidenceとして併記される）。
+
+**効果**: 冒頭のDYSF c.3498_3499delinsAA は、通常設定のまま
+`mechanism_source: "ClinGen Criteria Specification Registry (CSpec)"`、`disease_match: EXACT`、
+`moi_match: MATCHED` でG01を通過し、PVS1 very_strong に到達する。
+**Uncertain Significance (1) → Likely Pathogenic (9)。**
+ERepoの Pathogenic には届かない。差分は PM3_Strong（4点）で、PM3は未実装6基準のひとつ。
 
 **未解決（意図的に残す）**
 
-1. **`PVS1: Applicable` と `lof_mechanism_established` は同じ文ではない。** 前者はVCEPが自
-   仕様について述べた適用可否、後者は機序の主張である。上表3/3はマッピングの**証拠**では
-   あるがマッピングそのものではない。どちらに落とすか（`lof_mechanism_established` へ直接
-   マップするか、`pvs1_applicable` を新設してPVS1側で読むか）は、`gene_disease_draft.py` が
-   守る「validityを機序と混同しない」原則に照らしてキュレーターが決めるべき箇所。DRAFTは
-   CSpec自身の語彙のまま保持しており、この判断を先取りしていない。
-2. **PP2/BP1 には転用できない。** 手書き側の `pp2_applicable: true` は「評価対象である」の
+1. **PP2/BP1 には転用できない。** 手書き側の `pp2_applicable: true` は「評価対象である」の
    意で、met/not-met は隣の機序フィールドが決める（MYBPC3の `review_summary` は
    `pp2_applicable: true` としつつ「generic PP2は自動的にmetにならない」と書いている）。
    CSpecの `Not applicable` は「VCEPが基準ごと除外した」で、軸が違う。1-6の未解決は
-   **これでは解けない**。
-3. **CSpecは手書きJSONを置き換えない。** デモ症例の DSG2 と KCNJ5 はCSpec未収載であり、
+   **これでは解けない**。providerはPVS1列だけを読み、他27列はキュレーター向けの参考情報
+   として保持している。
+2. **CSpecは手書きJSONを置き換えない。** デモ症例の DSG2 と KCNJ5 はCSpec未収載であり、
    `MYBPC3 / MONDO:0016587` の組み合わせもCSpecは持たず手書き側だけが答えを持つ。
    あくまで第3経路として足す位置づけになる。
+3. **スナップショットの鮮度に更新手順がない。** CSpecの仕様は改訂される（GN180は
+   v2.0.0、GN010は2021-06-02更新）が、`config/cspec_applicability.json` を再収集する
+   タイミングは決めていない。`retrieved_at` は記録されるので古さは分かるが、古い値を
+   使い続けても警告は出ない。
 
 ### 2. 現在はstubとして残すcriterion
 
