@@ -1,5 +1,8 @@
 # GA4GH VA-Spec feedback: gaps found building an ACMG/AMP pipeline
 
+**Filed upstream**: [ga4gh/va-spec#448](https://github.com/ga4gh/va-spec/issues/448)
+("Requested features for ACMG profile", 2026-09-18).
+
 Compiled 2026-09-18, while removing duplicate/custom fields from this
 project's VA-Spec `EvidenceLine` output (see `doc/curator_hints_unification_proposal_ja.md`
 for the internal side of that cleanup). Each item below was found by trying

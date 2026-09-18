@@ -54,8 +54,8 @@ actually reads.
   output (`Method.reportedIn` accepts only a single Document, `hasEvidenceItems` has no
   generic StudyResult type, `Direction` cannot represent "not evaluated") were written up
   as 5 issues in
-  [doc/ga4gh_va_spec_feedback_v1_en.md](ga4gh_va_spec_feedback_v1_en.md) and organized as
-  a proposal back to GA4GH.
+  [doc/ga4gh_va_spec_feedback_v1_en.md](ga4gh_va_spec_feedback_v1_en.md) and filed
+  upstream as [ga4gh/va-spec#448](https://github.com/ga4gh/va-spec/issues/448).
 
 ## 3. Accuracy validation
 
