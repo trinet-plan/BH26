@@ -1,15 +1,19 @@
 """
-hpo_extraction.py
+hpo_mondo_extraction.py
 
 Normalize ClinicalFeature.label values in ClinicalNoteExtraction to official HPO
-IDs using TogoMCP.
+IDs, and ClinicalNoteExtraction.diagnosis to a MONDO disease class, both using
+TogoMCP. Renamed from hpo_extraction.py (2026-09-18) when MONDO resolution was
+added alongside the original HPO resolution.
 
 Primary API:
     await normalize_hpo(extraction) -> ClinicalNoteExtraction
+    await resolve_diagnosis_mondo(extraction) -> ClinicalNoteExtraction
 
-The source-grounded ClinicalFeature.label is preserved. Only hpo_id is filled.
-The current shared ClinicalFeature class has no official-HPO-label field, so the
-official label is used only during candidate validation and is not stored.
+The source-grounded ClinicalFeature.label/diagnosis text is preserved in both
+cases. Only hpo_id / mondo_id is filled. The current shared ClinicalFeature
+class has no official-HPO-label field, so the official label is used only
+during candidate validation and is not stored.
 """
 
 from __future__ import annotations
@@ -38,7 +42,7 @@ from openai import OpenAI
 from acmg_pipeline.clinical_note import ClinicalFeature, ClinicalNoteExtraction
 
 
-# parents[1]: this file lives at <repo root>/acmg_pipeline/hpo_extraction.py,
+# parents[1]: this file lives at <repo root>/acmg_pipeline/hpo_mondo_extraction.py,
 # so one parent up is <repo root> (where .env lives) - same fix as
 # clinical_extraction.py's ROOT_DIR (2026-09-17), for the same reason: the
 # pp4_pp1_bs4 branch's parents[3] only resolves correctly under a
@@ -98,6 +102,15 @@ def extract_text(result: Any) -> str:
 
 
 def parse_sparql_csv(text: str) -> list[dict[str, str]]:
+    """Parse a run_sparql CSV result with ?term/?notation/?label columns.
+
+    The output keys ("term"/"hpo_id"/"hpo_label") predate this file also
+    being used for MONDO (search_mondo_candidates() re-keys its own result
+    to mondo_id/mondo_label immediately after calling this - see that
+    function). Left as-is here rather than renamed to a generic "id"/"label"
+    to avoid touching the already-verified HPO call sites for an unrelated
+    change.
+    """
     rows: list[dict[str, str]] = []
     lines = [
         line
@@ -252,6 +265,218 @@ HPO candidates returned by TogoMCP:
         if answer == f"{item['hpo_id']}|||{item['hpo_label']}":
             return item
     return None
+
+
+async def get_mondo_mie(mcp: ClientSession) -> str:
+    result = await mcp.call_tool("get_MIE_file", {"database": "mondo"})
+    return extract_text(result)
+
+
+async def search_mondo_candidates(
+    mcp: ClientSession,
+    run_sparql_tool: dict[str, Any],
+    mie: str,
+    expression: str,
+) -> list[dict[str, str]]:
+    """Search MONDO for disease class candidates matching a free-text diagnosis.
+
+    Reuses parse_sparql_csv() (its "hpo_id"/"hpo_label" keys are a generic
+    notation/label pair, not HPO-specific - see that function's own docstring
+    section on why it isn't renamed) and re-keys the result to mondo_id/
+    mondo_label so callers aren't reading a MONDO value out of a dict key
+    that says "hpo_id".
+    """
+    system_prompt = f"""
+You are resolving a clinical diagnosis expression against
+the Mondo Disease Ontology (MONDO) using TogoMCP.
+
+Before writing SPARQL, follow the ontology MIE below.
+
+----- BEGIN ONTOLOGY MIE -----
+{mie}
+----- END ONTOLOGY MIE -----
+
+You have one available tool: run_sparql.
+
+Your job:
+- Search the MONDO graph for disease class candidates relevant to the
+  supplied clinical diagnosis expression.
+- Use database="mondo" (NOT "ontology" - that is a different, umbrella
+  database that also includes EFO and does not scope you to MONDO).
+- Pin the MONDO graph:
+  GRAPH <http://rdfportal.org/ontology/mondo>
+- A free-text diagnosis has no known category IRI or cross-reference to
+  start from, so match on the label text with a plain SPARQL
+  FILTER(CONTAINS(LCASE(?label), "...")) pattern.
+- Do NOT declare or reference a `bif:` prefix for any reason, even if you
+  end up not using it. Virtuoso reserves that prefix name and rejects the
+  entire query (HTTP 400) if it is merely declared, whether or not
+  bif:contains is actually called.
+- Retrieve:
+  ?term (the MONDO class IRI)
+  ?notation (bound via oboInOwl:id, e.g. "MONDO:0007739")
+  ?label (bound via rdfs:label)
+- Always add FILTER NOT EXISTS {{ ?term owl:deprecated true }}.
+- End the query with exactly this clause (copy it verbatim, do not write
+  "STRLEN(?label) ASC" - that is SQL syntax, not valid SPARQL, and the
+  endpoint will reject the whole query with a syntax error):
+  ORDER BY ASC(STRLEN(?label))
+  This sorts the shortest matching label first. A substring match like
+  "hypertrophic cardiomyopathy" can match dozens of longer, more specific
+  subtype labels (e.g. "hypertrophic cardiomyopathy 4", a single-gene-locus
+  subtype) that would otherwise crowd the general disease concept out of a
+  bounded LIMIT - the general concept's label is almost always the
+  shortest matching label, so sorting shortest-first keeps it in the
+  window.
+- Keep the query bounded (LIMIT 20 or fewer).
+- Do not search any other ontology.
+- Do not invent a MONDO ID from memory.
+- Actually call run_sparql.
+
+Use the verified MONDO pattern from the MIE, adapted to the supplied
+diagnosis expression. The result should provide a small candidate set, not
+every matching MONDO term.
+"""
+
+    question = f"""
+Find MONDO disease candidates for this clinical diagnosis:
+
+{expression}
+"""
+
+    response = client.chat.completions.create(
+        model=MODEL,
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": question},
+        ],
+        tools=[run_sparql_tool],
+        tool_choice={"type": "function", "function": {"name": "run_sparql"}},
+    )
+
+    message = response.choices[0].message
+    if not message.tool_calls:
+        raise RuntimeError(f"run_sparql was not called for diagnosis: {expression}")
+
+    args = json.loads(message.tool_calls[0].function.arguments)
+    args["database"] = "mondo"
+
+    result = await mcp.call_tool("run_sparql", args)
+    raw = parse_sparql_csv(extract_text(result))
+    return [
+        {"term": row["term"], "mondo_id": row["hpo_id"], "mondo_label": row["hpo_label"]}
+        for row in raw
+    ]
+
+
+def choose_best_mondo(
+    expression: str,
+    candidates: list[dict[str, str]],
+) -> Optional[dict[str, str]]:
+    if not candidates:
+        return None
+
+    candidate_text = "\n".join(
+        f"{index}. {item['mondo_id']}|||{item['mondo_label']}"
+        for index, item in enumerate(candidates, start=1)
+    )
+
+    system_prompt = """
+Select the best Mondo Disease Ontology (MONDO) match for a clinical
+diagnosis expression.
+
+You MUST choose only from the supplied candidates.
+
+Rules:
+- Do not create a new MONDO label.
+- Do not create or change a MONDO ID.
+- If none of the candidates adequately represents the diagnosis,
+  return exactly: NOT_FOUND
+- Otherwise return exactly one candidate in this format:
+  MONDO_ID|||MONDO_LABEL
+- Do not add explanations.
+"""
+
+    question = f"""
+Clinical diagnosis:
+
+{expression}
+
+MONDO candidates returned by TogoMCP:
+
+{candidate_text}
+"""
+
+    response = client.chat.completions.create(
+        model=MODEL,
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": question},
+        ],
+    )
+
+    answer = (response.choices[0].message.content or "").strip()
+    if answer == "NOT_FOUND":
+        return None
+
+    for item in candidates:
+        if answer == f"{item['mondo_id']}|||{item['mondo_label']}":
+            return item
+    return None
+
+
+async def resolve_diagnosis_mondo(
+    extraction: ClinicalNoteExtraction,
+) -> ClinicalNoteExtraction:
+    """
+    Return a deep-copied ClinicalNoteExtraction with mondo_id filled, resolving
+    extraction.diagnosis (free text) to a MONDO disease class via TogoMCP -
+    the same search-then-choose pattern normalize_hpo() uses for clinical
+    features, applied to the diagnosis field instead.
+
+    extraction.diagnosis is never replaced or overwritten; only mondo_id is
+    added. Opens its own TogoMCP session rather than sharing one with
+    resolve_hpo_labels() - a second connection is simpler and lower-risk than
+    threading a shared session through both call paths, and diagnosis
+    resolution only runs once per note anyway.
+    """
+    result = copy.deepcopy(extraction)
+    diagnosis = (result.diagnosis or "").strip()
+    if not diagnosis:
+        return result
+
+    best: Optional[dict[str, str]] = None
+
+    async with AsyncExitStack() as stack:
+        ctx = await stack.enter_async_context(streamable_http_client(TOGOMCP_URL))
+        read, write = ctx[0], ctx[1]
+        mcp = await stack.enter_async_context(ClientSession(read, write))
+        await mcp.initialize()
+        tools = (await mcp.list_tools()).tools
+        tool_names = {tool.name for tool in tools}
+        required = {"get_MIE_file", "run_sparql"}
+        missing = required - tool_names
+        if missing:
+            raise RuntimeError(
+                "Required TogoMCP tools are missing: " + ", ".join(sorted(missing))
+            )
+
+        run_sparql_mcp_tool = next(tool for tool in tools if tool.name == "run_sparql")
+        run_sparql_tool = to_openai_tools([run_sparql_mcp_tool])[0]
+        mie = await get_mondo_mie(mcp)
+
+        print(f"[MONDO] {diagnosis}")
+        candidates = await search_mondo_candidates(
+            mcp=mcp, run_sparql_tool=run_sparql_tool, mie=mie, expression=diagnosis,
+        )
+        best = choose_best_mondo(diagnosis, candidates)
+        if best is None:
+            print("        selected: NOT_FOUND")
+        else:
+            print(f"        selected: {best['mondo_id']} {best['mondo_label']}")
+
+    result.mondo_id = best["mondo_id"] if best else None
+    return result
 
 
 def _all_features(extraction: ClinicalNoteExtraction) -> list[ClinicalFeature]:

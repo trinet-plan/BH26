@@ -150,9 +150,12 @@ class ClinicalNoteExtraction:
     de_novo: DeNovo = field(default_factory=DeNovo)
     # 自由文の診断名(例: "hypertrophic cardiomyopathy")。VA-Spec Statementの
     # objectCondition(対象疾患)に使う - see z_tmp_va_spec_statement_decisions.md。
-    # コード体系(MedGen/OMIM等)への変換は行わず、この自由文をそのまま
-    # MappableConcept.name に載せる想定。
     diagnosis: Optional[str] = None
+    # diagnosisをMONDOに正規化したID(例: "MONDO:0007739")。
+    # clinical_extraction.pyのLLMは埋めない(hpo_idと同様、抽出時点では常にNone) -
+    # acmg_pipeline.hpo_mondo_extraction.resolve_diagnosis_mondo()がTogoMCP経由で
+    # 別途埋める(2026-09-18)。解決できない場合はNoneのまま。
+    mondo_id: Optional[str] = None
 
     @staticmethod
     def from_json(data: dict) -> "ClinicalNoteExtraction":
@@ -161,6 +164,7 @@ class ClinicalNoteExtraction:
             family=Family.from_json(data.get("family") or {}),
             de_novo=DeNovo.from_json(data.get("de_novo") or {}),
             diagnosis=data.get("diagnosis"),
+            mondo_id=data.get("mondo_id"),
         )
 
 
