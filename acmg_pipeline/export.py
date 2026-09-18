@@ -103,7 +103,7 @@ from acmg_pipeline.common import (
     AggregatedJudgment, CuratorHint, MatchStatus, PaperContribution,
     is_not_clear, strength_tier_from_paper_count,
 )
-from acmg_pipeline.constants import IMPLEMENTED_CODES, CriterionStatus
+from acmg_pipeline.constants import IMPLEMENTED_CODES, PATHOGENIC_CODES, CriterionStatus
 from acmg_pipeline.criteria import curator_info, reference_links
 from acmg_pipeline.vcf_record import VariantRecord
 
@@ -334,9 +334,24 @@ def _document(pmid: str) -> Document:
 
 
 def _direction_of_evidence(direction, criterion: str) -> Direction:
+    """direction/disputes here means "for/against pathogenicity", not "for/against
+    the criterion under test" - so a BS3 line whose evidence actually establishes
+    BS3 (i.e. direction.value == criterion == "BS3") DISPUTES pathogenicity, it
+    does not support it. Only a match on a *pathogenic* criterion (PS3, PS4)
+    supports pathogenicity; a mismatch (the dispute-sibling case, e.g. PS3
+    evidence found while testing BS3) always disputes the criterion under test,
+    regardless of that criterion's own P/B prefix. Found 2026-09-18: this always
+    returned SUPPORTS on a match, so a real BS3_supporting outcome (MYBPC3-class
+    literature, LDLR c.2575G>A) raised acmg_pipeline.export's own
+    _check_acmg_semantics() ValueError the first time it was exercised live -
+    mirrors the same convention acmg_pipeline.criteria.pp1_bs4_pp4_engine's
+    build_evidence_line() already uses via PATHOGENIC_CODES.
+    """
     if is_not_clear(direction):
         return Direction.NEUTRAL
-    return Direction.SUPPORTS if direction.value == criterion else Direction.DISPUTES
+    if direction.value != criterion:
+        return Direction.DISPUTES
+    return Direction.SUPPORTS if criterion in PATHOGENIC_CODES else Direction.DISPUTES
 
 
 def _hints_extension(hints: list[CuratorHint]) -> Optional[Extension]:
