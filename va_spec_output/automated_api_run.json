@@ -34,13 +34,23 @@
           "id": "evline:MYBPC3_c_278delA_BA1",
           "type": "EvidenceLine",
           "description": "No reliable population observation",
+          "specifiedBy": {
+            "type": "Method",
+            "name": "ACMG/AMP BA1 assessment (not met)",
+            "methodType": "BA1",
+            "reportedIn": {
+              "type": "Document",
+              "name": "Richards et al., 2015, Genet Med.",
+              "doi": "10.1038/gim.2015.30",
+              "pmid": "25741868"
+            }
+          },
+          "directionOfEvidenceProvided": "neutral",
           "extensions": [
             {
               "name": "bh26AssessmentDetails",
               "value": {
-                "criterion": "BA1",
-                "status": "unknown",
-                "summary": "No reliable population observation",
+                "status": "not_met",
                 "evidenceItemIds": [],
                 "provenance": {
                   "rule_version": "BA1-v1",
@@ -57,45 +67,26 @@
             {
               "name": "referenceLink",
               "value": "https://grch38.togovar.org/variant/11-47351252-CT-C"
+            },
+            {
+              "name": "curatorHints",
+              "value": [
+                {
+                  "severity": "caution",
+                  "category": "unevaluated",
+                  "message": "BA1 could not actually be evaluated from the available data (reported as not_met rather than left unknown)."
+                }
+              ]
             }
-          ],
-          "specifiedBy": {
-            "type": "Method",
-            "name": "ACMG/AMP BA1 assessment (unknown)",
-            "methodType": "BA1",
-            "reportedIn": {
-              "type": "Document",
-              "name": "Richards et al., 2015, Genet Med.",
-              "doi": "10.1038/gim.2015.30",
-              "pmid": "25741868"
-            }
-          },
-          "directionOfEvidenceProvided": "neutral"
+          ]
         },
         "BP1": {
           "id": "evline:MYBPC3_c_278delA_BP1",
           "type": "EvidenceLine",
           "description": "BP1 is not applicable: it evaluates missense variants, and the annotation reports frameshift_variant. BP1 evaluates missense variants in genes where disease is predominantly caused by truncating variants rather than missense variation. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
-          "extensions": [
-            {
-              "name": "bh26AssessmentDetails",
-              "value": {
-                "criterion": "BP1",
-                "status": "unknown",
-                "summary": "BP1 is not applicable: it evaluates missense variants, and the annotation reports frameshift_variant. BP1 evaluates missense variants in genes where disease is predominantly caused by truncating variants rather than missense variation. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
-                "evidenceItemIds": [
-                  "urn:sha256:a04aeca39543cf0e63dbeaa44fa9a14421d6507dd385413440d6fcf6e7391115:annotation:NM_000256.3"
-                ],
-                "provenance": {
-                  "rule_version": "BP1-v1",
-                  "assessment_outcome": "not_applicable"
-                }
-              }
-            }
-          ],
           "specifiedBy": {
             "type": "Method",
-            "name": "ACMG/AMP BP1 assessment (unknown)",
+            "name": "ACMG/AMP BP1 assessment (not met)",
             "methodType": "BP1",
             "reportedIn": {
               "type": "Document",
@@ -104,32 +95,40 @@
               "pmid": "25741868"
             }
           },
-          "directionOfEvidenceProvided": "neutral"
+          "directionOfEvidenceProvided": "neutral",
+          "extensions": [
+            {
+              "name": "bh26AssessmentDetails",
+              "value": {
+                "status": "not_met",
+                "evidenceItemIds": [
+                  "urn:sha256:a04aeca39543cf0e63dbeaa44fa9a14421d6507dd385413440d6fcf6e7391115:annotation:NM_000256.3"
+                ],
+                "provenance": {
+                  "rule_version": "BP1-v1",
+                  "assessment_outcome": "not_applicable"
+                }
+              }
+            },
+            {
+              "name": "curatorHints",
+              "value": [
+                {
+                  "severity": "caution",
+                  "category": "unevaluated",
+                  "message": "BP1 could not actually be evaluated from the available data (reported as not_met rather than left unknown)."
+                }
+              ]
+            }
+          ]
         },
         "BP3": {
           "id": "evline:MYBPC3_c_278delA_BP3",
           "type": "EvidenceLine",
           "description": "BP3 is not applicable: the annotation does not indicate an in-frame insertion or deletion, which BP3 requires before repeat-region assessment (annotated: frameshift_variant). BP3 evaluates in-frame insertions or deletions in a repetitive region without known function. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
-          "extensions": [
-            {
-              "name": "bh26AssessmentDetails",
-              "value": {
-                "criterion": "BP3",
-                "status": "unknown",
-                "summary": "BP3 is not applicable: the annotation does not indicate an in-frame insertion or deletion, which BP3 requires before repeat-region assessment (annotated: frameshift_variant). BP3 evaluates in-frame insertions or deletions in a repetitive region without known function. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
-                "evidenceItemIds": [
-                  "urn:sha256:a04aeca39543cf0e63dbeaa44fa9a14421d6507dd385413440d6fcf6e7391115:annotation:NM_000256.3"
-                ],
-                "provenance": {
-                  "rule_version": "BP3-v1",
-                  "assessment_outcome": "not_applicable"
-                }
-              }
-            }
-          ],
           "specifiedBy": {
             "type": "Method",
-            "name": "ACMG/AMP BP3 assessment (unknown)",
+            "name": "ACMG/AMP BP3 assessment (not met)",
             "methodType": "BP3",
             "reportedIn": {
               "type": "Document",
@@ -138,31 +137,40 @@
               "pmid": "25741868"
             }
           },
-          "directionOfEvidenceProvided": "neutral"
+          "directionOfEvidenceProvided": "neutral",
+          "extensions": [
+            {
+              "name": "bh26AssessmentDetails",
+              "value": {
+                "status": "not_met",
+                "evidenceItemIds": [
+                  "urn:sha256:a04aeca39543cf0e63dbeaa44fa9a14421d6507dd385413440d6fcf6e7391115:annotation:NM_000256.3"
+                ],
+                "provenance": {
+                  "rule_version": "BP3-v1",
+                  "assessment_outcome": "not_applicable"
+                }
+              }
+            },
+            {
+              "name": "curatorHints",
+              "value": [
+                {
+                  "severity": "caution",
+                  "category": "unevaluated",
+                  "message": "BP3 could not actually be evaluated from the available data (reported as not_met rather than left unknown)."
+                }
+              ]
+            }
+          ]
         },
         "BP4": {
           "id": "evline:MYBPC3_c_278delA_BP4",
           "type": "EvidenceLine",
           "description": "Outside predictor calibration scope. BP4 evaluates calibrated computational evidence supporting a benign effect. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
-          "extensions": [
-            {
-              "name": "bh26AssessmentDetails",
-              "value": {
-                "criterion": "BP4",
-                "status": "unknown",
-                "summary": "Outside predictor calibration scope. BP4 evaluates calibrated computational evidence supporting a benign effect. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
-                "evidenceItemIds": [
-                  "urn:sha256:a04aeca39543cf0e63dbeaa44fa9a14421d6507dd385413440d6fcf6e7391115:annotation:NM_000256.3"
-                ],
-                "provenance": {
-                  "rule_version": "BP4-v1"
-                }
-              }
-            }
-          ],
           "specifiedBy": {
             "type": "Method",
-            "name": "ACMG/AMP BP4 assessment (unknown)",
+            "name": "ACMG/AMP BP4 assessment (not met)",
             "methodType": "BP4",
             "reportedIn": {
               "type": "Document",
@@ -171,29 +179,39 @@
               "pmid": "25741868"
             }
           },
-          "directionOfEvidenceProvided": "neutral"
+          "directionOfEvidenceProvided": "neutral",
+          "extensions": [
+            {
+              "name": "bh26AssessmentDetails",
+              "value": {
+                "status": "not_met",
+                "evidenceItemIds": [
+                  "urn:sha256:a04aeca39543cf0e63dbeaa44fa9a14421d6507dd385413440d6fcf6e7391115:annotation:NM_000256.3"
+                ],
+                "provenance": {
+                  "rule_version": "BP4-v1"
+                }
+              }
+            },
+            {
+              "name": "curatorHints",
+              "value": [
+                {
+                  "severity": "caution",
+                  "category": "unevaluated",
+                  "message": "BP4 could not actually be evaluated from the available data (reported as not_met rather than left unknown)."
+                }
+              ]
+            }
+          ]
         },
         "BP6": {
           "id": "evline:MYBPC3_c_278delA_BP6",
           "type": "EvidenceLine",
           "description": "ClinGen General policy: retrieve primary evidence instead of scoring external assertions. BP6 is not scored from an external assertion alone; the primary evidence must be reviewed. Outcome: UNKNOWN; no MET or NOT_MET judgment is made.",
-          "extensions": [
-            {
-              "name": "bh26AssessmentDetails",
-              "value": {
-                "criterion": "BP6",
-                "status": "unknown",
-                "summary": "ClinGen General policy: retrieve primary evidence instead of scoring external assertions. BP6 is not scored from an external assertion alone; the primary evidence must be reviewed. Outcome: UNKNOWN; no MET or NOT_MET judgment is made.",
-                "evidenceItemIds": [],
-                "provenance": {
-                  "rule_version": "BP6-v1"
-                }
-              }
-            }
-          ],
           "specifiedBy": {
             "type": "Method",
-            "name": "ACMG/AMP BP6 assessment (unknown)",
+            "name": "ACMG/AMP BP6 assessment (not met)",
             "methodType": "BP6",
             "reportedIn": {
               "type": "Document",
@@ -202,32 +220,37 @@
               "pmid": "25741868"
             }
           },
-          "directionOfEvidenceProvided": "neutral"
+          "directionOfEvidenceProvided": "neutral",
+          "extensions": [
+            {
+              "name": "bh26AssessmentDetails",
+              "value": {
+                "status": "not_met",
+                "evidenceItemIds": [],
+                "provenance": {
+                  "rule_version": "BP6-v1"
+                }
+              }
+            },
+            {
+              "name": "curatorHints",
+              "value": [
+                {
+                  "severity": "caution",
+                  "category": "unevaluated",
+                  "message": "BP6 could not actually be evaluated from the available data (reported as not_met rather than left unknown)."
+                }
+              ]
+            }
+          ]
         },
         "BP7": {
           "id": "evline:MYBPC3_c_278delA_BP7",
           "type": "EvidenceLine",
           "description": "BP7 is not applicable: it evaluates synonymous changes outside splice-critical regions, and the annotation reports frameshift_variant. BP7 evaluates synonymous variants outside splice-critical regions when splice prediction and conservation evidence support a benign interpretation. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
-          "extensions": [
-            {
-              "name": "bh26AssessmentDetails",
-              "value": {
-                "criterion": "BP7",
-                "status": "unknown",
-                "summary": "BP7 is not applicable: it evaluates synonymous changes outside splice-critical regions, and the annotation reports frameshift_variant. BP7 evaluates synonymous variants outside splice-critical regions when splice prediction and conservation evidence support a benign interpretation. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
-                "evidenceItemIds": [
-                  "urn:sha256:a04aeca39543cf0e63dbeaa44fa9a14421d6507dd385413440d6fcf6e7391115:annotation:NM_000256.3"
-                ],
-                "provenance": {
-                  "rule_version": "BP7-v1",
-                  "assessment_outcome": "not_applicable"
-                }
-              }
-            }
-          ],
           "specifiedBy": {
             "type": "Method",
-            "name": "ACMG/AMP BP7 assessment (unknown)",
+            "name": "ACMG/AMP BP7 assessment (not met)",
             "methodType": "BP7",
             "reportedIn": {
               "type": "Document",
@@ -236,19 +259,54 @@
               "pmid": "25741868"
             }
           },
-          "directionOfEvidenceProvided": "neutral"
+          "directionOfEvidenceProvided": "neutral",
+          "extensions": [
+            {
+              "name": "bh26AssessmentDetails",
+              "value": {
+                "status": "not_met",
+                "evidenceItemIds": [
+                  "urn:sha256:a04aeca39543cf0e63dbeaa44fa9a14421d6507dd385413440d6fcf6e7391115:annotation:NM_000256.3"
+                ],
+                "provenance": {
+                  "rule_version": "BP7-v1",
+                  "assessment_outcome": "not_applicable"
+                }
+              }
+            },
+            {
+              "name": "curatorHints",
+              "value": [
+                {
+                  "severity": "caution",
+                  "category": "unevaluated",
+                  "message": "BP7 could not actually be evaluated from the available data (reported as not_met rather than left unknown)."
+                }
+              ]
+            }
+          ]
         },
         "BS1": {
           "id": "evline:MYBPC3_c_278delA_BS1",
           "type": "EvidenceLine",
           "description": "No reliable population observation",
+          "specifiedBy": {
+            "type": "Method",
+            "name": "ACMG/AMP BS1 assessment (not met)",
+            "methodType": "BS1",
+            "reportedIn": {
+              "type": "Document",
+              "name": "Richards et al., 2015, Genet Med.",
+              "doi": "10.1038/gim.2015.30",
+              "pmid": "25741868"
+            }
+          },
+          "directionOfEvidenceProvided": "neutral",
           "extensions": [
             {
               "name": "bh26AssessmentDetails",
               "value": {
-                "criterion": "BS1",
-                "status": "unknown",
-                "summary": "No reliable population observation",
+                "status": "not_met",
                 "evidenceItemIds": [],
                 "provenance": {
                   "rule_version": "BS1-v1",
@@ -265,12 +323,27 @@
             {
               "name": "referenceLink",
               "value": "https://grch38.togovar.org/variant/11-47351252-CT-C"
+            },
+            {
+              "name": "curatorHints",
+              "value": [
+                {
+                  "severity": "caution",
+                  "category": "unevaluated",
+                  "message": "BS1 could not actually be evaluated from the available data (reported as not_met rather than left unknown)."
+                }
+              ]
             }
-          ],
+          ]
+        },
+        "PM1": {
+          "id": "evline:MYBPC3_c_278delA_PM1",
+          "type": "EvidenceLine",
+          "description": "No region assessment was retrieved for this variant. PM1 evaluates a variant in a reviewed mutational hotspot or critical functional domain with no conflicting benign variation. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
           "specifiedBy": {
             "type": "Method",
-            "name": "ACMG/AMP BS1 assessment (unknown)",
-            "methodType": "BS1",
+            "name": "ACMG/AMP PM1 assessment (not met)",
+            "methodType": "PM1",
             "reportedIn": {
               "type": "Document",
               "name": "Richards et al., 2015, Genet Med.",
@@ -278,19 +351,12 @@
               "pmid": "25741868"
             }
           },
-          "directionOfEvidenceProvided": "neutral"
-        },
-        "PM1": {
-          "id": "evline:MYBPC3_c_278delA_PM1",
-          "type": "EvidenceLine",
-          "description": "No region assessment was retrieved for this variant. PM1 evaluates a variant in a reviewed mutational hotspot or critical functional domain with no conflicting benign variation. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
+          "directionOfEvidenceProvided": "neutral",
           "extensions": [
             {
               "name": "bh26AssessmentDetails",
               "value": {
-                "criterion": "PM1",
-                "status": "unknown",
-                "summary": "No region assessment was retrieved for this variant. PM1 evaluates a variant in a reviewed mutational hotspot or critical functional domain with no conflicting benign variation. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
+                "status": "not_met",
                 "evidenceItemIds": [
                   "urn:sha256:a04aeca39543cf0e63dbeaa44fa9a14421d6507dd385413440d6fcf6e7391115:annotation:NM_000256.3"
                 ],
@@ -321,61 +387,24 @@
                 ],
                 "nearbyVariants": []
               }
-            }
-          ],
-          "specifiedBy": {
-            "type": "Method",
-            "name": "ACMG/AMP PM1 assessment (unknown)",
-            "methodType": "PM1",
-            "reportedIn": {
-              "type": "Document",
-              "name": "Richards et al., 2015, Genet Med.",
-              "doi": "10.1038/gim.2015.30",
-              "pmid": "25741868"
-            }
-          },
-          "directionOfEvidenceProvided": "neutral"
-        },
-        "PM2": {
-          "id": "evline:MYBPC3_c_278delA_PM2",
-          "type": "EvidenceLine",
-          "name": "PM2 assessment for GRCh38:11:47351252:CT:C",
-          "description": "Every queried population source resolved and reported no record at all for this allele. PM2 evaluates whether reliable population observations satisfy the configured rarity threshold. Outcome: MET; satisfies PM2.",
-          "extensions": [
-            {
-              "name": "bh26AssessmentDetails",
-              "value": {
-                "criterion": "PM2",
-                "status": "met",
-                "summary": "Every queried population source resolved and reported no record at all for this allele. PM2 evaluates whether reliable population observations satisfy the configured rarity threshold. Outcome: MET; satisfies PM2.",
-                "evidenceItemIds": [],
-                "provenance": {
-                  "rule_version": "PM2-v1",
-                  "policy_source": "BH26 demo population evidence QC policy",
-                  "policy_version": "2026-09-15",
-                  "rejected_observations": [],
-                  "provider_failures": []
-                },
-                "strength": "supporting",
-                "direction": "supports",
-                "evidenceOutcome": "PM2_supporting"
-              }
             },
             {
               "name": "curatorHints",
               "value": [
                 {
                   "severity": "caution",
-                  "category": "review",
-                  "message": "Locus coverage at this position is not confirmed - total absence from population databases is treated here as weak evidence of rarity, not a confirmed AF observation"
+                  "category": "unevaluated",
+                  "message": "PM1 could not actually be evaluated from the available data (reported as not_met rather than left unknown)."
                 }
               ]
-            },
-            {
-              "name": "referenceLink",
-              "value": "https://grch38.togovar.org/variant/11-47351252-CT-C"
             }
-          ],
+          ]
+        },
+        "PM2": {
+          "id": "evline:MYBPC3_c_278delA_PM2",
+          "type": "EvidenceLine",
+          "name": "PM2 assessment for GRCh38:11:47351252:CT:C",
+          "description": "Every queried population source resolved and reported no record at all for this allele. PM2 evaluates whether reliable population observations satisfy the configured rarity threshold. Outcome: MET; satisfies PM2.",
           "specifiedBy": {
             "type": "Method",
             "name": "ACMG/AMP 2015 with ClinGen General Guidance",
@@ -403,32 +432,47 @@
               "system": "ACMG Guidelines, 2015",
               "code": "PM2_supporting"
             }
-          }
+          },
+          "extensions": [
+            {
+              "name": "bh26AssessmentDetails",
+              "value": {
+                "criterion": "PM2",
+                "status": "met",
+                "evidenceItemIds": [],
+                "provenance": {
+                  "rule_version": "PM2-v1",
+                  "policy_source": "BH26 demo population evidence QC policy",
+                  "policy_version": "2026-09-15",
+                  "rejected_observations": [],
+                  "provider_failures": []
+                },
+                "direction": "supports"
+              }
+            },
+            {
+              "name": "curatorHints",
+              "value": [
+                {
+                  "severity": "caution",
+                  "category": "review",
+                  "message": "Locus coverage at this position is not confirmed - total absence from population databases is treated here as weak evidence of rarity, not a confirmed AF observation"
+                }
+              ]
+            },
+            {
+              "name": "referenceLink",
+              "value": "https://grch38.togovar.org/variant/11-47351252-CT-C"
+            }
+          ]
         },
         "PM4": {
           "id": "evline:MYBPC3_c_278delA_PM4",
           "type": "EvidenceLine",
           "description": "PM4 is not applicable: the annotation does not indicate an in-frame insertion, in-frame deletion, or stop-loss consequence (annotated: frameshift_variant). PM4 evaluates protein-length changes caused by an in-frame insertion, in-frame deletion, or stop-loss variant. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
-          "extensions": [
-            {
-              "name": "bh26AssessmentDetails",
-              "value": {
-                "criterion": "PM4",
-                "status": "unknown",
-                "summary": "PM4 is not applicable: the annotation does not indicate an in-frame insertion, in-frame deletion, or stop-loss consequence (annotated: frameshift_variant). PM4 evaluates protein-length changes caused by an in-frame insertion, in-frame deletion, or stop-loss variant. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
-                "evidenceItemIds": [
-                  "urn:sha256:a04aeca39543cf0e63dbeaa44fa9a14421d6507dd385413440d6fcf6e7391115:annotation:NM_000256.3"
-                ],
-                "provenance": {
-                  "rule_version": "PM4-v1",
-                  "assessment_outcome": "not_applicable"
-                }
-              }
-            }
-          ],
           "specifiedBy": {
             "type": "Method",
-            "name": "ACMG/AMP PM4 assessment (unknown)",
+            "name": "ACMG/AMP PM4 assessment (not met)",
             "methodType": "PM4",
             "reportedIn": {
               "type": "Document",
@@ -437,19 +481,54 @@
               "pmid": "25741868"
             }
           },
-          "directionOfEvidenceProvided": "neutral"
+          "directionOfEvidenceProvided": "neutral",
+          "extensions": [
+            {
+              "name": "bh26AssessmentDetails",
+              "value": {
+                "status": "not_met",
+                "evidenceItemIds": [
+                  "urn:sha256:a04aeca39543cf0e63dbeaa44fa9a14421d6507dd385413440d6fcf6e7391115:annotation:NM_000256.3"
+                ],
+                "provenance": {
+                  "rule_version": "PM4-v1",
+                  "assessment_outcome": "not_applicable"
+                }
+              }
+            },
+            {
+              "name": "curatorHints",
+              "value": [
+                {
+                  "severity": "caution",
+                  "category": "unevaluated",
+                  "message": "PM4 could not actually be evaluated from the available data (reported as not_met rather than left unknown)."
+                }
+              ]
+            }
+          ]
         },
         "PM5": {
           "id": "evline:MYBPC3_c_278delA_PM5",
           "type": "EvidenceLine",
           "description": "PM5 is not applicable: it compares missense substitutions, and the annotation reports frameshift_variant. PM5 compares a missense variant with an independently established pathogenic variant causing a different amino-acid substitution at the same residue. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
+          "specifiedBy": {
+            "type": "Method",
+            "name": "ACMG/AMP PM5 assessment (not met)",
+            "methodType": "PM5",
+            "reportedIn": {
+              "type": "Document",
+              "name": "Richards et al., 2015, Genet Med.",
+              "doi": "10.1038/gim.2015.30",
+              "pmid": "25741868"
+            }
+          },
+          "directionOfEvidenceProvided": "neutral",
           "extensions": [
             {
               "name": "bh26AssessmentDetails",
               "value": {
-                "criterion": "PM5",
-                "status": "unknown",
-                "summary": "PM5 is not applicable: it compares missense substitutions, and the annotation reports frameshift_variant. PM5 compares a missense variant with an independently established pathogenic variant causing a different amino-acid substitution at the same residue. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
+                "status": "not_met",
                 "evidenceItemIds": [
                   "urn:sha256:a04aeca39543cf0e63dbeaa44fa9a14421d6507dd385413440d6fcf6e7391115:annotation:NM_000256.3"
                 ],
@@ -478,12 +557,27 @@
                 ],
                 "nearbyVariants": []
               }
+            },
+            {
+              "name": "curatorHints",
+              "value": [
+                {
+                  "severity": "caution",
+                  "category": "unevaluated",
+                  "message": "PM5 could not actually be evaluated from the available data (reported as not_met rather than left unknown)."
+                }
+              ]
             }
-          ],
+          ]
+        },
+        "PP2": {
+          "id": "evline:MYBPC3_c_278delA_PP2",
+          "type": "EvidenceLine",
+          "description": "PP2 is not applicable: it evaluates missense variants, and the annotation reports frameshift_variant. PP2 evaluates missense variants in genes where missense is an established disease mechanism and benign missense variation is constrained. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
           "specifiedBy": {
             "type": "Method",
-            "name": "ACMG/AMP PM5 assessment (unknown)",
-            "methodType": "PM5",
+            "name": "ACMG/AMP PP2 assessment (not met)",
+            "methodType": "PP2",
             "reportedIn": {
               "type": "Document",
               "name": "Richards et al., 2015, Genet Med.",
@@ -491,19 +585,12 @@
               "pmid": "25741868"
             }
           },
-          "directionOfEvidenceProvided": "neutral"
-        },
-        "PP2": {
-          "id": "evline:MYBPC3_c_278delA_PP2",
-          "type": "EvidenceLine",
-          "description": "PP2 is not applicable: it evaluates missense variants, and the annotation reports frameshift_variant. PP2 evaluates missense variants in genes where missense is an established disease mechanism and benign missense variation is constrained. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
+          "directionOfEvidenceProvided": "neutral",
           "extensions": [
             {
               "name": "bh26AssessmentDetails",
               "value": {
-                "criterion": "PP2",
-                "status": "unknown",
-                "summary": "PP2 is not applicable: it evaluates missense variants, and the annotation reports frameshift_variant. PP2 evaluates missense variants in genes where missense is an established disease mechanism and benign missense variation is constrained. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
+                "status": "not_met",
                 "evidenceItemIds": [
                   "urn:sha256:a04aeca39543cf0e63dbeaa44fa9a14421d6507dd385413440d6fcf6e7391115:annotation:NM_000256.3"
                 ],
@@ -516,44 +603,26 @@
             {
               "name": "referenceLink",
               "value": "https://gnomad.broadinstitute.org/gene/MYBPC3?dataset=gnomad_r4"
+            },
+            {
+              "name": "curatorHints",
+              "value": [
+                {
+                  "severity": "caution",
+                  "category": "unevaluated",
+                  "message": "PP2 could not actually be evaluated from the available data (reported as not_met rather than left unknown)."
+                }
+              ]
             }
-          ],
-          "specifiedBy": {
-            "type": "Method",
-            "name": "ACMG/AMP PP2 assessment (unknown)",
-            "methodType": "PP2",
-            "reportedIn": {
-              "type": "Document",
-              "name": "Richards et al., 2015, Genet Med.",
-              "doi": "10.1038/gim.2015.30",
-              "pmid": "25741868"
-            }
-          },
-          "directionOfEvidenceProvided": "neutral"
+          ]
         },
         "PP3": {
           "id": "evline:MYBPC3_c_278delA_PP3",
           "type": "EvidenceLine",
           "description": "Outside predictor calibration scope. PP3 evaluates calibrated computational evidence supporting a damaging effect. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
-          "extensions": [
-            {
-              "name": "bh26AssessmentDetails",
-              "value": {
-                "criterion": "PP3",
-                "status": "unknown",
-                "summary": "Outside predictor calibration scope. PP3 evaluates calibrated computational evidence supporting a damaging effect. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
-                "evidenceItemIds": [
-                  "urn:sha256:a04aeca39543cf0e63dbeaa44fa9a14421d6507dd385413440d6fcf6e7391115:annotation:NM_000256.3"
-                ],
-                "provenance": {
-                  "rule_version": "PP3-v1"
-                }
-              }
-            }
-          ],
           "specifiedBy": {
             "type": "Method",
-            "name": "ACMG/AMP PP3 assessment (unknown)",
+            "name": "ACMG/AMP PP3 assessment (not met)",
             "methodType": "PP3",
             "reportedIn": {
               "type": "Document",
@@ -562,29 +631,39 @@
               "pmid": "25741868"
             }
           },
-          "directionOfEvidenceProvided": "neutral"
+          "directionOfEvidenceProvided": "neutral",
+          "extensions": [
+            {
+              "name": "bh26AssessmentDetails",
+              "value": {
+                "status": "not_met",
+                "evidenceItemIds": [
+                  "urn:sha256:a04aeca39543cf0e63dbeaa44fa9a14421d6507dd385413440d6fcf6e7391115:annotation:NM_000256.3"
+                ],
+                "provenance": {
+                  "rule_version": "PP3-v1"
+                }
+              }
+            },
+            {
+              "name": "curatorHints",
+              "value": [
+                {
+                  "severity": "caution",
+                  "category": "unevaluated",
+                  "message": "PP3 could not actually be evaluated from the available data (reported as not_met rather than left unknown)."
+                }
+              ]
+            }
+          ]
         },
         "PP5": {
           "id": "evline:MYBPC3_c_278delA_PP5",
           "type": "EvidenceLine",
           "description": "ClinGen General policy: retrieve primary evidence instead of scoring external assertions. PP5 is not scored from an external assertion alone; the primary evidence must be reviewed. Outcome: UNKNOWN; no MET or NOT_MET judgment is made.",
-          "extensions": [
-            {
-              "name": "bh26AssessmentDetails",
-              "value": {
-                "criterion": "PP5",
-                "status": "unknown",
-                "summary": "ClinGen General policy: retrieve primary evidence instead of scoring external assertions. PP5 is not scored from an external assertion alone; the primary evidence must be reviewed. Outcome: UNKNOWN; no MET or NOT_MET judgment is made.",
-                "evidenceItemIds": [],
-                "provenance": {
-                  "rule_version": "PP5-v1"
-                }
-              }
-            }
-          ],
           "specifiedBy": {
             "type": "Method",
-            "name": "ACMG/AMP PP5 assessment (unknown)",
+            "name": "ACMG/AMP PP5 assessment (not met)",
             "methodType": "PP5",
             "reportedIn": {
               "type": "Document",
@@ -593,19 +672,51 @@
               "pmid": "25741868"
             }
           },
-          "directionOfEvidenceProvided": "neutral"
+          "directionOfEvidenceProvided": "neutral",
+          "extensions": [
+            {
+              "name": "bh26AssessmentDetails",
+              "value": {
+                "status": "not_met",
+                "evidenceItemIds": [],
+                "provenance": {
+                  "rule_version": "PP5-v1"
+                }
+              }
+            },
+            {
+              "name": "curatorHints",
+              "value": [
+                {
+                  "severity": "caution",
+                  "category": "unevaluated",
+                  "message": "PP5 could not actually be evaluated from the available data (reported as not_met rather than left unknown)."
+                }
+              ]
+            }
+          ]
         },
         "PS1": {
           "id": "evline:MYBPC3_c_278delA_PS1",
           "type": "EvidenceLine",
           "description": "PS1 is not applicable: it compares missense substitutions, and the annotation reports frameshift_variant. PS1 compares a missense variant with an independently established pathogenic variant producing the same amino-acid substitution. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
+          "specifiedBy": {
+            "type": "Method",
+            "name": "ACMG/AMP PS1 assessment (not met)",
+            "methodType": "PS1",
+            "reportedIn": {
+              "type": "Document",
+              "name": "Richards et al., 2015, Genet Med.",
+              "doi": "10.1038/gim.2015.30",
+              "pmid": "25741868"
+            }
+          },
+          "directionOfEvidenceProvided": "neutral",
           "extensions": [
             {
               "name": "bh26AssessmentDetails",
               "value": {
-                "criterion": "PS1",
-                "status": "unknown",
-                "summary": "PS1 is not applicable: it compares missense substitutions, and the annotation reports frameshift_variant. PS1 compares a missense variant with an independently established pathogenic variant producing the same amino-acid substitution. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
+                "status": "not_met",
                 "evidenceItemIds": [
                   "urn:sha256:a04aeca39543cf0e63dbeaa44fa9a14421d6507dd385413440d6fcf6e7391115:annotation:NM_000256.3"
                 ],
@@ -617,13 +728,28 @@
             },
             {
               "name": "referenceLink",
-              "value": "https://www.ncbi.nlm.nih.gov/clinvar/?term=MYBPC3%5Bgene%5D%20AND%20c.278delA"
+              "value": "https://www.ncbi.nlm.nih.gov/clinvar/?term=11%5Bchr%5D%20AND%2047351242%3A47351262%5Bchrpos38%5D"
+            },
+            {
+              "name": "curatorHints",
+              "value": [
+                {
+                  "severity": "caution",
+                  "category": "unevaluated",
+                  "message": "PS1 could not actually be evaluated from the available data (reported as not_met rather than left unknown)."
+                }
+              ]
             }
-          ],
+          ]
+        },
+        "PVS1": {
+          "id": "evline:MYBPC3_c_278delA_PVS1",
+          "type": "EvidenceLine",
+          "description": "Condition was not provided, so no disease-specific loss-of-function mechanism could be established. PVS1 evaluates predicted loss-of-function variants only when loss of function is an established disease mechanism for the gene. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
           "specifiedBy": {
             "type": "Method",
-            "name": "ACMG/AMP PS1 assessment (unknown)",
-            "methodType": "PS1",
+            "name": "ACMG/AMP PVS1 assessment (not met)",
+            "methodType": "PVS1",
             "reportedIn": {
               "type": "Document",
               "name": "Richards et al., 2015, Genet Med.",
@@ -631,34 +757,12 @@
               "pmid": "25741868"
             }
           },
-          "directionOfEvidenceProvided": "neutral"
-        },
-        "PVS1": {
-          "id": "evline:MYBPC3_c_278delA_PVS1",
-          "type": "EvidenceLine",
-          "name": "PROVISIONAL PVS1 assessment for GRCh38:11:47351252:CT:C",
-          "description": "Condition was not provided, so no disease-specific loss-of-function mechanism could be established. The variant-level decision tree reaches PVS1_very_strong on its own, so PVS1 is applied provisionally on that basis alone. PVS1 evaluates predicted loss-of-function variants only when loss of function is an established disease mechanism for the gene. Outcome: MET; the available evidence satisfies PVS1.",
+          "directionOfEvidenceProvided": "neutral",
           "extensions": [
-            {
-              "name": "bh26ProvisionalVerdict",
-              "value": {
-                "provisional": true,
-                "applicability": "MANUAL_REVIEW",
-                "unconfirmed": [
-                  "Supply the disease context; MYBPC3 has curated evidence for MONDO:0005021, MONDO:0005045, MONDO:0005453, MONDO:0007268, MONDO:0016587",
-                  "Confirm the disease mechanism before this provisional PVS1_very_strong is used in a classification; the decision tree reached it without one"
-                ],
-                "missingInputs": [
-                  "condition"
-                ]
-              }
-            },
             {
               "name": "bh26AssessmentDetails",
               "value": {
-                "criterion": "PVS1",
-                "status": "met",
-                "summary": "Condition was not provided, so no disease-specific loss-of-function mechanism could be established. The variant-level decision tree reaches PVS1_very_strong on its own, so PVS1 is applied provisionally on that basis alone. PVS1 evaluates predicted loss-of-function variants only when loss of function is an established disease mechanism for the gene. Outcome: MET; the available evidence satisfies PVS1.",
+                "status": "not_met",
                 "evidenceItemIds": [
                   "urn:sha256:a04aeca39543cf0e63dbeaa44fa9a14421d6507dd385413440d6fcf6e7391115:annotation:NM_000256.3"
                 ],
@@ -816,9 +920,6 @@
                     }
                   ]
                 },
-                "strength": "very_strong",
-                "direction": "supports",
-                "evidenceOutcome": "PVS1",
                 "missingInputs": [
                   "condition"
                 ],
@@ -882,17 +983,16 @@
               }
             },
             {
+              "name": "referenceLink",
+              "value": "https://autopvs1.bgi.com/variant/hg38/11-47351252-CT-C"
+            },
+            {
               "name": "curatorHints",
               "value": [
                 {
                   "severity": "caution",
                   "category": "review",
                   "message": "Supply the disease context; MYBPC3 has curated evidence for MONDO:0005021, MONDO:0005045, MONDO:0005453, MONDO:0007268, MONDO:0016587"
-                },
-                {
-                  "severity": "caution",
-                  "category": "review",
-                  "message": "Confirm the disease mechanism before this provisional PVS1_very_strong is used in a classification; the decision tree reached it without one"
                 },
                 {
                   "severity": "warning",
@@ -903,45 +1003,15 @@
                   "severity": "warning",
                   "category": "warning",
                   "message": "Variant-level loss-of-function assessment was retained as a preliminary result; PVS1 itself was not evaluated."
+                },
+                {
+                  "severity": "caution",
+                  "category": "unevaluated",
+                  "message": "PVS1 could not actually be evaluated from the available data (reported as not_met rather than left unknown)."
                 }
               ]
-            },
-            {
-              "name": "referenceLink",
-              "value": "https://autopvs1.bgi.com"
             }
-          ],
-          "specifiedBy": {
-            "type": "Method",
-            "name": "ACMG/AMP 2015 with ClinGen General Guidance",
-            "methodType": "PVS1",
-            "reportedIn": {
-              "type": "Document",
-              "name": "Richards et al., 2015, Genet Med.",
-              "urls": [
-                "https://pubmed.ncbi.nlm.nih.gov/25741868/"
-              ],
-              "doi": "10.1038/gim.2015.30",
-              "pmid": "25741868"
-            }
-          },
-          "hasEvidenceItems": [
-            "urn:sha256:a04aeca39543cf0e63dbeaa44fa9a14421d6507dd385413440d6fcf6e7391115:annotation:NM_000256.3"
-          ],
-          "directionOfEvidenceProvided": "supports",
-          "strengthOfEvidenceProvided": {
-            "primaryCoding": {
-              "system": "ACMG Guidelines, 2015",
-              "code": "very strong"
-            }
-          },
-          "evidenceOutcome": {
-            "name": "ACMG 2015 PVS1 criterion met",
-            "primaryCoding": {
-              "system": "ACMG Guidelines, 2015",
-              "code": "PVS1"
-            }
-          }
+          ]
         }
       },
       "identity": {

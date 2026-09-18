@@ -165,66 +165,30 @@ def judge(
 criterionでも、呼び出し境界を揃えるため空の `ClinicalNoteExtraction()` を
 渡してください。出力は従来どおり GA4GH VA-Spec `EvidenceLine` です。
 
-## PVS1の暫定判定(consumer側の必須対応)
+## PVS1が判定に至らない場合の出力
 
 PVS1は、決定木が判定に到達していても**疾患特異的なLoF機序が確認できていない**
-場合に、`status: met` と strength を返します。この場合の出力は「確定した判定」
-ではなく「確認待ちの判定」です。
+場合は `met` を返しません。strength・direction・evidenceOutcome はいずれも
+付かず、VA-Spec上は他の結論の出なかったcriterionと同じ
+`not_met` + curator hint として報告されます。
 
-**VA-Spec の標準フィールドだけを読むと、確定判定と区別がつきません。**
-暫定判定でも `directionOfEvidenceProvided` は `supports`、`evidenceOutcome` は
-`PVS1`、`strengthOfEvidenceProvided` は決定木が到達した強度(例 `very strong`)
-になります。`neutral` に落とす選択肢もありましたが、それは「病原性を支持しない」
-という別の誤りになるため採用していません。
+**`status` だけで「適用されたか」が分かります。** 他のcriterionと同じ読み方で、
+consumer 側で追加のフィールドを確認する必要はありません。
 
-### 区別する方法
+### 捨てていない情報
 
-consumer は次のどちらかを**必ず**確認してください。
+判定に至らなくても、variant側の評価結果は `bh26AssessmentDetails` に残ります。
 
-```python
-# 1. EvidenceLine の拡張(推奨)
-provisional = next((e["value"] for e in line.get("extensions", [])
-                    if e["name"] == "bh26ProvisionalVerdict"), None)
-if provisional:
-    # provisional["applicability"], ["unconfirmed"], ["missingInputs"]
-    ...
-
-# 2. assessment details の applicability
-details = next(e["value"] for e in line["extensions"]
-               if e["name"] == "bh26AssessmentDetails")
-settled = details["evaluationContext"]["applicability"] == "APPLICABLE"
-```
-
-`bh26ProvisionalVerdict` 拡張は `extensions` の**先頭**に置かれ、
-EvidenceLine の `name` も `PROVISIONAL PVS1 assessment for ...` になります。
-
-`applicability` の値は4つです。
-
-| 値 | 意味 |
+| 場所 | 内容 |
 |---|---|
-| `APPLICABLE` | 適用済み、未処理事項なし |
-| `MANUAL_REVIEW` | 判定は出たが要確認、または人が決める必要がある |
-| `NOT_EVALUATED` | 判定に必要な情報が揃っていない |
-| `NOT_APPLICABLE` | このvariant/疾患にPVS1は当たらない |
+| `provenance.preliminary_assessment` | 決定木がどのノードまで到達したか、疾患機序が確認できれば何になるか(`candidate_strength`) |
+| `provenance.candidate_conditions` | 疾患未指定時の候補疾患(病名・機序・遺伝形式付き) |
+| `missingInputs` | 何が足りないか |
+| `curatorHints` | 人が何を判断すればよいか |
 
-**`APPLICABLE` 以外はすべて未確定**です。予測で埋めたノード(NF04/NF06、
-SP01/SP02、IC01)を含むMETも `MANUAL_REVIEW` になります。
-
-### 設計上のトレードオフ
-
-この挙動は、疾患機序を確認するまで判定を保留する従来方針を**意図的に逆向きに
-したもの**です。判定を黙って出さないより、決定木が到達した結論を
-「何が未確認か」を添えて人に渡すほうが有用だという判断によります。
-
-代償として、**疾患機序が一度も確認されないまま `supports` が VA-Spec に
-出ます。** 安全性は consumer が `bh26ProvisionalVerdict` または
-`applicability` を見ることに依存します。見ない実装があると、未確認の
-`very_strong` が分類に流れ込みます。
-
-判定に至らなかった場合も、variant側の評価結果は
-`provenance.preliminary_assessment` に残ります(どのノードまで到達したか、
-疾患が入れば何になるか)。疾患未指定時は
-`provenance.candidate_conditions` に候補疾患が病名付きで並びます。
+`candidate_strength` は criterion の `strength` には**なりません**。
+「疾患機序が確認できればこうなる」という仮定の結論であって、確認された
+という主張ではないためです。VA-Spec にも `PVS1 supports` としては出ません。
 
 ## APIサーバーの起動
 
