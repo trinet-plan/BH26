@@ -43,6 +43,9 @@ from acmg_pipeline.providers.upstream_pathogenic import (
 from acmg_pipeline.providers.protein_region import (
     METHOD as REGION_METHOD, ProteinRegionProvider,
 )
+from acmg_pipeline.providers.population_registry import (
+    DEFAULT_POPULATION_SOURCES,
+)
 from acmg_pipeline.providers.nmd import (
     METHOD as NMD_METHOD, RULE_SOURCE as NMD_RULE_SOURCE, TRUNCATING as NMD_TRUNCATING,
     NmdPredictionProvider,
@@ -54,9 +57,27 @@ from acmg_pipeline.services.resolve import (
 )
 
 
-def TOGOVAR_SOURCE(api_version):
-    """The one population source this command offers, in the registry's own shape."""
-    return [{"provider": "togovar", "api_version": api_version}]
+def _population_sources(args):
+    """The population sources this run reads frequencies from, or [] for none.
+
+    The rule set is where they belong: which frequency databases a run consults decides what
+    PM2 and BS1 see, so it is a recorded policy rather than a command-line default. This
+    command used to build a TogoVar provider directly and leave frequency_sources unset,
+    which takes every group TogoVar offers - a wider set than config/demo-rules.json asks
+    for, and a different one from what the same variant gets through the API.
+
+    --togovar-api-version still overrides the version, because pinning the API a run replayed
+    is the flag's job; which databases to consult is not.
+    """
+    if not args.with_togovar:
+        return []
+    configured = (json.loads(args.rules.read_text(encoding="utf-8")).get("population_sources")
+                  if args.rules else None)
+    if not configured:
+        return DEFAULT_POPULATION_SOURCES
+    return [{**source, "api_version": args.togovar_api_version}
+            if source.get("provider") == "togovar" else source
+            for source in configured]
 
 
 def _hotspot_policy(args):
@@ -229,8 +250,7 @@ def main(argv=None):
                     evidence_cache_dir=args.evidence_cache_dir or args.cache_dir,
                     ensembl_release=args.ensembl_release,
                     clinvar_release=args.clinvar_release,
-                    population_sources=(TOGOVAR_SOURCE(args.togovar_api_version)
-                                        if args.with_togovar else []),
+                    population_sources=_population_sources(args),
                     hotspot_policy=_hotspot_policy(args) if args.with_pm1_hotspot else None,
                     with_clingen_dosage=args.with_clingen_dosage,
                     with_gene2phenotype=args.with_gene2phenotype,
