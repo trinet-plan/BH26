@@ -170,6 +170,47 @@ class VaSpecTests(unittest.TestCase):
         self.assertEqual(extension["value"]["status"], "not_met")
         self.assertEqual(extension["value"]["evidenceItemIds"], [identifier])
 
+    def test_a_provisional_verdict_is_marked_before_its_supporting_detail(self):
+        """VA-Spec's own fields cannot say a met criterion is unconfirmed: the direction is
+        still "supports" and the outcome is still the code. So it is said outright, and first."""
+        result = CriterionResult(
+            "PVS1", CriterionStatus.MET, VARIANT, "applied provisionally", "very_strong",
+            "supports", "PVS1", evidence=EVIDENCE,
+            evaluation_context={"gene": "TEST", "applicability": "MANUAL_REVIEW"},
+            missing_inputs=["condition"],
+            review_points=["Confirm the disease mechanism before this is used in a "
+                           "classification"],
+        )
+        line = to_evidence_line(result)
+        self.assertEqual(line["extensions"][0]["name"], "bh26ProvisionalVerdict")
+        marker = line["extensions"][0]["value"]
+        self.assertTrue(marker["provisional"])
+        self.assertEqual(marker["applicability"], "MANUAL_REVIEW")
+        self.assertIn("Confirm the disease mechanism", " ".join(marker["unconfirmed"]))
+        self.assertEqual(marker["missingInputs"], ["condition"])
+        self.assertTrue(line["name"].startswith("PROVISIONAL "))
+        # The verdict itself is unchanged - it was met, and says so.
+        self.assertEqual(line["directionOfEvidenceProvided"], "supports")
+        self.assertEqual(line["evidenceOutcome"]["primaryCoding"]["code"], "PVS1")
+
+    def test_a_settled_verdict_carries_no_provisional_marker(self):
+        result = CriterionResult(
+            "PVS1", CriterionStatus.MET, VARIANT, "met", "very_strong", "supports", "PVS1",
+            evidence=EVIDENCE,
+            evaluation_context={"gene": "TEST", "applicability": "APPLICABLE"},
+        )
+        line = to_evidence_line(result)
+        self.assertNotIn("bh26ProvisionalVerdict", [e["name"] for e in line["extensions"]])
+        self.assertFalse(line["name"].startswith("PROVISIONAL "))
+
+    def test_a_criterion_that_records_no_applicability_is_not_called_provisional(self):
+        """Silence is not a caveat, and reading it as one would mark every other criterion."""
+        result = CriterionResult(
+            "PM2", CriterionStatus.MET, VARIANT, "met", "moderate", "supports", "PM2",
+            evidence=EVIDENCE, review_points=["some review point"])
+        line = to_evidence_line(result)
+        self.assertNotIn("bh26ProvisionalVerdict", [e["name"] for e in line["extensions"]])
+
     def test_pvs1_assessment_details_keep_decision_trace(self):
         result = CriterionResult(
             "PVS1", CriterionStatus.MET, VARIANT, "NMD expected", "very_strong", "supports", "PVS1",

@@ -260,6 +260,35 @@ def assessment_details(result):
     return value
 
 
+def _provisional_verdict(result):
+    """The "this verdict is not settled" marker, or None when it is.
+
+    VA-Spec's own fields cannot say this. A provisional PVS1 is still a criterion that was
+    met, so directionOfEvidenceProvided is "supports" and the evidence outcome is the code
+    itself - and a consumer reading only those two would take an unconfirmed very_strong for
+    a confirmed one. Downgrading the direction instead would be the other error: it would
+    report the criterion as not supporting pathogenicity, which is not what was found.
+
+    So it is said outright, in an extension of its own rather than only inside the assessment
+    details, because a reader scanning the extensions should not have to know where to dig.
+    `applicability` is the source of truth - APPLICABLE means applied with nothing
+    outstanding - and what is outstanding travels with it.
+    """
+    context = result.evaluation_context or {}
+    applicability = context.get("applicability")
+    # Keyed on applicability alone, and only where it was actually recorded. A result that
+    # never stated one has not said its verdict is unsettled, and reading silence as a caveat
+    # would put the marker on every criterion that does not use the field.
+    if result.status != CriterionStatus.MET or applicability in (None, "APPLICABLE"):
+        return None
+    return {
+        "provisional": True,
+        "applicability": applicability,
+        "unconfirmed": list(result.review_points),
+        "missingInputs": list(result.missing_inputs),
+    }
+
+
 def _curator_hints_from_result(result):
     """Map automated-engine review messages to the shared curatorHints shape."""
     hints = []
@@ -367,8 +396,12 @@ def to_evidence_line(result):
     if direction not in {"supports", "disputes", "neutral"}:
         raise ValueError(f"Invalid VA-Spec direction for {result.criterion}")
     method_type = METHOD_TYPES[result.criterion]
-    extensions = [{"name": "bh26AssessmentDetails",
-                   "value": assessment_details(result)}]
+    provisional = _provisional_verdict(result)
+    # First, so a consumer enumerating extensions meets the caveat before the verdict's
+    # supporting detail rather than after it.
+    extensions = [*([{"name": "bh26ProvisionalVerdict", "value": provisional}]
+                    if provisional else []),
+                  {"name": "bh26AssessmentDetails", "value": assessment_details(result)}]
     curator_hints = _curator_hints_from_result(result)
     if curator_hints:
         extensions.append({"name": "curatorHints", "value": curator_hints})
@@ -378,7 +411,7 @@ def to_evidence_line(result):
             "evidence-line",
             f"{result.criterion}:{result.evidence_outcome}:{json.dumps(result.variant, sort_keys=True)}",
         ),
-        "name": f"{result.criterion} assessment for {result.variant['assembly']}:{result.variant['chrom']}:{result.variant['pos']}:{result.variant['ref']}:{result.variant['alt']}",
+        "name": f"{'PROVISIONAL ' if provisional else ''}{result.criterion} assessment for {result.variant['assembly']}:{result.variant['chrom']}:{result.variant['pos']}:{result.variant['ref']}:{result.variant['alt']}",
         "description": result.summary,
         "extensions": extensions,
         "specifiedBy": {
