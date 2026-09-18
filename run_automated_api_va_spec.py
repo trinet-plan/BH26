@@ -15,15 +15,12 @@ where they can be changed. Needs the network on a cold cache.
 import argparse
 import asyncio
 import json
-from dataclasses import replace
 from pathlib import Path
 
 from acmg_pipeline.automated_engine import CRITERIA as AUTOMATED_CRITERIA
 from acmg_pipeline.pipeline_interface import (
     load_automated_config, parse_request_vcf, run_selected_criteria,
 )
-from acmg_pipeline.providers.ensembl import EnsemblIdentityProvider
-from acmg_pipeline.providers.http import CachedHttpClient
 
 ROOT = Path(__file__).resolve().parent
 RULES_PATH = ROOT / "config" / "demo-rules.json"
@@ -62,23 +59,6 @@ def requests_from(path):
     return ["\n".join([*header, body]) + "\n" for body in bodies]
 
 
-def resolved(variant, provider):
-    """The same variant with REF/ALT filled in, when the request left ALT as ".".
-
-    The demo request bodies use the project's synthetic convention - ALT "." with the real
-    identity in TRANSCRIPT/HGVSC - and the API path needs concrete alleles before it does
-    anything at all. Resolving that is what the CLI's prepare step does and what the API has
-    no step for, so it is done here, against the same Ensembl provider and release the
-    evidence comes from. Everything after this is the API's own code.
-    """
-    if variant.alt != ".":
-        return variant
-    _candidate, annotation, _predictions = provider.map_record_with_evidence(
-        {"identity": dict(variant.info)})
-    assembly, chrom, pos, ref, alt = annotation["variant_key"].split(":")
-    return replace(variant, chrom=chrom, pos=int(pos), ref=ref, alt=alt)
-
-
 async def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input", type=Path, default=DEFAULT_INPUT)
@@ -91,15 +71,9 @@ async def main():
     criteria = tuple(sorted(AUTOMATED_CRITERIA))
     bodies = requests_from(args.input)[:args.limit]
     print(f"[api] {len(bodies)} requests x {len(criteria)} automated criteria")
-    client = CachedHttpClient(config.get("evidence_cache_dir")
-                              or str(ROOT / "cache" / "erepo_automated_evidence"))
-    provider = EnsemblIdentityProvider(
-        client, config.get("ensembl_release")
-        or EnsemblIdentityProvider.current_release(client))
-
     records = []
     for body in bodies:
-        variant = resolved(parse_request_vcf(body), provider)
+        variant = parse_request_vcf(body)
         # mcp/erepo_client stay None: an automated-only request never reaches PubMed or the
         # LLM, and run_selected_criteria() raises rather than quietly returning UNKNOWN if a
         # literature code is asked for without them.
@@ -112,10 +86,15 @@ async def main():
                         "ref": variant.ref, "alt": variant.alt},
             "evidence_lines": lines,
         })
+        status = variant.info.get("identity_status")
+        issues = variant.info.get("identity_issues") or []
         applied = [code for code, line in lines.items()
                    if line.get("directionOfEvidenceProvided") in ("supports", "disputes")]
+        records[-1]["identity"] = {"status": status, "issues": issues}
         print(f"  {variant.id} {variant.chrom}:{variant.pos}:{variant.ref}>{variant.alt}"
-              f" -> {len(lines)} lines, applied: {', '.join(applied) or 'none'}")
+              f" [{status}] -> {len(lines)} lines, applied: {', '.join(applied) or 'none'}")
+        for issue in issues:
+            print(f"      issue: {issue}")
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(
