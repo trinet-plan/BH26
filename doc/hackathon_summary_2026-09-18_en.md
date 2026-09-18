@@ -10,15 +10,21 @@ curator's first-pass screening.
 All 28 ACMG/AMP 2015 criteria are implemented across four layers, grouped by how each
 criterion is judged. Three systems are already running: deterministic rule/database-driven
 criteria, criteria that require reading the literature (LLM + PubMed MCP), and criteria that
-require a phenotype/segregation match. The remaining six criteria are honestly reported as
-"not evaluated" rather than silently omitted.
+require a phenotype/segregation match. The rest are honestly reported as "not evaluated"
+rather than silently omitted.
 
 | Layer | Criteria | Count | Status |
 |---|---|---:|---|
-| Automated (Layer 1) | `PVS1 PS1 PM1 PM2 PM4 PM5 PP2 PP3 PP5 BA1 BS1 BP1 BP3 BP4 BP6 BP7` | 16 | Implemented |
+| Automated (Layer 1) | `PVS1 PS1 PM1 PM2 PM4 PM5 PP2 PP3 BA1 BS1 BP1 BP3 BP4 BP7` | 14 | Implemented |
 | Literature engine | `PS3 BS3 PS4` | 3 | Implemented |
 | Phenotype/segregation | `PP1 BS4 PP4` | 3 | Implemented |
+| Disabled by policy | `PP5 BP6` | 2 | Always UNKNOWN (see below) |
 | Not yet implemented | `PS2 PM3 PM6 BS2 BP2 BP5` | 6 | Explicitly NOT_EVALUATED |
+
+`PP5` and `BP6` ("reputable source, no shared data available") exist as code, but per
+ClinGen SVI's general policy — do not score an external assertion by itself, go back to
+the primary evidence — they are wired to always return `UNKNOWN` regardless of input.
+They are effectively unused.
 
 The final classification is combined using Tavtigian et al. 2018's Bayesian point-based
 framework (Supporting=1 / Moderate=2 / Strong=4 / Very Strong=8; thresholds: ≥10
@@ -95,9 +101,9 @@ finding.
 
 ## 5. Known gaps / handover notes
 
-- **6 criteria not yet implemented** (PS2, PM3, PM6, BS2, BP2, BP5) — the current ground
-  truth dataset does not contain a single real example of `BP6` or `PP5` either, so the
-  validation data itself needs to be expanded first.
+- **6 criteria not yet implemented** (PS2, PM3, PM6, BS2, BP2, BP5) — future work.
+  (`PP5` and `BP6` are a separate case — as noted above, they are intentionally always
+  `UNKNOWN` by policy, not pending implementation.)
 - **Empirically validating PP1/PP4** — until a diagnosis is attached to each ERepo variant,
   these criteria can never reach `met` in the automated validation pipeline. Adding
   diagnosis data is the next step.
