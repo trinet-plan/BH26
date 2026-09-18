@@ -130,6 +130,14 @@ def _resolve_coordinates(variants: list[tuple[str, str]], transcripts: dict) -> 
 async def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--limit", type=int, default=None, help="only process the first N variants (smoke test)")
+    parser.add_argument(
+        "--only-file", type=Path, default=None,
+        help="JSON file with a list of [gene, hgvsc] pairs - restrict the run to just "
+             "these variants. The full 64-variant list is still iterated internally "
+             "(skipping everything not in this set) so each variant's erepo64:<line>:1 "
+             "record_id still matches the cached coordinates in "
+             "test_data/erepo_variant_coordinates.json.",
+    )
     args = parser.parse_args()
 
     # One timestamp for the whole run, prefixed onto every output filename so
@@ -142,6 +150,11 @@ async def main() -> None:
     coords = _resolve_coordinates(variants, transcripts)
     if args.limit:
         variants = variants[: args.limit]
+
+    only_set = None
+    if args.only_file:
+        only_set = {tuple(pair) for pair in json.loads(args.only_file.read_text(encoding="utf-8"))}
+    total_to_process = len(only_set) if only_set is not None else len(variants)
 
     automated_config = json.loads((ROOT / "config" / "demo-rules.json").read_text(encoding="utf-8"))
     automated_config["evidence_cache_dir"] = str(EVIDENCE_CACHE_DIR)
@@ -173,7 +186,11 @@ async def main() -> None:
         pl.show("[MCP] Connected to PubMed")
         erepo_client = ERepoClient()
 
+        k = 0
         for i, (gene, hgvsc) in enumerate(variants, 1):
+            if only_set is not None and (gene, hgvsc) not in only_set:
+                continue
+            k += 1
             # _resolve_coordinates()'s synthetic VCF has 3 header/meta lines
             # (##fileformat, ##reference, #CHROM...) before the first data
             # row, and audit_vcf() builds record_id from the real file LINE
@@ -186,7 +203,7 @@ async def main() -> None:
                 skipped.append(f"{gene} {hgvsc} (no resolved coordinates)")
                 continue
 
-            pl.show(f"\n{'#'*70}\n# [{i}/{len(variants)}] {gene} {hgvsc}\n{'#'*70}")
+            pl.show(f"\n{'#'*70}\n# [{k}/{total_to_process}] {gene} {hgvsc}\n{'#'*70}")
             gt_entries = entries_for(gene, hgvsc)
             outcomes = {e.variant_outcome for e in gt_entries if e.variant_outcome}
             if len(outcomes) != 1:
