@@ -9,7 +9,7 @@ Expected upstream flow
 clinical_note
     -> clinical_extraction.py
     -> ClinicalNoteExtraction
-    -> hpo_extraction.py
+    -> hpo_mondo_extraction.py
     -> ClinicalNoteExtraction with proband ClinicalFeature.hpo_id populated
     -> evaluate_locus_evidence(...)
 
@@ -73,6 +73,15 @@ _MALE_RELATIONSHIPS = {
     "grandfather",
     "grandson",
     "nephew",
+}
+_FEMALE_RELATIONSHIPS = {
+    "mother",
+    "sister",
+    "daughter",
+    "aunt",
+    "grandmother",
+    "granddaughter",
+    "niece",
 }
 
 
@@ -229,6 +238,10 @@ def _is_known_male_relationship(relative: Relative) -> bool:
     return relative.relationship.strip().lower() in _MALE_RELATIONSHIPS
 
 
+def _is_known_female_relationship(relative: Relative) -> bool:
+    return relative.relationship.strip().lower() in _FEMALE_RELATIONSHIPS
+
+
 def _score_family_segregation(
     extraction: ClinicalNoteExtraction,
     *,
@@ -248,11 +261,29 @@ def _score_family_segregation(
 
     Conservative restrictions:
       * unaffected relatives are counted for PP1 only when fully_penetrant=True
-      * unaffected parents are not counted for PP1 (they may be used for phase)
+      * unaffected parents are not counted for PP1 (they may be used for phase) -
+        this exclusion applies only to autosomal dominant / autosomal recessive
+        (Table 3 footnote a); the X-linked recessive row has no such footnote
+        and is governed by footnote e instead (see below), so an unaffected
+        XLR parent is not blanket-excluded the way an AD/AR parent is
       * AR scoring requires ar_case_mode='homozygous' or 'compound_heterozygous'
       * BS4 from an unaffected carrier requires fully_penetrant=True
       * BS4 from non-segregation requires low_phenocopy=True
       * AR compound-heterozygous relative non-segregation is not auto-BS4
+      * X-linked recessive: an unaffected relative with a known female
+        relationship who carries the variant is scored as PP1 (+1.0), not
+        routed through the non-segregation/BS4 check - Table 3 footnote e
+        ("Additional segregations can be counted for obligate heterozygous
+        females") and the paper's own Figure 6 worked example score exactly
+        this observation (an unaffected carrier mother/sister with an
+        affected brother and son) as a positive co-segregation, since an
+        unaffected heterozygous carrier is the *expected* state for a
+        female in X-linked recessive disease, not evidence against
+        segregation. This is evaluated before the general non-segregation
+        check further below (2026-09-18 fix - the previous version required
+        _is_known_male_relationship for every XLR PP1/BS4 observation,
+        which meant female carriers were silently dropped from scoring
+        entirely rather than credited).
     """
     result = SegregationAssessment(inheritance_mode=inheritance_mode)
 
@@ -301,6 +332,25 @@ def _score_family_segregation(
 
         if affected is None or variant is None:
             obs.note = "affected or target-variant status is unknown"
+            result.observations.append(obs)
+            continue
+
+        # ------------------------------
+        # X-linked recessive obligate/confirmed carrier female (Table 3
+        # footnote e) - handled before the general non-segregation gate
+        # below because an unaffected female carrier is the expected state
+        # in X-linked recessive disease, not a non-segregation signal.
+        # ------------------------------
+        if (
+            inheritance_mode == InheritanceMode.X_LINKED_RECESSIVE
+            and affected is False
+            and variant is True
+            and _is_known_female_relationship(relative)
+        ):
+            obs.role = "PP1"
+            obs.points = 1.0
+            obs.note = "unaffected X-linked carrier female counted per Table 3 footnote e"
+            result.pp1_points_raw += obs.points
             result.observations.append(obs)
             continue
 
@@ -374,7 +424,10 @@ def _score_family_segregation(
         elif affected is False and variant is False:
             if fully_penetrant is not True:
                 obs.note = "unaffected non-carrier not counted for PP1 without confirmed full penetrance"
-            elif _is_parent(relative):
+            elif (
+                inheritance_mode != InheritanceMode.X_LINKED_RECESSIVE
+                and _is_parent(relative)
+            ):
                 obs.note = "unaffected parent not counted for PP1; may be used to establish phase"
             elif inheritance_mode == InheritanceMode.AUTOSOMAL_DOMINANT:
                 obs.role = "PP1"

@@ -37,8 +37,8 @@ config/pp4_reference_records.json before PP4 can produce anything at all.
   applies.
 
 [Why this connects to the PubMed MCP server, not TogoMCP]
-  acmg_pipeline.hpo_extraction opens its own TogoMCP connection (used for
-  HPO normalization); this module instead reuses acmg_pipeline.pipeline's
+  acmg_pipeline.hpo_mondo_extraction opens its own TogoMCP connection (used
+  for HPO/MONDO normalization); this module instead reuses acmg_pipeline.pipeline's
   existing connect_pubmed() / search_candidate_pmids() / fetch_full_text()
   / extract_json() / client / MODEL - the
   same building blocks the PS3/BS3/PS4 literature workflow already uses -

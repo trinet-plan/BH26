@@ -8,7 +8,7 @@ classify()/VA-Spec pipeline. PP4's diagnostic-yield input always comes
 from a live acmg_pipeline.pp4_literature_search call now (2026-09-17, no
 curated registry - see pp1_bs4_pp4_engine.py's own docstring for why).
 This file fakes that call to stay offline/deterministic, the same way it
-fakes hpo_extraction.normalize_hpo().
+fakes hpo_mondo_extraction.normalize_hpo().
 """
 
 import asyncio
@@ -17,7 +17,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-import acmg_pipeline.hpo_extraction as hpo_extraction
+import acmg_pipeline.hpo_mondo_extraction as hpo_mondo_extraction
 import acmg_pipeline.pp4_literature_search as pp4_literature_search
 from acmg_pipeline.classification import CriterionStatus, Strength
 from acmg_pipeline.clinical_note import (
@@ -32,7 +32,7 @@ check = h.check
 
 
 async def _identity_normalize_hpo(extraction):
-    # engine.evaluate() calls hpo_extraction.normalize_hpo() (a real
+    # engine.evaluate() calls hpo_mondo_extraction.normalize_hpo() (a real
     # TogoMCP + LLM round trip) before evaluate_locus_evidence(). Patching
     # it to a pass-through keeps this file fast, deterministic, and
     # offline - the phenotype_match itself no longer depends on HPO terms
@@ -40,7 +40,7 @@ async def _identity_normalize_hpo(extraction):
     return extraction
 
 
-hpo_extraction.normalize_hpo = _identity_normalize_hpo
+hpo_mondo_extraction.normalize_hpo = _identity_normalize_hpo
 
 
 def _fake_search(*, found, yield_fraction=None, sample_size=None,
@@ -70,7 +70,7 @@ pp4_literature_search.search_diagnostic_yield = _fake_search(found=True, yield_f
 
 
 def run_evaluate(variant, note, config=None):
-    # engine.evaluate() is async (hpo_extraction/pp4_literature_search are
+    # engine.evaluate() is async (hpo_mondo_extraction/pp4_literature_search are
     # both real TogoMCP/PubMed round trips in production) - this test file
     # stays plain top-to-bottom script style (test_harness.py convention),
     # so each call site just drives its own event loop.

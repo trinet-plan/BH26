@@ -331,12 +331,12 @@ async def evaluate(
     pp4_pp1_bs4.evaluate_locus_evidence()), so PP1/BS4's segregation
     scoring below is unaffected either way.
 
-    HPO normalization (acmg_pipeline.hpo_extraction.normalize_hpo(), a
+    HPO normalization (acmg_pipeline.hpo_mondo_extraction.normalize_hpo(), a
     TogoMCP + LLM round trip) and the literature search only run once
     clinical_note.diagnosis is non-empty - with nothing to search for,
     PP4 is already decided (not evaluable), so spending real network/LLM
     cost first would be wasted. Both imports are local (not top-level)
-    because hpo_extraction and pp4_literature_search each require
+    because hpo_mondo_extraction and pp4_literature_search each require
     VLLM_BASE_URL/VLLM_API_KEY at import time (same reason clinical_note.py
     lazily imports clinical_extraction.py instead of importing it at
     module load).
@@ -368,8 +368,8 @@ async def evaluate(
             testing_method="unspecified", source_citation="",
         )
 
-    from acmg_pipeline import hpo_extraction
-    clinical_note = await hpo_extraction.normalize_hpo(clinical_note)
+    from acmg_pipeline import hpo_mondo_extraction
+    clinical_note = await hpo_mondo_extraction.normalize_hpo(clinical_note)
 
     result = evaluate_locus_evidence(
         clinical_note,
