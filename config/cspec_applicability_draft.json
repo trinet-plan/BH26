@@ -1,0 +1,5669 @@
+{
+  "schema_version": "1.0",
+  "registry_status": "DRAFT",
+  "purpose": "Per-gene ACMG criterion applicability transcribed from public ClinGen VCEP criteria specifications (CSpec). Entries are a curator-review queue and MUST NOT be read as runtime evidence until a provider is written for them and a curator records reviewed_at. In particular, 'PVS1: Applicable' is a VCEP statement about its own specification and is NOT the same sentence as gene-disease-review-decisions.json's lof_mechanism_established; see test_data/collect_cspec_applicability.py.",
+  "source": "ClinGen Criteria Specification Registry (CSpec)",
+  "source_url": "https://cspec.genome.network/cspec/api/svis",
+  "retrieved_at": "2026-09-18T12:00:15+00:00",
+  "entry_method": "machine_collected",
+  "applicability_rule": "A criterion is Applicable when at least one of its evidenceStrengths is Applicable, and Not applicable when every strength says it is not. Verified against the registry's own per-criterion applicability on GN180 (DYSF): all 28 agree.",
+  "not_verified_by_a_second_reader": true,
+  "statistics": {
+    "svis_listed": 208,
+    "documents_fetched": 208,
+    "documents_without_criteria": 86,
+    "genes_named": 192,
+    "genes_with_criteria": 134,
+    "genes_with_all_28": 134,
+    "failures": []
+  },
+  "entries": {
+    "ABCA4": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Not applicable",
+        "PM2": "Applicable",
+        "PM3": "Applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Not applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Not applicable",
+        "BS3": "Applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Not applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0800406"
+      ],
+      "inheritance": [
+        "Autosomal recessive inheritance"
+      ],
+      "svis": [
+        "GN164"
+      ]
+    },
+    "ABCD1": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Not applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0018544"
+      ],
+      "inheritance": [
+        "X-linked inheritance"
+      ],
+      "svis": [
+        "GN105"
+      ]
+    },
+    "ACADVL": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Not applicable",
+        "PS3": "Applicable",
+        "PS4": "Not applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Not applicable",
+        "BS3": "Applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0008723"
+      ],
+      "inheritance": [
+        "Autosomal recessive inheritance"
+      ],
+      "svis": [
+        "GN021"
+      ]
+    },
+    "ACTA1": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Not applicable",
+        "PM1": "Not applicable",
+        "PM2": "Applicable",
+        "PM3": "Applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Not applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0009725",
+        "MONDO:0100084"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance",
+        "Autosomal recessive inheritance",
+        "X-linked inheritance"
+      ],
+      "svis": [
+        "GN147",
+        "GN169",
+        "GN229"
+      ]
+    },
+    "ACTC1": {
+      "criteria": {
+        "PVS1": "Not applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Not applicable",
+        "PM2": "Applicable",
+        "PM3": "Not applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Not applicable",
+        "BS3": "Applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0005045"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance"
+      ],
+      "svis": [
+        "GN101"
+      ]
+    },
+    "ACVRL1": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Not applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Not applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Not applicable",
+        "BS3": "Applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0010880"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance"
+      ],
+      "svis": [
+        "GN135"
+      ]
+    },
+    "ADA": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Not applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Not applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Not applicable",
+        "BP3": "Not applicable",
+        "BP4": "Not applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0007064"
+      ],
+      "inheritance": [
+        "Autosomal recessive inheritance"
+      ],
+      "svis": [
+        "GN114"
+      ]
+    },
+    "AIPL1": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Not applicable",
+        "PM1": "Not applicable",
+        "PM2": "Applicable",
+        "PM3": "Applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Not applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Not applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0100438"
+      ],
+      "inheritance": [
+        "Autosomal recessive inheritance"
+      ],
+      "svis": [
+        "GN208"
+      ]
+    },
+    "AKT3": {
+      "criteria": {
+        "PVS1": "Not applicable",
+        "PS1": "Not applicable",
+        "PS2": "Not applicable",
+        "PS3": "Not applicable",
+        "PS4": "Not applicable",
+        "PM1": "Not applicable",
+        "PM2": "Not applicable",
+        "PM3": "Not applicable",
+        "PM4": "Not applicable",
+        "PM5": "Not applicable",
+        "PM6": "Not applicable",
+        "PP1": "Not applicable",
+        "PP2": "Not applicable",
+        "PP3": "Not applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Not applicable",
+        "BS1": "Not applicable",
+        "BS2": "Not applicable",
+        "BS3": "Not applicable",
+        "BS4": "Not applicable",
+        "BP1": "Not applicable",
+        "BP2": "Not applicable",
+        "BP3": "Not applicable",
+        "BP4": "Not applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Not applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0016054"
+      ],
+      "inheritance": [],
+      "svis": [
+        "GN018"
+      ]
+    },
+    "ANO5": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Not applicable",
+        "PM2": "Applicable",
+        "PM3": "Applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Not applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Not applicable",
+        "BS3": "Not applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0015152"
+      ],
+      "inheritance": [
+        "Autosomal recessive inheritance"
+      ],
+      "svis": [
+        "GN188"
+      ]
+    },
+    "APC": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Not applicable",
+        "PM2": "Applicable",
+        "PM3": "Not applicable",
+        "PM4": "Not applicable",
+        "PM5": "Applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Applicable",
+        "BS4": "Applicable",
+        "BP1": "Applicable",
+        "BP2": "Applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0021056"
+      ],
+      "inheritance": [],
+      "svis": [
+        "GN089"
+      ]
+    },
+    "ATM": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Not applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Not applicable",
+        "PM2": "Applicable",
+        "PM3": "Applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Not applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Not applicable",
+        "BS3": "Applicable",
+        "BS4": "Not applicable",
+        "BP1": "Not applicable",
+        "BP2": "Applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0008840",
+        "MONDO:0018266",
+        "MONDO:0700270"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance",
+        "Autosomal recessive inheritance"
+      ],
+      "svis": [
+        "GN020"
+      ]
+    },
+    "BMPR2": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Not applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Not applicable",
+        "PP1": "Applicable",
+        "PP2": "Applicable",
+        "PP3": "Applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Applicable",
+        "BP3": "Applicable",
+        "BP4": "Applicable",
+        "BP5": "Applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0015924"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance"
+      ],
+      "svis": [
+        "GN125"
+      ]
+    },
+    "BRAF": {
+      "criteria": {
+        "PVS1": "Not applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Not applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Applicable",
+        "PP3": "Applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Not applicable",
+        "BS4": "Applicable",
+        "BP1": "Applicable",
+        "BP2": "Applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0021060"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance"
+      ],
+      "svis": [
+        "GN049"
+      ]
+    },
+    "BRCA1": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Not applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Not applicable",
+        "PM2": "Applicable",
+        "PM3": "Applicable",
+        "PM4": "Not applicable",
+        "PM5": "Applicable",
+        "PM6": "Not applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Applicable",
+        "BS4": "Applicable",
+        "BP1": "Applicable",
+        "BP2": "Not applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0700268"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance"
+      ],
+      "svis": [
+        "GN092"
+      ]
+    },
+    "BRCA2": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Not applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Not applicable",
+        "PM2": "Applicable",
+        "PM3": "Applicable",
+        "PM4": "Not applicable",
+        "PM5": "Applicable",
+        "PM6": "Not applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Applicable",
+        "BS4": "Applicable",
+        "BP1": "Applicable",
+        "BP2": "Not applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0700269"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance"
+      ],
+      "svis": [
+        "GN097"
+      ]
+    },
+    "CAPN3": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Not applicable",
+        "PM2": "Applicable",
+        "PM3": "Applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Not applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Not applicable",
+        "BS3": "Not applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0015152"
+      ],
+      "inheritance": [
+        "Autosomal recessive inheritance"
+      ],
+      "svis": [
+        "GN187"
+      ]
+    },
+    "CDH1": {
+      "criteria": {
+        "PVS1": "Not applicable",
+        "PS1": "Not applicable",
+        "PS2": "Not applicable",
+        "PS3": "Not applicable",
+        "PS4": "Not applicable",
+        "PM1": "Not applicable",
+        "PM2": "Not applicable",
+        "PM3": "Not applicable",
+        "PM4": "Not applicable",
+        "PM5": "Not applicable",
+        "PM6": "Not applicable",
+        "PP1": "Not applicable",
+        "PP2": "Not applicable",
+        "PP3": "Not applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Not applicable",
+        "BS1": "Not applicable",
+        "BS2": "Not applicable",
+        "BS3": "Not applicable",
+        "BS4": "Not applicable",
+        "BP1": "Not applicable",
+        "BP2": "Not applicable",
+        "BP3": "Not applicable",
+        "BP4": "Not applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Not applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0007648"
+      ],
+      "inheritance": [],
+      "svis": [
+        "GN007"
+      ]
+    },
+    "CDH23": {
+      "criteria": {
+        "PVS1": "Not applicable",
+        "PS1": "Not applicable",
+        "PS2": "Not applicable",
+        "PS3": "Not applicable",
+        "PS4": "Not applicable",
+        "PM1": "Not applicable",
+        "PM2": "Not applicable",
+        "PM3": "Not applicable",
+        "PM4": "Not applicable",
+        "PM5": "Not applicable",
+        "PM6": "Not applicable",
+        "PP1": "Not applicable",
+        "PP2": "Not applicable",
+        "PP3": "Not applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Not applicable",
+        "BS1": "Not applicable",
+        "BS2": "Not applicable",
+        "BS3": "Not applicable",
+        "BS4": "Not applicable",
+        "BP1": "Not applicable",
+        "BP2": "Not applicable",
+        "BP3": "Not applicable",
+        "BP4": "Not applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Not applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0019497",
+        "MONDO:0019501"
+      ],
+      "inheritance": [],
+      "svis": [
+        "GN005"
+      ]
+    },
+    "CDKL5": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Not applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Applicable",
+        "BP3": "Applicable",
+        "BP4": "Applicable",
+        "BP5": "Applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0100039"
+      ],
+      "inheritance": [
+        "X-linked inheritance"
+      ],
+      "svis": [
+        "GN034"
+      ]
+    },
+    "CEP290": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Not applicable",
+        "PM1": "Not applicable",
+        "PM2": "Applicable",
+        "PM3": "Applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Not applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0100451"
+      ],
+      "inheritance": [
+        "Autosomal recessive inheritance"
+      ],
+      "svis": [
+        "GN226"
+      ]
+    },
+    "COCH": {
+      "criteria": {
+        "PVS1": "Not applicable",
+        "PS1": "Not applicable",
+        "PS2": "Not applicable",
+        "PS3": "Not applicable",
+        "PS4": "Not applicable",
+        "PM1": "Not applicable",
+        "PM2": "Not applicable",
+        "PM3": "Not applicable",
+        "PM4": "Not applicable",
+        "PM5": "Not applicable",
+        "PM6": "Not applicable",
+        "PP1": "Not applicable",
+        "PP2": "Not applicable",
+        "PP3": "Not applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Not applicable",
+        "BS1": "Not applicable",
+        "BS2": "Not applicable",
+        "BS3": "Not applicable",
+        "BS4": "Not applicable",
+        "BP1": "Not applicable",
+        "BP2": "Not applicable",
+        "BP3": "Not applicable",
+        "BP4": "Not applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Not applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0019497"
+      ],
+      "inheritance": [],
+      "svis": [
+        "GN005"
+      ]
+    },
+    "CTLA4": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Not applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Not applicable",
+        "BS3": "Applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Not applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0014493"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance"
+      ],
+      "svis": [
+        "GN122"
+      ]
+    },
+    "CYP1B1": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Not applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Not applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Not applicable",
+        "BS3": "Not applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Not applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0800472"
+      ],
+      "inheritance": [
+        "Autosomal recessive inheritance"
+      ],
+      "svis": [
+        "GN104"
+      ]
+    },
+    "DCLRE1C": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Not applicable",
+        "PM1": "Not applicable",
+        "PM2": "Applicable",
+        "PM3": "Applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Not applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Not applicable",
+        "BP3": "Not applicable",
+        "BP4": "Not applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0011225"
+      ],
+      "inheritance": [
+        "Autosomal recessive inheritance"
+      ],
+      "svis": [
+        "GN116"
+      ]
+    },
+    "DICER1": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Not applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Not applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0100216"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance"
+      ],
+      "svis": [
+        "GN024"
+      ]
+    },
+    "DNM2": {
+      "criteria": {
+        "PVS1": "Not applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Not applicable",
+        "PM2": "Applicable",
+        "PM3": "Not applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Applicable",
+        "PP3": "Applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0018947"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance"
+      ],
+      "svis": [
+        "GN148"
+      ]
+    },
+    "DYSF": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Not applicable",
+        "PM2": "Applicable",
+        "PM3": "Applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Not applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Not applicable",
+        "BS3": "Not applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0015152"
+      ],
+      "inheritance": [
+        "Autosomal recessive inheritance"
+      ],
+      "svis": [
+        "GN180"
+      ]
+    },
+    "ENG": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Not applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Not applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Not applicable",
+        "BS3": "Applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0008535"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance"
+      ],
+      "svis": [
+        "GN136"
+      ]
+    },
+    "ETHE1": {
+      "criteria": {
+        "PVS1": "Not applicable",
+        "PS1": "Not applicable",
+        "PS2": "Not applicable",
+        "PS3": "Not applicable",
+        "PS4": "Not applicable",
+        "PM1": "Not applicable",
+        "PM2": "Not applicable",
+        "PM3": "Not applicable",
+        "PM4": "Not applicable",
+        "PM5": "Not applicable",
+        "PM6": "Not applicable",
+        "PP1": "Not applicable",
+        "PP2": "Not applicable",
+        "PP3": "Not applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Not applicable",
+        "BS1": "Not applicable",
+        "BS2": "Not applicable",
+        "BS3": "Not applicable",
+        "BS4": "Not applicable",
+        "BP1": "Not applicable",
+        "BP2": "Not applicable",
+        "BP3": "Not applicable",
+        "BP4": "Not applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Not applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0011229"
+      ],
+      "inheritance": [],
+      "svis": [
+        "GN014"
+      ]
+    },
+    "F8": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Not applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Not applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Not applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0010602"
+      ],
+      "inheritance": [
+        "X-linked inheritance"
+      ],
+      "svis": [
+        "GN071"
+      ]
+    },
+    "F9": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Not applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Not applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Not applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0010604"
+      ],
+      "inheritance": [
+        "X-linked inheritance"
+      ],
+      "svis": [
+        "GN080"
+      ]
+    },
+    "FBN1": {
+      "criteria": {
+        "PVS1": "Not applicable",
+        "PS1": "Not applicable",
+        "PS2": "Not applicable",
+        "PS3": "Not applicable",
+        "PS4": "Not applicable",
+        "PM1": "Not applicable",
+        "PM2": "Not applicable",
+        "PM3": "Not applicable",
+        "PM4": "Not applicable",
+        "PM5": "Not applicable",
+        "PM6": "Not applicable",
+        "PP1": "Not applicable",
+        "PP2": "Not applicable",
+        "PP3": "Not applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Not applicable",
+        "BS1": "Not applicable",
+        "BS2": "Not applicable",
+        "BS3": "Not applicable",
+        "BS4": "Not applicable",
+        "BP1": "Not applicable",
+        "BP2": "Not applicable",
+        "BP3": "Not applicable",
+        "BP4": "Not applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Not applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0007947"
+      ],
+      "inheritance": [],
+      "svis": [
+        "GN022"
+      ]
+    },
+    "FOXG1": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Not applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Applicable",
+        "BP3": "Applicable",
+        "BP4": "Applicable",
+        "BP5": "Applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0100040"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance"
+      ],
+      "svis": [
+        "GN035"
+      ]
+    },
+    "FOXN1": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Not applicable",
+        "BS3": "Not applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0011132"
+      ],
+      "inheritance": [
+        "Semidominant inheritance"
+      ],
+      "svis": [
+        "GN113"
+      ]
+    },
+    "GAA": {
+      "criteria": {
+        "PVS1": "Not applicable",
+        "PS1": "Not applicable",
+        "PS2": "Not applicable",
+        "PS3": "Not applicable",
+        "PS4": "Not applicable",
+        "PM1": "Not applicable",
+        "PM2": "Not applicable",
+        "PM3": "Not applicable",
+        "PM4": "Not applicable",
+        "PM5": "Not applicable",
+        "PM6": "Not applicable",
+        "PP1": "Not applicable",
+        "PP2": "Not applicable",
+        "PP3": "Not applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Not applicable",
+        "BS1": "Not applicable",
+        "BS2": "Not applicable",
+        "BS3": "Not applicable",
+        "BS4": "Not applicable",
+        "BP1": "Not applicable",
+        "BP2": "Not applicable",
+        "BP3": "Not applicable",
+        "BP4": "Not applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Not applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0009290"
+      ],
+      "inheritance": [],
+      "svis": [
+        "GN010"
+      ]
+    },
+    "GALT": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Not applicable",
+        "PS3": "Applicable",
+        "PS4": "Not applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0018116"
+      ],
+      "inheritance": [
+        "Autosomal recessive inheritance"
+      ],
+      "svis": [
+        "GN158"
+      ]
+    },
+    "GAMT": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Not applicable",
+        "PS3": "Applicable",
+        "PS4": "Not applicable",
+        "PM1": "Not applicable",
+        "PM2": "Applicable",
+        "PM3": "Applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Not applicable",
+        "PP1": "Not applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Applicable",
+        "BS4": "Not applicable",
+        "BP1": "Not applicable",
+        "BP2": "Applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0012999"
+      ],
+      "inheritance": [],
+      "svis": [
+        "GN026"
+      ]
+    },
+    "GATM": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Not applicable",
+        "PS3": "Applicable",
+        "PS4": "Not applicable",
+        "PM1": "Not applicable",
+        "PM2": "Applicable",
+        "PM3": "Applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Not applicable",
+        "PP1": "Not applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Applicable",
+        "BS4": "Not applicable",
+        "BP1": "Not applicable",
+        "BP2": "Applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0012996"
+      ],
+      "inheritance": [
+        "Autosomal recessive inheritance"
+      ],
+      "svis": [
+        "GN025"
+      ]
+    },
+    "GCK": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Not applicable",
+        "PP1": "Applicable",
+        "PP2": "Applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0015967"
+      ],
+      "inheritance": [
+        "Semidominant inheritance"
+      ],
+      "svis": [
+        "GN086"
+      ]
+    },
+    "GFAP": {
+      "criteria": {
+        "PVS1": "Not applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Not applicable",
+        "PM4": "Not applicable",
+        "PM5": "Applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Not applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Applicable",
+        "BP3": "Not applicable",
+        "BP4": "Not applicable",
+        "BP5": "Applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0008752"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance"
+      ],
+      "svis": [
+        "GN157"
+      ]
+    },
+    "GJB2": {
+      "criteria": {
+        "PVS1": "Not applicable",
+        "PS1": "Not applicable",
+        "PS2": "Not applicable",
+        "PS3": "Not applicable",
+        "PS4": "Not applicable",
+        "PM1": "Not applicable",
+        "PM2": "Not applicable",
+        "PM3": "Not applicable",
+        "PM4": "Not applicable",
+        "PM5": "Not applicable",
+        "PM6": "Not applicable",
+        "PP1": "Not applicable",
+        "PP2": "Not applicable",
+        "PP3": "Not applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Not applicable",
+        "BS1": "Not applicable",
+        "BS2": "Not applicable",
+        "BS3": "Not applicable",
+        "BS4": "Not applicable",
+        "BP1": "Not applicable",
+        "BP2": "Not applicable",
+        "BP3": "Not applicable",
+        "BP4": "Not applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Not applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0019497"
+      ],
+      "inheritance": [],
+      "svis": [
+        "GN005"
+      ]
+    },
+    "GP1BA": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Not applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Applicable",
+        "BP3": "Applicable",
+        "BP4": "Applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0009276"
+      ],
+      "inheritance": [
+        "Autosomal recessive inheritance"
+      ],
+      "svis": [
+        "GN079"
+      ]
+    },
+    "GP1BB": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Not applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Applicable",
+        "BP3": "Applicable",
+        "BP4": "Applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0009276"
+      ],
+      "inheritance": [
+        "Autosomal recessive inheritance"
+      ],
+      "svis": [
+        "GN082"
+      ]
+    },
+    "GP9": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Not applicable",
+        "PM2": "Applicable",
+        "PM3": "Applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Not applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Applicable",
+        "BP3": "Applicable",
+        "BP4": "Applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0009276"
+      ],
+      "inheritance": [
+        "Autosomal recessive inheritance"
+      ],
+      "svis": [
+        "GN083"
+      ]
+    },
+    "GUCY2D": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Not applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Not applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0100453"
+      ],
+      "inheritance": [
+        "Autosomal recessive inheritance"
+      ],
+      "svis": [
+        "GN167"
+      ]
+    },
+    "HBA2": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0018023",
+        "MONDO:0019050",
+        "MONDO:0020459",
+        "MONDO:0054802",
+        "MONDO:0100562"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance",
+        "Autosomal recessive inheritance"
+      ],
+      "svis": [
+        "GN154",
+        "GN173",
+        "GN198",
+        "GN201",
+        "GN203",
+        "GN205"
+      ]
+    },
+    "HBB": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0011381",
+        "MONDO:0013517",
+        "MONDO:0017146",
+        "MONDO:0018023",
+        "MONDO:0019050",
+        "MONDO:0020459",
+        "MONDO:0054801"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance",
+        "Autosomal recessive inheritance"
+      ],
+      "svis": [
+        "GN111",
+        "GN170",
+        "GN171",
+        "GN172",
+        "GN193",
+        "GN194",
+        "GN195",
+        "GN196",
+        "GN197"
+      ]
+    },
+    "HNF1A": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Not applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Not applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0015967"
+      ],
+      "inheritance": [],
+      "svis": [
+        "GN017"
+      ]
+    },
+    "HNF4A": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Not applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Not applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0015967"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance"
+      ],
+      "svis": [
+        "GN085"
+      ]
+    },
+    "HRAS": {
+      "criteria": {
+        "PVS1": "Not applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Not applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Not applicable",
+        "BS4": "Applicable",
+        "BP1": "Applicable",
+        "BP2": "Applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0021060"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance"
+      ],
+      "svis": [
+        "GN046"
+      ]
+    },
+    "IDUA": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Not applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Not applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Not applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0001586"
+      ],
+      "inheritance": [
+        "Autosomal recessive inheritance"
+      ],
+      "svis": [
+        "GN091"
+      ]
+    },
+    "IL2RG": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Not applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Not applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Not applicable",
+        "BP3": "Not applicable",
+        "BP4": "Not applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0010315"
+      ],
+      "inheritance": [
+        "X-linked inheritance"
+      ],
+      "svis": [
+        "GN129"
+      ]
+    },
+    "IL7R": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Not applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Not applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Not applicable",
+        "BP3": "Not applicable",
+        "BP4": "Not applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0012163"
+      ],
+      "inheritance": [
+        "Autosomal recessive inheritance"
+      ],
+      "svis": [
+        "GN119"
+      ]
+    },
+    "ITGA2B": {
+      "criteria": {
+        "PVS1": "Not applicable",
+        "PS1": "Not applicable",
+        "PS2": "Not applicable",
+        "PS3": "Not applicable",
+        "PS4": "Not applicable",
+        "PM1": "Not applicable",
+        "PM2": "Not applicable",
+        "PM3": "Not applicable",
+        "PM4": "Not applicable",
+        "PM5": "Not applicable",
+        "PM6": "Not applicable",
+        "PP1": "Not applicable",
+        "PP2": "Not applicable",
+        "PP3": "Not applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Not applicable",
+        "BS1": "Not applicable",
+        "BS2": "Not applicable",
+        "BS3": "Not applicable",
+        "BS4": "Not applicable",
+        "BP1": "Not applicable",
+        "BP2": "Not applicable",
+        "BP3": "Not applicable",
+        "BP4": "Not applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Not applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0008552",
+        "MONDO:0100326"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance"
+      ],
+      "svis": [
+        "GN011",
+        "GN221"
+      ]
+    },
+    "ITGB3": {
+      "criteria": {
+        "PVS1": "Not applicable",
+        "PS1": "Not applicable",
+        "PS2": "Not applicable",
+        "PS3": "Not applicable",
+        "PS4": "Not applicable",
+        "PM1": "Not applicable",
+        "PM2": "Not applicable",
+        "PM3": "Not applicable",
+        "PM4": "Not applicable",
+        "PM5": "Not applicable",
+        "PM6": "Not applicable",
+        "PP1": "Not applicable",
+        "PP2": "Not applicable",
+        "PP3": "Not applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Not applicable",
+        "BS1": "Not applicable",
+        "BS2": "Not applicable",
+        "BS3": "Not applicable",
+        "BS4": "Not applicable",
+        "BP1": "Not applicable",
+        "BP2": "Not applicable",
+        "BP3": "Not applicable",
+        "BP4": "Not applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Not applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0008552",
+        "MONDO:0100326"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance"
+      ],
+      "svis": [
+        "GN011",
+        "GN223"
+      ]
+    },
+    "JAK3": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Not applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Not applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Not applicable",
+        "BP3": "Not applicable",
+        "BP4": "Not applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0010938"
+      ],
+      "inheritance": [
+        "Autosomal recessive inheritance"
+      ],
+      "svis": [
+        "GN121"
+      ]
+    },
+    "KCNQ1": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Applicable",
+        "BS4": "Applicable",
+        "BP1": "Applicable",
+        "BP2": "Applicable",
+        "BP3": "Applicable",
+        "BP4": "Applicable",
+        "BP5": "Applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0100316"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance",
+        "Autosomal recessive inheritance"
+      ],
+      "svis": [
+        "GN112"
+      ]
+    },
+    "KCNQ4": {
+      "criteria": {
+        "PVS1": "Not applicable",
+        "PS1": "Not applicable",
+        "PS2": "Not applicable",
+        "PS3": "Not applicable",
+        "PS4": "Not applicable",
+        "PM1": "Not applicable",
+        "PM2": "Not applicable",
+        "PM3": "Not applicable",
+        "PM4": "Not applicable",
+        "PM5": "Not applicable",
+        "PM6": "Not applicable",
+        "PP1": "Not applicable",
+        "PP2": "Not applicable",
+        "PP3": "Not applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Not applicable",
+        "BS1": "Not applicable",
+        "BS2": "Not applicable",
+        "BS3": "Not applicable",
+        "BS4": "Not applicable",
+        "BP1": "Not applicable",
+        "BP2": "Not applicable",
+        "BP3": "Not applicable",
+        "BP4": "Not applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Not applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0019497"
+      ],
+      "inheritance": [],
+      "svis": [
+        "GN005"
+      ]
+    },
+    "KRAS": {
+      "criteria": {
+        "PVS1": "Not applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Not applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Not applicable",
+        "BS4": "Applicable",
+        "BP1": "Applicable",
+        "BP2": "Applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0021060"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance"
+      ],
+      "svis": [
+        "GN044"
+      ]
+    },
+    "LDLR": {
+      "criteria": {
+        "PVS1": "Not applicable",
+        "PS1": "Not applicable",
+        "PS2": "Not applicable",
+        "PS3": "Not applicable",
+        "PS4": "Not applicable",
+        "PM1": "Not applicable",
+        "PM2": "Not applicable",
+        "PM3": "Not applicable",
+        "PM4": "Not applicable",
+        "PM5": "Not applicable",
+        "PM6": "Not applicable",
+        "PP1": "Not applicable",
+        "PP2": "Not applicable",
+        "PP3": "Not applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Not applicable",
+        "BS1": "Not applicable",
+        "BS2": "Not applicable",
+        "BS3": "Not applicable",
+        "BS4": "Not applicable",
+        "BP1": "Not applicable",
+        "BP2": "Not applicable",
+        "BP3": "Not applicable",
+        "BP4": "Not applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Not applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0007750"
+      ],
+      "inheritance": [],
+      "svis": [
+        "GN013"
+      ]
+    },
+    "LZTR1": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Not applicable",
+        "PM2": "Applicable",
+        "PM3": "Applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Not applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0021060"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance",
+        "Autosomal recessive inheritance"
+      ],
+      "svis": [
+        "GN094"
+      ]
+    },
+    "MAP2K1": {
+      "criteria": {
+        "PVS1": "Not applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Not applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Applicable",
+        "PP3": "Applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Not applicable",
+        "BS4": "Applicable",
+        "BP1": "Applicable",
+        "BP2": "Applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0021060"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance"
+      ],
+      "svis": [
+        "GN045"
+      ]
+    },
+    "MAP2K2": {
+      "criteria": {
+        "PVS1": "Not applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Not applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Not applicable",
+        "BS4": "Applicable",
+        "BP1": "Applicable",
+        "BP2": "Applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0021060"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance"
+      ],
+      "svis": [
+        "GN048"
+      ]
+    },
+    "MECP2": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Not applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Applicable",
+        "BP3": "Applicable",
+        "BP4": "Applicable",
+        "BP5": "Applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0010726"
+      ],
+      "inheritance": [
+        "X-linked inheritance"
+      ],
+      "svis": [
+        "GN036"
+      ]
+    },
+    "MLH1": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Not applicable",
+        "PM1": "Not applicable",
+        "PM2": "Applicable",
+        "PM3": "Applicable",
+        "PM4": "Not applicable",
+        "PM5": "Applicable",
+        "PM6": "Not applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Not applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0010159",
+        "MONDO:0012249"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance",
+        "Autosomal recessive inheritance"
+      ],
+      "svis": [
+        "GN115"
+      ]
+    },
+    "MRAS": {
+      "criteria": {
+        "PVS1": "Not applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Not applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Not applicable",
+        "BS4": "Applicable",
+        "BP1": "Applicable",
+        "BP2": "Applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0021060"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance"
+      ],
+      "svis": [
+        "GN087"
+      ]
+    },
+    "MSH2": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Not applicable",
+        "PM1": "Not applicable",
+        "PM2": "Applicable",
+        "PM3": "Applicable",
+        "PM4": "Not applicable",
+        "PM5": "Applicable",
+        "PM6": "Not applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Not applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0007356",
+        "MONDO:0010159"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance",
+        "Autosomal recessive inheritance"
+      ],
+      "svis": [
+        "GN137"
+      ]
+    },
+    "MSH6": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Not applicable",
+        "PM1": "Not applicable",
+        "PM2": "Applicable",
+        "PM3": "Applicable",
+        "PM4": "Not applicable",
+        "PM5": "Applicable",
+        "PM6": "Not applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Not applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0005835",
+        "MONDO:0010159"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance",
+        "Autosomal recessive inheritance"
+      ],
+      "svis": [
+        "GN138"
+      ]
+    },
+    "MTM1": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Not applicable",
+        "PM2": "Applicable",
+        "PM3": "Not applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Not applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0018947"
+      ],
+      "inheritance": [
+        "X-linked inheritance"
+      ],
+      "svis": [
+        "GN149"
+      ]
+    },
+    "MTOR": {
+      "criteria": {
+        "PVS1": "Not applicable",
+        "PS1": "Not applicable",
+        "PS2": "Not applicable",
+        "PS3": "Not applicable",
+        "PS4": "Not applicable",
+        "PM1": "Not applicable",
+        "PM2": "Not applicable",
+        "PM3": "Not applicable",
+        "PM4": "Not applicable",
+        "PM5": "Not applicable",
+        "PM6": "Not applicable",
+        "PP1": "Not applicable",
+        "PP2": "Not applicable",
+        "PP3": "Not applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Not applicable",
+        "BS1": "Not applicable",
+        "BS2": "Not applicable",
+        "BS3": "Not applicable",
+        "BS4": "Not applicable",
+        "BP1": "Not applicable",
+        "BP2": "Not applicable",
+        "BP3": "Not applicable",
+        "BP4": "Not applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Not applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0016054"
+      ],
+      "inheritance": [],
+      "svis": [
+        "GN018"
+      ]
+    },
+    "MYBPC3": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Not applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Not applicable",
+        "BS3": "Applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0005045"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance"
+      ],
+      "svis": [
+        "GN095"
+      ]
+    },
+    "MYH7": {
+      "criteria": {
+        "PVS1": "Not applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Not applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Not applicable",
+        "BS3": "Applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0005021",
+        "MONDO:0005045"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance"
+      ],
+      "svis": [
+        "GN002"
+      ]
+    },
+    "MYL2": {
+      "criteria": {
+        "PVS1": "Not applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Not applicable",
+        "PM2": "Applicable",
+        "PM3": "Not applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Not applicable",
+        "BS3": "Applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0005045"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance"
+      ],
+      "svis": [
+        "GN102"
+      ]
+    },
+    "MYL3": {
+      "criteria": {
+        "PVS1": "Not applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Not applicable",
+        "PM2": "Applicable",
+        "PM3": "Not applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Not applicable",
+        "BS3": "Applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0005045"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance"
+      ],
+      "svis": [
+        "GN103"
+      ]
+    },
+    "MYO15A": {
+      "criteria": {
+        "PVS1": "Not applicable",
+        "PS1": "Not applicable",
+        "PS2": "Not applicable",
+        "PS3": "Not applicable",
+        "PS4": "Not applicable",
+        "PM1": "Not applicable",
+        "PM2": "Not applicable",
+        "PM3": "Not applicable",
+        "PM4": "Not applicable",
+        "PM5": "Not applicable",
+        "PM6": "Not applicable",
+        "PP1": "Not applicable",
+        "PP2": "Not applicable",
+        "PP3": "Not applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Not applicable",
+        "BS1": "Not applicable",
+        "BS2": "Not applicable",
+        "BS3": "Not applicable",
+        "BS4": "Not applicable",
+        "BP1": "Not applicable",
+        "BP2": "Not applicable",
+        "BP3": "Not applicable",
+        "BP4": "Not applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Not applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0019497"
+      ],
+      "inheritance": [],
+      "svis": [
+        "GN023"
+      ]
+    },
+    "MYO6": {
+      "criteria": {
+        "PVS1": "Not applicable",
+        "PS1": "Not applicable",
+        "PS2": "Not applicable",
+        "PS3": "Not applicable",
+        "PS4": "Not applicable",
+        "PM1": "Not applicable",
+        "PM2": "Not applicable",
+        "PM3": "Not applicable",
+        "PM4": "Not applicable",
+        "PM5": "Not applicable",
+        "PM6": "Not applicable",
+        "PP1": "Not applicable",
+        "PP2": "Not applicable",
+        "PP3": "Not applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Not applicable",
+        "BS1": "Not applicable",
+        "BS2": "Not applicable",
+        "BS3": "Not applicable",
+        "BS4": "Not applicable",
+        "BP1": "Not applicable",
+        "BP2": "Not applicable",
+        "BP3": "Not applicable",
+        "BP4": "Not applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Not applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0019497"
+      ],
+      "inheritance": [],
+      "svis": [
+        "GN005"
+      ]
+    },
+    "MYO7A": {
+      "criteria": {
+        "PVS1": "Not applicable",
+        "PS1": "Not applicable",
+        "PS2": "Not applicable",
+        "PS3": "Not applicable",
+        "PS4": "Not applicable",
+        "PM1": "Not applicable",
+        "PM2": "Not applicable",
+        "PM3": "Not applicable",
+        "PM4": "Not applicable",
+        "PM5": "Not applicable",
+        "PM6": "Not applicable",
+        "PP1": "Not applicable",
+        "PP2": "Not applicable",
+        "PP3": "Not applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Not applicable",
+        "BS1": "Not applicable",
+        "BS2": "Not applicable",
+        "BS3": "Not applicable",
+        "BS4": "Not applicable",
+        "BP1": "Not applicable",
+        "BP2": "Not applicable",
+        "BP3": "Not applicable",
+        "BP4": "Not applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Not applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0019497",
+        "MONDO:0019501"
+      ],
+      "inheritance": [],
+      "svis": [
+        "GN005"
+      ]
+    },
+    "MYOC": {
+      "criteria": {
+        "PVS1": "Not applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Not applicable",
+        "PM2": "Applicable",
+        "PM3": "Not applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Not applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Not applicable",
+        "BS3": "Applicable",
+        "BS4": "Not applicable",
+        "BP1": "Not applicable",
+        "BP2": "Not applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0005338"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance"
+      ],
+      "svis": [
+        "GN019"
+      ]
+    },
+    "NEB": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Not applicable",
+        "PM2": "Applicable",
+        "PM3": "Applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0018958"
+      ],
+      "inheritance": [
+        "Autosomal recessive inheritance"
+      ],
+      "svis": [
+        "GN146"
+      ]
+    },
+    "NRAS": {
+      "criteria": {
+        "PVS1": "Not applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Not applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Not applicable",
+        "BS4": "Applicable",
+        "BP1": "Applicable",
+        "BP2": "Applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0021060"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance"
+      ],
+      "svis": [
+        "GN039"
+      ]
+    },
+    "OTC": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Not applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0010703"
+      ],
+      "inheritance": [
+        "X-linked inheritance"
+      ],
+      "svis": [
+        "GN156"
+      ]
+    },
+    "OTOF": {
+      "criteria": {
+        "PVS1": "Not applicable",
+        "PS1": "Not applicable",
+        "PS2": "Not applicable",
+        "PS3": "Not applicable",
+        "PS4": "Not applicable",
+        "PM1": "Not applicable",
+        "PM2": "Not applicable",
+        "PM3": "Not applicable",
+        "PM4": "Not applicable",
+        "PM5": "Not applicable",
+        "PM6": "Not applicable",
+        "PP1": "Not applicable",
+        "PP2": "Not applicable",
+        "PP3": "Not applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Not applicable",
+        "BS1": "Not applicable",
+        "BS2": "Not applicable",
+        "BS3": "Not applicable",
+        "BS4": "Not applicable",
+        "BP1": "Not applicable",
+        "BP2": "Not applicable",
+        "BP3": "Not applicable",
+        "BP4": "Not applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Not applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0019497"
+      ],
+      "inheritance": [],
+      "svis": [
+        "GN023"
+      ]
+    },
+    "PAH": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Not applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Not applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Not applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0009861"
+      ],
+      "inheritance": [],
+      "svis": [
+        "GN006"
+      ]
+    },
+    "PALB2": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Not applicable",
+        "PS3": "Not applicable",
+        "PS4": "Applicable",
+        "PM1": "Not applicable",
+        "PM2": "Applicable",
+        "PM3": "Applicable",
+        "PM4": "Not applicable",
+        "PM5": "Applicable",
+        "PM6": "Not applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Not applicable",
+        "BS4": "Applicable",
+        "BP1": "Applicable",
+        "BP2": "Not applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0012565",
+        "MONDO:0700272"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance",
+        "Autosomal recessive inheritance"
+      ],
+      "svis": [
+        "GN077"
+      ]
+    },
+    "PAX6": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Not applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Not applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Not applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0800183"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance"
+      ],
+      "svis": [
+        "GN162"
+      ]
+    },
+    "PDHA1": {
+      "criteria": {
+        "PVS1": "Not applicable",
+        "PS1": "Not applicable",
+        "PS2": "Not applicable",
+        "PS3": "Not applicable",
+        "PS4": "Not applicable",
+        "PM1": "Not applicable",
+        "PM2": "Not applicable",
+        "PM3": "Not applicable",
+        "PM4": "Not applicable",
+        "PM5": "Not applicable",
+        "PM6": "Not applicable",
+        "PP1": "Not applicable",
+        "PP2": "Not applicable",
+        "PP3": "Not applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Not applicable",
+        "BS1": "Not applicable",
+        "BS2": "Not applicable",
+        "BS3": "Not applicable",
+        "BS4": "Not applicable",
+        "BP1": "Not applicable",
+        "BP2": "Not applicable",
+        "BP3": "Not applicable",
+        "BP4": "Not applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Not applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0019169"
+      ],
+      "inheritance": [],
+      "svis": [
+        "GN014"
+      ]
+    },
+    "PIK3CA": {
+      "criteria": {
+        "PVS1": "Not applicable",
+        "PS1": "Not applicable",
+        "PS2": "Not applicable",
+        "PS3": "Not applicable",
+        "PS4": "Not applicable",
+        "PM1": "Not applicable",
+        "PM2": "Not applicable",
+        "PM3": "Not applicable",
+        "PM4": "Not applicable",
+        "PM5": "Not applicable",
+        "PM6": "Not applicable",
+        "PP1": "Not applicable",
+        "PP2": "Not applicable",
+        "PP3": "Not applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Not applicable",
+        "BS1": "Not applicable",
+        "BS2": "Not applicable",
+        "BS3": "Not applicable",
+        "BS4": "Not applicable",
+        "BP1": "Not applicable",
+        "BP2": "Not applicable",
+        "BP3": "Not applicable",
+        "BP4": "Not applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Not applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0016054"
+      ],
+      "inheritance": [],
+      "svis": [
+        "GN018"
+      ]
+    },
+    "PIK3CD": {
+      "criteria": {
+        "PVS1": "Not applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Not applicable",
+        "PM2": "Applicable",
+        "PM3": "Not applicable",
+        "PM4": "Not applicable",
+        "PM5": "Applicable",
+        "PM6": "Not applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Not applicable",
+        "BS3": "Applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Not applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0014222"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance"
+      ],
+      "svis": [
+        "GN141"
+      ]
+    },
+    "PIK3R1": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Not applicable",
+        "PM2": "Applicable",
+        "PM3": "Not applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Not applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Not applicable",
+        "BS3": "Applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Not applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:1060136"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance"
+      ],
+      "svis": [
+        "GN160"
+      ]
+    },
+    "PIK3R2": {
+      "criteria": {
+        "PVS1": "Not applicable",
+        "PS1": "Not applicable",
+        "PS2": "Not applicable",
+        "PS3": "Not applicable",
+        "PS4": "Not applicable",
+        "PM1": "Not applicable",
+        "PM2": "Not applicable",
+        "PM3": "Not applicable",
+        "PM4": "Not applicable",
+        "PM5": "Not applicable",
+        "PM6": "Not applicable",
+        "PP1": "Not applicable",
+        "PP2": "Not applicable",
+        "PP3": "Not applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Not applicable",
+        "BS1": "Not applicable",
+        "BS2": "Not applicable",
+        "BS3": "Not applicable",
+        "BS4": "Not applicable",
+        "BP1": "Not applicable",
+        "BP2": "Not applicable",
+        "BP3": "Not applicable",
+        "BP4": "Not applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Not applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0016054"
+      ],
+      "inheritance": [],
+      "svis": [
+        "GN018"
+      ]
+    },
+    "PMS2": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Not applicable",
+        "PM1": "Not applicable",
+        "PM2": "Applicable",
+        "PM3": "Applicable",
+        "PM4": "Not applicable",
+        "PM5": "Applicable",
+        "PM6": "Not applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Not applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0010159",
+        "MONDO:0013699"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance",
+        "Autosomal recessive inheritance"
+      ],
+      "svis": [
+        "GN139"
+      ]
+    },
+    "POLG": {
+      "criteria": {
+        "PVS1": "Not applicable",
+        "PS1": "Not applicable",
+        "PS2": "Not applicable",
+        "PS3": "Not applicable",
+        "PS4": "Not applicable",
+        "PM1": "Not applicable",
+        "PM2": "Not applicable",
+        "PM3": "Not applicable",
+        "PM4": "Not applicable",
+        "PM5": "Not applicable",
+        "PM6": "Not applicable",
+        "PP1": "Not applicable",
+        "PP2": "Not applicable",
+        "PP3": "Not applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Not applicable",
+        "BS1": "Not applicable",
+        "BS2": "Not applicable",
+        "BS3": "Not applicable",
+        "BS4": "Not applicable",
+        "BP1": "Not applicable",
+        "BP2": "Not applicable",
+        "BP3": "Not applicable",
+        "BP4": "Not applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Not applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0044970"
+      ],
+      "inheritance": [],
+      "svis": [
+        "GN014"
+      ]
+    },
+    "PPP1CB": {
+      "criteria": {
+        "PVS1": "Not applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Not applicable",
+        "PS4": "Applicable",
+        "PM1": "Not applicable",
+        "PM2": "Applicable",
+        "PM3": "Not applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Applicable",
+        "PP3": "Applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Not applicable",
+        "BS4": "Applicable",
+        "BP1": "Applicable",
+        "BP2": "Applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0021060"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance"
+      ],
+      "svis": [
+        "GN128"
+      ]
+    },
+    "PTEN": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Not applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Applicable",
+        "PP3": "Applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0017623"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance"
+      ],
+      "svis": [
+        "GN003"
+      ]
+    },
+    "PTPN11": {
+      "criteria": {
+        "PVS1": "Not applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Not applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Applicable",
+        "PP3": "Applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Not applicable",
+        "BS4": "Applicable",
+        "BP1": "Applicable",
+        "BP2": "Applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0021060"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance"
+      ],
+      "svis": [
+        "GN043"
+      ]
+    },
+    "RAF1": {
+      "criteria": {
+        "PVS1": "Not applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Not applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Not applicable",
+        "BS4": "Applicable",
+        "BP1": "Applicable",
+        "BP2": "Applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0021060"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance"
+      ],
+      "svis": [
+        "GN040"
+      ]
+    },
+    "RAG1": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Not applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Not applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Not applicable",
+        "BP3": "Not applicable",
+        "BP4": "Not applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0000572"
+      ],
+      "inheritance": [
+        "Autosomal recessive inheritance"
+      ],
+      "svis": [
+        "GN123"
+      ]
+    },
+    "RAG2": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Not applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Not applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Not applicable",
+        "BP3": "Not applicable",
+        "BP4": "Not applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0000573"
+      ],
+      "inheritance": [
+        "Autosomal recessive inheritance"
+      ],
+      "svis": [
+        "GN124"
+      ]
+    },
+    "RIT1": {
+      "criteria": {
+        "PVS1": "Not applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Not applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Not applicable",
+        "BS4": "Applicable",
+        "BP1": "Applicable",
+        "BP2": "Applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0021060"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance"
+      ],
+      "svis": [
+        "GN047"
+      ]
+    },
+    "RMRP": {
+      "criteria": {
+        "PVS1": "Not applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Not applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Applicable",
+        "PM4": "Applicable",
+        "PM5": "Not applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Not applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Not applicable",
+        "BP3": "Not applicable",
+        "BP4": "Not applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Not applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0009595"
+      ],
+      "inheritance": [
+        "Autosomal recessive inheritance"
+      ],
+      "svis": [
+        "GN088"
+      ]
+    },
+    "RPE65": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Not applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Not applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0100368"
+      ],
+      "inheritance": [
+        "Autosomal recessive inheritance"
+      ],
+      "svis": [
+        "GN120"
+      ]
+    },
+    "RPGR": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Not applicable",
+        "PM2": "Applicable",
+        "PM3": "Not applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Not applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Not applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Not applicable",
+        "BP3": "Applicable",
+        "BP4": "Applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0100437"
+      ],
+      "inheritance": [
+        "X-linked inheritance"
+      ],
+      "svis": [
+        "GN106"
+      ]
+    },
+    "RRAS2": {
+      "criteria": {
+        "PVS1": "Not applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Not applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Applicable",
+        "BS4": "Applicable",
+        "BP1": "Applicable",
+        "BP2": "Applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0021060"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance"
+      ],
+      "svis": [
+        "GN127"
+      ]
+    },
+    "RS1": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Not applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Not applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Not applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Not applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0010725"
+      ],
+      "inheritance": [
+        "X-linked inheritance"
+      ],
+      "svis": [
+        "GN126"
+      ]
+    },
+    "RUNX1": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Not applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Not applicable",
+        "BS3": "Applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0011071"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance"
+      ],
+      "svis": [
+        "GN008"
+      ]
+    },
+    "RYR1": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Not applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Not applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0018493",
+        "MONDO:0100150"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance",
+        "Autosomal recessive inheritance"
+      ],
+      "svis": [
+        "GN012",
+        "GN150",
+        "GN179"
+      ]
+    },
+    "SCN1A": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Not applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Not applicable",
+        "BS4": "Not applicable",
+        "BP1": "Not applicable",
+        "BP2": "Applicable",
+        "BP3": "Applicable",
+        "BP4": "Applicable",
+        "BP5": "Applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0018214",
+        "MONDO:0100062",
+        "MONDO:0100135"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance"
+      ],
+      "svis": [
+        "GN067"
+      ]
+    },
+    "SCN1B": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Not applicable",
+        "PM2": "Applicable",
+        "PM3": "Applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Not applicable",
+        "BS4": "Not applicable",
+        "BP1": "Not applicable",
+        "BP2": "Applicable",
+        "BP3": "Applicable",
+        "BP4": "Applicable",
+        "BP5": "Applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0018214",
+        "MONDO:0100062"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance",
+        "Autosomal recessive inheritance"
+      ],
+      "svis": [
+        "GN076"
+      ]
+    },
+    "SCN2A": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Not applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Not applicable",
+        "BS4": "Not applicable",
+        "BP1": "Not applicable",
+        "BP2": "Applicable",
+        "BP3": "Applicable",
+        "BP4": "Applicable",
+        "BP5": "Applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0100038"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance"
+      ],
+      "svis": [
+        "GN068"
+      ]
+    },
+    "SCN3A": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Not applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Not applicable",
+        "BS4": "Not applicable",
+        "BP1": "Not applicable",
+        "BP2": "Applicable",
+        "BP3": "Applicable",
+        "BP4": "Applicable",
+        "BP5": "Applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0100062"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance"
+      ],
+      "svis": [
+        "GN069"
+      ]
+    },
+    "SCN8A": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Not applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Not applicable",
+        "BS4": "Not applicable",
+        "BP1": "Not applicable",
+        "BP2": "Applicable",
+        "BP3": "Applicable",
+        "BP4": "Applicable",
+        "BP5": "Applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0100038"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance"
+      ],
+      "svis": [
+        "GN070"
+      ]
+    },
+    "SERPINC1": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Not applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Not applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Not applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0013144"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance"
+      ],
+      "svis": [
+        "GN084"
+      ]
+    },
+    "SGCA": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Not applicable",
+        "PM2": "Applicable",
+        "PM3": "Applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Not applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Not applicable",
+        "BS3": "Not applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0015152"
+      ],
+      "inheritance": [
+        "Autosomal recessive inheritance"
+      ],
+      "svis": [
+        "GN189"
+      ]
+    },
+    "SGCB": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Not applicable",
+        "PM2": "Applicable",
+        "PM3": "Applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Not applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Not applicable",
+        "BS3": "Not applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0015152"
+      ],
+      "inheritance": [
+        "Autosomal recessive inheritance"
+      ],
+      "svis": [
+        "GN184"
+      ]
+    },
+    "SGCD": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Not applicable",
+        "PM2": "Applicable",
+        "PM3": "Applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Not applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Not applicable",
+        "BS3": "Not applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0015152"
+      ],
+      "inheritance": [
+        "Autosomal recessive inheritance"
+      ],
+      "svis": [
+        "GN186"
+      ]
+    },
+    "SGCG": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Not applicable",
+        "PM2": "Applicable",
+        "PM3": "Applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Not applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Not applicable",
+        "BS3": "Not applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0015152"
+      ],
+      "inheritance": [
+        "Autosomal recessive inheritance"
+      ],
+      "svis": [
+        "GN185"
+      ]
+    },
+    "SHOC2": {
+      "criteria": {
+        "PVS1": "Not applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Not applicable",
+        "PS4": "Applicable",
+        "PM1": "Not applicable",
+        "PM2": "Applicable",
+        "PM3": "Not applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Not applicable",
+        "BS4": "Applicable",
+        "BP1": "Applicable",
+        "BP2": "Applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0021060"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance"
+      ],
+      "svis": [
+        "GN038"
+      ]
+    },
+    "SLC19A3": {
+      "criteria": {
+        "PVS1": "Not applicable",
+        "PS1": "Not applicable",
+        "PS2": "Not applicable",
+        "PS3": "Not applicable",
+        "PS4": "Not applicable",
+        "PM1": "Not applicable",
+        "PM2": "Not applicable",
+        "PM3": "Not applicable",
+        "PM4": "Not applicable",
+        "PM5": "Not applicable",
+        "PM6": "Not applicable",
+        "PP1": "Not applicable",
+        "PP2": "Not applicable",
+        "PP3": "Not applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Not applicable",
+        "BS1": "Not applicable",
+        "BS2": "Not applicable",
+        "BS3": "Not applicable",
+        "BS4": "Not applicable",
+        "BP1": "Not applicable",
+        "BP2": "Not applicable",
+        "BP3": "Not applicable",
+        "BP4": "Not applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Not applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0011841"
+      ],
+      "inheritance": [],
+      "svis": [
+        "GN014"
+      ]
+    },
+    "SLC26A4": {
+      "criteria": {
+        "PVS1": "Not applicable",
+        "PS1": "Not applicable",
+        "PS2": "Not applicable",
+        "PS3": "Not applicable",
+        "PS4": "Not applicable",
+        "PM1": "Not applicable",
+        "PM2": "Not applicable",
+        "PM3": "Not applicable",
+        "PM4": "Not applicable",
+        "PM5": "Not applicable",
+        "PM6": "Not applicable",
+        "PP1": "Not applicable",
+        "PP2": "Not applicable",
+        "PP3": "Not applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Not applicable",
+        "BS1": "Not applicable",
+        "BS2": "Not applicable",
+        "BS3": "Not applicable",
+        "BS4": "Not applicable",
+        "BP1": "Not applicable",
+        "BP2": "Not applicable",
+        "BP3": "Not applicable",
+        "BP4": "Not applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Not applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0010134"
+      ],
+      "inheritance": [],
+      "svis": [
+        "GN005"
+      ]
+    },
+    "SLC6A8": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Not applicable",
+        "PM2": "Applicable",
+        "PM3": "Not applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Not applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0010305"
+      ],
+      "inheritance": [
+        "X-linked inheritance"
+      ],
+      "svis": [
+        "GN027"
+      ]
+    },
+    "SLC9A6": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Not applicable",
+        "PM2": "Applicable",
+        "PM3": "Not applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Applicable",
+        "BP3": "Applicable",
+        "BP4": "Applicable",
+        "BP5": "Applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0010278"
+      ],
+      "inheritance": [
+        "X-linked inheritance"
+      ],
+      "svis": [
+        "GN033"
+      ]
+    },
+    "SOS1": {
+      "criteria": {
+        "PVS1": "Not applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Not applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Not applicable",
+        "BS4": "Applicable",
+        "BP1": "Applicable",
+        "BP2": "Applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0021060"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance"
+      ],
+      "svis": [
+        "GN041"
+      ]
+    },
+    "SOS2": {
+      "criteria": {
+        "PVS1": "Not applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Not applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Not applicable",
+        "BS4": "Applicable",
+        "BP1": "Applicable",
+        "BP2": "Applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0021060"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance"
+      ],
+      "svis": [
+        "GN042"
+      ]
+    },
+    "TCF4": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Not applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Applicable",
+        "BP3": "Applicable",
+        "BP4": "Applicable",
+        "BP5": "Applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0012589"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance"
+      ],
+      "svis": [
+        "GN032"
+      ]
+    },
+    "TECTA": {
+      "criteria": {
+        "PVS1": "Not applicable",
+        "PS1": "Not applicable",
+        "PS2": "Not applicable",
+        "PS3": "Not applicable",
+        "PS4": "Not applicable",
+        "PM1": "Not applicable",
+        "PM2": "Not applicable",
+        "PM3": "Not applicable",
+        "PM4": "Not applicable",
+        "PM5": "Not applicable",
+        "PM6": "Not applicable",
+        "PP1": "Not applicable",
+        "PP2": "Not applicable",
+        "PP3": "Not applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Not applicable",
+        "BS1": "Not applicable",
+        "BS2": "Not applicable",
+        "BS3": "Not applicable",
+        "BS4": "Not applicable",
+        "BP1": "Not applicable",
+        "BP2": "Not applicable",
+        "BP3": "Not applicable",
+        "BP4": "Not applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Not applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0019497"
+      ],
+      "inheritance": [],
+      "svis": [
+        "GN005"
+      ]
+    },
+    "TNNI3": {
+      "criteria": {
+        "PVS1": "Not applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Not applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Not applicable",
+        "BS3": "Applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0005045"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance"
+      ],
+      "svis": [
+        "GN098"
+      ]
+    },
+    "TNNT2": {
+      "criteria": {
+        "PVS1": "Not applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Not applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Not applicable",
+        "BS3": "Applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0005021",
+        "MONDO:0005045"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance"
+      ],
+      "svis": [
+        "GN099"
+      ]
+    },
+    "TP53": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Not applicable",
+        "PM4": "Not applicable",
+        "PM5": "Applicable",
+        "PM6": "Not applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Not applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0018875"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance"
+      ],
+      "svis": [
+        "GN009"
+      ]
+    },
+    "TPM1": {
+      "criteria": {
+        "PVS1": "Not applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Not applicable",
+        "PM2": "Applicable",
+        "PM3": "Not applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Applicable",
+        "PP3": "Applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Not applicable",
+        "BS3": "Applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0005045"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance"
+      ],
+      "svis": [
+        "GN100"
+      ]
+    },
+    "UBE3A": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Not applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Applicable",
+        "BP3": "Applicable",
+        "BP4": "Applicable",
+        "BP5": "Applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0007113"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance"
+      ],
+      "svis": [
+        "GN037"
+      ]
+    },
+    "USH2A": {
+      "criteria": {
+        "PVS1": "Not applicable",
+        "PS1": "Not applicable",
+        "PS2": "Not applicable",
+        "PS3": "Not applicable",
+        "PS4": "Not applicable",
+        "PM1": "Not applicable",
+        "PM2": "Not applicable",
+        "PM3": "Not applicable",
+        "PM4": "Not applicable",
+        "PM5": "Not applicable",
+        "PM6": "Not applicable",
+        "PP1": "Not applicable",
+        "PP2": "Not applicable",
+        "PP3": "Not applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Not applicable",
+        "BS1": "Not applicable",
+        "BS2": "Not applicable",
+        "BS3": "Not applicable",
+        "BS4": "Not applicable",
+        "BP1": "Not applicable",
+        "BP2": "Not applicable",
+        "BP3": "Not applicable",
+        "BP4": "Not applicable",
+        "BP5": "Not applicable",
+        "BP6": "Not applicable",
+        "BP7": "Not applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0019501"
+      ],
+      "inheritance": [],
+      "svis": [
+        "GN005"
+      ]
+    },
+    "VHL": {
+      "criteria": {
+        "PVS1": "Applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Applicable",
+        "PM1": "Applicable",
+        "PM2": "Applicable",
+        "PM3": "Not applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Not applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Applicable",
+        "BS3": "Applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Applicable",
+        "BP3": "Applicable",
+        "BP4": "Applicable",
+        "BP5": "Applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0008667"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance"
+      ],
+      "svis": [
+        "GN078"
+      ]
+    },
+    "VWF": {
+      "criteria": {
+        "PVS1": "Not applicable",
+        "PS1": "Applicable",
+        "PS2": "Applicable",
+        "PS3": "Applicable",
+        "PS4": "Not applicable",
+        "PM1": "Not applicable",
+        "PM2": "Applicable",
+        "PM3": "Applicable",
+        "PM4": "Applicable",
+        "PM5": "Applicable",
+        "PM6": "Not applicable",
+        "PP1": "Applicable",
+        "PP2": "Not applicable",
+        "PP3": "Applicable",
+        "PP4": "Applicable",
+        "PP5": "Not applicable",
+        "BA1": "Applicable",
+        "BS1": "Applicable",
+        "BS2": "Not applicable",
+        "BS3": "Not applicable",
+        "BS4": "Applicable",
+        "BP1": "Not applicable",
+        "BP2": "Not applicable",
+        "BP3": "Not applicable",
+        "BP4": "Applicable",
+        "BP5": "Applicable",
+        "BP6": "Not applicable",
+        "BP7": "Applicable"
+      },
+      "criteria_missing": [],
+      "mondo": [
+        "MONDO:0010191",
+        "MONDO:0013304",
+        "MONDO:0015628",
+        "MONDO:0015629",
+        "MONDO:0015630",
+        "MONDO:0015631",
+        "MONDO:0024574"
+      ],
+      "inheritance": [
+        "Autosomal dominant inheritance",
+        "Autosomal recessive inheritance",
+        "Other",
+        "Undetermined mode of inheritance"
+      ],
+      "svis": [
+        "GN081",
+        "GN090",
+        "GN190",
+        "GN244"
+      ]
+    }
+  }
+}
