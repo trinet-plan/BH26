@@ -457,7 +457,24 @@ async def resolve_diagnosis_mondo(
             if fallback_query:
                 print(f"        no candidates for full text, retrying with: {fallback_query}")
                 candidates = await search_mondo_candidates(mcp, fallback_query)
-        best = choose_best_mondo(diagnosis, candidates)
+        # choose_best_mondo() is an LLM call, not a deterministic lookup -
+        # confirmed empirically (2026-09-18) that a borderline diagnosis
+        # (a specific sub-phenotype whose exact MONDO term isn't among the
+        # candidates, e.g. "hypertrophic cardiomyopathy with apical
+        # ventricular aneurysm" vs. plain "hypertrophic cardiomyopathy")
+        # returns NOT_FOUND on roughly 1 in 5 calls, purely from sampling
+        # variance, even though the same candidates are judged sufficient
+        # on the other 4. A missing condition_id here cascades into PVS1's
+        # (and other criteria's) mechanism gate going unevaluated, so a
+        # few independent retries meaningfully reduces the odds a real,
+        # available candidate gets lost to a single unlucky call - this
+        # does not change which candidates are offered, just how many
+        # chances the same judgment gets to land on one of them.
+        best = None
+        for attempt in range(3):
+            best = choose_best_mondo(diagnosis, candidates)
+            if best is not None:
+                break
         if best is None:
             print("        selected: NOT_FOUND")
         else:
