@@ -226,6 +226,7 @@ def build_evidence_line(code: str, evidence: CriterionEvidence, variant: Variant
         ACMG_2015_METHOD_DOCUMENT, _variant_identity, build_reference_extensions,
         evidence_line_id, validate_integrated_line,
     )
+    from acmg_pipeline.automated_va_spec import details_as_extensions
     from acmg_pipeline.classification import PATHOGENIC_CODES
     from ga4gh.core.models import Extension
     from ga4gh.va_spec.base.core import Direction, EvidenceLine, Method
@@ -272,8 +273,9 @@ def build_evidence_line(code: str, evidence: CriterionEvidence, variant: Variant
                        "available data (reported as not_met rather than left "
                        "unknown).",
         })
-    assessment = {"status": reported_status.value}
-    extensions = [Extension(name="bh26AssessmentDetails", value=assessment)]
+    # `status` sits as its own top-level extension, not grouped under one
+    # bh26AssessmentDetails object - see details_as_extensions(), 2026-09-18.
+    extensions = [Extension(**d) for d in details_as_extensions({"status": reported_status.value})]
     if curator_hints:
         extensions.append(Extension(name="curatorHints", value=curator_hints))
     ref_extensions, reference_evidence_items = build_reference_extensions(code, variant)

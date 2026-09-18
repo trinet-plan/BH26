@@ -97,7 +97,7 @@ from jsonschema import Draft202012Validator, FormatChecker
 
 from acmg_pipeline.criteria.common import DEFAULT_STRENGTH
 from acmg_pipeline.automated_va_spec import (
-    OUTCOME_PATTERN, extensions_last, output_schema, stable_urn,
+    OUTCOME_PATTERN, details_as_extensions, extensions_last, output_schema, stable_urn,
 )
 
 from ga4gh.core.models import Coding, Extension, MappableConcept
@@ -520,13 +520,10 @@ def build_evidence_line(
     # assessment_details() (see its docstring), nothing here needs `criterion`
     # as a list-disambiguator - this line is never folded into an unkeyed
     # list of assessments the way export_record()'s criterion_assessments is.
-    assessment_ext = Extension(
-        name="bh26AssessmentDetails",
-        value={
-            "status": status,
-        },
-    )
-    extensions = [e for e in (hints_ext, assessment_ext) if e]
+    # `status` sits as its own top-level extension, not grouped under one
+    # bh26AssessmentDetails object - see details_as_extensions(), 2026-09-18.
+    extensions = [e for e in (hints_ext,) if e]
+    extensions.extend(Extension(**d) for d in details_as_extensions({"status": status}))
     reference_evidence_items: list[dict] = []
     if variant is not None:
         ref_extensions, reference_evidence_items = build_reference_extensions(criterion, variant)
@@ -695,7 +692,9 @@ def build_workflow_evidence_line(
     EvidenceLine's own top-level `description` and `specifiedBy.methodType`
     below verbatim (see build_evidence_line()'s own note on the same choice,
     and automated_va_spec.assessment_details()'s docstring for the one case
-    where `criterion` has to stay, 2026-09-18).
+    where `criterion` has to stay, 2026-09-18). Each remaining field
+    (status/missingInputs/decisionTrace/...) becomes its own top-level
+    extension rather than one grouping object - see details_as_extensions().
     """
     gene, _hgvsc, safe_hgvsc = _variant_identity(variant)
     assessment = {
@@ -703,7 +702,7 @@ def build_workflow_evidence_line(
     }
     if details:
         assessment.update(details)
-    extensions = [Extension(name="bh26AssessmentDetails", value=assessment)]
+    extensions = [Extension(**d) for d in details_as_extensions(assessment)]
     ref_extensions, reference_evidence_items = build_reference_extensions(code, variant)
     extensions.extend(ref_extensions)
     line = EvidenceLine(

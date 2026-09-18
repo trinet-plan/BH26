@@ -185,8 +185,11 @@ def lines_by_code() -> dict[str, dict]:
 
 
 def _details(line: dict) -> dict:
-    extensions = {item["name"]: item["value"] for item in line["extensions"]}
-    return extensions["bh26AssessmentDetails"]
+    """Each detail field (status/direction/...) is its own top-level
+    extension now, not grouped under one bh26AssessmentDetails object
+    (2026-09-18, per the user's direction)."""
+    from acmg_pipeline.automated_va_spec import details_from_extensions
+    return details_from_extensions(line["extensions"])
 
 
 def test_evidence_cli_criteria_are_really_evaluated(lines_by_code):
