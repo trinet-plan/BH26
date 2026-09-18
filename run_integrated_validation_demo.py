@@ -173,6 +173,14 @@ async def main() -> None:
 
             note_text = (ROOT / "demo-data" / note_file).read_text(encoding="utf-8")
             clinical_note = extract_clinical_note(note_text)
+            # pipeline_interface.run_pipeline()/run_selected_criteria() (the
+            # real API path this script validates against) always resolves
+            # condition_id via EBI OLS4 after extract_clinical_note() - this
+            # script had fallen out of sync with that, so clinical_note.
+            # condition_id was always None here, and PVS1's mechanism gate
+            # (which requires it) could never do better than NOT_PROVIDED.
+            from acmg_pipeline import hpo_mondo_extraction
+            clinical_note = await hpo_mondo_extraction.resolve_diagnosis_mondo(clinical_note)
 
             variant = VariantRecord(
                 chrom=coord_entry["variant"]["chrom"], pos=coord_entry["variant"]["pos"],
