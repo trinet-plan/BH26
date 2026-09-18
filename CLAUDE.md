@@ -6,7 +6,7 @@
 
 - LLM(vLLM上のgemma-4)とPubMed MCPを組み合わせ、ACMG/AMP 2015の28基準について、人間キュレーターの一次スクリーニングを高速化する下書き判定を生成するパイプライン
 - fastapi + uvicorn をdockerで動かす形でAPIが実装されている
-- 現状パイプラインの実装はmockである
+- 実装状況(mockではない): PS3/BS3/PS4はPubMed MCP + LLM(vLLM)による文献読解、PP1/BS4/PP4はClinGen 2024 Bayesian-pointsエンジン(診断イールド統計をPubMed+LLMで検索。見つからなければ正直にUNKNOWN)、残り16基準はルール・外部DB照合による自動判定(`acmg_pipeline/criteria/`, `acmg_pipeline/providers/`)。未実装分はNOT_EVALUATEDのstubとして返す。正確な内訳・件数は `acmg_pipeline/constants.py` の `LITERATURE_CODES` / `PHENOTYPE_SEGREGATION_CODES` / `AUTOMATED_CODES` / `STUB_CODES` を参照(READMEの「5基準」表記とは数が合わないので注意)
 
 ## APIのテスト方法
 
@@ -45,7 +45,9 @@
     ```
 
 
-補足: 今のrun_pipeline()はまだ暫定実装(vLLM/PubMed MCPを呼ばない)なので、VLLM_BASE_URL/VLLM_API_KEY等の環境変数は今回のコンテナには不要でした。実パイプラインが接続されたら、doc 8章にある通りdocker run -e VLLM_BASE_URL=... -e VLLM_API_KEY=...のように環境変数を渡す形に拡張することになります。
+補足: `acmg_pipeline/pipeline_interface.py` の `run_pipeline()` と `run_selected_criteria()` はどちらも毎回 `extract_clinical_note()`(`clinical_note.py`が遅延importする`clinical_extraction.py`)と `hpo_mondo_extraction.resolve_diagnosis_mondo()` を呼ぶ。この2モジュールはimport時にVLLM_BASE_URL/VLLM_API_KEYが無いと`RuntimeError`を送出するため、`/v1/classify_criteria`・`/v1/get_evidence_line_by_target_criteria`のどちらも(自動判定基準のみを指定した場合を含め)環境変数なしでは動かない。`docker run -e VLLM_BASE_URL=... -e VLLM_API_KEY=...`または`.env`で必ず設定すること(doc 8章参照)。
+
+※ `pipeline_interface.py` 冒頭のモジュールdocstring(「実際の判定ロジックが未接続で全28コードをNOT_EVALUATEDとして返す」)は古い記述のまま残っている。実装(`run_pipeline()`/`run_selected_criteria()`本体)はすでに`evaluate_variant_evidence_lines()`/`evaluate_selected_criteria()`に接続済みで、この点でもコード側のコメントとREADMEに乖離がある。
 
 
 ## 初期段階の構想
