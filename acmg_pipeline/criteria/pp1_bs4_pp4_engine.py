@@ -111,6 +111,36 @@ async def _build_reference_from_literature(gene: str, diagnosis: str) -> Optiona
 
     Returns None when nothing usable was found - callers must treat that
     as "not evaluable," never as a negative (benign) observation.
+
+    [locus_model is approximated from yield alone - a known, documented
+     simplification (2026-09-18)]
+      evaluator.py's high_yield_homogeneous check (which suppresses PP1 so
+      it isn't double-counted with a locus-homogeneous, high-yield PP4 -
+      the paper's own central CTNS/cystinosis argument) requires
+      reference.locus_model == "homogeneous". A live literature search has
+      no way to confirm the paper's actual test for this ("is the
+      diagnostic yield substantially specific to ONE gene, i.e. is there
+      literature evidence no other gene is known to cause this phenotype" -
+      see Biesecker et al. 2024's own CTNS/FBN1 examples, each backed by an
+      explicit "no other gene known" statement, not just a yield number;
+      the paper's own step 2.b explicitly allows "locus homogeneity but
+      low diagnostic yield" as a distinct case, so yield and homogeneity
+      are not the same fact). Confirming genuine locus homogeneity would
+      need a further LLM literature judgment (a new hallucination surface)
+      or a curated per-disease homogeneity list (the registry design this
+      project's PP4 rework deliberately dropped - see this module's own
+      docstring). Per the user's explicit direction (2026-09-18), this
+      project instead approximates: yield alone already implies the
+      homogeneity treatment when it exceeds the same 90% threshold
+      evaluator.py's high_yield_homogeneous check already uses.
+      This approximation's real-world impact is bounded: every yield that
+      can trigger it (>90%) already independently saturates PP4's own
+      +5.0 cap on its own (Table 2 reaches +5.0 at just 81.6% yield), so
+      getting the homogeneity call "wrong" here never changes the total
+      combined PP1+PP4 point value or final classification - it only
+      changes whether PP1 is reported as an independently-confirmed MET
+      criterion (when it should have been suppressed as redundant with
+      PP4) or correctly NOT_MET.
     """
     from acmg_pipeline import pp4_literature_search
 
@@ -127,7 +157,7 @@ async def _build_reference_from_literature(gene: str, diagnosis: str) -> Optiona
         gene=gene,
         phenotype_label=diagnosis,
         phenotype_hpo=(),
-        locus_model="heterogeneous",
+        locus_model="homogeneous" if result.yield_fraction > 0.90 else "heterogeneous",
         diagnostic_yield=result.yield_fraction,
         testing_method="unspecified",
         source_citation=(

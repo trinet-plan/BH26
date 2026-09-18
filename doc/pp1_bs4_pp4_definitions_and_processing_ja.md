@@ -177,3 +177,69 @@ GeneReviewsを本番システムに追加接続する優先度は、当初想定
 | 再現率（そもそも見つかるか） | 8件中3件（37.5%）。原因は主に①本文取得できない論文が多い、②検索で正解論文自体を拾えていない、の2種類 |
 
 次の改善余地：検索クエリの工夫（②への対応）、複数候補を試す際のクエリバリエーション追加。
+
+---
+
+## 6. ガイドラインとの乖離点の洗い出しと対応（2026-09-18）
+
+`pp4_pp1_bs4.py`/`pp1_bs4_pp4_engine.py`をBiesecker et al. 2024の本文・Table 3・Table 4と改めて突き合わせ、3件の乖離を発見した。
+
+### 6-1. X連鎖劣性（XLR）で保因者女性が一切カウントされていなかった（修正済み）
+
+`_score_family_segregation()`はXLRのPP1/BS4を`father`/`son`/`brother`等の「既知の男性関係」を持つrelativeにしか与えておらず、Table 3脚注e「Additional segregations can be counted for obligate heterozygous females」および論文自身のFigure 6のワークド例（非罹患の保因者女性に+1.0点）と矛盾していた。加えて、AD/AR-unaffected行だけに付く脚注aの「親を除外する」ルールが、脚注aの付いていないXLR行にも誤って適用されていた。
+
+**対応**: 非罹患・variant保有・既知の女性関係を持つrelativeをTable 3脚注e通りPP1(+1.0)としてカウントするよう修正し、親除外ルールをXLR以外に限定した（[pp4_pp1_bs4.py](../acmg_pipeline/criteria/pp4_pp1_bs4.py)）。
+
+### 6-2. `locus_model`が常に"heterogeneous"固定だった（yield閾値による近似で対応済み）
+
+PP4の文献検索由来のreferenceは常に`locus_model="heterogeneous"`に固定されており、論文の中心的主張である「locus homogeneity + 診断的yield>90%の場合はPP1をPP4に追加してはいけない（二重計上になる）」というルール（`evaluator.py`の`high_yield_homogeneous`判定）が本番では絶対に発火しない状態だった。
+
+**論文の厳密な定義との差**: 論文の"Summary of this heuristic approach"のstep 2は「表現型がsubstantially specificで、かつ診断的yieldが90%を超えている」ことを求めており、さらにstep 2.bは「locus homogeneityだが診断的yieldが低い（＝他に原因遺伝子があるかもしれない）」というケースを明示的に想定している。つまりlocus homogeneityは診断的yieldの数字だけから機械的に導出できる値ではなく、本来は「他にこの表現型の原因になる遺伝子が知られていない」という、yieldとは別の文献的事実（CTNS・FBN1の例で論文が別途明記している）が必要。
+
+**採用した対応（ユーザー承認、2026-09-18）**: 厳密な「本当にこの遺伝子だけが原因か」の確認には新しいLLM文献判定（新たなハルシネーション面）か登録簿（このプロジェクトが明示的に廃止した設計）が必要になるため、簡易的な近似として、**取得したyieldが90%を超えていたら`locus_model="homogeneous"`とみなす**方式を採用した（[pp1_bs4_pp4_engine.py](../acmg_pipeline/criteria/pp1_bs4_pp4_engine.py)の`_build_reference_from_literature()`）。
+
+```python
+locus_model = "homogeneous" if result.yield_fraction > 0.90 else "heterogeneous"
+```
+
+**この近似の実害範囲は限定的**: `DIAGNOSTIC_YIELD_POINT_TABLE`はyield 81.6%の時点で既にPP4単独で+5.0点（1アレル上限）に達するため、この近似が発火する90%超のケースでは、PP4だけで既にcapに達している。したがって近似が誤っていても、PP1+PP4の合計点・最終分類は変わらず、変わるのは「PP1が個別にMET表示されるか、NOT_MET表示されるか」という表示上の正確さのみ。
+
+### 6-3. PP1/BS4評価に必要なパラメータが本番呼び出しで常にNone（未対応、今後の検討課題）
+
+`pp1_bs4_pp4_engine.evaluate()`は`evaluate_locus_evidence()`を呼ぶ際、`inheritance_mode`/`ar_case_mode`/`fully_penetrant`/`low_phenocopy`を全て`None`固定で渡している。
+
+- `inheritance_mode`：`clinical_note.family.inheritance_pattern`にフォールバックするが、`clinical_extraction.py`のプロンプトは「ノートに明記されている場合のみ埋める」方針のため、実際の症例ノートではほぼ常にNoneのまま（デモ4症例全てで確認）。
+- `ar_case_mode`：常にNoneのため、AR（常染色体劣性）症例のPP1は本番で一切スコアされない。
+- `fully_penetrant`/`low_phenocopy`：常にNoneのため、**BS4（非分離）は本番では実質発火しない**。
+
+**検討した対応案（未実装）**:
+- `inheritance_mode`：今回のマージで入った`gene2phenotype.py`（G2P、PVS1の遺伝子-疾患知識ベース）が遺伝子×MONDO疾患ペアごとに継承様式を持っているため、新たに実装した`diagnosis`→MONDO変換と組み合わせて機械的に取得できる可能性がある。ただしG2Pの`x_linked`はdominant/recessiveを区別しないため、`X_LINKED_RECESSIVE`への単純マッピングは近似になる。
+- `ar_case_mode`：`clinical_extraction.py`が既に抽出している`proband.genotype.zygosity`（"homozygous"/"compound_heterozygous"等）から直接導出可能。新しいデータソース不要の低リスクな修正。
+- `fully_penetrant`/`low_phenocopy`：既存のデータソースが無く、LLM文献判定（新規ハルシネーション面）か登録簿（廃止済み設計）のどちらかが必要になる。優先度は低いと判断し保留。
+
+---
+
+## 7. 診断名のMONDO変換（2026-09-18、新規追加）
+
+`diagnosis`（自由文の診断名）をHPO変換と同じ仕組みでMONDO疾患IDに変換する`resolve_diagnosis_mondo()`を`acmg_pipeline/hpo_mondo_extraction.py`（旧`hpo_extraction.py`をリネーム）に追加した。TogoMCPの`mondo`データベース（HPOとは別データベース）に対し、SPARQL検索→LLM最終判定という同じパターンで実装。結果は`ClinicalNoteExtraction.mondo_id`に格納される。
+
+### 検証結果
+
+デモ4症例の診断名で、実際のTogoMCP+LLMを3回ずつ（計12回）実行し、EBI OLS4（`https://www.ebi.ac.uk/ols4`、TogoMCPとは独立した公式API）で確認した正解データと比較した。
+
+| 診断名 | 正解（EBI OLS4） | 結果（3回とも） |
+|---|---|---|
+| hypertrophic cardiomyopathy | MONDO:0005045 | MONDO:0005045 ✅ |
+| hypertrophic cardiomyopathy (HCM) complicated by a left ventricular apical aneurysm | MONDO:0005045 | MONDO:0005045 ✅ |
+| arrhythmogenic right ventricular cardiomyopathy | MONDO:0016587 | MONDO:0016587 ✅ |
+
+12回全てが正解データと一致し、実行ごとのブレも無かった。
+
+### 開発中に見つかった2件のバグ（判定精度ではなく、検索クエリ自体の構文エラー）
+
+検証の過程で、LLMが生成するSPARQLクエリ自体が失敗するケースが2件見つかった。いずれもLLMの意味判定（ハルシネーション）ではなく、SPARQL構文レベルの問題だった。
+
+1. **`PREFIX bif:`宣言がVirtuosoの予約語と衝突**：プロンプトで`bif:contains`に言及したところ、LLMが（未使用でも）`PREFIX bif: <...>`を宣言し、Virtuosoエンドポイントがクエリ全体をHTTP 400で拒否した。→ `bif:contains`への言及を削除し、標準の`CONTAINS(LCASE(?label), ...)`のみを指示するよう修正。
+2. **`ORDER BY STRLEN(?label) ASC`はSQL構文であり有効なSPARQLではない**：正しくは`ORDER BY ASC(STRLEN(?label))`。プロンプトで「意図」を英語で説明するだけでは誤った構文を生成したため、正確な構文を直接明記するよう修正。
+
+「ラベルが短い順に並べる」という並び替え自体は、"hypertrophic cardiomyopathy"のような一般名が"hypertrophic cardiomyopathy 4"のような遺伝子座別サブタイプ名（20件以上存在）に候補リストの`LIMIT`枠から押し出されてしまう問題（4-2で見つかったHPO検索の`myocardial necrosis`と同型の問題）への対策として追加した。
