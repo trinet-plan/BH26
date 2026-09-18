@@ -470,8 +470,18 @@ async def resolve_diagnosis_mondo(
         # available candidate gets lost to a single unlucky call - this
         # does not change which candidates are offered, just how many
         # chances the same judgment gets to land on one of them.
+        #
+        # 3 attempts still missed a particularly borderline diagnosis
+        # ("hypertrophic cardiomyopathy with apical ventricular aneurysm")
+        # in a live 12-variant run (2026-09-18) despite resolving correctly
+        # 10/10 in isolated repeat trials - raised to 5 to push the
+        # remaining miss rate down further (~20%^5 < 0.01% if failures were
+        # truly independent; the real rate is likely a bit higher since the
+        # upstream extract_clinical_note() call also re-runs per attempt
+        # of the OUTER pipeline and can itself vary the exact diagnosis
+        # wording, but more attempts here still only helps).
         best = None
-        for attempt in range(3):
+        for attempt in range(5):
             best = choose_best_mondo(diagnosis, candidates)
             if best is not None:
                 break
