@@ -2,18 +2,37 @@
 hpo_mondo_extraction.py
 
 Normalize ClinicalFeature.label values in ClinicalNoteExtraction to official HPO
-IDs, and ClinicalNoteExtraction.diagnosis to a MONDO disease class, both using
-TogoMCP. Renamed from hpo_extraction.py (2026-09-18) when MONDO resolution was
-added alongside the original HPO resolution.
+IDs (via TogoMCP), and ClinicalNoteExtraction.diagnosis to a MONDO disease class
+(via EBI OLS4). Renamed from hpo_extraction.py (2026-09-18) when MONDO
+resolution was added alongside the original HPO resolution.
 
 Primary API:
     await normalize_hpo(extraction) -> ClinicalNoteExtraction
     await resolve_diagnosis_mondo(extraction) -> ClinicalNoteExtraction
 
 The source-grounded ClinicalFeature.label/diagnosis text is preserved in both
-cases. Only hpo_id / mondo_id is filled. The current shared ClinicalFeature
+cases. Only hpo_id / condition_id is filled. The current shared ClinicalFeature
 class has no official-HPO-label field, so the official label is used only
 during candidate validation and is not stored.
+
+[Why MONDO resolution uses OLS4, not TogoMCP - switched 2026-09-18]
+  The original MONDO implementation used the same TogoMCP SPARQL
+  search-then-choose pattern as HPO below, but an LLM has to author a fresh
+  SPARQL query on every call, and that hit two real, reproducible query-
+  construction bugs in production testing: a stray `PREFIX bif:`
+  declaration (Virtuoso reserves that name and rejects the whole query,
+  HTTP 400, even when bif:contains is never actually called) and
+  `ORDER BY STRLEN(?label) ASC` (SQL syntax, not valid SPARQL - the correct
+  form is `ORDER BY ASC(STRLEN(?label))`). EBI's OLS4 (Ontology Lookup
+  Service) exposes its own MCP server (https://www.ebi.ac.uk/ols4/api/mcp)
+  with a purpose-built `searchClasses` tool - a real, relevance-ranked
+  ontology search endpoint, not a query language the LLM has to write
+  correctly from scratch each call - so neither failure mode can occur
+  here. Verified directly: `searchClasses(query=..., ontologyId="mondo")`
+  returns the correct MONDO term as the first result for both
+  "hypertrophic cardiomyopathy" (MONDO:0005045) and "arrhythmogenic right
+  ventricular cardiomyopathy" (MONDO:0016587), without needing the
+  shortest-label-first workaround the TogoMCP version needed.
 """
 
 from __future__ import annotations
@@ -25,6 +44,7 @@ import csv
 import io
 import json
 import os
+import re
 from contextlib import AsyncExitStack
 from dataclasses import asdict
 from pathlib import Path
@@ -68,6 +88,7 @@ VLLM_BASE_URL = os.environ.get("VLLM_BASE_URL", "")
 VLLM_API_KEY = os.environ.get("VLLM_API_KEY", "")
 MODEL = os.environ.get("VLLM_MODEL", "google/gemma-4-26B-A4B-it")
 TOGOMCP_URL = os.environ.get("TOGOMCP_URL", "https://togomcp.rdfportal.org/mcp")
+OLS4_MCP_URL = os.environ.get("OLS4_MCP_URL", "https://www.ebi.ac.uk/ols4/api/mcp")
 
 if not VLLM_BASE_URL or not VLLM_API_KEY:
     raise RuntimeError(
@@ -104,12 +125,9 @@ def extract_text(result: Any) -> str:
 def parse_sparql_csv(text: str) -> list[dict[str, str]]:
     """Parse a run_sparql CSV result with ?term/?notation/?label columns.
 
-    The output keys ("term"/"hpo_id"/"hpo_label") predate this file also
-    being used for MONDO (search_mondo_candidates() re-keys its own result
-    to mondo_id/mondo_label immediately after calling this - see that
-    function). Left as-is here rather than renamed to a generic "id"/"label"
-    to avoid touching the already-verified HPO call sites for an unrelated
-    change.
+    HPO-only now: MONDO resolution moved to EBI OLS4's own JSON search API
+    (2026-09-18, see this module's docstring), which needs no SPARQL CSV
+    parsing at all.
     """
     rows: list[dict[str, str]] = []
     lines = [
@@ -267,106 +285,64 @@ HPO candidates returned by TogoMCP:
     return None
 
 
-async def get_mondo_mie(mcp: ClientSession) -> str:
-    result = await mcp.call_tool("get_MIE_file", {"database": "mondo"})
-    return extract_text(result)
-
-
 async def search_mondo_candidates(
     mcp: ClientSession,
-    run_sparql_tool: dict[str, Any],
-    mie: str,
     expression: str,
+    *,
+    page_size: int = 8,
 ) -> list[dict[str, str]]:
-    """Search MONDO for disease class candidates matching a free-text diagnosis.
-
-    Reuses parse_sparql_csv() (its "hpo_id"/"hpo_label" keys are a generic
-    notation/label pair, not HPO-specific - see that function's own docstring
-    section on why it isn't renamed) and re-keys the result to mondo_id/
-    mondo_label so callers aren't reading a MONDO value out of a dict key
-    that says "hpo_id".
+    """Search EBI OLS4's MONDO index for disease class candidates matching a
+    free-text diagnosis, via OLS4's own searchClasses tool (real network
+    call, no SPARQL an LLM has to author - see this module's own docstring
+    for why that replaced the earlier TogoMCP approach).
     """
-    system_prompt = f"""
-You are resolving a clinical diagnosis expression against
-the Mondo Disease Ontology (MONDO) using TogoMCP.
-
-Before writing SPARQL, follow the ontology MIE below.
-
------ BEGIN ONTOLOGY MIE -----
-{mie}
------ END ONTOLOGY MIE -----
-
-You have one available tool: run_sparql.
-
-Your job:
-- Search the MONDO graph for disease class candidates relevant to the
-  supplied clinical diagnosis expression.
-- Use database="mondo" (NOT "ontology" - that is a different, umbrella
-  database that also includes EFO and does not scope you to MONDO).
-- Pin the MONDO graph:
-  GRAPH <http://rdfportal.org/ontology/mondo>
-- A free-text diagnosis has no known category IRI or cross-reference to
-  start from, so match on the label text with a plain SPARQL
-  FILTER(CONTAINS(LCASE(?label), "...")) pattern.
-- Do NOT declare or reference a `bif:` prefix for any reason, even if you
-  end up not using it. Virtuoso reserves that prefix name and rejects the
-  entire query (HTTP 400) if it is merely declared, whether or not
-  bif:contains is actually called.
-- Retrieve:
-  ?term (the MONDO class IRI)
-  ?notation (bound via oboInOwl:id, e.g. "MONDO:0007739")
-  ?label (bound via rdfs:label)
-- Always add FILTER NOT EXISTS {{ ?term owl:deprecated true }}.
-- End the query with exactly this clause (copy it verbatim, do not write
-  "STRLEN(?label) ASC" - that is SQL syntax, not valid SPARQL, and the
-  endpoint will reject the whole query with a syntax error):
-  ORDER BY ASC(STRLEN(?label))
-  This sorts the shortest matching label first. A substring match like
-  "hypertrophic cardiomyopathy" can match dozens of longer, more specific
-  subtype labels (e.g. "hypertrophic cardiomyopathy 4", a single-gene-locus
-  subtype) that would otherwise crowd the general disease concept out of a
-  bounded LIMIT - the general concept's label is almost always the
-  shortest matching label, so sorting shortest-first keeps it in the
-  window.
-- Keep the query bounded (LIMIT 20 or fewer).
-- Do not search any other ontology.
-- Do not invent a MONDO ID from memory.
-- Actually call run_sparql.
-
-Use the verified MONDO pattern from the MIE, adapted to the supplied
-diagnosis expression. The result should provide a small candidate set, not
-every matching MONDO term.
-"""
-
-    question = f"""
-Find MONDO disease candidates for this clinical diagnosis:
-
-{expression}
-"""
-
-    response = client.chat.completions.create(
-        model=MODEL,
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": question},
-        ],
-        tools=[run_sparql_tool],
-        tool_choice={"type": "function", "function": {"name": "run_sparql"}},
+    result = await mcp.call_tool(
+        "searchClasses", {"query": expression, "ontologyId": "mondo", "pageSize": page_size},
     )
+    try:
+        data = json.loads(extract_text(result))
+    except (json.JSONDecodeError, ValueError):
+        return []
 
-    message = response.choices[0].message
-    if not message.tool_calls:
-        raise RuntimeError(f"run_sparql was not called for diagnosis: {expression}")
+    candidates: list[dict[str, str]] = []
+    seen_ids: set[str] = set()
+    for item in data.get("items") or []:
+        curie = item.get("curie")
+        labels = item.get("label") or []
+        if not curie or not curie.startswith("MONDO:") or not labels or curie in seen_ids:
+            continue
+        seen_ids.add(curie)
+        candidates.append({"mondo_id": curie, "mondo_label": labels[0]})
+    return candidates
 
-    args = json.loads(message.tool_calls[0].function.arguments)
-    args["database"] = "mondo"
 
-    result = await mcp.call_tool("run_sparql", args)
-    raw = parse_sparql_csv(extract_text(result))
-    return [
-        {"term": row["term"], "mondo_id": row["hpo_id"], "mondo_label": row["hpo_label"]}
-        for row in raw
-    ]
+# Splits a compound diagnosis string ("hypertrophic cardiomyopathy (HCM)
+# complicated by a left ventricular apical aneurysm") at its first
+# qualifier/complication clause or parenthetical, for _primary_diagnosis_clause()
+# below.
+_DIAGNOSIS_QUALIFIER_SPLIT = re.compile(
+    r"\s*\(|\s+(?:complicated by|with|due to|secondary to|associated with)\s+",
+    re.IGNORECASE,
+)
+
+
+def _primary_diagnosis_clause(diagnosis: str) -> Optional[str]:
+    """The leading clause of a compound diagnosis string, or None if it is
+    already a single clause.
+
+    OLS4's searchClasses does phrase-relevance matching, not the free
+    substring match TogoMCP's SPARQL CONTAINS() did - confirmed empirically:
+    the full string "hypertrophic cardiomyopathy (HCM) complicated by a
+    left ventricular apical aneurysm" returns zero candidates, even though
+    "hypertrophic cardiomyopathy" alone finds the right one immediately.
+    This is used only to build a broader FOLLOW-UP search query when the
+    first search returns nothing - never assigned to diagnosis/condition_id
+    directly, and choose_best_mondo() is still shown the full original
+    diagnosis text for its final pick, so a bad split can only mean fewer
+    candidates are found, never a wrong disease getting chosen.
+    """
+    head = _DIAGNOSIS_QUALIFIER_SPLIT.split(diagnosis, maxsplit=1)[0].strip()
+    return head if head and head != diagnosis else None
 
 
 def choose_best_mondo(
@@ -402,7 +378,7 @@ Clinical diagnosis:
 
 {expression}
 
-MONDO candidates returned by TogoMCP:
+MONDO candidates returned by EBI OLS4:
 
 {candidate_text}
 """
@@ -431,20 +407,24 @@ async def resolve_diagnosis_mondo(
     """
     Return a deep-copied ClinicalNoteExtraction with condition_id filled,
     resolving extraction.diagnosis (free text) to a MONDO disease class via
-    TogoMCP - the same search-then-choose pattern normalize_hpo() uses for
-    clinical features, applied to the diagnosis field instead.
+    EBI OLS4 - the same search-then-choose shape normalize_hpo() uses for
+    clinical features (real candidates only, a final pick validated to
+    exactly match one of them - see choose_best_mondo()), applied to the
+    diagnosis field instead.
 
-    The field is ClinicalNoteExtraction.condition_id, which the clinical-note
-    parser may also fill at extraction time; see that field's own comment for
-    why the two producers share one field. It validates the MONDO form, so a
-    candidate that is not MONDO:<digits> raises here rather than silently
-    reaching the disease matching.
+    This is the ONLY producer of ClinicalNoteExtraction.condition_id
+    (2026-09-18): clinical_extraction.py's LLM used to also guess this
+    field directly from the note text with no grounding at all beyond a
+    regex format check, which produced a confirmed, reproducible wrong
+    answer in real testing (a demo case's diagnosis "arrhythmogenic right
+    ventricular cardiomyopathy" came back condition_id=MONDO:0005045, which
+    is hypertrophic cardiomyopathy - a different disease). That prompt
+    instruction was removed; this function is now the only path that can
+    set condition_id, and it can only return a real, existing MONDO term
+    that OLS4 itself returned as a candidate, never a fabricated one.
 
-    extraction.diagnosis is never replaced or overwritten; only condition_id is
-    added. Opens its own TogoMCP session rather than sharing one with
-    resolve_hpo_labels() - a second connection is simpler and lower-risk than
-    threading a shared session through both call paths, and diagnosis
-    resolution only runs once per note anyway.
+    extraction.diagnosis is never replaced or overwritten; only condition_id
+    is added.
     """
     result = copy.deepcopy(extraction)
     diagnosis = (result.diagnosis or "").strip()
@@ -454,27 +434,29 @@ async def resolve_diagnosis_mondo(
     best: Optional[dict[str, str]] = None
 
     async with AsyncExitStack() as stack:
-        ctx = await stack.enter_async_context(streamable_http_client(TOGOMCP_URL))
+        ctx = await stack.enter_async_context(streamable_http_client(OLS4_MCP_URL))
         read, write = ctx[0], ctx[1]
         mcp = await stack.enter_async_context(ClientSession(read, write))
         await mcp.initialize()
         tools = (await mcp.list_tools()).tools
         tool_names = {tool.name for tool in tools}
-        required = {"get_MIE_file", "run_sparql"}
-        missing = required - tool_names
-        if missing:
-            raise RuntimeError(
-                "Required TogoMCP tools are missing: " + ", ".join(sorted(missing))
-            )
-
-        run_sparql_mcp_tool = next(tool for tool in tools if tool.name == "run_sparql")
-        run_sparql_tool = to_openai_tools([run_sparql_mcp_tool])[0]
-        mie = await get_mondo_mie(mcp)
+        if "searchClasses" not in tool_names:
+            raise RuntimeError("Required OLS4 tool 'searchClasses' is missing")
 
         print(f"[MONDO] {diagnosis}")
-        candidates = await search_mondo_candidates(
-            mcp=mcp, run_sparql_tool=run_sparql_tool, mie=mie, expression=diagnosis,
-        )
+        candidates = await search_mondo_candidates(mcp, diagnosis)
+        if not candidates:
+            # OLS4 does phrase-relevance matching, not a substring search -
+            # a compound diagnosis ("X complicated by Y") can return zero
+            # candidates for the full text even though its primary clause
+            # alone finds the right term. Broaden the QUERY only; the final
+            # choose_best_mondo() call below still sees the full, original
+            # diagnosis text (see _primary_diagnosis_clause()'s own
+            # docstring for why this cannot introduce a wrong disease).
+            fallback_query = _primary_diagnosis_clause(diagnosis)
+            if fallback_query:
+                print(f"        no candidates for full text, retrying with: {fallback_query}")
+                candidates = await search_mondo_candidates(mcp, fallback_query)
         best = choose_best_mondo(diagnosis, candidates)
         if best is None:
             print("        selected: NOT_FOUND")

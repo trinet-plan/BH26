@@ -156,13 +156,14 @@ class ClinicalNoteExtraction:
     diagnosis: Optional[str] = None
     # diagnosisをMONDOに正規化したID(例: "MONDO:0007739")。
     #
-    # 生産者は2つある。clinical-note parserが抽出時に埋める経路と、
-    # acmg_pipeline.hpo_mondo_extraction.resolve_diagnosis_mondo()がTogoMCP経由で
-    # 後から埋める経路。どちらも同じ「この症例が対象とする疾患」を指すので、
-    # フィールドは1つに保つ(2026-09-18のマージで mondo_id と condition_id の2案が
-    # 並行実装されたが、読む側 - automated_core.interface.criterion_input() が
-    # data["condition"]へ渡し、PP2/BP1/PM1/PVS1の疾患照合を駆動する - は1つしか
-    # 無いため、下流の`condition`と名前を揃えたこちらに寄せた)。
+    # 唯一の生産者はacmg_pipeline.hpo_mondo_extraction.resolve_diagnosis_mondo()
+    # (EBI OLS4経由、2026-09-18)。読む側 - automated_core.interface.
+    # criterion_input()がdata["condition"]へ渡し、PP2/BP1/PM1/PVS1の疾患照合を
+    # 駆動する - はここに入る値を裏取りなしのLLM記憶からの出力だと想定していない。
+    # clinical_extraction.pyのLLMは以前ここを直接埋めていたが(ontology検証なし、
+    # 正規表現の書式チェックのみ)、実データでcase4のARVC診断がHCMのMONDO ID
+    # (MONDO:0005045)を誤って返す再現可能なハルシネーションが見つかったため、
+    # その経路は削除しresolve_diagnosis_mondo()に一本化した。
     # 解決できない場合はNoneのまま。diagnosisは決して上書きしない。
     condition_id: Optional[str] = None
 

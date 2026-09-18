@@ -78,9 +78,10 @@ Return data that matches the ClinicalNoteExtraction schema exactly.
 
 Rules:
 - Do not invent or repair missing information.
-- Mapping an explicitly stated diagnosis to condition_id is ontology normalization and is
-  permitted; it must not add or change the patient's diagnosis.
 - Do not generate HPO IDs. Every hpo_id must be null.
+- Do not generate a MONDO identifier. condition_id must always be null; it is
+  resolved separately, from the diagnosis text you extract, against a real
+  ontology - never guess or recall one from memory.
 - Do not assign ACMG/AMP criteria or variant pathogenicity.
 - Do not infer inheritance pattern from the pedigree. Populate inheritance_pattern
   only when the note explicitly states an inheritance pattern.
@@ -118,10 +119,6 @@ Rules:
   ("hypertrophic cardiomyopathy") in that case, since the hedge is about certainty,
   not about which disease is being discussed. Use null only when no diagnosis or
   named condition is discussed at all.
-- condition_id is the MONDO identifier for diagnosis (for example "MONDO:0005045").
-  Resolve the extracted diagnosis to MONDO and return exactly one MONDO identifier.
-  Use null when there is no diagnosis or it cannot be resolved unambiguously. Never
-  return an OMIM, Orphanet, MedGen, ICD, or free-text value in condition_id.
 
 Return ONLY valid JSON. Do not wrap it in Markdown.
 """
@@ -275,6 +272,19 @@ def _force_hpo_ids_null(data: dict[str, Any]) -> None:
                     feature["hpo_id"] = None
 
 
+def _force_condition_id_null(data: dict[str, Any]) -> None:
+    """Never trust a MONDO ID emitted during the LLM extraction step.
+
+    Same reasoning as _force_hpo_ids_null(): this step has no ontology to
+    check itself against, so any condition_id it produced would be a raw
+    LLM guess - confirmed in real testing to be wrong for at least one demo
+    case (see acmg_pipeline.hpo_mondo_extraction.resolve_diagnosis_mondo()'s
+    own docstring). condition_id is resolved separately, against real EBI
+    OLS4 candidates, from the diagnosis text this step does extract.
+    """
+    data["condition_id"] = None
+
+
 def extract_clinical_note(
     clinical_note: str,
     *,
@@ -305,6 +315,7 @@ def extract_clinical_note(
     data = _extract_json_object(raw_text)
 
     _force_hpo_ids_null(data)
+    _force_condition_id_null(data)
     if not target_variant_label:
         _force_no_target_variant(data)
 

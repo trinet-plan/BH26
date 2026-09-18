@@ -95,8 +95,18 @@ async def run_pipeline(
     full_text_cache=None,
     llm_cache=None,
 ) -> PipelineOutput:
-    """Evaluate 19 implemented and 9 UNKNOWN stub criteria in ACMG order."""
+    """Evaluate 19 implemented and 9 UNKNOWN stub criteria in ACMG order.
+
+    extraction.condition_id is resolved via EBI OLS4 (real candidates only,
+    2026-09-18) - see acmg_pipeline.clinical_extraction._force_condition_id_null()
+    for why extract_clinical_note() alone never sets it. The import is local
+    because hpo_mondo_extraction requires VLLM_BASE_URL/VLLM_API_KEY at
+    import time, the same reason clinical_note.py lazily imports
+    clinical_extraction.py instead of importing it at module load.
+    """
     extraction = extract_clinical_note(clinical_note)
+    from acmg_pipeline import hpo_mondo_extraction
+    extraction = await hpo_mondo_extraction.resolve_diagnosis_mondo(extraction)
     lines = await evaluate_variant_evidence_lines(
         variant, extraction,
         automated_config=load_automated_config(),
@@ -139,8 +149,13 @@ async def run_selected_criteria(
     always evaluates and classifies all 28 codes, this answers "does this
     variant meet criterion X" for an arbitrary caller-chosen subset, without
     running (or classifying against) the other 27.
+
+    extraction.condition_id is resolved via EBI OLS4 the same way
+    run_pipeline() does - see that function's own docstring.
     """
     extraction = extract_clinical_note(clinical_note)
+    from acmg_pipeline import hpo_mondo_extraction
+    extraction = await hpo_mondo_extraction.resolve_diagnosis_mondo(extraction)
     return await evaluate_selected_criteria(
         variant, extraction, criteria,
         automated_config=load_automated_config(),
