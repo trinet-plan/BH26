@@ -69,6 +69,31 @@ class ApplicabilityFoldingTests(unittest.TestCase):
                          "Not applicable")
         self.assertEqual(applicability(code("BP4", "Not Applicable", "APPLICABLE")), "Applicable")
 
+    def test_a_qualified_affirmative_still_means_applicable(self):
+        """The wordings a VCEP uses when it specified or adopted the criterion.
+
+        Reading these as negatives is the bug that reported the Lysosomal Diseases VCEP as
+        having struck out all 28 criteria for GAA, PVS1 included.
+        """
+        for wording in ("Applicable with VCEP specification", "Applicable as originally described"):
+            with self.subTest(wording=wording):
+                self.assertEqual(applicability(code("PVS1", "Not applicable", wording)),
+                                 "Applicable")
+
+    def test_not_applicable_for_this_vcep_is_a_negative_despite_containing_the_word(self):
+        self.assertEqual(applicability(code("BP6", "Not Applicable for this VCEP")),
+                         "Not applicable")
+
+    def test_the_six_wordings_the_registry_actually_uses(self):
+        """Counted across all 208 documents on 2026-09-18, not read off one of them."""
+        affirmative = ("Applicable", "Applicable with VCEP specification",
+                       "Applicable as originally described")
+        negative = ("Not applicable", "Not Applicable", "Not Applicable for this VCEP")
+        for wording in affirmative:
+            self.assertEqual(applicability(code("PVS1", wording)), "Applicable", wording)
+        for wording in negative:
+            self.assertEqual(applicability(code("PVS1", wording)), "Not applicable", wording)
+
     def test_a_criterion_stating_nothing_is_unknown_rather_than_negative(self):
         self.assertIsNone(applicability(code("PS2")))
         self.assertIsNone(applicability({"label": "PS2"}))
