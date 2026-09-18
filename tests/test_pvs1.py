@@ -3,6 +3,7 @@ import unittest
 
 from acmg_pipeline.automated_core.models import Variant
 from acmg_pipeline.automated_engine import evaluate_prepared_record, make_services
+from acmg_pipeline.providers.splice_default import METHOD as SPLICE_DEFAULT_METHOD
 
 
 RULES = {"PVS1": {
@@ -256,6 +257,21 @@ class PVS1DecisionTreeTests(unittest.TestCase):
                            lof_mechanism_established=True)]
         value = self.evaluate_result(*items, input_data=input_data)
         self.assertNotIn("candidate_conditions", value.provenance)
+
+    def test_the_preliminary_run_carries_its_own_caveats(self):
+        """The tree raises caveats as it goes, and the preliminary run raises them too. It
+        needs its own list to raise them into: without one the splice path stopped with a
+        KeyError instead of a result."""
+        input_data = {key: value for key, value in self.input.items() if key != "condition"}
+        items = [self.annotation("splice_donor_variant"), self.transcript(), self.nmd(),
+                 self.item("splice_assessment", transcript="NM_TEST.1",
+                           alternative_rescue=False, splice_outcome="OUT_OF_FRAME_PTC",
+                           reading_frame_disrupted=True, method=SPLICE_DEFAULT_METHOD,
+                           assessment_method="automated", policy_version="splice-default-v1")]
+        value = self.evaluate_result(*items, input_data=input_data)
+        preliminary = value.provenance["preliminary_assessment"]
+        self.assertEqual(preliminary["candidate_strength"], "very_strong")
+        self.assertIn("default policy", " ".join(preliminary["flagged_predictions"]))
 
     def test_a_provisional_verdict_says_so_and_never_reads_as_settled(self):
         """The tree's strength is carried out, and every reader is told it is unconfirmed."""

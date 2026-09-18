@@ -642,6 +642,11 @@ def _preliminary_assessment(input_data, services, annotation, variant_type, stat
         "ruleset": state["ruleset"],
         "policy": state["policy"],
         "summary": None,
+        # The tree raises caveats into this as it goes (a node answered from a default policy
+        # rather than a curator). They belong to this run, not to the criterion's own result,
+        # so it gets its own list - and it has to exist, because the paths append to it
+        # unconditionally.
+        "pending_review": [],
     }
     if variant_type in {"STOP_GAINED", "FRAMESHIFT"}:
         outcome = _truncating_path(input_data, services, annotation, scratch)
@@ -657,6 +662,8 @@ def _preliminary_assessment(input_data, services, annotation, variant_type, stat
         "decision_path": outcome.decision_trace[-1]["node_id"] if outcome.decision_trace else None,
         "candidate_strength": outcome.strength,
         "candidate_applicability": outcome.evaluation_context["applicability"],
+        # What the tree would need confirmed if this preliminary run became the verdict.
+        "flagged_predictions": list(scratch["pending_review"]),
         "conclusion_if_mechanism_established": scratch["summary"],
         "unresolved_requirements": list(outcome.unresolved_requirements),
         "decision_trace": outcome.decision_trace,

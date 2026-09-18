@@ -868,6 +868,21 @@ def _apply_curated_context(variant: VariantRecord, automated_config: dict) -> No
             variant.info[key] = updated[key]
 
 
+def _apply_condition_mapping(variant: VariantRecord, resolver) -> None:
+    """Record how the case's condition resolves to MONDO, beside the identifier it came in as.
+
+    PVS1's disease gate compares identifiers, so a case recorded in OMIM never matches a
+    curation recorded in MONDO. The mapping travels as `condition_mapping` in variant.info -
+    which is how criteria read case context on this path - and the original identifier stays
+    exactly as it arrived.
+    """
+    condition = next(
+        (value for name, value in variant.info.items() if name.casefold() == "condition"), None)
+    mapping = getattr(resolver, "normalize_condition", lambda _condition: None)(condition)
+    if mapping:
+        variant.info["condition_mapping"] = mapping
+
+
 def _automated_variant(variant: VariantRecord) -> AutomatedVariant:
     """The evidence-cli Variant for provider lookups (GRCh38 unless INFO says otherwise)."""
     assembly = next(
@@ -931,7 +946,10 @@ async def evaluate_variant_evidence_lines(
         with_splice_default=bool(automated_config.get("PVS1", {}).get("splice_default_policy_version")),
         splice_default_policy_version=automated_config.get("PVS1", {}).get("splice_default_policy_version"),
         with_initiation_assessment=bool(automated_config.get("PVS1", {}).get("with_initiation_assessment")),
+        with_gene2phenotype=bool(automated_config.get("with_gene2phenotype")),
+        with_disease_matching=bool(automated_config.get("with_disease_matching")),
     )
+    _apply_condition_mapping(variant, resolver)
     resolved = resolver.resolve(_identity_from_info(variant), _automated_variant(variant))
     services = make_services(
         resolved.records,

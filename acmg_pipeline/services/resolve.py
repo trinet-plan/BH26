@@ -60,6 +60,10 @@ from acmg_pipeline.providers.clinvar import (
 )
 from acmg_pipeline.providers.clingen_dosage import ClinGenDosageProvider
 from acmg_pipeline.providers.clingen_gene_validity import ClinGenGeneValidityProvider
+from acmg_pipeline.providers.clingen_lumping import ClinGenLumpingProvider
+from acmg_pipeline.providers.gene2phenotype import Gene2PhenotypeProvider
+from acmg_pipeline.providers.mondo import MondoMappingProvider
+from acmg_pipeline.providers.mondo_hierarchy import MondoHierarchyProvider
 from acmg_pipeline.providers.clinvar_spectrum import ClinvarSpectrumProvider
 from acmg_pipeline.providers.gene_disease_draft import GeneDiseaseDraftProvider
 from acmg_pipeline.providers.gnomad_constraint import GnomadConstraintProvider
@@ -224,6 +228,8 @@ class ProviderEvidenceResolver:
         splice_default_policy_version: str | None = None,
         with_initiation_assessment: bool = False,
         with_pvs1_transcript_gates: bool = False,
+        with_gene2phenotype: bool = False,
+        with_disease_matching: bool = False,
     ):
         self._client = CachedHttpClient(cache_dir, offline=offline)
         self._external = (
@@ -245,6 +251,12 @@ class ProviderEvidenceResolver:
         self._splice_default_policy_version = splice_default_policy_version
         self._with_initiation_assessment = with_initiation_assessment
         self._with_pvs1_transcript_gates = with_pvs1_transcript_gates
+        self._with_gene2phenotype = with_gene2phenotype
+        # One switch for the three sources that only ever refine the disease match: mapping
+        # OMIM/Orphanet to MONDO, MONDO ancestry, and ClinGen's lumping decisions. They
+        # answer one question between them and are useless apart, so they are asked for once.
+        self._with_disease_matching = with_disease_matching
+        self._mondo = None
         self._mane = None
         self._clingen_gene_validity = None
         self._gnomad_constraint = None
@@ -280,6 +292,8 @@ class ProviderEvidenceResolver:
             resolved.records.extend(predictions)
         self._add_population(variant, resolved)
         self._add_lof_mechanism(annotation, variant, resolved)
+        self._add_gene2phenotype_mechanism(annotation, variant, resolved)
+        self._add_disease_matching(annotation, identity, resolved)
         self._add_gene_disease_draft(annotation, variant, identity, resolved)
         self._add_splice_default(annotation, variant, resolved)
         self._add_initiation_assessment(annotation, variant, identity, resolved)
@@ -329,6 +343,82 @@ class ProviderEvidenceResolver:
             resolved.records.extend(provider.get_mechanism(variant, annotation.get("gene")))
         except PROVIDER_ERRORS as exc:
             resolved.failures.append({"provider": ClinGenDosageProvider.name, "error": str(exc)})
+
+    def _add_gene2phenotype_mechanism(self, annotation, variant, resolved):
+        """PVS1's mechanism gate from G2P, which curates per gene-disease pair.
+
+        Off unless asked for, like the dosage stand-in beside it. Where dosage scores one
+        haploinsufficiency judgment per gene, G2P states the molecular mechanism for each
+        disease and names its MONDO term, so it answers for a gene that loses function in one
+        disease and gains it in another - the case a per-gene score cannot separate.
+        """
+        if not self._with_gene2phenotype or annotation is None:
+            return
+        gene = annotation.get("gene")
+        if not gene:
+            return
+        try:
+            resolved.records.extend(
+                Gene2PhenotypeProvider(self._external).get_mechanism(variant, gene))
+        except PROVIDER_ERRORS as exc:
+            resolved.failures.append(
+                {"provider": Gene2PhenotypeProvider.name, "error": str(exc)})
+
+    def _mondo_provider(self) -> MondoMappingProvider:
+        if self._mondo is None:
+            self._mondo = MondoMappingProvider(self._external)
+        return self._mondo
+
+    def normalize_condition(self, condition):
+        """The case's condition resolved to MONDO, or None when it is already one or cannot be.
+
+        Called by the caller that owns the case's context rather than returned as evidence:
+        this says which disease the case is about, not something retrieved about the variant.
+        """
+        if not self._with_disease_matching or not condition:
+            return None
+        if str(condition).startswith("MONDO:"):
+            return None
+        try:
+            return self._mondo_provider().normalize(condition)
+        except PROVIDER_ERRORS:
+            return None
+
+    def _add_disease_matching(self, annotation, identity, resolved):
+        """What PVS1's disease gate needs to compare two diseases that are written differently.
+
+        Two things here, and the third (the case's own condition, resolved to MONDO) through
+        normalize_condition() because it belongs to the case rather than to the variant. All
+        of them refinements of one comparison and none of them a mechanism: the
+        case's condition resolved to MONDO when it was recorded in OMIM or Orphanet, the MONDO
+        ancestry of every disease named on a mechanism record, and ClinGen's lumping decisions
+        for each curated gene-disease pair. Without them the gate can only answer on identical
+        identifiers, and withholds PVS1 for evidence that is on file under a neighbouring term.
+
+        They travel beside the records rather than replacing anything: the original identifier
+        is kept, and an exclusion or an ancestry relation is attached to the curation that
+        made it.
+        """
+        if not self._with_disease_matching or annotation is None:
+            return
+        try:
+            lumping = ClinGenLumpingProvider(self._external, self._mondo_provider())
+            tree = MondoHierarchyProvider(self._external)
+            for record in resolved.records:
+                if record.get("category") != "gene_disease":
+                    continue
+                curated = record.get("condition")
+                if not str(curated or "").startswith("MONDO:"):
+                    continue
+                scope = lumping.get_scope(record.get("gene"), curated)
+                if scope:
+                    record["condition_scope"] = scope
+                ancestry = tree.ancestors(curated)
+                if ancestry:
+                    record["condition_ancestors"] = ancestry["ancestors"]
+        except PROVIDER_ERRORS as exc:
+            resolved.failures.append(
+                {"provider": "PVS1 disease matching", "error": str(exc)})
 
     def _clingen_gene_validity_provider(self) -> ClinGenGeneValidityProvider:
         if self._clingen_gene_validity is None:
