@@ -200,6 +200,49 @@ class PVS1DecisionTreeTests(unittest.TestCase):
             sorted(item["lof_mechanism_established"] for item in offered[0]["sources"]),
             [False, True])
 
+    def test_a_stated_diagnosis_orders_the_candidates_and_is_matched_by_name(self):
+        """The whole route: a prepared record's clinical note reaches the criterion, and the
+        disease it names is matched against the candidates' own names."""
+        input_data = {key: value for key, value in self.input.items() if key != "condition"}
+        input_data["clinical_note"] = {"diagnosis": "Dilated cardiomyopathy"}
+        items = [self.annotation(), self.transcript(), self.nmd(),
+                 self.mechanism(True, condition="MONDO:1",
+                                condition_label="hypertrophic cardiomyopathy"),
+                 self.validity("MONDO:2", label="dilated cardiomyopathy",
+                               classification="Limited")]
+        value = self.evaluate_result(*items, input_data=input_data)
+        offered = value.provenance["candidate_conditions"]
+        # Named by the note first, even though the other one is the established mechanism.
+        self.assertEqual([item["condition"] for item in offered], ["MONDO:2", "MONDO:1"])
+        self.assertEqual(offered[0]["stated_diagnosis_match"], "LABEL_EQUAL")
+        self.assertIsNone(offered[1]["stated_diagnosis_match"])
+        self.assertIn("Dilated cardiomyopathy", " ".join(value.review_points))
+        # A resemblance between two strings is not a disease match, and never becomes one.
+        self.assertEqual(value.evaluation_context["disease_match"], "UNKNOWN")
+        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
+
+    def test_a_diagnosis_inside_a_longer_curated_name_is_matched(self):
+        input_data = {key: value for key, value in self.input.items() if key != "condition"}
+        input_data["clinical_note"] = {"diagnosis": "hypertrophic cardiomyopathy"}
+        items = [self.annotation(), self.transcript(), self.nmd(),
+                 self.mechanism(True, condition="MONDO:1",
+                                condition_label="TEST-related hypertrophic cardiomyopathy")]
+        value = self.evaluate_result(*items, input_data=input_data)
+        self.assertEqual(
+            value.provenance["candidate_conditions"][0]["stated_diagnosis_match"],
+            "LABEL_CONTAINS")
+
+    def test_a_shared_word_is_not_a_match(self):
+        """"cardiomyopathy" is shared by diseases that are not the same disease."""
+        input_data = {key: value for key, value in self.input.items() if key != "condition"}
+        input_data["clinical_note"] = {"diagnosis": "cardiomyopathy, dilated"}
+        items = [self.annotation(), self.transcript(), self.nmd(),
+                 self.mechanism(True, condition="MONDO:1",
+                                condition_label="hypertrophic cardiomyopathy")]
+        value = self.evaluate_result(*items, input_data=input_data)
+        self.assertIsNone(
+            value.provenance["candidate_conditions"][0]["stated_diagnosis_match"])
+
     def test_nothing_is_offered_when_the_gene_has_no_curated_disease(self):
         input_data = {key: value for key, value in self.input.items() if key != "condition"}
         value = self.evaluate_result(*self.gene_level_evidence(), input_data=input_data)

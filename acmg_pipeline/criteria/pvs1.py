@@ -655,6 +655,38 @@ def _preliminary_assessment(input_data, services, annotation, variant_type, stat
     }
 
 
+_WORD = __import__("re").compile(r"[a-z0-9]+")
+
+
+def _phrase(value):
+    """A disease name reduced to its words, for comparing two ways of writing one."""
+    return " ".join(_WORD.findall(str(value).lower())) if value else ""
+
+
+def _stated_diagnosis_match(diagnosis, label):
+    """How a candidate's name relates to the diagnosis the note states, or None.
+
+    Text, and only text. ACMG's disease-match levels put name resemblance outside what may
+    be applied automatically, so this never becomes a condition and never reaches the disease
+    gate - it orders and marks the suggestions a curator is choosing between, which is the one
+    place a resemblance is useful and harmless.
+
+    Two relations are reported and nothing in between. The names are the same phrase, or the
+    stated one appears whole inside the candidate's ("hypertrophic cardiomyopathy" inside
+    "MYBPC3-related hypertrophic cardiomyopathy"). Partial word overlap is not reported at
+    all: "cardiomyopathy" is shared by diseases that are not the same disease, and a score
+    invented here would be a threshold nobody set.
+    """
+    stated, candidate = _phrase(diagnosis), _phrase(label)
+    if not stated or not candidate:
+        return None
+    if stated == candidate:
+        return "LABEL_EQUAL"
+    if f" {stated} " in f" {candidate} ":
+        return "LABEL_CONTAINS"
+    return None
+
+
 def _candidate_conditions(input_data, services, annotation):
     """The diseases this gene is curated for, as a list to show a curator - never a choice.
 
@@ -720,6 +752,7 @@ def _candidate_conditions(input_data, services, annotation):
             found["inheritance"] = normalize_inheritance(item.get("moi"))
             found["inheritance_as_recorded"] = item.get("moi")
 
+    diagnosis = (input_data.get("clinical_note") or {}).get("diagnosis")
     for found in merged.values():
         # Only when the sources that spoke about the mechanism agree. Two that disagree are
         # left unstated rather than resolved here, and both stay visible under `sources`.
@@ -727,11 +760,14 @@ def _candidate_conditions(input_data, services, annotation):
                   if "lof_mechanism_established" in item
                   and item["lof_mechanism_established"] is not None}
         found["lof_mechanism_established"] = stated.pop() if len(stated) == 1 else None
+        found["stated_diagnosis_match"] = _stated_diagnosis_match(
+            diagnosis, found["condition_label"])
 
-    # A disease whose mechanism is established is the one that would let PVS1 proceed, so it
-    # leads; the rest are context and follow in a stable order.
+    # What the note named comes first, then what would let PVS1 proceed, then the rest. All
+    # three are the curator's to choose from; the order only says which to look at first.
     return sorted(merged.values(),
-                  key=lambda item: (item["lof_mechanism_established"] is not True,
+                  key=lambda item: (item["stated_diagnosis_match"] is None,
+                                    item["lof_mechanism_established"] is not True,
                                     item["condition"]))
 
 
@@ -832,10 +868,21 @@ def _evaluate_input(input_data, services, config):
         candidates = _candidate_conditions(input_data, services, annotation)
         # Named so a curator can supply the disease context, not so the criterion can pick
         # one - see _candidate_conditions() for why a single candidate is still not a choice.
-        review = ([f"Supply the disease context; {annotation.get('gene')} has curated "
-                   f"mechanism evidence for "
-                   f"{', '.join(sorted({item['condition'] for item in candidates}))}"]
-                  if candidates else [])
+        named = [item for item in candidates if item["stated_diagnosis_match"]]
+        diagnosis = (input_data.get("clinical_note") or {}).get("diagnosis")
+        if named:
+            # The note named a disease and the gene is curated for something that reads like
+            # it. Still a resemblance between two strings, so the curator confirms the
+            # identifier rather than the pipeline adopting it.
+            review = [f"The note states {diagnosis!r}; confirm whether that is "
+                      f"{', '.join(item['condition'] for item in named)} and supply it as "
+                      f"the disease context"]
+        elif candidates:
+            review = [f"Supply the disease context; {annotation.get('gene')} has curated "
+                      f"evidence for "
+                      f"{', '.join(sorted({item['condition'] for item in candidates}))}"]
+        else:
+            review = []
         return _not_evaluated(
             input_data, services, annotation, variant_type, state, confirmed_rna,
             _node("D01", "disease_match", "UNKNOWN", "NOT_PROVIDED"),
