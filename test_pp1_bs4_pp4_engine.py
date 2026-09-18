@@ -220,8 +220,8 @@ check("PP4 line direction is 'supports' (MET, pathogenic code)",
       pp4_line["directionOfEvidenceProvided"] == "supports")
 check("PP4 line carries a strengthOfEvidenceProvided",
       pp4_line.get("strengthOfEvidenceProvided", {}).get("primaryCoding", {}).get("code") == "strong")
-check("PP4 line's bh26AssessmentDetails round-trips status=met",
-      any(e["name"] == "bh26AssessmentDetails" and e["value"]["status"] == "met"
+check("PP4 line's status extension round-trips status=met",
+      any(e["name"] == "status" and e["value"] == "met"
           for e in pp4_line["extensions"]))
 
 bs4_line = engine.build_evidence_line("BS4", sibling_results["BS4"], variant)

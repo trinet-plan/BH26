@@ -273,6 +273,35 @@ def assessment_details(result):
     return value
 
 
+# The set of keys assessment_details() can ever return - used to reconstruct
+# its dict back out of a flattened extensions list (see details_as_extensions()
+# and validate_envelope() below).
+_DETAIL_EXTENSION_NAMES = frozenset({
+    "status", "direction", "missingInputs", "evaluationContext",
+    "decisionTrace", "rulesUsed", "provenance",
+})
+
+
+def details_as_extensions(details: dict) -> list[dict]:
+    """Flatten an assessment_details()-shaped dict into individual top-level
+    extensions instead of one grouping `bh26AssessmentDetails` object - each
+    field (status/direction/decisionTrace/...) becomes its own named
+    extension, the same level `curatorHints`/`referenceLink` already sit at
+    (2026-09-18, per the user's direction: nothing about VA-Spec's own
+    `extensions` array requires - or even suggests - grouping a project's
+    custom fields under one umbrella object)."""
+    return [{"name": key, "value": value} for key, value in details.items()]
+
+
+def details_from_extensions(extensions: list[dict]) -> dict:
+    """Inverse of details_as_extensions() - picks the assessment_details()
+    fields back out of a line's full (possibly much larger) extensions list,
+    e.g. to compare a real EvidenceLine's content against the audit's own
+    recorded version of it (see validate_envelope())."""
+    return {ext["name"]: ext["value"] for ext in extensions
+            if ext.get("name") in _DETAIL_EXTENSION_NAMES}
+
+
 def _curator_hints_from_result(result):
     """Map automated-engine review messages to the shared curatorHints shape."""
     hints = []
@@ -346,8 +375,7 @@ def validate_envelope(document):
             if line["id"] in line_ids:
                 raise ValueError("Duplicate EvidenceLine id in one record")
             line_ids.add(line["id"])
-            details = next((item["value"] for item in line.get("extensions", [])
-                            if item.get("name") == "bh26AssessmentDetails"), None)
+            details = details_from_extensions(line.get("extensions", []))
             if details != audited:
                 raise ValueError("EvidenceLine extension disagrees with criterion audit")
     return document
@@ -356,7 +384,7 @@ def validate_envelope(document):
 def extensions_last(line: dict) -> dict:
     """Reorder so `extensions` prints last in the serialized JSON.
 
-    `extensions` (bh26AssessmentDetails' decisionTrace, curatorHints, ...) is
+    `extensions` (decisionTrace, curatorHints, ...) is
     routinely the largest and most deeply nested field on a line - added
     2026-09-18 so a human skimming an output file sees the compact,
     identifying fields (id/description/specifiedBy/evidenceOutcome/...)
@@ -405,8 +433,7 @@ def to_evidence_line(result):
     if direction not in {"supports", "disputes", "neutral"}:
         raise ValueError(f"Invalid VA-Spec direction for {result.criterion}")
     method_type = METHOD_TYPES[result.criterion]
-    extensions = [{"name": "bh26AssessmentDetails",
-                   "value": assessment_details(result)}]
+    extensions = details_as_extensions(assessment_details(result))
     curator_hints = _curator_hints_from_result(result)
     if curator_hints:
         extensions.append({"name": "curatorHints", "value": curator_hints})

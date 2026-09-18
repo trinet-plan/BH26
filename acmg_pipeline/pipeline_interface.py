@@ -45,9 +45,14 @@ def load_automated_config() -> dict:
 
 
 def _assessment(line: dict) -> dict:
+    """`status` (met/not_met/unknown) is its own top-level extension now, not
+    grouped under one bh26AssessmentDetails object (2026-09-18, per the
+    user's direction) - see acmg_pipeline.automated_va_spec.
+    details_as_extensions(). This function's only caller only ever reads
+    `status`, so it looks for that one extension directly."""
     for extension in line.get("extensions", []):
-        if extension.get("name") == "bh26AssessmentDetails":
-            return extension.get("value") or {}
+        if extension.get("name") == "status":
+            return {"status": extension.get("value")}
     return {}
 
 

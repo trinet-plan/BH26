@@ -100,11 +100,12 @@ class ClinGenPositiveReferenceTests(unittest.TestCase):
             for assessment in record["criterion_assessments"]:
                 self.assertTrue(set(assessment["evidenceItemIds"]) <= set(catalog))
             for wrapped in record["evidence_lines"]:
-                extension = next(
-                    item for item in wrapped["evidence_line"]["extensions"]
-                    if item["name"] == "bh26AssessmentDetails"
-                )
-                self.assertEqual(extension["value"], wrapped["assessment_details"])
+                # Each detail field is its own top-level extension now, not
+                # grouped under one bh26AssessmentDetails object (2026-09-18,
+                # per the user's direction).
+                from acmg_pipeline.automated_va_spec import details_from_extensions
+                reconstructed = details_from_extensions(wrapped["evidence_line"]["extensions"])
+                self.assertEqual(reconstructed, wrapped["assessment_details"])
 
     def test_pvs1_reference_preserves_trace_and_rules(self):
         result = self.by_record["clingen-positive:pvs1-pah"]["PVS1"]
