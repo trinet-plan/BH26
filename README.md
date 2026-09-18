@@ -297,7 +297,7 @@ consumer 側で追加のフィールドを確認する必要はありません�
 どこにも保存されない。`ACMG_API_OUTPUT_DIR` にディレクトリを指定すると、
 完了した判定が1件1ファイルのJSONとして書き出される。未指定なら何も書かない。
 
-````bash
+```bash
 docker run -d --name acmg-api -p 8000:8000 \
   -e ACMG_API_OUTPUT_DIR=/data/results \
   -v "$PWD/api_results:/data/results" \
