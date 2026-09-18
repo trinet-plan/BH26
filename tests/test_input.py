@@ -11,12 +11,12 @@ ROOT = Path(__file__).resolve().parents[1]
 
 class DemoAuditTests(unittest.TestCase):
     def setUp(self):
-        self.records = audit_demo(ROOT / "demo-data")
+        self.records = audit_demo(ROOT / "democase")
 
     def test_every_row_is_retained(self):
         expected = sum(
             len(line.split("\t")[4].split(","))
-            for path in (ROOT / "demo-data").glob("*.vcf")
+            for path in (ROOT / "democase").glob("*.vcf")
             for line in path.read_text().splitlines() if line and not line.startswith("#")
         )
         self.assertEqual(len(self.records), expected)
@@ -46,7 +46,7 @@ class DemoAuditTests(unittest.TestCase):
         self.assertTrue(all(r["identity_status"] == "PENDING" for r in self.records))
 
     def test_spreadsheet_rows_are_joined_losslessly(self):
-        path = ROOT / "demo-data" / "annotation_alphamissense_alphagenome_v1.xlsx"
+        path = ROOT / "democase" / "annotation_alphamissense_alphagenome_v1.xlsx"
         self.assertEqual(len(read_xlsx_rows(path)), 28)
         self.assertTrue(all("spreadsheet_source" in row for row in self.records))
         self.assertFalse(any("VCF_SPREADSHEET_IDENTITY_MISMATCH" in row["issues"]

@@ -8,7 +8,7 @@ ground truth, the same way test_full_criteria_ground_truth.py already does
 for this project's own 3 literature codes.
 
 [Where the ground truth comes from]
-  Each demo-data/case*_variants_v2.vcf row's own INFO column carries an
+  Each democase/case*_variants_v2.vcf row's own INFO column carries an
   ACMG_CODES=... field - the human curator's actual per-variant assertion
   (e.g. "PVS1_VeryStrong,PM2_Moderate"), written by hand into these files
   well before evidence-cli existed (see NOTE= in the same INFO column for
@@ -73,7 +73,7 @@ from acmg_pipeline.classification import AUTOMATED_CODES
 from test_harness import Harness
 
 ROOT = Path(__file__).resolve().parent
-DEMO_VCFS = sorted(ROOT.glob("demo-data/case*_variants_v2.vcf"))
+DEMO_VCFS = sorted(ROOT.glob("democase/case*_variants_v2.vcf"))
 
 h = Harness()
 check = h.check
@@ -121,7 +121,7 @@ def _load_ground_truth() -> dict[str, dict[str, str | None]]:
     return ground_truth
 
 
-print("[1] Ground truth extracted from demo-data VCFs' own ACMG_CODES= field")
+print("[1] Ground truth extracted from democase VCFs' own ACMG_CODES= field")
 ground_truth = _load_ground_truth()
 n_asserted = sum(len(codes) for codes in ground_truth.values())
 check(f"at least 10 curator MET assertions collected across the 4 demo cases (got {n_asserted})",
@@ -136,14 +136,14 @@ check("every parsed code is a recognized AUTOMATED_CODES member or a literature 
 #     pipeline.py), --internal-only to skip the currently-broken VA-Spec
 #     export step (see module docstring)
 # ============================================================================
-print("\n[2] Running the automated engine over all 28 demo-data ALT records (offline, fixture-cached)")
+print("\n[2] Running the automated engine over all 28 democase ALT records (offline, fixture-cached)")
 
 _work = Path(tempfile.mkdtemp(prefix="bh26_automated_gt_check_"))
 _prepared = _work / "prepared"
 _evaluated = _work / "evaluated"
 
 _prepare_exit = automated_main([
-    "prepare-demo-online", "--input-dir", str(ROOT / "demo-data"),
+    "prepare-demo-online", "--input-dir", str(ROOT / "democase"),
     "--cache-dir", str(ROOT / "tests" / "fixtures" / "ensembl-cache"),
     "--evidence-cache-dir", str(ROOT / "tests" / "fixtures" / "external-cache"),
     "--output-dir", str(_prepared), "--ensembl-release", "116",
@@ -166,7 +166,7 @@ check("evaluate --internal-only exits 0", _evaluate_exit == 0)
 
 results = json.loads((_evaluated / "results.json").read_text(encoding="utf-8"))
 records = results["records"]
-check("all 28 demo-data ALT records evaluated", len(records) == 28)
+check("all 28 democase ALT records evaluated", len(records) == 28)
 
 
 # ============================================================================

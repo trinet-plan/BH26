@@ -76,11 +76,11 @@ from acmg_pipeline.inputs import empty_clinical_note
 from acmg_pipeline.llm_cache import DiskBackedLLMCache
 from acmg_pipeline.pipeline_interface import _evidence_from_line
 from acmg_pipeline.vcf_record import VariantRecord
-from test_data.full_criteria_ground_truth import entries_for, unique_variants
+from test_data.collectors.full_criteria_ground_truth import entries_for, unique_variants
 
 ROOT = Path(__file__).resolve().parent
-TRANSCRIPTS_PATH = ROOT / "test_data" / "erepo_variant_transcripts.json"
-COORDS_PATH = ROOT / "test_data" / "erepo_variant_coordinates.json"
+TRANSCRIPTS_PATH = ROOT / "test_data" / "fetched_data" / "erepo_variant_transcripts.json"
+COORDS_PATH = ROOT / "test_data" / "fetched_data" / "erepo_variant_coordinates.json"
 CACHE_DIR = ROOT / "cache" / "erepo_automated_ensembl"
 EVIDENCE_CACHE_DIR = ROOT / "cache" / "erepo_automated_evidence"
 OUTPUT_DIR = ROOT / "va_spec_output" / "integrated"

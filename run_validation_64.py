@@ -58,7 +58,7 @@ from acmg_pipeline.classification import IMPLEMENTED_CODES
 from acmg_pipeline.fulltext_cache import DiskBackedFullTextCache
 from acmg_pipeline.gate import ERepoClient
 from acmg_pipeline.llm_cache import DiskBackedLLMCache
-from test_data.full_criteria_ground_truth import GROUND_TRUTH, GroundTruthEntry
+from test_data.collectors.full_criteria_ground_truth import GROUND_TRUTH, GroundTruthEntry
 
 import acmg_pipeline.pipeline as pl
 

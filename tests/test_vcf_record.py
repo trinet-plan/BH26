@@ -50,7 +50,7 @@ class DemoVcfTests(unittest.TestCase):
     def test_every_demo_variant_parses(self):
         """case3-var1 (the MYH7 c.2155C>T this was found on) and case4-var2/var3
         carry SG10K_AF=. and used to raise here."""
-        for path in sorted((ROOT / "demo-data").glob("case*_variants_v2.vcf")):
+        for path in sorted((ROOT / "democase").glob("case*_variants_v2.vcf")):
             text = path.read_text(encoding="utf-8")
             header = [l for l in text.splitlines() if l.startswith("#")]
             for body in [l for l in text.splitlines() if l and not l.startswith("#")]:

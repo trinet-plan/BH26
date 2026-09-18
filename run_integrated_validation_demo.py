@@ -4,14 +4,14 @@ run_integrated_validation_demo.py
 Runs the REAL integrated pipeline (acmg_pipeline.pipeline.
 evaluate_variant_evidence_lines() - live PubMed+LLM literature judgment for
 PS3/BS3/PS4, plus the real automated engine for the 16 Layer-1 codes, plus
-stubs for the rest) for the 4 demo-data primary variants, USING THEIR REAL
+stubs for the rest) for the 4 democase primary variants, USING THEIR REAL
 CLINICAL NOTES (unlike run_integrated_validation_64.py, which has no
 clinical note text for the ERepo-only variants and passes an empty one) -
 a smaller, faster first pass than the full 64-variant run, per the user's
 request (2026-09-17) to start with just the 4 demo cases.
 
 The 4 target variants (each demo case's primary/case-defining variant,
-not the "noise" background variants also present in demo-data):
+not the "noise" background variants also present in democase):
   case1-var1: MYBPC3 c.278delA
   case2-var1: MYBPC3 c.2905+1G>A
   case3-var1: MYH7 c.2155C>T
@@ -45,7 +45,7 @@ from acmg_pipeline.gate import ERepoClient
 from acmg_pipeline.llm_cache import DiskBackedLLMCache
 from acmg_pipeline.pipeline_interface import _evidence_from_line
 from acmg_pipeline.vcf_record import VariantRecord
-from test_data.full_criteria_ground_truth import entries_for
+from test_data.collectors.full_criteria_ground_truth import entries_for
 
 ROOT = Path(__file__).resolve().parent
 OUTPUT_DIR = ROOT / "va_spec_output" / "integrated"
@@ -63,11 +63,11 @@ def _safe_hgvsc(hgvsc: str) -> str:
 
 
 def _resolve_demo_coordinates() -> dict:
-    """Real GRCh38 coordinates + transcript for every demo-data ALT record, offline/cached."""
+    """Real GRCh38 coordinates + transcript for every democase ALT record, offline/cached."""
     work = Path(tempfile.mkdtemp())
     prepared = work / "prepared"
     exit_code = automated_cli_module.main([
-        "prepare-demo-online", "--input-dir", str(ROOT / "demo-data"),
+        "prepare-demo-online", "--input-dir", str(ROOT / "democase"),
         "--cache-dir", str(ROOT / "tests" / "fixtures" / "ensembl-cache"),
         "--evidence-cache-dir", str(ROOT / "tests" / "fixtures" / "external-cache"),
         "--output-dir", str(prepared), "--ensembl-release", "116",
@@ -113,7 +113,7 @@ def _hgvsp_from_demo_vcf() -> dict:
     as evidence for any judgment.
     """
     result = {}
-    for path in sorted((ROOT / "demo-data").glob("case*_variants_v2.vcf")):
+    for path in sorted((ROOT / "democase").glob("case*_variants_v2.vcf")):
         for line in path.read_text(encoding="utf-8").splitlines():
             if not line or line.startswith("#"):
                 continue
@@ -171,7 +171,7 @@ async def main() -> None:
                 pl.show(f"  -> ERROR: no resolved coordinates for {variant_id}, skipping")
                 continue
 
-            note_text = (ROOT / "demo-data" / note_file).read_text(encoding="utf-8")
+            note_text = (ROOT / "democase" / note_file).read_text(encoding="utf-8")
             clinical_note = extract_clinical_note(note_text)
             # pipeline_interface.run_pipeline()/run_selected_criteria() (the
             # real API path this script validates against) always resolves

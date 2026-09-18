@@ -19,7 +19,7 @@ class DemoPipelineTests(unittest.TestCase):
         mechanism_evidence = base / "gene-disease" / "evidence.json"
         mechanism_evaluated = base / "gene-disease-evaluated"
         code = main([
-            "prepare-demo-online", "--input-dir", str(ROOT / "demo-data"),
+            "prepare-demo-online", "--input-dir", str(ROOT / "democase"),
             "--cache-dir", str(ROOT / "tests" / "fixtures" / "ensembl-cache"),
             "--evidence-cache-dir", str(ROOT / "tests" / "fixtures" / "external-cache"),
             "--output-dir", str(prepared), "--ensembl-release", "116",

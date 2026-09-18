@@ -4,22 +4,22 @@ run_automated_validation_64.py
 Validates the 16 automated Layer-1 criteria (acmg_pipeline.classification.
 AUTOMATED_CODES) against ALL 64 unique variants in test_data.
 full_criteria_ground_truth.py (ERepo + democase sourced) - not just the 4
-demo-data cases test_automated_criteria_ground_truth.py already covers.
+democase cases test_automated_criteria_ground_truth.py already covers.
 Companion to run_validation_64.py (the equivalent full-dataset validation
 for this project's own 3 literature codes).
 
-[Why this needs its own synthetic VCF, not demo-data's]
+[Why this needs its own synthetic VCF, not democase's]
   full_criteria_ground_truth.py only carries (gene, hgvsc) - no RefSeq
   transcript accession, no genomic coordinates. See test_data/
   resolve_erepo_transcripts.py's own docstring for how each variant's
   transcript was resolved (54 exact ERepo hgvs-list matches, 4 same-
-  accession-different-version, 6 demo-data-derived MANE Select fallbacks -
+  accession-different-version, 6 democase-derived MANE Select fallbacks -
   run that script first, or use its committed output, test_data/
   erepo_variant_transcripts.json).
 
   Every synthetic VCF row uses ALT="." (CHROM/POS/REF are harmless
   placeholders - "1"/1/"A") - the exact same "identity is unknown from the
-  source row alone, resolve it via HGVS" convention demo-data/case1_
+  source row alone, resolve it via HGVS" convention democase/case1_
   variants_v2.vcf already uses for case1-var1/case2-var2 (see
   acmg_pipeline/automated_core/input.py: an unparseable ALT makes
   parsed_variant None, and reconcile() then trusts the corroborated
@@ -33,7 +33,7 @@ for this project's own 3 literature codes).
   dbNSFP/PM1-hotspot wiring, evidence/manifest assembly) are exactly what
   this script needs to reuse unchanged - but they all start from
   `records = audit_demo(args.input_dir)`, which is hardcoded to
-  demo-data/case{1..4}_variants_v2.vcf specifically (acmg_pipeline.
+  democase/case{1..4}_variants_v2.vcf specifically (acmg_pipeline.
   automated_core.input.audit_demo loops `for case in range(1, 5)`, not a
   generic "read this directory" function). Rather than duplicate the
   200+ lines of provider-wiring logic that follows, this script
@@ -44,21 +44,21 @@ for this project's own 3 literature codes).
   of that call runs completely unmodified.
 
 [Live network, cached for reproducibility]
-  These 64 variants have no committed fixture cache (unlike demo-data's
+  These 64 variants have no committed fixture cache (unlike democase's
   tests/fixtures/ensembl-cache, external-cache). The FIRST run of this
   script makes real gnomAD/ClinVar/Ensembl/dbNSFP network calls (via the
   same CachedHttpClient every other provider path uses) and writes them
   to cache/erepo_automated_{ensembl,evidence}/ (gitignored, same
   cache/ convention as fulltext_cache.py's PubMed cache) - every
   subsequent run of this exact 64-variant set replays from that cache with
-  zero network calls, exactly as verified for the demo-data comparison
+  zero network calls, exactly as verified for the democase comparison
   (see test_automated_criteria_ground_truth.py's commit history / the
   online-vs-offline check discussed with the user 2026-09-17).
 
 [Comparison scope and method]
   Only criteria in AUTOMATED_CODES are compared (this dataset also has
   ground truth for PS3/BS3/PS4/PP1/BS4/PP4 and clinical-record-only codes,
-  none of which this automated engine implements). Unlike the demo-data
+  none of which this automated engine implements). Unlike the democase
   comparison (which only had curator MET assertions to check against),
   full_criteria_ground_truth.py has explicit NOT_MET entries too, so this
   script compares both directions: does the engine's met/not_met status
@@ -82,10 +82,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import acmg_pipeline.automated_cli as automated_cli_module
 from acmg_pipeline.automated_core.input import audit_vcf
 from acmg_pipeline.classification import AUTOMATED_CODES
-from test_data.full_criteria_ground_truth import entries_for, unique_variants
+from test_data.collectors.full_criteria_ground_truth import entries_for, unique_variants
 
 ROOT = Path(__file__).resolve().parent
-TRANSCRIPTS_PATH = ROOT / "test_data" / "erepo_variant_transcripts.json"
+TRANSCRIPTS_PATH = ROOT / "test_data" / "fetched_data" / "erepo_variant_transcripts.json"
 CACHE_DIR = ROOT / "cache" / "erepo_automated_ensembl"
 EVIDENCE_CACHE_DIR = ROOT / "cache" / "erepo_automated_evidence"
 
@@ -98,7 +98,7 @@ def _build_synthetic_vcf(variants: list[tuple[str, str]], transcripts: dict[str,
         "##caveat=Synthetic records for test_data/full_criteria_ground_truth.py's 64 "
         "ERepo/democase variants - CHROM/POS/REF are placeholders, ALT=\".\" deliberately "
         "so identity is resolved purely from TRANSCRIPT+HGVSC via Ensembl VEP, same "
-        "convention as demo-data/case1_variants_v2.vcf's case1-var1/case2-var2.",
+        "convention as democase/case1_variants_v2.vcf's case1-var1/case2-var2.",
         "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
     ]
     included = 0

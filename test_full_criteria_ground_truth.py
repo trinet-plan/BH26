@@ -44,7 +44,7 @@ from acmg_pipeline.classification import (
     CriterionEvidence, classify,
 )
 from acmg_pipeline.gate import CriterionStatus
-from test_data.full_criteria_ground_truth import GROUND_TRUTH, unique_variants, entries_for
+from test_data.collectors.full_criteria_ground_truth import GROUND_TRUTH, unique_variants, entries_for
 from test_harness import Harness
 
 h = Harness()

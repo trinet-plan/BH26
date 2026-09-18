@@ -34,9 +34,9 @@ sys.path.insert(0, str(ROOT))
 import run_automated_validation_64 as base  # noqa: E402
 import acmg_pipeline.automated_cli as cli  # noqa: E402
 from acmg_pipeline.automated_core.input import audit_vcf  # noqa: E402
-from test_data.full_criteria_ground_truth import entries_for, unique_variants  # noqa: E402
+from test_data.collectors.full_criteria_ground_truth import entries_for, unique_variants  # noqa: E402
 
-CONTEXTS_PATH = ROOT / "test_data" / "pvs1_disease_contexts.json"
+CONTEXTS_PATH = ROOT / "test_data" / "fetched_data" / "pvs1_disease_contexts.json"
 RULES_PATH = ROOT / "config" / "demo-rules.json"
 CURATED_CONTEXT_PATH = ROOT / "config" / "curated-context.json"
 
