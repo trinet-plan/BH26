@@ -142,6 +142,64 @@ class PVS1DecisionTreeTests(unittest.TestCase):
         self.assertEqual(value.evaluation_context["disease_match"], "UNKNOWN")
         self.assertIsNone(value.evaluation_context["mechanism_source"])
 
+    def validity(self, condition, classification="Definitive", label="A disease", moi="AD",
+                 **values):
+        """A ClinGen gene-disease validity row: an association, never a mechanism."""
+        return self.item("gene_disease_validity", gene="TEST", condition=condition,
+                         condition_label=label, classification=classification, moi=moi,
+                         **values)
+
+    def test_a_validity_curation_adds_a_disease_the_mechanism_sources_do_not_name(self):
+        input_data = {key: value for key, value in self.input.items() if key != "condition"}
+        items = [self.annotation(), self.transcript(), self.nmd(),
+                 self.mechanism(True, condition="MONDO:1"),
+                 self.validity("MONDO:2", classification="Limited", label="Another disease")]
+        value = self.evaluate_result(*items, input_data=input_data)
+        offered = value.provenance["candidate_conditions"]
+        self.assertEqual([item["condition"] for item in offered], ["MONDO:1", "MONDO:2"])
+        # The established mechanism leads; the association follows as context.
+        self.assertIs(offered[0]["lof_mechanism_established"], True)
+        self.assertIsNone(offered[1]["lof_mechanism_established"])
+        self.assertEqual(offered[1]["gene_disease_validity"], "Limited")
+        self.assertEqual(offered[1]["condition_label"], "Another disease")
+
+    def test_a_validity_curation_never_reaches_the_mechanism_gate(self):
+        """It says the gene and the disease are related, which is not a mechanism. Its own
+        category keeps it out of the lookup rather than a rule that could be forgotten."""
+        input_data = {**self.input, "condition": "MONDO:1"}
+        items = [self.annotation(), self.transcript(), self.nmd(),
+                 self.validity("MONDO:1", classification="Definitive")]
+        value = self.evaluate_result(*items, input_data=input_data)
+        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
+        self.assertIsNone(value.strength)
+        self.assertIn("loss-of-function disease mechanism", value.missing_inputs)
+
+    def test_one_disease_named_by_both_sources_is_offered_once(self):
+        input_data = {key: value for key, value in self.input.items() if key != "condition"}
+        items = [self.annotation(), self.transcript(), self.nmd(),
+                 self.mechanism(True, condition="MONDO:1"),
+                 self.validity("MONDO:1", label="The disease")]
+        value = self.evaluate_result(*items, input_data=input_data)
+        offered = value.provenance["candidate_conditions"]
+        self.assertEqual(len(offered), 1)
+        self.assertEqual(offered[0]["condition_label"], "The disease")
+        self.assertIs(offered[0]["lof_mechanism_established"], True)
+        self.assertEqual(offered[0]["gene_disease_validity"], "Definitive")
+        self.assertEqual(len(offered[0]["sources"]), 2)
+
+    def test_mechanism_sources_that_disagree_leave_it_unstated(self):
+        """Resolved here it would look settled; both readings stay visible instead."""
+        input_data = {key: value for key, value in self.input.items() if key != "condition"}
+        items = [self.annotation(), self.transcript(), self.nmd(),
+                 self.mechanism(True, condition="MONDO:1"),
+                 self.mechanism(False, condition="MONDO:1", evidence_id="second")]
+        value = self.evaluate_result(*items, input_data=input_data)
+        offered = value.provenance["candidate_conditions"]
+        self.assertIsNone(offered[0]["lof_mechanism_established"])
+        self.assertEqual(
+            sorted(item["lof_mechanism_established"] for item in offered[0]["sources"]),
+            [False, True])
+
     def test_nothing_is_offered_when_the_gene_has_no_curated_disease(self):
         input_data = {key: value for key, value in self.input.items() if key != "condition"}
         value = self.evaluate_result(*self.gene_level_evidence(), input_data=input_data)

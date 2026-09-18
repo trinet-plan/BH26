@@ -17,6 +17,7 @@ from acmg_pipeline.providers.clingen_dosage import METHOD as DOSAGE_METHOD, Clin
 from acmg_pipeline.providers.gene2phenotype import (
     METHOD as G2P_METHOD, Gene2PhenotypeProvider,
 )
+from acmg_pipeline.providers.clingen_gene_validity import ClinGenGeneValidityProvider
 from acmg_pipeline.providers.clingen_lumping import (
     METHOD as LUMPING_METHOD, ClinGenLumpingProvider,
 )
@@ -95,6 +96,10 @@ def main(argv=None):
     online.add_argument("--with-mondo-mapping", action="store_true",
                         help="Resolve each record's OMIM/Orphanet condition to MONDO so "
                              "PVS1's disease gate can compare it with curated evidence")
+    online.add_argument("--with-clingen-gene-validity", action="store_true",
+                        help="Attach ClinGen's curated gene-disease associations, so a case "
+                             "with no condition can be offered the diseases the gene is "
+                             "curated for. Never a mechanism - see doc and PVS1's own gate")
     online.add_argument("--with-clingen-lumping", action="store_true",
                         help="Attach the phenotypes each curated disease lumps in or keeps "
                              "out, so an included case is matched and an excluded one is "
@@ -480,6 +485,46 @@ def main(argv=None):
                         "unresolved": sorted(resolvable - set(condition_mappings)),
                         "errors": mondo_errors,
                         "use_restriction": "DISEASE_MATCH_EQUIVALENCE_ONLY",
+                    })
+                if args.with_clingen_gene_validity:
+                    # Suggestion material only. These are gene-disease associations, not
+                    # mechanism assessments, and they carry their own category so that
+                    # PVS1's mechanism lookup cannot reach them even by accident - a
+                    # validity classification is not a statement that loss of function is
+                    # the mechanism, which is the conflation gene_disease_draft.py exists
+                    # to prevent.
+                    validity = ClinGenGeneValidityProvider(external_client)
+                    validity_records, validity_errors, validity_seen = [], [], set()
+                    for annotation in annotations:
+                        gene = annotation.get("gene")
+                        key = (annotation["variant_key"], gene)
+                        if not gene or key in validity_seen:
+                            continue
+                        validity_seen.add(key)
+                        try:
+                            rows = validity.get_validity(gene)
+                        except (FetchError, ValueError) as exc:
+                            validity_errors.append(f"{gene}: {exc}")
+                            continue
+                        for row in rows:
+                            if not str(row.get("condition") or "").startswith("MONDO:"):
+                                continue
+                            validity_records.append({
+                                **row,
+                                "variant_key": annotation["variant_key"],
+                                # Per variant, for the same reason the dosage provider's ids
+                                # are: the CLI deduplicates by evidence_id, and a row-only id
+                                # collapses every variant in one gene down to the first.
+                                "evidence_id": f"{row['evidence_id']}:{annotation['variant_key']}",
+                            })
+                    evidence.extend(validity_records)
+                    external_manifest.append({
+                        "provider": validity.name,
+                        "provider_version": validity_records[0]["source_version"]
+                        if validity_records else None,
+                        "genes_queried": len(validity_seen),
+                        "evidence": len(validity_records), "errors": validity_errors,
+                        "use_restriction": "CANDIDATE_CONDITION_SUGGESTION_ONLY",
                     })
                 if args.with_clingen_lumping:
                     # The scope belongs to the curated disease, so it is attached to the

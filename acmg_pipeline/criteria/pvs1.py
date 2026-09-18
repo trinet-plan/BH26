@@ -659,11 +659,18 @@ def _candidate_conditions(input_data, services, annotation):
     """The diseases this gene is curated for, as a list to show a curator - never a choice.
 
     With no condition supplied there is no disease whose mechanism could be checked, and PVS1
-    stops. What it can still say is which diseases the gene has curated mechanism evidence
-    for, because that is the information a curator needs in order to supply the one this case
-    is about, and it is already in hand.
+    stops. What it can still say is which diseases the gene has been curated for, because
+    that is what a curator needs in order to supply the one this case is about.
 
-    It is offered and never taken. In ClinGen's curation set 85% of curated genes have a
+    Two kinds of record answer that, and they are not interchangeable. A `gene_disease`
+    mechanism assessment says what loss of function does in that disease, and is what would
+    let PVS1 proceed. A `gene_disease_validity` curation says only that the gene and the
+    disease are related, which is a weaker statement and deliberately never a mechanism - it
+    is read here, for suggestions, and nowhere else. Validity records are not filtered through
+    reviewed_or_automated() for that reason: they are not assessments to be relied on, and
+    holding them to the bar for evidence that decides a criterion would only drop context.
+
+    They are offered and never taken. In ClinGen's curation set 85% of curated genes have a
     single disease, which is exactly the shape that invites picking it automatically - and the
     remaining genes are why that would be wrong: among genes curated for more than one
     disease, mechanisms disagree often enough (ABCC9, ACTB, ATP1A2 and CACNA1D each carry both
@@ -671,30 +678,61 @@ def _candidate_conditions(input_data, services, annotation):
     mechanism too. A single candidate is not evidence that the case is about that disease
     either; it is evidence about what has been curated.
     """
-    records = _candidates("gene_disease", input_data, services, annotation["transcript"])
     gene = annotation.get("gene")
-    seen, candidates = set(), []
-    for item in records:
-        condition = item.get("condition")
-        if item.get("gene") != gene or not condition:
-            continue
-        key = (condition, item.get("source"))
-        if key in seen:
-            continue
-        seen.add(key)
-        candidates.append({
-            "condition": condition,
-            "condition_label": item.get("condition_label"),
-            "lof_mechanism_established": item.get("lof_mechanism_established"),
-            # Normalized so it reads the same as everywhere else, and kept as written so the
-            # source's own wording is not lost behind this pipeline's vocabulary.
-            "inheritance": normalize_inheritance(item.get("inheritance")),
-            "inheritance_as_recorded": item.get("inheritance"),
-            "source": item.get("source"),
-            "source_version": item.get("source_version"),
-            "assessment_method": item.get("assessment_method"),
+    variant = Variant(**input_data["variant"])
+    merged = {}
+
+    def entry(condition):
+        return merged.setdefault(condition, {
+            "condition": condition, "condition_label": None,
+            "lof_mechanism_established": None, "inheritance": None,
+            "inheritance_as_recorded": None, "gene_disease_validity": None, "sources": [],
         })
-    return sorted(candidates, key=lambda item: (item["condition"], str(item["source"])))
+
+    def label(item, found):
+        return found["condition_label"] or item.get("condition_label")
+
+    for item in _candidates("gene_disease", input_data, services, annotation["transcript"]):
+        if item.get("gene") != gene or not item.get("condition"):
+            continue
+        found = entry(item["condition"])
+        found["condition_label"] = label(item, found)
+        found["sources"].append({
+            "source": item.get("source"), "source_version": item.get("source_version"),
+            "assessment_method": item.get("assessment_method"),
+            "lof_mechanism_established": item.get("lof_mechanism_established"),
+        })
+        if found["inheritance"] is None:
+            found["inheritance"] = normalize_inheritance(item.get("inheritance"))
+            found["inheritance_as_recorded"] = item.get("inheritance")
+
+    for item in services.evidence.get_candidates("gene_disease_validity", variant):
+        if item.get("gene") != gene or not item.get("condition"):
+            continue
+        found = entry(item["condition"])
+        found["condition_label"] = label(item, found)
+        found["gene_disease_validity"] = item.get("classification")
+        found["sources"].append({
+            "source": item.get("source"), "source_version": item.get("source_version"),
+            "classification": item.get("classification"),
+        })
+        if found["inheritance"] is None:
+            found["inheritance"] = normalize_inheritance(item.get("moi"))
+            found["inheritance_as_recorded"] = item.get("moi")
+
+    for found in merged.values():
+        # Only when the sources that spoke about the mechanism agree. Two that disagree are
+        # left unstated rather than resolved here, and both stay visible under `sources`.
+        stated = {item["lof_mechanism_established"] for item in found["sources"]
+                  if "lof_mechanism_established" in item
+                  and item["lof_mechanism_established"] is not None}
+        found["lof_mechanism_established"] = stated.pop() if len(stated) == 1 else None
+
+    # A disease whose mechanism is established is the one that would let PVS1 proceed, so it
+    # leads; the rest are context and follow in a stable order.
+    return sorted(merged.values(),
+                  key=lambda item: (item["lof_mechanism_established"] is not True,
+                                    item["condition"]))
 
 
 def _not_evaluated(input_data, services, annotation, variant_type, state, rna, node, summary,

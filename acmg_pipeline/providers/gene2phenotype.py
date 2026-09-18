@@ -112,6 +112,9 @@ class Gene2PhenotypeProvider:
                 "quality_status": "PASS",
                 "gene": gene,
                 "condition": condition,
+                # The name G2P curated the disease under, so a candidate list can be read
+                # without resolving every identifier by hand.
+                "condition_label": (body.get("disease") or {}).get("name"),
                 "lof_mechanism_established": established,
                 "inheritance": GENOTYPE_MODES.get(entry.get("genotype")),
                 # Curated by a panel, but read here without a human confirming that this
