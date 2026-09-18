@@ -89,6 +89,43 @@ def _resolve_demo_coordinates() -> dict:
     return by_variant_id
 
 
+def _hgvsp_from_demo_vcf() -> dict:
+    """variant_id -> INFO/HGVSP, read straight from the original demo VCFs.
+
+    Everything else in the VariantRecord below comes from
+    _resolve_demo_coordinates(), whose `matched_identifiers` carries only the
+    identifiers prepare-demo-online actually confirmed against the reference
+    (TRANSCRIPT and HGVSC) - HGVSP is not among them, so a record built from
+    that alone has no protein residue to name.
+
+    PS1's reference link needs one: acmg_pipeline.criteria.reference_links.
+    clinvar_codon_url() searches ClinVar at the variant's own residue
+    ("MYH7[gene] AND Arg719") and falls back to a coarser genomic window when
+    no residue is given. The API path reads HGVSP from the request's own VCF
+    INFO and gets the residue search; this script was getting the fallback,
+    so its output disagreed with the path it is supposed to be validating.
+
+    This is an UNVERIFIED annotation from the original VCF, unlike the
+    resolved identity beside it (2026-09-18, per the user's direction: keep
+    the confirmation boundary in prepare-demo-online, and let this script -
+    a validation harness, not the pipeline - supply the one field the API
+    would have had). It is used to build a curator-facing reference URL, not
+    as evidence for any judgment.
+    """
+    result = {}
+    for path in sorted((ROOT / "demo-data").glob("case*_variants_v2.vcf")):
+        for line in path.read_text(encoding="utf-8").splitlines():
+            if not line or line.startswith("#"):
+                continue
+            fields = line.split("	")
+            info = dict(
+                entry.partition("=")[::2] for entry in fields[7].split(";") if "=" in entry
+            )
+            if info.get("HGVSP"):
+                result[fields[2]] = info["HGVSP"]
+    return result
+
+
 async def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--case", choices=[c[0] for c in CASES], default=None,
@@ -102,6 +139,7 @@ async def main() -> None:
     run_ts = datetime.now().strftime("%Y%m%d%H%M%S")
 
     coords = _resolve_demo_coordinates()
+    hgvsp_by_variant_id = _hgvsp_from_demo_vcf()
 
     automated_config = json.loads((ROOT / "config" / "demo-rules.json").read_text(encoding="utf-8"))
     automated_config["evidence_cache_dir"] = str(ROOT / "tests" / "fixtures" / "external-cache")
@@ -140,7 +178,12 @@ async def main() -> None:
                 chrom=coord_entry["variant"]["chrom"], pos=coord_entry["variant"]["pos"],
                 id=variant_id, ref=coord_entry["variant"]["ref"], alt=coord_entry["variant"]["alt"],
                 qual="", filter="",
-                info={"GENE": gene, "TRANSCRIPT": coord_entry["transcript"], "HGVSC": hgvsc},
+                info={"GENE": gene, "TRANSCRIPT": coord_entry["transcript"], "HGVSC": hgvsc,
+                      # Unverified, and only for PS1's reference link - see
+                      # _hgvsp_from_demo_vcf(). Omitted rather than blanked when the
+                      # original VCF has no HGVSP for this variant.
+                      **({"HGVSP": hgvsp} if (hgvsp := hgvsp_by_variant_id.get(variant_id))
+                         else {})},
             )
 
             lines = await pl.evaluate_variant_evidence_lines(

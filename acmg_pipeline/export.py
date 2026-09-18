@@ -728,7 +728,6 @@ def build_automated_evidence_line(result, variant: VariantRecord) -> dict:
         _curator_hints_from_result,
         assessment_details,
         to_evidence_line,
-        validate_1_0_1,
     )
 
     status = CriterionStatus(result.status)
@@ -748,10 +747,29 @@ def build_automated_evidence_line(result, variant: VariantRecord) -> dict:
         # so it moves whenever a threshold changes. See evidence_line_id().
         gene, _hgvsc, safe_hgvsc = _variant_identity(variant)
         line["id"] = evidence_line_id(result.criterion, gene, safe_hgvsc)
-        # validate_1_0_1() still runs: these lines always score, so they
-        # are held to the strict schema (no relaxation for a missing
-        # evidenceOutcome) as before the merge.
-        return validate_1_0_1(line, result.criterion)
+        # Not validate_1_0_1(): that applies the published 1.0.1 profile
+        # verbatim, and the profile's `hasEvidenceItems` lists only an IRI
+        # string or a cohort allele frequency StudyResult - not the nested
+        # EvidenceLine that carries curatorInfo a few lines above (or the
+        # per-paper literature items). The profile FILE must not be widened:
+        # its sha256 travels inside audit envelopes as provenance
+        # (automated_va_spec.output_schema_sha256()), and the standalone
+        # `acmg evaluate` CLI still validates against it verbatim via
+        # to_evidence_line(). _integrated_line_schema() is the in-memory
+        # superset that already accepts this exact third shape for the
+        # literature lines - see its own docstring - so these lines use it
+        # too rather than a second, parallel relaxation.
+        #
+        # The one thing that superset drops is the evidenceOutcome
+        # requirement, which a workflow line must not carry. This branch is
+        # MET/NOT_MET only, so these lines always score: that requirement is
+        # asserted here directly instead of being lost.
+        if not line.get("evidenceOutcome"):
+            raise ValueError(
+                f"{result.criterion}: a {status.value} line must carry an "
+                "evidenceOutcome"
+            )
+        return validate_integrated_line(line, result.criterion)
 
     # Only reachable with status == UNKNOWN (MET/NOT_MET already returned
     # above) - always for an IMPLEMENTED criterion (a real evaluator module

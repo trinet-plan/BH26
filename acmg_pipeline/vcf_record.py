@@ -41,6 +41,9 @@ from typing import Any, Optional
 
 _CORE_COLUMNS = ("CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER")
 
+# The VCF missing value, in QUAL/INFO alike.
+_MISSING = "."
+
 
 @dataclass
 class InfoFieldDef:
@@ -107,6 +110,8 @@ def _coerce_unknown(raw: str) -> Any:
     """Best-effort typing for an INFO key with no ##INFO declaration (see
     module docstring: GNOMAD_AF/TAVTIGIAN_POINTS in the current demo data).
     Tries int, then float, then falls back to the raw string."""
+    if raw == _MISSING:
+        return None
     try:
         return int(raw)
     except ValueError:
@@ -118,6 +123,14 @@ def _coerce_unknown(raw: str) -> Any:
 
 
 def _cast_scalar(raw: str, type_: str) -> Any:
+    # "." is the VCF missing value, for a declared INFO field of any Type -
+    # not a number and not the literal string ".". Without this, a real
+    # demo row (SG10K_AF=., declared Number=1,Type=Float, in case3-var1 and
+    # case4-var2/var3) raised ValueError out of float(".") and the variant
+    # could not be parsed at all. QUAL's own "." is handled separately in
+    # parse_vcf(); this is the INFO-column counterpart.
+    if raw == _MISSING:
+        return None
     if type_ == "Integer":
         return int(raw)
     if type_ == "Float":
