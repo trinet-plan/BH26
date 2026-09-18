@@ -137,6 +137,12 @@ def main(argv=None):
     online.add_argument("--with-gene2phenotype", action="store_true",
                         help="Take PVS1's LoF-mechanism gate from G2P curation, which is "
                              "scoped to one gene-disease pair and names its MONDO disease")
+    online.add_argument("--cspec-applicability", default=None, metavar="PATH",
+                        help="Take PVS1's LoF-mechanism gate from a collected snapshot of "
+                             "ClinGen VCEP criteria specifications "
+                             "(config/cspec_applicability.json), which answers for any "
+                             "gene a VCEP wrote a specification for - including recessive "
+                             "genes the dosage score and G2P leave unanswered")
     online.add_argument("--with-mondo-mapping", action="store_true",
                         help="Resolve each record's OMIM/Orphanet condition to MONDO so "
                              "PVS1's disease gate can compare it with curated evidence")
@@ -254,6 +260,7 @@ def main(argv=None):
                     hotspot_policy=_hotspot_policy(args) if args.with_pm1_hotspot else None,
                     with_clingen_dosage=args.with_clingen_dosage,
                     with_gene2phenotype=args.with_gene2phenotype,
+                    cspec_applicability_path=args.cspec_applicability,
                     with_disease_matching=(args.with_mondo_mapping or args.with_clingen_lumping
                                            or args.with_mondo_hierarchy),
                     with_gene_disease_associations=args.with_clingen_gene_validity,

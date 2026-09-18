@@ -1076,6 +1076,7 @@ async def evaluate_variant_evidence_lines(
         splice_default_policy_version=automated_config.get("PVS1", {}).get("splice_default_policy_version"),
         with_initiation_assessment=bool(automated_config.get("PVS1", {}).get("with_initiation_assessment")),
         with_gene2phenotype=bool(automated_config.get("with_gene2phenotype")),
+        cspec_applicability_path=automated_config.get("cspec_applicability"),
         with_disease_matching=bool(automated_config.get("with_disease_matching")),
         with_gene_disease_associations=bool(
             automated_config.get("with_gene_disease_associations")),
@@ -1233,6 +1234,7 @@ async def evaluate_selected_criteria(
             splice_default_policy_version=automated_config.get("PVS1", {}).get("splice_default_policy_version"),
             with_initiation_assessment=bool(automated_config.get("PVS1", {}).get("with_initiation_assessment")),
             with_gene2phenotype=bool(automated_config.get("with_gene2phenotype")),
+            cspec_applicability_path=automated_config.get("cspec_applicability"),
             with_disease_matching=bool(automated_config.get("with_disease_matching")),
             with_gene_disease_associations=bool(
                 automated_config.get("with_gene_disease_associations")),

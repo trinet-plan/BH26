@@ -402,6 +402,152 @@ transcript無しを許容していたので、2つのマッチャが偶然だけ
 `config/gene-disease-review-decisions.json` との組み合わせ手順が残っていない。これが
 現状 PP2/BP1 が判定に到達するかどうかを決めている唯一の要因である。
 
+### 1-7. PVS1のG01ゲートは、常染色体劣性遺伝子で3経路とも沈黙する
+
+ERepoの `DYSF NM_001130987.2:c.3498_3499delinsAA`（LGMD VCEP、Pathogenic、PVS1適用）を
+統合パイプラインに通したところ、`Uncertain Significance` となり、met は `PM2(supporting)`
+のみだった。決定トレースは `C01 condition_status=PASS` → `G01 lof_mechanism_available=UNKNOWN`
+で停止している。座標解決（`2-71590212-TG-AA`）もMONDO解決（`MONDO:0015152`）も成功しており、
+入力の不備ではない。
+
+機序を供給しうる3経路が、いずれも**この遺伝子については答えを持っていなかった**。
+
+| 経路 | 結果 | 理由 |
+|---|---|---|
+| ClinGen Dosage | レコードを出さない | DYSFはAR。スコア30に対してレコードを出さないのは `providers/clingen_dosage.py` の意図的な仕様（劣性のPVS1を一律に潰さないため） |
+| Gene2Phenotype | 空を返す | `/api/gene/DYSF/summary/` が `records_summary: []`。`/api/gene/DYSF/` は HGNC:3097 と座標を返すので遺伝子解決の失敗ではなく、G2Pに gene-disease レコードが存在しない |
+| 手書き review 決定 | 対象外 | `config/gene-disease-review-decisions.json` は5遺伝子のみ |
+
+いずれも誤判定ではなく「答えを持っていない」であり、PVS1が `unknown` を返して
+キュレーターに渡したのは本文書の原則どおりの正しい挙動である。ただし、**AR かつ
+非心筋症の遺伝子では自動経路2本が構造的に同時に沈黙する**という穴が残る。
+
+**第3経路の候補調査（2026-09-18）**
+
+ClinGen CSpec（Criteria Specification Registry）が、VCEP仕様を機械可読JSONで公開している。
+DYSFはLGMD VCEP仕様 `GN180` に含まれ、`PVS1: Applicable` と明記されている。
+
+```
+GET /cspec/api/svis                                    → 208件、各 @id が GN###
+GET /cspec/api/SequenceVariantInterpretation/id/GN180  → ruleSets[].criteriaCodes[]
+```
+
+レジストリ本体（`/cspec/SequenceVariantInterpretation`）は `entEmbedded: false` で列挙
+できないが、上記API経路なら全件辿れる。API形式は `ruleSets[].genes[]` に MONDO疾患IDと
+遺伝形式まで持つため、疾患スコープ付きで読める点でレジストリ形式より有利である。
+
+実測カバレッジ（`test_data/collect_cspec_applicability.py`、208文書・失敗0）:
+
+| | |
+|---|---:|
+| SVI文書 | 208 |
+| うち criteria を持つ文書 | 122（86件は枠のみ） |
+| 遺伝子（記載のみ含む） | 192 |
+| **28基準フルセット + MONDO を持つ遺伝子** | **134** |
+| PVS1 = Applicable | 81 |
+| PVS1 = Not applicable | 53 |
+
+部分的なレコードは1件も無い（134件すべてが28基準完備）。現行configの5遺伝子に対して27倍。
+
+`applicability` は `evidenceStrengths[]` にネストしているため「1つでもApplicableなら適用可」
+と畳んだ。GN180についてレジストリ形式の直接の `applicability` と突き合わせ、28基準すべて
+一致することを確認済み。
+
+既存の手書き判断との整合（疾患スコープ一致分、PVS1軸のみ）:
+
+| gene | condition | 手書き `lof_mechanism_established` | CSpec PVS1 | |
+|---|---|---|---|---|
+| MYBPC3 | MONDO:0005045 | true | Applicable | 一致 |
+| MYH7 | MONDO:0005045 | false | Not applicable | 一致 |
+| TNNI3 | MONDO:0005045 | false | Not applicable | 一致 |
+
+3/3で一致する。人手でVCEP仕様を読んで入れた判断をCSpecが機械的に再現しており、これは
+本プロジェクトが既に採用しているポリシー（VCEP applicability は数値トリアージに優先）を
+自動化する形にあたる。新しい判断基準を持ち込まない。
+
+もう一つの候補である AutoPVS1 の `data/PVS1.level`（18,331行、DYSF は `L0` = 降格なし）は
+網羅性で勝るが、**遺伝子1つに1値で疾患スコープが無い**。これは `clingen_dosage.py` が
+「per-gene score では分離できない」として明示的に避けた構造であり、加えてAPIではなく
+GitHub上の静的TSVのため `source_version` / `retrieved_at` の根拠が弱く、
+`build_assessment_document()` の provenance 要件を満たしにくい。採らない。
+
+**採取時の注意（2026-09-18に一度誤った）**
+
+`applicability` は `evidenceStrengths[]` にネストしており、registry が使う語彙は
+**6種類**ある（全208文書で集計）。
+
+```
+9414 'Not applicable'   4087 'Applicable'   2571 'Not Applicable'
+1168 'Not Applicable for this VCEP'
+ 345 'Applicable with VCEP specification'    85 'Applicable as originally described'
+```
+
+最初の実装は `== "applicable"` の完全一致で畳んだため、後ろ2つ（計430件）の**限定付き
+肯定**を否定へ倒し、21遺伝子のPVS1を誤って `Not applicable` として公開した。GAAで発覚
+（Lysosomal Diseases VCEPはPVS1を適用しているのに28基準すべてNot applicableになっていた）。
+現在は `startswith("applicable")` で畳む（`Not Applicable for this VCEP` は先頭がNotなので
+部分一致にはしない）。
+
+**検証の教訓**: 畳み込み規則をGN180（DYSF）だけで突き合わせて「28基準一致」を確認したが、
+GN180は肯定をすべて素の `Applicable` で書く文書で、**バグを露呈させられない唯一の文書を
+検証に使っていた**。語彙は1文書から読まず、全文書で数えること。
+
+**投入物（実行時に読まれる）**
+
+| ファイル | 役割 |
+|---|---|
+| `test_data/collect_cspec_applicability.py` | 収集スクリプト。ディスクキャッシュ付きで再実行コスト0 |
+| `config/cspec_applicability.json` | 134遺伝子 × 28基準 + MONDO + 遺伝形式（`registry_status: APPROVED`） |
+| `acmg_pipeline/providers/cspec_applicability.py` | **PVS1のG01ゲートだけ**を読むprovider |
+
+`config/demo-rules.json` の `cspec_applicability` にパスを置くと有効になる（CLIは
+`--cspec-applicability PATH`）。ClinGen Dosage / G2P と同じく既定ではオフで、明示的に
+指定した run だけが読む。
+
+**キュレーター判断（2026-09-18）: `PVS1: Applicable` → `lof_mechanism_established: true`**
+
+前者はVCEPが自仕様について述べた適用可否、後者は機序の主張であり、**同じ文ではない**。
+ただしPVS1は「LoFが既知機序である遺伝子のnull変異」の基準なので、VCEPがPVS1を適用可と
+宣言した時点でその前提を認めている。上表3/3の一致を根拠に、この読み替えを採用した。
+
+この判断は次の形で追跡可能にしてある。
+
+- `config/cspec_applicability.json` の `pvs1_mapping_decision`（決定日・決定者・根拠・
+  policy_version・スコープ）
+- 各レコードの `policy_version: "BH26-cspec-pvs1-applicability-v1"` と `policy_note`
+- スナップショット本体は**CSpec自身の語彙のまま**保持し、マッピングはproviderの1箇所だけ
+  で行う（テストがentriesに `lof_mechanism_established` 等が現れないことを固定している）
+
+`Not applicable` は `false` にマップする。`unknown` ではない — VCEPが自仕様からPVS1を
+外したのは前提についての判断であり（MYH7がこれ）、`unknown` にすると専門パネルが既に
+否定した機序をキュレーターに探させることになる。
+
+レコードは `assessment_method: "automated"` のままで、同一遺伝子・疾患のreview済み
+assessmentが優先される（PVS1の `_resolve_mechanism()` がreview済みを採り、CSpec側は
+evidenceとして併記される）。
+
+**効果**: 冒頭のDYSF c.3498_3499delinsAA は、通常設定のまま
+`mechanism_source: "ClinGen Criteria Specification Registry (CSpec)"`、`disease_match: EXACT`、
+`moi_match: MATCHED` でG01を通過し、PVS1 very_strong に到達する。
+**Uncertain Significance (1) → Likely Pathogenic (9)。**
+ERepoの Pathogenic には届かない。差分は PM3_Strong（4点）で、PM3は未実装6基準のひとつ。
+
+**未解決（意図的に残す）**
+
+1. **PP2/BP1 には転用できない。** 手書き側の `pp2_applicable: true` は「評価対象である」の
+   意で、met/not-met は隣の機序フィールドが決める（MYBPC3の `review_summary` は
+   `pp2_applicable: true` としつつ「generic PP2は自動的にmetにならない」と書いている）。
+   CSpecの `Not applicable` は「VCEPが基準ごと除外した」で、軸が違う。1-6の未解決は
+   **これでは解けない**。providerはPVS1列だけを読み、他27列はキュレーター向けの参考情報
+   として保持している。
+2. **CSpecは手書きJSONを置き換えない。** デモ症例の DSG2 と KCNJ5 はCSpec未収載であり、
+   `MYBPC3 / MONDO:0016587` の組み合わせもCSpecは持たず手書き側だけが答えを持つ。
+   あくまで第3経路として足す位置づけになる。
+3. **スナップショットの鮮度に更新手順がない。** CSpecの仕様は改訂される（GN180は
+   v2.0.0、GN010は2021-06-02更新）が、`config/cspec_applicability.json` を再収集する
+   タイミングは決めていない。`retrieved_at` は記録されるので古さは分かるが、古い値を
+   使い続けても警告は出ない。
+
 ### 2. 現在はstubとして残すcriterion
 
 次の9基準は実判定を行わず、全28本のVA-Spec EvidenceLineには `UNKNOWN` として出力する。
