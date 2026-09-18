@@ -225,7 +225,7 @@ def test_combined_document_is_valid_va_spec(lines_by_code):
     for code, line in lines_by_code.items():
         EvidenceLine.model_validate(line)
         schema_validator.validate(line)
-        assert _details(line)["criterion"] == code
+        assert line["specifiedBy"]["methodType"] == code
 
 
 def test_every_line_passes_the_1_0_1_validator(lines_by_code):

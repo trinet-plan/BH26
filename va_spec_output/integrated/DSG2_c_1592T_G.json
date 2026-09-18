@@ -222,7 +222,7 @@
           "name": "ACMG literature-evidence LLM pipeline (gemma-4 via vLLM) - AI-generated draft evidence, requires human curator review before use"
         },
         "activityType": "automated evidence evaluation",
-        "date": "2026-09-17T07:52:48.919929Z"
+        "date": "2026-09-17T14:27:31.441126Z"
       }
     ],
     "reportedIn": [
@@ -622,7 +622,7 @@
           "name": "ACMG literature-evidence LLM pipeline (gemma-4 via vLLM) - AI-generated draft evidence, requires human curator review before use"
         },
         "activityType": "automated evidence evaluation",
-        "date": "2026-09-17T07:52:48.917021Z"
+        "date": "2026-09-17T14:27:31.443885Z"
       }
     ],
     "reportedIn": [
@@ -1013,22 +1013,34 @@
   {
     "id": "evline:DSG2_c_1592T_G_PM1",
     "type": "EvidenceLine",
-    "description": "No region assessment was retrieved for this variant. PM1 evaluates a variant in a reviewed mutational hotspot or critical functional domain with no conflicting benign variation. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
+    "description": "Reported pathogenic density is below the hotspot policy threshold. PM1 evaluates a variant in a reviewed mutational hotspot or critical functional domain with no conflicting benign variation. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
     "extensions": [
       {
         "name": "bh26AssessmentDetails",
         "value": {
           "criterion": "PM1",
           "status": "unknown",
-          "summary": "No region assessment was retrieved for this variant. PM1 evaluates a variant in a reviewed mutational hotspot or critical functional domain with no conflicting benign variation. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
+          "summary": "Reported pathogenic density is below the hotspot policy threshold. PM1 evaluates a variant in a reviewed mutational hotspot or critical functional domain with no conflicting benign variation. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
           "evidenceItemIds": [
-            "urn:sha256:9908b24cf1b295180f712f6449a8495648a4a1d6c5de16022ec1a2daca0d6678:annotation:NM_001943.5"
+            "urn:sha256:9908b24cf1b295180f712f6449a8495648a4a1d6c5de16022ec1a2daca0d6678:annotation:NM_001943.5",
+            "urn:sha256:285113a53e20f205d21e2c12332e7b7e8cdb4ada0aebcd9741cedf05ebd8b4a8:clinvar-pm1-hotspot:NP_001934.2:526-536"
           ],
           "provenance": {
-            "rule_version": "PM1-v1"
+            "rule_version": "PM1-v1",
+            "pm1_route": "mutational_hotspot",
+            "hotspot_policy": {
+              "window_aa": 5,
+              "min_pathogenic": 3,
+              "max_benign": 0,
+              "method": "clinvar_local_density",
+              "policy_source": "BH26 demo PM1 hotspot proxy policy (fastVEP-style ClinVar missense density); not a ClinGen VCEP specification",
+              "policy_version": "PM1-hotspot-v1"
+            },
+            "pathogenic_count": 0,
+            "benign_count": 0
           },
           "missingInputs": [
-            "region"
+            "pathogenic_density"
           ]
         }
       },
@@ -1428,14 +1440,14 @@
   {
     "id": "evline:DSG2_c_1592T_G_PP1",
     "type": "EvidenceLine",
-    "description": "pp1_bs4_pp4_engine: no APPROVED curated PP4 reference record for gene 'DSG2'",
+    "description": "pp1_bs4_pp4_engine: segregation not evaluable (no family data or unknown inheritance mode)",
     "extensions": [
       {
         "name": "bh26AssessmentDetails",
         "value": {
           "criterion": "PP1",
           "status": "unknown",
-          "summary": "pp1_bs4_pp4_engine: no APPROVED curated PP4 reference record for gene 'DSG2'"
+          "summary": "pp1_bs4_pp4_engine: segregation not evaluable (no family data or unknown inheritance mode)"
         }
       },
       {
@@ -1459,28 +1471,36 @@
   {
     "id": "evline:DSG2_c_1592T_G_PP2",
     "type": "EvidenceLine",
-    "description": "No gene_disease assessment was retrieved for this variant. PP2 evaluates missense variants in genes where missense is an established disease mechanism and benign missense variation is constrained. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
+    "description": "1 reviewed gene_disease assessment(s) were made against a different transcript (None, not NM_001943.5). PP2 evaluates missense variants in genes where missense is an established disease mechanism and benign missense variation is constrained. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
     "extensions": [
       {
         "name": "bh26AssessmentDetails",
         "value": {
           "criterion": "PP2",
           "status": "unknown",
-          "summary": "No gene_disease assessment was retrieved for this variant. PP2 evaluates missense variants in genes where missense is an established disease mechanism and benign missense variation is constrained. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
+          "summary": "1 reviewed gene_disease assessment(s) were made against a different transcript (None, not NM_001943.5). PP2 evaluates missense variants in genes where missense is an established disease mechanism and benign missense variation is constrained. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
           "evidenceItemIds": [
-            "urn:sha256:9908b24cf1b295180f712f6449a8495648a4a1d6c5de16022ec1a2daca0d6678:annotation:NM_001943.5"
+            "urn:sha256:9908b24cf1b295180f712f6449a8495648a4a1d6c5de16022ec1a2daca0d6678:annotation:NM_001943.5",
+            "urn:sha256:b7aedf994c71dfcc61b4957dcfffb791d75a6bcf8638ebb7e641a3b56a995294:clingen-dosage:DSG2:GRCh38:18:31536370:T:G"
           ],
           "provenance": {
             "rule_version": "PP2-v1"
-          },
-          "missingInputs": [
-            "gene_disease"
-          ]
+          }
         }
       },
       {
         "name": "referenceLink",
         "value": "https://gnomad.broadinstitute.org/gene/DSG2?dataset=gnomad_r4"
+      },
+      {
+        "name": "curatorHints",
+        "value": [
+          {
+            "severity": "caution",
+            "category": "review",
+            "message": "Resolve the transcript of the gene_disease assessment"
+          }
+        ]
       }
     ],
     "specifiedBy": {
@@ -1586,14 +1606,14 @@
   {
     "id": "evline:DSG2_c_1592T_G_PP4",
     "type": "EvidenceLine",
-    "description": "pp1_bs4_pp4_engine: no APPROVED curated PP4 reference record for gene 'DSG2'",
+    "description": "pp1_bs4_pp4_engine: phenotype not evaluable (no_diagnosis_available_to_search_literature_for)",
     "extensions": [
       {
         "name": "bh26AssessmentDetails",
         "value": {
           "criterion": "PP4",
           "status": "unknown",
-          "summary": "pp1_bs4_pp4_engine: no APPROVED curated PP4 reference record for gene 'DSG2'"
+          "summary": "pp1_bs4_pp4_engine: phenotype not evaluable (no_diagnosis_available_to_search_literature_for)"
         }
       }
     ],
@@ -1850,12 +1870,23 @@
             "comparison": ">",
             "highest_observed": "0.00004150668083976261773672062839",
             "threshold_scope": "default",
+            "policy_status": "DRAFT",
             "disease_frequency_threshold": {
               "max_credible_af": 0.0001,
               "source": "BH26 provisional default BS1 threshold for rare Mendelian disease (PLACEHOLDER - not a reviewed clinical value; a real threshold is per-disease, e.g. the ClinGen Inherited Cardiomyopathy VCEP applies 0.0002 for MYH7)",
               "source_version": "2026-09-17-provisional-2",
               "frequency_statistic": "faf95",
-              "comparison": ">"
+              "comparison": ">",
+              "derivation": {
+                "method": "Maximum credible allele frequency (Whiffin et al. 2017), https://pubmed.ncbi.nlm.nih.gov/28518168/",
+                "prevalence": null,
+                "inheritance": null,
+                "penetrance": null,
+                "max_genetic_contribution": null,
+                "max_allelic_contribution": null,
+                "target_population": null,
+                "source_url": "https://clinicalgenome.org/site/assets/files/5182/pm2_-_svi_recommendation_-_approved_sept2020.pdf"
+              }
             }
           },
           "direction": "none",
@@ -2103,7 +2134,7 @@
           "name": "ACMG literature-evidence LLM pipeline (gemma-4 via vLLM) - AI-generated draft evidence, requires human curator review before use"
         },
         "activityType": "automated evidence evaluation",
-        "date": "2026-09-17T07:52:48.913364Z"
+        "date": "2026-09-17T14:27:31.446151Z"
       }
     ],
     "reportedIn": [
@@ -2459,14 +2490,14 @@
   {
     "id": "evline:DSG2_c_1592T_G_BS4",
     "type": "EvidenceLine",
-    "description": "pp1_bs4_pp4_engine: no APPROVED curated PP4 reference record for gene 'DSG2'",
+    "description": "pp1_bs4_pp4_engine: segregation not evaluable (no family data or unknown inheritance mode)",
     "extensions": [
       {
         "name": "bh26AssessmentDetails",
         "value": {
           "criterion": "BS4",
           "status": "unknown",
-          "summary": "pp1_bs4_pp4_engine: no APPROVED curated PP4 reference record for gene 'DSG2'"
+          "summary": "pp1_bs4_pp4_engine: segregation not evaluable (no family data or unknown inheritance mode)"
         }
       }
     ],
@@ -2486,24 +2517,32 @@
   {
     "id": "evline:DSG2_c_1592T_G_BP1",
     "type": "EvidenceLine",
-    "description": "No gene_disease assessment was retrieved for this variant. BP1 evaluates missense variants in genes where disease is predominantly caused by truncating variants rather than missense variation. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
+    "description": "1 reviewed gene_disease assessment(s) were made against a different transcript (None, not NM_001943.5). BP1 evaluates missense variants in genes where disease is predominantly caused by truncating variants rather than missense variation. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
     "extensions": [
       {
         "name": "bh26AssessmentDetails",
         "value": {
           "criterion": "BP1",
           "status": "unknown",
-          "summary": "No gene_disease assessment was retrieved for this variant. BP1 evaluates missense variants in genes where disease is predominantly caused by truncating variants rather than missense variation. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
+          "summary": "1 reviewed gene_disease assessment(s) were made against a different transcript (None, not NM_001943.5). BP1 evaluates missense variants in genes where disease is predominantly caused by truncating variants rather than missense variation. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
           "evidenceItemIds": [
-            "urn:sha256:9908b24cf1b295180f712f6449a8495648a4a1d6c5de16022ec1a2daca0d6678:annotation:NM_001943.5"
+            "urn:sha256:9908b24cf1b295180f712f6449a8495648a4a1d6c5de16022ec1a2daca0d6678:annotation:NM_001943.5",
+            "urn:sha256:b7aedf994c71dfcc61b4957dcfffb791d75a6bcf8638ebb7e641a3b56a995294:clingen-dosage:DSG2:GRCh38:18:31536370:T:G"
           ],
           "provenance": {
             "rule_version": "BP1-v1"
-          },
-          "missingInputs": [
-            "gene_disease"
-          ]
+          }
         }
+      },
+      {
+        "name": "curatorHints",
+        "value": [
+          {
+            "severity": "caution",
+            "category": "review",
+            "message": "Resolve the transcript of the gene_disease assessment"
+          }
+        ]
       }
     ],
     "specifiedBy": {

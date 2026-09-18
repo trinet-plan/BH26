@@ -253,8 +253,29 @@ def build_evidence_line(code: str, evidence: CriterionEvidence, variant: Variant
         evidence_outcome = None
         strength_block = None
 
-    assessment = {"criterion": code, "status": status.value, "summary": evidence.source or ""}
+    # No `summary`/`criterion` keys: they would duplicate `description` below
+    # (both come from evidence.source) and `specifiedBy.methodType` (both are
+    # `code`) verbatim. Unlike automated_va_spec.assessment_details() (see its
+    # docstring), nothing here needs `criterion` as a list-disambiguator.
+    # An UNKNOWN status (no family/segregation/phenotype data to decide from)
+    # is reported as not_met, not unknown - PP1/BS4/PP4 are implemented, this
+    # is "ran, couldn't reach a verdict", the same reframing export.
+    # build_evidence_line()/build_automated_evidence_line() apply, 2026-09-18.
+    # A curatorHint discloses the real reason.
+    curator_hints = []
+    reported_status = status
+    if status == CriterionStatus.UNKNOWN:
+        reported_status = CriterionStatus.NOT_MET
+        curator_hints.append({
+            "severity": "caution", "category": "unevaluated",
+            "message": f"{code} could not actually be evaluated from the "
+                       "available data (reported as not_met rather than left "
+                       "unknown).",
+        })
+    assessment = {"status": reported_status.value}
     extensions = [Extension(name="bh26AssessmentDetails", value=assessment)]
+    if curator_hints:
+        extensions.append(Extension(name="curatorHints", value=curator_hints))
     extensions.extend(build_reference_extensions(code, variant))
 
     line = EvidenceLine(

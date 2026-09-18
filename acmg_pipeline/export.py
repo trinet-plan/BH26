@@ -93,7 +93,7 @@ from typing import Any, Optional
 from jsonschema import Draft202012Validator, FormatChecker
 
 from acmg_pipeline.criteria.common import DEFAULT_STRENGTH
-from acmg_pipeline.automated_va_spec import OUTCOME_PATTERN, output_schema
+from acmg_pipeline.automated_va_spec import OUTCOME_PATTERN, extensions_last, output_schema
 
 from ga4gh.core.models import Coding, Extension, MappableConcept
 from ga4gh.va_spec.base.core import Agent, Contribution, Direction, Document, EvidenceLine, Method
@@ -103,7 +103,7 @@ from acmg_pipeline.common import (
     AggregatedJudgment, CuratorHint, MatchStatus, PaperContribution,
     is_not_clear, strength_tier_from_paper_count,
 )
-from acmg_pipeline.constants import IMPLEMENTED_CODES, CriterionStatus
+from acmg_pipeline.constants import IMPLEMENTED_CODES, PATHOGENIC_CODES, CriterionStatus
 from acmg_pipeline.criteria import curator_info, reference_links
 from acmg_pipeline.vcf_record import VariantRecord
 
@@ -322,7 +322,7 @@ def validate_integrated_line(line: dict, criterion: str) -> dict:
         )
     if line.get("evidenceOutcome"):
         _check_acmg_semantics(line, criterion)
-    return line
+    return extensions_last(line)
 
 
 def _pubmed_url(pmid: str) -> str:
@@ -334,9 +334,24 @@ def _document(pmid: str) -> Document:
 
 
 def _direction_of_evidence(direction, criterion: str) -> Direction:
+    """direction/disputes here means "for/against pathogenicity", not "for/against
+    the criterion under test" - so a BS3 line whose evidence actually establishes
+    BS3 (i.e. direction.value == criterion == "BS3") DISPUTES pathogenicity, it
+    does not support it. Only a match on a *pathogenic* criterion (PS3, PS4)
+    supports pathogenicity; a mismatch (the dispute-sibling case, e.g. PS3
+    evidence found while testing BS3) always disputes the criterion under test,
+    regardless of that criterion's own P/B prefix. Found 2026-09-18: this always
+    returned SUPPORTS on a match, so a real BS3_supporting outcome (MYBPC3-class
+    literature, LDLR c.2575G>A) raised acmg_pipeline.export's own
+    _check_acmg_semantics() ValueError the first time it was exercised live -
+    mirrors the same convention acmg_pipeline.criteria.pp1_bs4_pp4_engine's
+    build_evidence_line() already uses via PATHOGENIC_CODES.
+    """
     if is_not_clear(direction):
         return Direction.NEUTRAL
-    return Direction.SUPPORTS if direction.value == criterion else Direction.DISPUTES
+    if direction.value != criterion:
+        return Direction.DISPUTES
+    return Direction.SUPPORTS if criterion in PATHOGENIC_CODES else Direction.DISPUTES
 
 
 def _hints_extension(hints: list[CuratorHint]) -> Optional[Extension]:
@@ -456,19 +471,34 @@ def build_evidence_line(
     ]
 
     strength, outcome, strength_disclosure = _strength_blocks(direction, len(relevant_pmids))
-    hints_ext = _hints_extension(aggregated.aggregation_hints)
+    # A not_clear judgment is still reported as not_met, not unknown - PS3/BS3/
+    # PS4 always have real judgment logic (the LLM/PubMed literature workflow
+    # ran, it just couldn't reach a verdict from what it read), so this is the
+    # same "implemented but inconclusive" case export.build_automated_evidence_
+    # line() reframes the same way (see that function's note, 2026-09-18). A
+    # curatorHint discloses the real reason so "not met" isn't mistaken for a
+    # confident negative finding.
+    aggregation_hints = list(aggregated.aggregation_hints)
+    if is_not_clear(direction):
+        aggregation_hints.append(CuratorHint(
+            "caution",
+            f"{criterion} could not actually be evaluated from the available "
+            "literature (reported as not_met rather than left unknown).",
+        ))
+    hints_ext = _hints_extension(aggregation_hints)
     status = (
-        CriterionStatus.UNKNOWN.value if is_not_clear(direction)
-        else CriterionStatus.MET.value if direction.value == criterion
+        CriterionStatus.MET.value if direction.value == criterion
         else CriterionStatus.NOT_MET.value
     )
+    # No `summary`/`criterion` keys: they would duplicate `description` below
+    # and `specifiedBy.methodType` verbatim. Unlike automated_va_spec.
+    # assessment_details() (see its docstring), nothing here needs `criterion`
+    # as a list-disambiguator - this line is never folded into an unkeyed
+    # list of assessments the way export_record()'s criterion_assessments is.
     assessment_ext = Extension(
         name="bh26AssessmentDetails",
         value={
-            "criterion": criterion,
             "status": status,
-            "summary": " ".join(h.message for h in aggregated.aggregation_hints)
-            or f"Literature evidence was evaluated for {criterion}.",
         },
     )
     extensions = [e for e in (hints_ext, strength_disclosure, assessment_ext) if e]
@@ -591,12 +621,17 @@ def build_workflow_evidence_line(
     description: str,
     details: Optional[dict[str, Any]] = None,
 ) -> dict:
-    """Emit a neutral VA-Spec line for a non-scoreable workflow state."""
+    """Emit a neutral VA-Spec line for a non-scoreable workflow state.
+
+    `assessment` carries no `summary`/`criterion`: they would duplicate the
+    EvidenceLine's own top-level `description` and `specifiedBy.methodType`
+    below verbatim (see build_evidence_line()'s own note on the same choice,
+    and automated_va_spec.assessment_details()'s docstring for the one case
+    where `criterion` has to stay, 2026-09-18).
+    """
     gene, _hgvsc, safe_hgvsc = _variant_identity(variant)
     assessment = {
-        "criterion": code,
         "status": status,
-        "summary": description,
     }
     if details:
         assessment.update(details)
@@ -646,17 +681,33 @@ def build_automated_evidence_line(result, variant: VariantRecord) -> dict:
         # evidenceOutcome) as before the merge.
         return validate_1_0_1(line, result.criterion)
 
+    # Only reachable with status == UNKNOWN (MET/NOT_MET already returned
+    # above) - always for an IMPLEMENTED criterion (a real evaluator module
+    # ran and could not reach a verdict from the data it had), never for a
+    # criterion with no judgment logic at all (build_stub_evidence_line()
+    # handles those separately and keeps their status "unknown" - per the
+    # user's explicit direction, 2026-09-18, only an ATTEMPTED-but-inconclusive
+    # evaluation is reframed this way). Reported as `not_met`, not `unknown`:
+    # directionOfEvidenceProvided was already "neutral" either way, so the
+    # only real change is which bucket classify() puts it in - and a curator
+    # hint discloses the real reason so "not met" here isn't mistaken for a
+    # confident negative finding.
     details = assessment_details(result)
     summary = result.summary or f"{result.criterion} was not scored ({status.value})."
     line = build_workflow_evidence_line(
         result.criterion,
         variant,
-        status=status.value,
+        status=CriterionStatus.NOT_MET.value,
         description=summary,
         details={key: value for key, value in details.items()
                  if key not in {"criterion", "status", "summary"}},
     )
-    curator_hints = _curator_hints_from_result(result)
+    curator_hints = _curator_hints_from_result(result) + [{
+        "severity": "caution", "category": "unevaluated",
+        "message": f"{result.criterion} could not actually be evaluated from "
+                   "the available data (reported as not_met rather than "
+                   "left unknown).",
+    }]
     if curator_hints:
         line.setdefault("extensions", []).append({
             "name": "curatorHints",

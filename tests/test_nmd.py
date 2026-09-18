@@ -178,5 +178,60 @@ class NmdPredictionTests(unittest.TestCase):
                 self.assertIsNone(parse_exon(value))
 
 
+def splice_consequence(**overrides):
+    record = {
+        "transcript_id": "ENST00000545968",
+        "gene_symbol": "MYBPC3",
+        "consequence_terms": ["splice_donor_variant"],
+        "exon": None,
+        "intron": "27/34",
+        "mane_select": "NM_000256.3",
+    }
+    record.update(overrides)
+    return record
+
+
+class NmdSplicePredictionTests(unittest.TestCase):
+    """Canonical splice donor/acceptor variants have no exon of their own from VEP - they
+    report an intron instead - added 2026-09-17 alongside acmg_pipeline.criteria.pvs1's
+    SP01 default policy, which routes a disrupted splice variant into the same
+    _truncating_path() a direct frameshift/nonsense takes."""
+
+    def setUp(self):
+        self.variant = Variant("GRCh38", "11", 47335041, "C", "T")
+
+    def predict(self, consequences, gene="MYBPC3", transcript="NM_000256.3",
+                hgvsc="NM_000256.3:c.2905+1G>A"):
+        provider = NmdPredictionProvider(FakeClient(consequences), "116")
+        return provider.get_nmd_prediction(self.variant, gene, transcript, hgvsc)
+
+    def test_mybpc3_c2905plus1g_a_real_case_reaches_predicted_true(self):
+        """VEP's real answer for this variant (intron 27/34 on the MANE transcript) -
+        ClinGen's real classification is PVS1_very_strong, which needs predicted=True here
+        to be reachable at all."""
+        records = self.predict([splice_consequence(intron="27/34")])
+        self.assertEqual(len(records), 1)
+        self.assertIs(records[0]["predicted"], True)
+        self.assertEqual(records[0]["position_type"], "intron")
+        self.assertEqual(records[0]["exon"], "27/34")
+
+    def test_the_last_intron_escapes_decay_the_same_as_the_last_exon(self):
+        records = self.predict([splice_consequence(intron="34/34")])
+        self.assertEqual(records[0]["predicted"], False)
+
+    def test_the_penultimate_intron_yields_no_record(self):
+        self.assertEqual(self.predict([splice_consequence(intron="33/34")]), [])
+
+    def test_a_non_canonical_splice_consequence_is_not_decidable(self):
+        self.assertEqual(self.predict([splice_consequence(
+            consequence_terms=["splice_region_variant"])]), [])
+
+    def test_the_exon_helper_also_reports_the_intron_position(self):
+        provider = NmdPredictionProvider(FakeClient([splice_consequence(intron="27/34")]), "116")
+        self.assertEqual(
+            provider.exon_on_transcript("MYBPC3", "NM_000256.3", "NM_000256.3:c.2905+1G>A"),
+            "27/34")
+
+
 if __name__ == "__main__":
     unittest.main()

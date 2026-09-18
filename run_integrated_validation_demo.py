@@ -25,18 +25,20 @@ does - see this script's _resolve_demo_coordinates().
 
 from __future__ import annotations
 
+import argparse
 import asyncio
 import json
 import sys
 import tempfile
 from contextlib import AsyncExitStack
+from datetime import datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import acmg_pipeline.automated_cli as automated_cli_module
 import acmg_pipeline.pipeline as pl
-from acmg_pipeline.classification import ALL_ACMG_CODES, classify
+from acmg_pipeline.classification import ALL_ACMG_CODES, classification_to_dict, classify
 from acmg_pipeline.clinical_note import extract_clinical_note
 from acmg_pipeline.fulltext_cache import DiskBackedFullTextCache
 from acmg_pipeline.gate import ERepoClient
@@ -88,6 +90,17 @@ def _resolve_demo_coordinates() -> dict:
 
 
 async def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--case", choices=[c[0] for c in CASES], default=None,
+                         help="only run this one demo case (default: all 4)")
+    args = parser.parse_args()
+    cases = [c for c in CASES if c[0] == args.case] if args.case else CASES
+
+    # One timestamp for the whole run, prefixed onto every output filename so
+    # files from different runs sort together and never silently clobber an
+    # earlier run's output for the same variant.
+    run_ts = datetime.now().strftime("%Y%m%d%H%M%S")
+
     coords = _resolve_demo_coordinates()
 
     automated_config = json.loads((ROOT / "config" / "demo-rules.json").read_text(encoding="utf-8"))
@@ -113,7 +126,7 @@ async def main() -> None:
         pl.show("[MCP] Connected to PubMed")
         erepo_client = ERepoClient()
 
-        for case_id, variant_id, gene, hgvsc, note_file in CASES:
+        for case_id, variant_id, gene, hgvsc, note_file in cases:
             pl.show(f"\n{'#'*70}\n# {case_id} ({variant_id}): {gene} {hgvsc}\n{'#'*70}")
             coord_entry = coords.get(variant_id)
             if not coord_entry:
@@ -137,14 +150,18 @@ async def main() -> None:
                 full_text_cache=full_text_cache, llm_cache=llm_cache,
             )
 
-            safe = _safe_hgvsc(hgvsc)
-            (OUTPUT_DIR / f"{gene}_{safe}.json").write_text(
-                json.dumps(lines, indent=2, ensure_ascii=False), encoding="utf-8",
-            )
-
             evidence_lines = dict(zip(ALL_ACMG_CODES, lines))
             evidence = [_evidence_from_line(code, evidence_lines[code]) for code in ALL_ACMG_CODES]
             result = classify(evidence)
+
+            safe = _safe_hgvsc(hgvsc)
+            (OUTPUT_DIR / f"{run_ts}_{gene}_{safe}.json").write_text(
+                json.dumps(
+                    {"classification": classification_to_dict(result), "evidence_lines": lines},
+                    indent=2, ensure_ascii=False,
+                ),
+                encoding="utf-8",
+            )
 
             gt_entries = entries_for(gene, hgvsc)
             outcomes = {e.variant_outcome for e in gt_entries if e.variant_outcome}

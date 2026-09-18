@@ -165,6 +165,31 @@ def judge(
 criterionでも、呼び出し境界を揃えるため空の `ClinicalNoteExtraction()` を
 渡してください。出力は従来どおり GA4GH VA-Spec `EvidenceLine` です。
 
+## PVS1が判定に至らない場合の出力
+
+PVS1は、決定木が判定に到達していても**疾患特異的なLoF機序が確認できていない**
+場合は `met` を返しません。strength・direction・evidenceOutcome はいずれも
+付かず、VA-Spec上は他の結論の出なかったcriterionと同じ
+`not_met` + curator hint として報告されます。
+
+**`status` だけで「適用されたか」が分かります。** 他のcriterionと同じ読み方で、
+consumer 側で追加のフィールドを確認する必要はありません。
+
+### 捨てていない情報
+
+判定に至らなくても、variant側の評価結果は `bh26AssessmentDetails` に残ります。
+
+| 場所 | 内容 |
+|---|---|
+| `provenance.preliminary_assessment` | 決定木がどのノードまで到達したか、疾患機序が確認できれば何になるか(`candidate_strength`) |
+| `provenance.candidate_conditions` | 疾患未指定時の候補疾患(病名・機序・遺伝形式付き) |
+| `missingInputs` | 何が足りないか |
+| `curatorHints` | 人が何を判断すればよいか |
+
+`candidate_strength` は criterion の `strength` には**なりません**。
+「疾患機序が確認できればこうなる」という仮定の結論であって、確認された
+という主張ではないためです。VA-Spec にも `PVS1 supports` としては出ません。
+
 ## APIサーバーの起動
 
 1.  ビルド

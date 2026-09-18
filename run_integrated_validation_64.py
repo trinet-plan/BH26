@@ -59,6 +59,7 @@ import asyncio
 import json
 import sys
 import tempfile
+from datetime import datetime
 from contextlib import AsyncExitStack
 from pathlib import Path
 
@@ -67,7 +68,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import acmg_pipeline.automated_cli as automated_cli_module
 import acmg_pipeline.pipeline as pl
 from acmg_pipeline.automated_core.input import audit_vcf
-from acmg_pipeline.classification import ALL_ACMG_CODES, classify
+from acmg_pipeline.classification import ALL_ACMG_CODES, classification_to_dict, classify
 from acmg_pipeline.fulltext_cache import DiskBackedFullTextCache
 from acmg_pipeline.gate import ERepoClient
 from acmg_pipeline.inputs import empty_clinical_note
@@ -131,6 +132,11 @@ async def main() -> None:
     parser.add_argument("--limit", type=int, default=None, help="only process the first N variants (smoke test)")
     args = parser.parse_args()
 
+    # One timestamp for the whole run, prefixed onto every output filename so
+    # files from different runs sort together and never silently clobber an
+    # earlier run's output for the same variant.
+    run_ts = datetime.now().strftime("%Y%m%d%H%M%S")
+
     transcripts = json.loads(TRANSCRIPTS_PATH.read_text(encoding="utf-8"))
     variants = list(unique_variants())
     coords = _resolve_coordinates(variants, transcripts)
@@ -139,7 +145,19 @@ async def main() -> None:
 
     automated_config = json.loads((ROOT / "config" / "demo-rules.json").read_text(encoding="utf-8"))
     automated_config["evidence_cache_dir"] = str(EVIDENCE_CACHE_DIR)
-    automated_config["offline"] = True
+    # Live (2026-09-18), not offline: EVIDENCE_CACHE_DIR (cache/erepo_automated_
+    # evidence/) had never been warmed for most of these 64 variants - not just
+    # the providers wired up this session (ClinGen dosage/MANE/NMD/protein-
+    # region/splice-default/initiation/gene-disease-draft/clinvar-spectrum) but
+    # even the base Ensembl VEP annotation PVS1 needs first. With offline=True
+    # every one of those was a silent OFFLINE_CACHE_MISS, so nearly every
+    # automated criterion fell through to unknown/not_met regardless of the
+    # variant - a run that looked complete (58/64 compared, 13 matched) but
+    # never actually exercised the automated engine. A live run writes through
+    # to this same cache (CachedHttpClient), so a later run can go back to
+    # offline=True and still see this data - same convention run_integrated_
+    # validation_demo.py already uses for its own cache.
+    automated_config["offline"] = False
     automated_config["ensembl_release"] = "116"
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -194,14 +212,19 @@ async def main() -> None:
                 skipped.append(f"{gene} {hgvsc} (error: {exc!r})")
                 continue
 
-            safe = _safe_hgvsc(hgvsc)
-            (OUTPUT_DIR / f"{gene}_{safe}.json").write_text(
-                json.dumps(lines, indent=2, ensure_ascii=False), encoding="utf-8",
-            )
-
             evidence_lines = dict(zip(ALL_ACMG_CODES, lines))
             evidence = [_evidence_from_line(code, evidence_lines[code]) for code in ALL_ACMG_CODES]
             result = classify(evidence)
+
+            safe = _safe_hgvsc(hgvsc)
+            (OUTPUT_DIR / f"{run_ts}_{gene}_{safe}.json").write_text(
+                json.dumps(
+                    {"classification": classification_to_dict(result), "evidence_lines": lines},
+                    indent=2, ensure_ascii=False,
+                ),
+                encoding="utf-8",
+            )
+
             compared_n += 1
             is_match = result.category.value == real_outcome
             match_n += is_match

@@ -69,7 +69,6 @@ def test_integrated_entrypoint_returns_one_ordered_line_per_acmg_code():
         schema_validator.validate(line)
         extensions = {item["name"]: item["value"] for item in line["extensions"]}
         code = line["specifiedBy"]["methodType"]
-        assert extensions["bh26AssessmentDetails"]["criterion"] == code
         assert extensions["referenceLink"] == f"https://example.test/{code}"
         assert "reportedIn" not in line
 
@@ -167,8 +166,13 @@ def test_unknown_automated_line_keeps_review_points_as_curator_hints():
 
     extensions = {item["name"]: item["value"] for item in line["extensions"]}
     assert "reviewPoints" not in extensions["bh26AssessmentDetails"]
-    assert extensions["curatorHints"] == [{
+    # An implemented-but-inconclusive line reports not_met, not unknown (see
+    # export.build_automated_evidence_line()'s note, 2026-09-18) - the real
+    # review_points-derived hint is joined by a second one disclosing that.
+    assert extensions["bh26AssessmentDetails"]["status"] == "not_met"
+    assert {
         "severity": "caution",
         "category": "review",
         "message": "Curate a disease-relevant functional region",
-    }]
+    } in extensions["curatorHints"]
+    assert any(h["category"] == "unevaluated" for h in extensions["curatorHints"])

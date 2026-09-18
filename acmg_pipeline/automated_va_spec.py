@@ -236,20 +236,39 @@ def evidence_catalog_item(item):
 
 
 def assessment_details(result):
-    """Return the complete workflow explanation shared by all criterion outputs."""
+    """Return the complete workflow explanation shared by all criterion outputs.
+
+    No `summary` key here: it would be a byte-for-byte copy of the standard
+    EvidenceLine's own top-level `description` (both come from
+    `result.summary`) - found 2026-09-18 as reader-visible duplication in
+    every scored/workflow line's JSON. `criterion` and `evidenceItemIds` also
+    duplicate standard fields (`specifiedBy.methodType`, `hasEvidenceItems`)
+    but stay regardless: export_record()/validate_envelope() below use this
+    exact dict, unkeyed by anything else, as one entry of
+    `criterion_assessments` - `criterion` says which code each entry is for,
+    and `evidenceItemIds` is what validate_envelope() cross-checks against
+    `referenced_evidence` for orphan references. Both real uses, not just
+    convenience copies - unlike `summary`, which nothing reads.
+    """
     value = {
         "criterion": result.criterion,
         "status": result.status.value,
-        "summary": result.summary,
         "evidenceItemIds": list(dict.fromkeys(
             evidence_reference(item) for item in result.evidence
         )),
         "provenance": result.provenance,
     }
+    # No `strength`/`evidenceOutcome` keys: for a MET line these are exactly
+    # STRENGTHS[result.strength] and result.evidence_outcome, i.e. the same
+    # facts already on the standard top-level strengthOfEvidenceProvided/
+    # evidenceOutcome fields, just unwrapped from their MappableConcept shape
+    # - found alongside the `summary` duplication above, 2026-09-18. `direction`
+    # stays: for a NOT_MET line it is the real computed value (e.g. "none"),
+    # while the top-level directionOfEvidenceProvided is forced to "neutral"
+    # (VA-Spec's Direction enum has no fourth state) - genuinely extra
+    # information, not a restatement.
     optional = {
-        "strength": result.strength,
         "direction": result.direction,
-        "evidenceOutcome": result.evidence_outcome,
         "missingInputs": result.missing_inputs,
         "evaluationContext": result.evaluation_context,
         "decisionTrace": result.decision_trace,
@@ -334,6 +353,25 @@ def validate_envelope(document):
     return document
 
 
+def extensions_last(line: dict) -> dict:
+    """Reorder so `extensions` prints last in the serialized JSON.
+
+    `extensions` (bh26AssessmentDetails' decisionTrace, curatorHints, ...) is
+    routinely the largest and most deeply nested field on a line - added
+    2026-09-18 so a human skimming an output file sees the compact,
+    identifying fields (id/description/specifiedBy/evidenceOutcome/...)
+    before that block, on every line regardless of which builder produced
+    it. Key order has no effect on schema validation or dict access, only
+    on how the file reads.
+    """
+    if "extensions" not in line:
+        return line
+    extensions = line["extensions"]
+    reordered = {key: value for key, value in line.items() if key != "extensions"}
+    reordered["extensions"] = extensions
+    return reordered
+
+
 def validate_1_0_1(line, criterion):
     """Validate the emitted subset and ACMG cross-field semantics for VA-Spec 1.0.1."""
     errors = sorted(Draft202012Validator(
@@ -353,7 +391,7 @@ def validate_1_0_1(line, criterion):
     )
     if direction != expected:
         raise ValueError("VA-Spec 1.0.1 direction/evidenceOutcome mismatch")
-    return line
+    return extensions_last(line)
 
 
 def to_evidence_line(result):

@@ -14,8 +14,20 @@
   disease mechanism. So every record here carries assessment_method="automated" with the
   method and policy_version that produced it - the shape
   acmg_pipeline.criteria.common.reviewed_or_automated() accepts for exactly this case - and
-  never a curator/reviewed_at. A curated record for the same gene wins on its own merits:
-  _resolve_mechanism() prefers a condition-specific record, and these are gene-level.
+  never a curator/reviewed_at. A reviewed assessment for the same gene and disease outranks
+  it: _resolve_mechanism() decides on the reviewed record and keeps this one as evidence.
+
+[Which disease the score was curated for]
+  ClinGen curates haploinsufficiency against a named disease and publishes its MONDO
+  identifier in the list, so the record carries it as `condition`. That is the scope of the
+  curation, not a claim about its strength - the two are separate, and PVS1 reads them
+  separately: `condition` decides which disease the record speaks about, and
+  assessment_method decides how much weight it carries.
+
+  A row with no disease identifier stays unscoped. The score still says something about the
+  gene, so the record is still emitted and still reaches a curator as evidence, but it
+  cannot settle a mechanism for a disease it does not name. In the September 2026 list that
+  is 3 of the 420 genes scored 3.
 
 [Why a score of 30 is unresolved rather than false]
   The haploinsufficiency score answers "does losing one copy cause disease", which is not
@@ -113,7 +125,7 @@ def parse(text):
 
 
 class ClinGenDosageProvider:
-    """Builds gene-level `gene_disease` evidence from the ClinGen dosage curation list."""
+    """Builds automated `gene_disease` evidence from the ClinGen dosage curation list."""
 
     name = "ClinGen Dosage Sensitivity Map"
 
@@ -122,7 +134,7 @@ class ClinGenDosageProvider:
         self.url = url
 
     def get_mechanism(self, variant, gene):
-        """One automated, gene-level record for `gene`, or none.
+        """One automated record for `gene`, or none.
 
         None covers three different situations, and PVS1 reports all of them as an
         unavailable mechanism: the gene is not in the list at all, its score is 30, or the
@@ -155,15 +167,17 @@ class ClinGenDosageProvider:
             "quality_status": "PASS",
             "gene": gene,
             "lof_mechanism_established": established,
+            # The disease this score was curated against. Absent when the list names none,
+            # which leaves the record unscoped rather than inventing a disease for it.
+            **({"condition": entry["disease_id"]} if entry["disease_id"] else {}),
             # Not a curated judgment, and every consumer can see that it is not.
             "assessment_method": "automated",
             "method": METHOD,
             "policy_version": release,
             "haploinsufficiency_score": entry["score"],
             "haploinsufficiency_description": entry["description"],
-            # Recorded as provenance, deliberately NOT as `condition`: a condition here
-            # would make _resolve_mechanism() treat this as a condition-specific
-            # assessment, which an automated gene-level signal is not.
+            # Kept under its own name as well, so a reader can see the condition came from
+            # the haploinsufficiency curation rather than from anywhere else.
             "haploinsufficiency_disease_id": entry["disease_id"],
             "gene_last_evaluated": entry["last_evaluated"],
             "clingen_gene_id": entry["gene_id"],

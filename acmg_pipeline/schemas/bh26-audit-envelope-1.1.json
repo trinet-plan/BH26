@@ -35,7 +35,6 @@
             "met", "not_met", "unknown"
           ]
         },
-        "summary": {"type": "string", "minLength": 1},
         "evidenceItemIds": {
           "type": "array",
           "items": {"type": "string", "format": "iri-reference"},
@@ -43,7 +42,7 @@
         },
         "provenance": {"type": "object"}
       },
-      "required": ["criterion", "status", "summary", "evidenceItemIds", "provenance"]
+      "required": ["criterion", "status", "evidenceItemIds", "provenance"]
     },
     "evidenceItem": {
       "type": "object",
