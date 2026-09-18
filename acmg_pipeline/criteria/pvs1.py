@@ -950,14 +950,55 @@ def _evaluate_input(input_data, services, config):
             review=[f"Decide whether the mechanism curated for {', '.join(diseases)} "
                     f"applies to {input_data['condition']!r}"])
     if mechanism_issue == "parent_child":
-        return _not_evaluated(
-            input_data, services, annotation, variant_type, state, confirmed_rna,
-            _node("D01", "disease_match", "MANUAL_REVIEW", "PARENT_CHILD", mechanism_records),
-            f"The available loss-of-function mechanism evidence is curated for a disease "
-            f"related to {input_data['condition']!r} in MONDO, but not for it",
-            "disease-specific loss-of-function mechanism",
-            evidence=mechanism_records,
-            review=["Decide whether the related disease's mechanism applies to this one"])
+        # A related (parent/child in MONDO) disease's mechanism is not the same
+        # question as this disease's, so this was withheld to MANUAL_REVIEW
+        # rather than applied. Per the user's explicit direction (2026-09-19):
+        # when every related record agrees the mechanism IS established, apply
+        # PVS1 on that basis - reproducing case 3 (a real ClinGen expert-panel
+        # curation of hereditary thrombocytopenia and hematologic cancer
+        # predisposition syndrome carries to RUNX1's specific thrombocytopenia
+        # phenotypes) - rather than staying UNKNOWN, but disclose the
+        # imprecise disease match via a curatorHint so a human curator can
+        # still veto it. A record that disagrees, or says False/unknown,
+        # keeps the previous conservative MANUAL_REVIEW behavior unchanged -
+        # this only replaces "unanimous but not exact" with "apply and flag,"
+        # never "some disagreement" with a guess.
+        established_values = {item.get("lof_mechanism_established") for item in mechanism_records}
+        if established_values != {True}:
+            return _not_evaluated(
+                input_data, services, annotation, variant_type, state, confirmed_rna,
+                _node("D01", "disease_match", "MANUAL_REVIEW", "PARENT_CHILD", mechanism_records),
+                f"The available loss-of-function mechanism evidence is curated for a disease "
+                f"related to {input_data['condition']!r} in MONDO, but not for it",
+                "disease-specific loss-of-function mechanism",
+                evidence=mechanism_records,
+                review=["Decide whether the related disease's mechanism applies to this one"])
+        state["pending_review"].append(
+            f"PVS1's disease mechanism gate applied a related (parent/child in MONDO) "
+            f"disease's loss-of-function mechanism - curated for "
+            f"{', '.join(sorted({str(item.get('condition')) for item in mechanism_records if item.get('condition')}))}, "
+            f"not {input_data['condition']!r} itself - because every source recording that "
+            f"related mechanism agrees it is established. Confirm the mechanism genuinely "
+            f"carries to this specific disease before relying on this MET result.")
+        context["mechanism_scope"] = "CONDITION_SPECIFIC"
+        context["condition_specific"] = True
+        state["trace"].append(_node(
+            "D01", "disease_match", "PASS", "PARENT_CHILD", mechanism_records))
+        state["evidence"].extend(mechanism_records)
+        state["trace"].append(_node(
+            "G01", "lof_mechanism_available", "PASS", True, mechanism_records))
+        state["trace"].append(_node(
+            "G02", "lof_mechanism_established", "PASS", True, mechanism_records))
+        state["trace"].append(_node(
+            "V01", "variant_type", "PASS", variant_type, [annotation],
+            "clingen_splicing_2023" if variant_type == "SPLICE_LOF_CONFIRMED" else "clingen_pvs1_2018"))
+        if variant_type in {"STOP_GAINED", "FRAMESHIFT"}:
+            return _truncating_path(input_data, services, annotation, state)
+        if variant_type in {"CANONICAL_SPLICE", "SPLICE_LOF_CONFIRMED"}:
+            return _splice_path(input_data, services, annotation, state, confirmed_rna)
+        if variant_type == "START_LOST":
+            return _start_loss_path(input_data, services, annotation, state)
+        raise AssertionError(f"Unhandled PVS1 variant type: {variant_type}")
     if mechanism_issue == "moi_mismatch":
         modes = sorted({str(item.get("inheritance")) for item in mechanism_records})
         raw = input_data.get("inheritance")

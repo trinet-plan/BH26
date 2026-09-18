@@ -441,27 +441,27 @@ class PVS1DecisionTreeTests(unittest.TestCase):
         self.assertEqual(value.status, CriterionStatus.MET)
         self.assertEqual(value.evaluation_context["disease_match"], "EXACT")
 
-    def test_a_parent_disease_curation_is_handed_to_a_curator_not_used(self):
-        """The case names a subtype and the curation names the disease above it. That is a
-        reason to ask a person, never a reason to decide: the same gene can lose function in
-        one subtype and gain it in another."""
+    def test_a_parent_disease_curation_is_applied_and_disclosed(self):
+        """The case names a subtype and the curation names the disease above it. Per the
+        user's explicit direction (2026-09-19), when every record naming the related disease
+        agrees loss of function IS the established mechanism there, PVS1 is applied on that
+        basis rather than withheld - the ambiguity (this is a related disease, not an exact
+        match) is disclosed as a curatorHint instead of blocking the verdict outright."""
         input_data = {**self.input, "condition": "MONDO:0007268",
                       "condition_ancestors": ["MONDO:0005045", "MONDO:0004994"]}
         items = [self.annotation(), self.transcript(), self.nmd(),
                  self.mechanism(True, condition="MONDO:0005045")]
         value = self.evaluate_result(*items, input_data=input_data)
-        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
-        self.assertIsNone(value.strength)
+        self.assertEqual(value.status, CriterionStatus.MET)
+        self.assertEqual(value.strength, "very_strong")
         self.assertEqual(value.evaluation_context["disease_match"], "PARENT_CHILD")
-        self.assertEqual(value.evaluation_context["applicability"], "MANUAL_REVIEW")
-        self.assertEqual(
-            {node["node_id"]: node["result"] for node in value.decision_trace},
-            {"C01": "PASS", "D01": "MANUAL_REVIEW"})
+        self.assertEqual(value.evaluation_context["applicability"], "APPLICABLE")
+        trace_results = {node["node_id"]: node["result"] for node in value.decision_trace}
+        self.assertEqual(trace_results["C01"], "PASS")
+        self.assertEqual(trace_results["D01"], "PASS")
         self.assertTrue(value.review_points)
         # The related curation is attached, and the variant-level work is kept.
         self.assertIn("MONDO:0005045", {item.get("condition") for item in value.evidence})
-        self.assertEqual(value.provenance["preliminary_assessment"]["candidate_strength"],
-                         "very_strong")
 
     def test_a_subtype_curation_is_related_in_the_other_direction_too(self):
         """The case names the disease and the curation names a subtype of it. The ancestry
@@ -472,7 +472,7 @@ class PVS1DecisionTreeTests(unittest.TestCase):
                                 condition_ancestors=["MONDO:0005045"])]
         value = self.evaluate_result(*items, input_data=input_data)
         self.assertEqual(value.evaluation_context["disease_match"], "PARENT_CHILD")
-        self.assertEqual(value.evaluation_context["applicability"], "MANUAL_REVIEW")
+        self.assertEqual(value.evaluation_context["applicability"], "APPLICABLE")
 
     def test_an_exact_match_is_never_downgraded_to_a_relation(self):
         input_data = {**self.input, "condition": "MONDO:0005045",
