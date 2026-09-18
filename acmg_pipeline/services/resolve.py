@@ -22,8 +22,9 @@ searches, the PM1 hotspot search), so that logic exists once.
   all five, and `acmg_pipeline.automated_va_spec.evidence_reference()` refuses to
   export an item without an IRI. Only a provider can supply those. In
   particular they cannot be read off the demo VCFs' INFO column: those
-  files carry identity/context (GENE/TRANSCRIPT/HGVSC/HGVSP/ZYGOSITY/
-  DISEASE_ASSOCIATION) plus already-decided answers (CLNSIG, ACMG_CODES)
+  files carry variant identity plus fields such as ZYGOSITY/DISEASE_ASSOCIATION,
+  but disease context is now accepted only from the clinical-note parser; they also carry
+  already-decided answers (CLNSIG, ACMG_CODES)
   and uncalibrated scores (AM_*/AG_*), but no population frequency and no
   source version for anything.
 
@@ -386,7 +387,7 @@ class ProviderEvidenceResolver:
         return {"identity": self._client, "external": self._external}
 
     def resolve(self, identity: dict, variant: Variant) -> ResolvedEvidence:
-        """`identity` is the VCF INFO view: GENE/TRANSCRIPT/HGVSC/CLNVARIATIONID/CONDITION."""
+        """Resolve variant identity plus the parser-owned CONDITION supplied by the caller."""
         resolved = ResolvedEvidence()
         annotation, predictions = self._annotate(identity, variant, resolved)
         if annotation is not None:

@@ -26,6 +26,14 @@ CONTEXT_FIELDS = (
     "ba1_exception_assessment",
 )
 
+# In the live API pipeline disease context has a different owner from the remaining
+# VariantRecord context: that boundary strips VCF disease fields and supplies these values
+# from the clinical-note parser. Retaining the fields here preserves the prepared-record/CLI
+# adapter, whose VariantRecord is constructed from structured JSON rather than raw VCF INFO.
+_DISEASE_CONTEXT_FIELDS = {
+    "condition", "condition_label", "condition_mapping", "condition_ancestors",
+}
+
 
 def _info_value(variant: VariantRecord, key: str, default=None):
     wanted = key.casefold()
@@ -82,6 +90,13 @@ def criterion_input(
         value = _info_value(variant, key)
         if value is not None:
             data[key] = value
+    if clinical_note.condition_id or clinical_note.diagnosis:
+        for key in _DISEASE_CONTEXT_FIELDS:
+            data.pop(key, None)
+    if clinical_note.condition_id:
+        data["condition"] = clinical_note.condition_id
+    if clinical_note.diagnosis:
+        data["condition_label"] = clinical_note.diagnosis
     if "inheritance" not in data and clinical_note.family.inheritance_pattern:
         data["inheritance"] = clinical_note.family.inheritance_pattern
     return data

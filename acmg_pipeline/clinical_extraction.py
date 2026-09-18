@@ -78,6 +78,8 @@ Return data that matches the ClinicalNoteExtraction schema exactly.
 
 Rules:
 - Do not invent or repair missing information.
+- Mapping an explicitly stated diagnosis to condition_id is ontology normalization and is
+  permitted; it must not add or change the patient's diagnosis.
 - Do not generate HPO IDs. Every hpo_id must be null.
 - Do not assign ACMG/AMP criteria or variant pathogenicity.
 - Do not infer inheritance pattern from the pedigree. Populate inheritance_pattern
@@ -116,6 +118,10 @@ Rules:
   ("hypertrophic cardiomyopathy") in that case, since the hedge is about certainty,
   not about which disease is being discussed. Use null only when no diagnosis or
   named condition is discussed at all.
+- condition_id is the MONDO identifier for diagnosis (for example "MONDO:0005045").
+  Resolve the extracted diagnosis to MONDO and return exactly one MONDO identifier.
+  Use null when there is no diagnosis or it cannot be resolved unambiguously. Never
+  return an OMIM, Orphanet, MedGen, ICD, or free-text value in condition_id.
 
 Return ONLY valid JSON. Do not wrap it in Markdown.
 """
@@ -183,7 +189,8 @@ Use exactly this JSON shape:
     "paternity_confirmed": null,
     "maternity_confirmed": null
   }},
-  "diagnosis": null
+  "diagnosis": null,
+  "condition_id": null
 }}
 
 Boolean semantics:

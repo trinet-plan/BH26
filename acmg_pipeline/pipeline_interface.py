@@ -34,12 +34,8 @@ class PipelineOutput:
     evidence_lines: dict[str, dict]
     # clinical_noteから抽出された自由文の診断名。VA-Spec Statementの
     # objectConditionに使う(acmg_pipeline/va_spec_statement.py参照)。
-    # PVS1のcandidate_conditionsもこれを読み、候補の並べ替えと照合表示に使う
-    # (疾患の確定には使わない - acmg_pipeline/criteria/pvs1.pyの
-    # _stated_diagnosis_match()参照)。
-    # extract_clinical_note()自体は実装済みだが、抽出プロンプトがdiagnosisを
-    # 要求していないため現状は常にNone。プロンプトがこのフィールドを返せば
-    # 経路はそのまま通る。
+    # 疾患特異的な判定には、同じ抽出結果のcondition_id (MONDO)を使う。
+    # どちらもVCF INFOやcurated-context由来ではない。
     diagnosis: Optional[str] = None
 
 def load_automated_config() -> dict:

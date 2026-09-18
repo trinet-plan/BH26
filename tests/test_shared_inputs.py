@@ -3,6 +3,7 @@ import unittest
 from importlib import import_module
 
 from acmg_pipeline.automated_core.models import CRITERIA
+from acmg_pipeline.automated_core.interface import criterion_input
 from acmg_pipeline.automated_engine import evaluate_record, make_services
 from acmg_pipeline.automated_va_spec import export_document
 from acmg_pipeline.clinical_note import ClinicalNoteExtraction
@@ -55,6 +56,28 @@ class SharedInputInterfaceTests(unittest.TestCase):
         }])
         self.assertEqual(document["validated_by"]["schema_version"], "1.0.1")
         self.assertEqual(len(document["records"][0]["criterion_assessments"]), len(CRITERIA))
+
+    def test_disease_context_comes_from_clinical_note_not_vcf_info(self):
+        self.variant.info.update({
+            "CONDITION": "MONDO:9999999",
+            "condition_label": "wrong VCF disease",
+            "DISEASE_ASSOCIATION": "also_wrong",
+        })
+        clinical_note = ClinicalNoteExtraction(
+            diagnosis="hypertrophic cardiomyopathy",
+            condition_id="MONDO:0005045",
+        )
+
+        data = criterion_input(self.variant, clinical_note)
+
+        self.assertEqual(data["condition"], "MONDO:0005045")
+        self.assertEqual(data["condition_label"], "hypertrophic cardiomyopathy")
+        self.assertNotIn("condition_mapping", data)
+        self.assertNotIn("condition_ancestors", data)
+
+    def test_condition_id_must_be_mondo(self):
+        with self.assertRaisesRegex(ValueError, "must be a MONDO identifier"):
+            ClinicalNoteExtraction(condition_id="OMIM:192600")
 
 
 if __name__ == "__main__":

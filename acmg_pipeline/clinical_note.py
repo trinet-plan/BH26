@@ -28,6 +28,7 @@ rather than guessed.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from typing import Optional
 
@@ -150,9 +151,16 @@ class ClinicalNoteExtraction:
     de_novo: DeNovo = field(default_factory=DeNovo)
     # 自由文の診断名(例: "hypertrophic cardiomyopathy")。VA-Spec Statementの
     # objectCondition(対象疾患)に使う - see z_tmp_va_spec_statement_decisions.md。
-    # コード体系(MedGen/OMIM等)への変換は行わず、この自由文をそのまま
-    # MappableConcept.name に載せる想定。
+    # 表示・文献検索には自由文を、疾患特異的な自動判定にはclinical-note
+    # parserが返したMONDO IDを使う。疾患情報はVariantRecord.infoに書き戻さない。
     diagnosis: Optional[str] = None
+    condition_id: Optional[str] = None
+
+    def __post_init__(self) -> None:
+        if self.condition_id is not None and not re.fullmatch(r"MONDO:\d+", self.condition_id):
+            raise ValueError(
+                "clinical-note condition_id must be a MONDO identifier such as MONDO:0005045"
+            )
 
     @staticmethod
     def from_json(data: dict) -> "ClinicalNoteExtraction":
@@ -161,6 +169,7 @@ class ClinicalNoteExtraction:
             family=Family.from_json(data.get("family") or {}),
             de_novo=DeNovo.from_json(data.get("de_novo") or {}),
             diagnosis=data.get("diagnosis"),
+            condition_id=data.get("condition_id"),
         )
 
 

@@ -31,7 +31,7 @@ acmg_pipeline/            判定パイプライン本体
   criteria/                  基準ごとの判定ロジック(PS3/BS3, PS4, PP1/BS4)
 
 acmg/                     移植した自動判定器(16基準)
-config/                   自動判定の閾値・疾患文脈
+config/                   自動判定の閾値・BA1例外・CLI互換用文脈
 tests/                    自動判定と統合インターフェースのpytest
 
 democase/                 デモ用の臨床ノート・VCF・正解データ
