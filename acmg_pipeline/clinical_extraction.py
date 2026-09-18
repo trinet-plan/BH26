@@ -105,6 +105,17 @@ Rules:
   person carries it, variant_status must be null, not false.
 - father_phenotype and mother_phenotype are concise source-grounded descriptions;
   use null if unavailable.
+- When the note describes a parent-related fact (e.g. age at death, cause of death) without
+  stating which parent it applies to, do not guess or assign it to a specific parent. Record
+  it as a family.relatives entry with relationship "parent (unspecified)" instead of "father"
+  or "mother".
+- diagnosis is the proband's overall clinical diagnosis / condition name, using the
+  note's own wording (e.g. "hypertrophic cardiomyopathy"), not an ACMG/variant
+  classification. Extract it whenever the note states one, including a hedged
+  impression such as "likely familial HCM" - still extract the named condition
+  ("hypertrophic cardiomyopathy") in that case, since the hedge is about certainty,
+  not about which disease is being discussed. Use null only when no diagnosis or
+  named condition is discussed at all.
 
 Return ONLY valid JSON. Do not wrap it in Markdown.
 """
@@ -171,7 +182,8 @@ Use exactly this JSON shape:
     "mother_phenotype": null,
     "paternity_confirmed": null,
     "maternity_confirmed": null
-  }}
+  }},
+  "diagnosis": null
 }}
 
 Boolean semantics:
