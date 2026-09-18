@@ -253,10 +253,17 @@ def assessment_details(result):
         )),
         "provenance": result.provenance,
     }
+    # No `strength`/`evidenceOutcome` keys: for a MET line these are exactly
+    # STRENGTHS[result.strength] and result.evidence_outcome, i.e. the same
+    # facts already on the standard top-level strengthOfEvidenceProvided/
+    # evidenceOutcome fields, just unwrapped from their MappableConcept shape
+    # - found alongside the `summary` duplication above, 2026-09-18. `direction`
+    # stays: for a NOT_MET line it is the real computed value (e.g. "none"),
+    # while the top-level directionOfEvidenceProvided is forced to "neutral"
+    # (VA-Spec's Direction enum has no fourth state) - genuinely extra
+    # information, not a restatement.
     optional = {
-        "strength": result.strength,
         "direction": result.direction,
-        "evidenceOutcome": result.evidence_outcome,
         "missingInputs": result.missing_inputs,
         "evaluationContext": result.evaluation_context,
         "decisionTrace": result.decision_trace,
