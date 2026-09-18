@@ -1,10 +1,18 @@
 {
   "schema_version": "1.0",
-  "registry_status": "DRAFT",
-  "purpose": "Per-gene ACMG criterion applicability transcribed from public ClinGen VCEP criteria specifications (CSpec). Entries are a curator-review queue and MUST NOT be read as runtime evidence until a provider is written for them and a curator records reviewed_at. In particular, 'PVS1: Applicable' is a VCEP statement about its own specification and is NOT the same sentence as gene-disease-review-decisions.json's lof_mechanism_established; see test_data/collect_cspec_applicability.py.",
+  "registry_status": "APPROVED",
+  "purpose": "Per-gene ACMG criterion applicability transcribed from public ClinGen VCEP criteria specifications (CSpec). ONLY the PVS1 column is read at runtime, by acmg_pipeline/providers/cspec_applicability.py, as the loss-of-function mechanism premise for PVS1's G01 gate. Every other column is reference for a curator: in particular PP2/BP1 applicability here means the VCEP struck the criterion out, which is a different axis from gene-disease-review-decisions.json's pp2_applicable/bp1_applicable, and carrying it over would change what those fields say. Records produced from this file stay assessment_method=automated and are outranked by a reviewed assessment for the same gene and disease.",
+  "pvs1_mapping_decision": {
+    "decision": "Read 'PVS1: Applicable' as lof_mechanism_established=true and 'Not applicable' as false.",
+    "decided_at": "2026-09-18",
+    "decided_by": "BH26 project curator",
+    "rationale": "A VCEP declaring PVS1 applicable has ruled on the premise that loss of function is a known mechanism for the gene, though it said so about the criterion rather than the mechanism. On the three genes where config/gene-disease-review-decisions.json and CSpec both have a disease-scoped answer the two agree 3/3: MYBPC3 true/Applicable, MYH7 false/Not applicable, TNNI3 false/Not applicable.",
+    "policy_version": "BH26-cspec-pvs1-applicability-v1",
+    "scope": "PVS1 only; no other criterion column is read at runtime."
+  },
   "source": "ClinGen Criteria Specification Registry (CSpec)",
   "source_url": "https://cspec.genome.network/cspec/api/svis",
-  "retrieved_at": "2026-09-18T12:16:02+00:00",
+  "retrieved_at": "2026-09-18T12:30:15+00:00",
   "entry_method": "machine_collected",
   "applicability_rule": "A criterion is Applicable when at least one of its evidenceStrengths is Applicable, and Not applicable when every strength says it is not. Verified against the registry's own per-criterion applicability on GN180 (DYSF): all 28 agree.",
   "not_verified_by_a_second_reader": true,

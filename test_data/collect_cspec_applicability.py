@@ -1,4 +1,4 @@
-"""Rebuild config/cspec_applicability_draft.json from the live ClinGen CSpec registry.
+"""Rebuild config/cspec_applicability.json from the live ClinGen CSpec registry.
 
 [Why this exists]
   PVS1 stops at G01 unless something states that loss of function is an established disease
@@ -64,7 +64,7 @@ from pathlib import Path
 from urllib.request import Request, urlopen
 
 ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_OUTPUT = ROOT / "config" / "cspec_applicability_draft.json"
+DEFAULT_OUTPUT = ROOT / "config" / "cspec_applicability.json"
 DEFAULT_CACHE = ROOT / "cache" / "cspec"
 
 SVIS_URL = "https://cspec.genome.network/cspec/api/svis"
@@ -211,15 +211,32 @@ def main() -> int:
     entries, stats = collect(args.cache_dir)
     document = {
         "schema_version": "1.0",
-        "registry_status": "DRAFT",
+        "registry_status": "APPROVED",
         "purpose": (
             "Per-gene ACMG criterion applicability transcribed from public ClinGen VCEP criteria "
-            "specifications (CSpec). Entries are a curator-review queue and MUST NOT be read as "
-            "runtime evidence until a provider is written for them and a curator records "
-            "reviewed_at. In particular, 'PVS1: Applicable' is a VCEP statement about its own "
-            "specification and is NOT the same sentence as gene-disease-review-decisions.json's "
-            "lof_mechanism_established; see test_data/collect_cspec_applicability.py."
+            "specifications (CSpec). ONLY the PVS1 column is read at runtime, by "
+            "acmg_pipeline/providers/cspec_applicability.py, as the loss-of-function mechanism "
+            "premise for PVS1's G01 gate. Every other column is reference for a curator: in "
+            "particular PP2/BP1 applicability here means the VCEP struck the criterion out, "
+            "which is a different axis from gene-disease-review-decisions.json's "
+            "pp2_applicable/bp1_applicable, and carrying it over would change what those "
+            "fields say. Records produced from this file stay assessment_method=automated and "
+            "are outranked by a reviewed assessment for the same gene and disease."
         ),
+        "pvs1_mapping_decision": {
+            "decision": ("Read 'PVS1: Applicable' as lof_mechanism_established=true and "
+                         "'Not applicable' as false."),
+            "decided_at": "2026-09-18",
+            "decided_by": "BH26 project curator",
+            "rationale": ("A VCEP declaring PVS1 applicable has ruled on the premise that loss "
+                          "of function is a known mechanism for the gene, though it said so "
+                          "about the criterion rather than the mechanism. On the three genes "
+                          "where config/gene-disease-review-decisions.json and CSpec both have "
+                          "a disease-scoped answer the two agree 3/3: MYBPC3 true/Applicable, "
+                          "MYH7 false/Not applicable, TNNI3 false/Not applicable."),
+            "policy_version": "BH26-cspec-pvs1-applicability-v1",
+            "scope": "PVS1 only; no other criterion column is read at runtime.",
+        },
         "source": "ClinGen Criteria Specification Registry (CSpec)",
         "source_url": SVIS_URL,
         "retrieved_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
