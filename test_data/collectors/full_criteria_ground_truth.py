@@ -110,7 +110,7 @@ from typing import Optional
 from acmg_pipeline.classification import ALL_ACMG_CODES, Strength
 from acmg_pipeline.gate import CriterionStatus
 
-_DATA_DIR = Path(__file__).resolve().parent
+_DATA_DIR = Path(__file__).resolve().parent.parent / "fetched_data"
 
 
 @dataclass(frozen=True)

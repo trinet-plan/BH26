@@ -4,7 +4,7 @@ test_data/resolve_erepo_transcripts.py
 One-time (re-runnable) data-preparation step for validating the 16
 automated Layer-1 criteria (acmg_pipeline.classification.AUTOMATED_CODES)
 against test_data/full_criteria_ground_truth.py's 64 ERepo/democase-derived
-variants - NOT just the 4 demo-data cases test_automated_criteria_ground_
+variants - NOT just the 4 democase cases test_automated_criteria_ground_
 truth.py already covers.
 
 [The problem this solves]
@@ -21,7 +21,7 @@ truth.py already covers.
   Tried first, via NCBI's MANE.GRCh38.v1.5.summary.txt (fetched fresh,
   https://ftp.ncbi.nlm.nih.gov/refseq/MANE/MANE_human/current/) - it does
   NOT always agree with the transcript ERepo's own curation actually used
-  (e.g. TNNT2: MANE Select is NM_001276345.2, but the demo-data VCF's own
+  (e.g. TNNT2: MANE Select is NM_001276345.2, but the democase VCF's own
   curated ACMG_CODES were asserted against NM_000364.4 - a real, known
   clinical-transcript-nomenclature discrepancy for this gene). Silently
   using MANE Select everywhere risks resolving several variants against
@@ -72,15 +72,15 @@ import time
 import urllib.request
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 import requests
 
-from test_data.full_criteria_ground_truth import unique_variants
+from test_data.collectors.full_criteria_ground_truth import unique_variants
 
-ROOT = Path(__file__).resolve().parent.parent
-MANE_CACHE = ROOT / "test_data" / "gene_transcripts_mane.json"
-OUTPUT_PATH = ROOT / "test_data" / "erepo_variant_transcripts.json"
+ROOT = Path(__file__).resolve().parent.parent.parent
+MANE_CACHE = ROOT / "test_data" / "fetched_data" / "gene_transcripts_mane.json"
+OUTPUT_PATH = ROOT / "test_data" / "fetched_data" / "erepo_variant_transcripts.json"
 MANE_URL = "https://ftp.ncbi.nlm.nih.gov/refseq/MANE/MANE_human/current/"
 
 

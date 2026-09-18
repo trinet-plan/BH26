@@ -52,7 +52,7 @@ from acmg_pipeline.classification import Strength
 from acmg_pipeline.clinical_note import ClinicalNoteExtraction
 from acmg_pipeline.gate import CriterionStatus
 from acmg_pipeline.vcf_record import VariantRecord
-from test_data.full_criteria_ground_truth import GroundTruthEntry, entries_for_criterion
+from test_data.collectors.full_criteria_ground_truth import GroundTruthEntry, entries_for_criterion
 
 JudgeFn = Callable[
     [VariantRecord, ClinicalNoteExtraction],

@@ -22,13 +22,13 @@ import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-from test_data.full_criteria_ground_truth import entries_for, unique_variants  # noqa: E402
+from test_data.collectors.full_criteria_ground_truth import entries_for, unique_variants  # noqa: E402
 
 API = "https://erepo.clinicalgenome.org/evrepo/api/classifications"
-OUT = ROOT / "test_data" / "pvs1_disease_contexts.json"
+OUT = ROOT / "test_data" / "fetched_data" / "pvs1_disease_contexts.json"
 USER_AGENT = "BH26-ACMG/0.1"
 _MONDO = re.compile(r"(MONDO[:_]\d+)")
 

@@ -13,7 +13,7 @@ from pathlib import Path
 
 import requests
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 API = "https://erepo.clinicalgenome.org/evrepo/api/classifications"
 GENES = ["PAH", "MYBPC3", "MYH7", "BRCA1", "BRCA2", "ATM", "PTEN", "CDH1", "RUNX1",
          "TP53", "LDLR", "GAA", "USH2A", "RPE65", "MYOC", "PALB2", "VHL", "DICER1",
@@ -102,7 +102,7 @@ def main():
         "genes_queried": GENES,
         "entries": entries,
     }
-    out = ROOT / "test_data" / "pvs1_erepo_cases.json"
+    out = ROOT / "test_data" / "fetched_data" / "pvs1_erepo_cases.json"
     out.write_text(json.dumps(document, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(f"\n{len(entries)} entries -> {out}")
 

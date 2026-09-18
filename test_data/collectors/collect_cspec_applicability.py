@@ -63,7 +63,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from urllib.request import Request, urlopen
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parent.parent.parent
 DEFAULT_OUTPUT = ROOT / "config" / "cspec_applicability.json"
 DEFAULT_CACHE = ROOT / "cache" / "cspec"
 
