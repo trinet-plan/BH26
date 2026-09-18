@@ -59,6 +59,7 @@ import asyncio
 import json
 import sys
 import tempfile
+from datetime import datetime
 from contextlib import AsyncExitStack
 from pathlib import Path
 
@@ -131,6 +132,11 @@ async def main() -> None:
     parser.add_argument("--limit", type=int, default=None, help="only process the first N variants (smoke test)")
     args = parser.parse_args()
 
+    # One timestamp for the whole run, prefixed onto every output filename so
+    # files from different runs sort together and never silently clobber an
+    # earlier run's output for the same variant.
+    run_ts = datetime.now().strftime("%Y%m%d%H%M%S")
+
     transcripts = json.loads(TRANSCRIPTS_PATH.read_text(encoding="utf-8"))
     variants = list(unique_variants())
     coords = _resolve_coordinates(variants, transcripts)
@@ -195,7 +201,7 @@ async def main() -> None:
                 continue
 
             safe = _safe_hgvsc(hgvsc)
-            (OUTPUT_DIR / f"{gene}_{safe}.json").write_text(
+            (OUTPUT_DIR / f"{run_ts}_{gene}_{safe}.json").write_text(
                 json.dumps(lines, indent=2, ensure_ascii=False), encoding="utf-8",
             )
 

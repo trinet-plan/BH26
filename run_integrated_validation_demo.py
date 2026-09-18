@@ -30,6 +30,7 @@ import json
 import sys
 import tempfile
 from contextlib import AsyncExitStack
+from datetime import datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -88,6 +89,11 @@ def _resolve_demo_coordinates() -> dict:
 
 
 async def main() -> None:
+    # One timestamp for the whole run, prefixed onto every output filename so
+    # files from different runs sort together and never silently clobber an
+    # earlier run's output for the same variant.
+    run_ts = datetime.now().strftime("%Y%m%d%H%M%S")
+
     coords = _resolve_demo_coordinates()
 
     automated_config = json.loads((ROOT / "config" / "demo-rules.json").read_text(encoding="utf-8"))
@@ -138,7 +144,7 @@ async def main() -> None:
             )
 
             safe = _safe_hgvsc(hgvsc)
-            (OUTPUT_DIR / f"{gene}_{safe}.json").write_text(
+            (OUTPUT_DIR / f"{run_ts}_{gene}_{safe}.json").write_text(
                 json.dumps(lines, indent=2, ensure_ascii=False), encoding="utf-8",
             )
 

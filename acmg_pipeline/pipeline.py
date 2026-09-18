@@ -1240,6 +1240,10 @@ async def connect_pubmed(stack: AsyncExitStack) -> ClientSession:
 
 
 async def main():
+    # One timestamp for the whole run, prefixed onto every output filename so
+    # files from different runs sort together and never silently clobber an
+    # earlier run's output for the same variant.
+    run_ts = datetime.now().strftime("%Y%m%d%H%M%S")
     async with AsyncExitStack() as stack:
         mcp = await connect_pubmed(stack)
         show(f"[MCP] Connected to PubMed")
@@ -1489,7 +1493,7 @@ async def main():
                 aggregated, gene=gene, hgvsc=hgvsc,
                 criterion=case["criterion"], vcep_name=case.get("vcep_name"),
             )
-            out_path = VA_SPEC_OUTPUT_DIR / f"{evidence_line['id'].replace('evline:', '')}.json"
+            out_path = VA_SPEC_OUTPUT_DIR / f"{run_ts}_{evidence_line['id'].replace('evline:', '')}.json"
             with out_path.open("w", encoding="utf-8") as f:
                 json.dump(evidence_line, f, ensure_ascii=False, indent=2)
             show(f"[VA-Spec] Wrote EvidenceLine -> {out_path}")
