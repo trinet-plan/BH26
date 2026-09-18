@@ -238,24 +238,19 @@ def evidence_catalog_item(item):
 def assessment_details(result):
     """Return the complete workflow explanation shared by all criterion outputs.
 
-    No `summary` key here: it would be a byte-for-byte copy of the standard
-    EvidenceLine's own top-level `description` (both come from
-    `result.summary`) - found 2026-09-18 as reader-visible duplication in
-    every scored/workflow line's JSON. `criterion` and `evidenceItemIds` also
-    duplicate standard fields (`specifiedBy.methodType`, `hasEvidenceItems`)
-    but stay regardless: export_record()/validate_envelope() below use this
-    exact dict, unkeyed by anything else, as one entry of
-    `criterion_assessments` - `criterion` says which code each entry is for,
-    and `evidenceItemIds` is what validate_envelope() cross-checks against
-    `referenced_evidence` for orphan references. Both real uses, not just
-    convenience copies - unlike `summary`, which nothing reads.
+    No `summary`/`criterion`/`evidenceItemIds` keys here: they would be
+    byte-for-byte copies of standard EvidenceLine fields already carrying
+    the same fact (`description`, `specifiedBy.methodType`, `hasEvidenceItems`
+    respectively). `criterion`/`evidenceItemIds` used to stay anyway because
+    export_record() folded this exact dict, unkeyed by anything else, into
+    `criterion_assessments` - but that was the audit layer leaning on this
+    function's output rather than a reason for the VA-Spec content itself to
+    carry them. export_record() now builds its own `{criterion,
+    evidenceItemIds, ...details}` wrapper instead (2026-09-18), so this
+    function is free to return only what has no standard-field equivalent.
     """
     value = {
-        "criterion": result.criterion,
         "status": result.status.value,
-        "evidenceItemIds": list(dict.fromkeys(
-            evidence_reference(item) for item in result.evidence
-        )),
         "provenance": result.provenance,
     }
     # No `strength`/`evidenceOutcome` keys: for a MET line these are exactly
@@ -339,7 +334,13 @@ def validate_envelope(document):
         line_ids = set()
         for wrapped in record["evidence_lines"]:
             criterion = wrapped["criterion"]
-            if criterion not in by_code or wrapped["assessment_details"] != by_code[criterion]:
+            # by_code[criterion] carries criterion/evidenceItemIds too (see
+            # export_record()) - wrapped["assessment_details"]/the embedded
+            # extension are the reduced VA-Spec content only, so the audit
+            # index fields are excluded before comparing.
+            audited = {k: v for k, v in by_code.get(criterion, {}).items()
+                       if k not in ("criterion", "evidenceItemIds")}
+            if criterion not in by_code or wrapped["assessment_details"] != audited:
                 raise ValueError("EvidenceLine assessment details disagree with criterion audit")
             line = wrapped["evidence_line"]
             if line["id"] in line_ids:
@@ -347,7 +348,7 @@ def validate_envelope(document):
             line_ids.add(line["id"])
             details = next((item["value"] for item in line.get("extensions", [])
                             if item.get("name") == "bh26AssessmentDetails"), None)
-            if details != by_code[criterion]:
+            if details != audited:
                 raise ValueError("EvidenceLine extension disagrees with criterion audit")
     return document
 
@@ -470,7 +471,17 @@ def export_record(record):
 
         value = CriterionResult(**result)
         details = assessment_details(value)
-        assessments.append(details)
+        # criterion/evidenceItemIds live here, not in `details` (see
+        # assessment_details()'s docstring) - this dict, not the VA-Spec
+        # content, is what needs to tell entries apart and cross-check
+        # references.
+        assessments.append({
+            "criterion": value.criterion,
+            "evidenceItemIds": list(dict.fromkeys(
+                evidence_reference(item) for item in value.evidence
+            )),
+            **details,
+        })
         for item in value.evidence:
             identifier = evidence_reference(item)
             if identifier in evidence and evidence[identifier] != item:

@@ -164,11 +164,15 @@ class VaSpecTests(unittest.TestCase):
         self.assertEqual(observations["AN"], 100000)
         self.assertEqual(len(evidence_hash), 64)
         self.assertEqual(wrapped["assessment_details"]["status"], "not_met")
-        self.assertEqual(wrapped["assessment_details"]["evidenceItemIds"], [identifier])
+        # evidenceItemIds lives only in the audit-index entry now, not in the
+        # embedded VA-Spec content (see automated_va_spec.assessment_details()'s
+        # docstring, 2026-09-18).
+        self.assertEqual(
+            record["criterion_assessments"][0]["evidenceItemIds"], [identifier])
         extension = wrapped["evidence_line"]["extensions"][0]
         self.assertEqual(extension["name"], "bh26AssessmentDetails")
         self.assertEqual(extension["value"]["status"], "not_met")
-        self.assertEqual(extension["value"]["evidenceItemIds"], [identifier])
+        self.assertNotIn("evidenceItemIds", extension["value"])
 
     def test_pvs1_assessment_details_keep_decision_trace(self):
         result = CriterionResult(
