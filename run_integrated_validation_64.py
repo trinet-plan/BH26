@@ -145,7 +145,19 @@ async def main() -> None:
 
     automated_config = json.loads((ROOT / "config" / "demo-rules.json").read_text(encoding="utf-8"))
     automated_config["evidence_cache_dir"] = str(EVIDENCE_CACHE_DIR)
-    automated_config["offline"] = True
+    # Live (2026-09-18), not offline: EVIDENCE_CACHE_DIR (cache/erepo_automated_
+    # evidence/) had never been warmed for most of these 64 variants - not just
+    # the providers wired up this session (ClinGen dosage/MANE/NMD/protein-
+    # region/splice-default/initiation/gene-disease-draft/clinvar-spectrum) but
+    # even the base Ensembl VEP annotation PVS1 needs first. With offline=True
+    # every one of those was a silent OFFLINE_CACHE_MISS, so nearly every
+    # automated criterion fell through to unknown/not_met regardless of the
+    # variant - a run that looked complete (58/64 compared, 13 matched) but
+    # never actually exercised the automated engine. A live run writes through
+    # to this same cache (CachedHttpClient), so a later run can go back to
+    # offline=True and still see this data - same convention run_integrated_
+    # validation_demo.py already uses for its own cache.
+    automated_config["offline"] = False
     automated_config["ensembl_release"] = "116"
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)

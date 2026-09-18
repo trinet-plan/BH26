@@ -471,10 +471,23 @@ def build_evidence_line(
     ]
 
     strength, outcome, strength_disclosure = _strength_blocks(direction, len(relevant_pmids))
-    hints_ext = _hints_extension(aggregated.aggregation_hints)
+    # A not_clear judgment is still reported as not_met, not unknown - PS3/BS3/
+    # PS4 always have real judgment logic (the LLM/PubMed literature workflow
+    # ran, it just couldn't reach a verdict from what it read), so this is the
+    # same "implemented but inconclusive" case export.build_automated_evidence_
+    # line() reframes the same way (see that function's note, 2026-09-18). A
+    # curatorHint discloses the real reason so "not met" isn't mistaken for a
+    # confident negative finding.
+    aggregation_hints = list(aggregated.aggregation_hints)
+    if is_not_clear(direction):
+        aggregation_hints.append(CuratorHint(
+            "caution",
+            f"{criterion} could not actually be evaluated from the available "
+            "literature (reported as not_met rather than left unknown).",
+        ))
+    hints_ext = _hints_extension(aggregation_hints)
     status = (
-        CriterionStatus.UNKNOWN.value if is_not_clear(direction)
-        else CriterionStatus.MET.value if direction.value == criterion
+        CriterionStatus.MET.value if direction.value == criterion
         else CriterionStatus.NOT_MET.value
     )
     # No `summary`/`criterion` keys: they would duplicate `description` below
@@ -668,17 +681,33 @@ def build_automated_evidence_line(result, variant: VariantRecord) -> dict:
         # evidenceOutcome) as before the merge.
         return validate_1_0_1(line, result.criterion)
 
+    # Only reachable with status == UNKNOWN (MET/NOT_MET already returned
+    # above) - always for an IMPLEMENTED criterion (a real evaluator module
+    # ran and could not reach a verdict from the data it had), never for a
+    # criterion with no judgment logic at all (build_stub_evidence_line()
+    # handles those separately and keeps their status "unknown" - per the
+    # user's explicit direction, 2026-09-18, only an ATTEMPTED-but-inconclusive
+    # evaluation is reframed this way). Reported as `not_met`, not `unknown`:
+    # directionOfEvidenceProvided was already "neutral" either way, so the
+    # only real change is which bucket classify() puts it in - and a curator
+    # hint discloses the real reason so "not met" here isn't mistaken for a
+    # confident negative finding.
     details = assessment_details(result)
     summary = result.summary or f"{result.criterion} was not scored ({status.value})."
     line = build_workflow_evidence_line(
         result.criterion,
         variant,
-        status=status.value,
+        status=CriterionStatus.NOT_MET.value,
         description=summary,
         details={key: value for key, value in details.items()
                  if key not in {"criterion", "status", "summary"}},
     )
-    curator_hints = _curator_hints_from_result(result)
+    curator_hints = _curator_hints_from_result(result) + [{
+        "severity": "caution", "category": "unevaluated",
+        "message": f"{result.criterion} could not actually be evaluated from "
+                   "the available data (reported as not_met rather than "
+                   "left unknown).",
+    }]
     if curator_hints:
         line.setdefault("extensions", []).append({
             "name": "curatorHints",
