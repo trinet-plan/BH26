@@ -103,4 +103,21 @@ assert r.pp4 is None
 assert r.segregation.pp1_points_raw == 1.0
 assert r.combined_positive_locus_points == 1.0
 
-print("5 passed, 0 failed")
+# 6) Two candidate variants on the allele: Table 2 footnote a AND Table 3
+#    footnote b both say to divide the allele's evidence by the number of
+#    variants - PP4 already did this (0.70/2=0.35 -> floors to 2.0 points on
+#    Table 2, down from 4.0 for a single variant); PP1's raw co-segregation
+#    count (1.0, from the sibling) stays the true undivided per-allele
+#    evidence, but the per-variant share actually used is halved to 0.5.
+r = evaluate_locus_evidence(
+    case([Relative("sister", affected_status=True, variant_status=True)]),
+    ref(),
+    method_comparable=True,
+    candidate_variants_on_allele=2,
+)
+assert r.pp4 is not None and r.pp4.points == 2.0
+assert r.segregation.pp1_points_raw == 1.0
+assert r.segregation.pp1_points_used == 0.5
+assert r.combined_positive_locus_points == 2.5
+
+print("6 passed, 0 failed")

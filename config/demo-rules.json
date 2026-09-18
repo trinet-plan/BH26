@@ -1,6 +1,21 @@
 {
-  "population_providers": [
-    "gnomAD"
+  "curated_context_path": "config/curated-context.json",
+  "ensembl_release": "116",
+  "with_clinvar_spectrum": true,
+  "with_clingen_dosage": true,
+  "with_pvs1_transcript_gates": true,
+  "with_gene2phenotype": true,
+  "with_disease_matching": true,
+  "with_gene_disease_associations": true,
+  "population_sources": [
+    {
+      "provider": "togovar",
+      "api_version": "0.9.1",
+      "frequency_sources": [
+        "gnomad",
+        "tommo"
+      ]
+    }
   ],
   "PM2": {
     "minimum_an": 2000,
@@ -27,18 +42,24 @@
     "default_source": "BH26 provisional default BS1 threshold for rare Mendelian disease (PLACEHOLDER - not a reviewed clinical value; a real threshold is per-disease, e.g. the ClinGen Inherited Cardiomyopathy VCEP applies 0.0002 for MYH7)",
     "default_source_version": "2026-09-17-provisional-2",
     "default_frequency_statistic": "faf95",
-    "default_comparison": ">"
+    "default_comparison": ">",
+    "default_derivation": {
+      "method": "Maximum credible allele frequency (Whiffin et al. 2017), https://pubmed.ncbi.nlm.nih.gov/28518168/",
+      "prevalence": null,
+      "inheritance": null,
+      "penetrance": null,
+      "max_genetic_contribution": null,
+      "max_allelic_contribution": null,
+      "target_population": null,
+      "source_url": "https://clinicalgenome.org/site/assets/files/5182/pm2_-_svi_recommendation_-_approved_sept2020.pdf"
+    },
+    "default_derivation_note": "The nulls are not blanks to be filled in by the pipeline. Each is an input only a curator can supply for a particular disease, and the criterion reports them as derivation_inputs_missing so the gap is visible in the result rather than assumed away. Until they are supplied and the threshold is reviewed, default_policy_status stays DRAFT and BS1 cannot reach MET on this threshold - see doc/external_data_coverage_ja.md, 2026-09-17."
   },
   "PVS1": {
     "ruleset": {
       "name": "clingen_general_pvs1",
       "version": "2018+2023-splicing",
       "sources": [
-        {
-          "id": "acmg_amp_2015",
-          "doi": "10.1038/gim.2015.30",
-          "pmid": "25741868"
-        },
         {
           "id": "clingen_pvs1_2018",
           "doi": "10.1002/humu.23626",
@@ -52,13 +73,19 @@
       ]
     },
     "rules": {
-      "protein_loss_threshold": 0.1
+      "protein_loss_threshold": 0.1,
+      "mechanism_source_precedence": [
+        "gene2phenotype_molecular_mechanism",
+        "clingen_dosage_haploinsufficiency"
+      ]
     },
     "implementation": {
-      "condition_required": false,
-      "missing_condition_behavior": "use_gene_level_context",
+      "condition_required": true,
+      "missing_condition_behavior": "not_evaluated_with_preliminary_assessment",
       "cnv_sv_supported": false
-    }
+    },
+    "splice_default_policy_version": "splice-default-v1",
+    "with_initiation_assessment": true
   },
   "PM1": {
     "hotspot": {
@@ -69,6 +96,16 @@
       "policy_source": "BH26 demo PM1 hotspot proxy policy (fastVEP-style ClinVar missense density); not a ClinGen VCEP specification",
       "policy_version": "PM1-hotspot-v1"
     }
+  },
+  "gene_disease_draft": {
+    "policy_version": "gene-disease-draft-v1",
+    "policy_source": "BH26 provisional PP2/BP1/PVS1 gene-disease mechanism suggestion policy (from ClinGen Gene-Disease Validity + gnomAD gene constraint); not a ClinGen VCEP specification. Thresholds are the commonly cited ExAC/gnomAD constraint cutoffs (Lek et al. 2016; Karczewski et al. 2020), not a formal per-gene review - see acmg_pipeline.criteria.mechanism's evaluate_mechanism() for how the suggestion is flagged in curatorHints rather than treated as a reviewed record.",
+    "pp2_min_mis_z": 3.09,
+    "bp1_min_p_li": 0.9,
+    "bp1_max_mis_z": 3.09,
+    "bp1_max_pathogenic_missense": 5,
+    "pvs1_min_p_li": 0.9,
+    "pvs1_max_loeuf": 0.35
   },
   "computational": {
     "calibrations": {

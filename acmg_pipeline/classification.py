@@ -51,6 +51,7 @@ from acmg_pipeline.constants import (
     AUTOMATED_CODES,
     IMPLEMENTED_CODES,
     LITERATURE_CODES,
+    PHENOTYPE_SEGREGATION_CODES,
     PATHOGENIC_CODES,
     BENIGN_CODES,
     CriterionStatus,
@@ -129,6 +130,30 @@ class ClassificationResult:
     not_met: list[CriterionEvidence] = field(default_factory=list)
     not_evaluated_codes: list[str] = field(default_factory=list)
     ba1_override: bool = False  # True if classified Benign via the BA1 stand-alone rule, not the point score
+
+
+def _evidence_to_dict(evidence: CriterionEvidence) -> dict:
+    return {
+        "code": evidence.code,
+        "status": evidence.status.value,
+        "strength": evidence.strength.value if evidence.strength else None,
+        "source": evidence.source,
+    }
+
+
+def classification_to_dict(result: ClassificationResult) -> dict:
+    """JSON-ready form of a ClassificationResult - for saving one alongside
+    the 28 EvidenceLines it was computed from, so a va_spec output file is
+    self-contained (the overall category, not just the per-criterion
+    inputs)."""
+    return {
+        "category": result.category.value,
+        "score": result.score,
+        "ba1_override": result.ba1_override,
+        "met": [_evidence_to_dict(e) for e in result.met],
+        "not_met": [_evidence_to_dict(e) for e in result.not_met],
+        "not_evaluated_codes": result.not_evaluated_codes,
+    }
 
 
 # ============================================================================

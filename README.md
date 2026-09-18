@@ -10,6 +10,9 @@ NOT_EVALUATEDとして保持し、1変異につき全28基準のVA-Spec Evidence
 
 外部データの現在の取得経路、未対応・review待ちの情報、TogoVarへ置換する場合の
 境界は [`doc/external_data_coverage_ja.md`](doc/external_data_coverage_ja.md) に分けて整理しています。
+変異単体の集団頻度はTogoVar GRCh38 APIを取得口とします。利用するデータソースは
+`config/demo-rules.json` の `population_sources` でプロバイダーとその内部ソースを選択します。
+現在はTogoVar内の `gnomad` と `tommo`（gnomAD exomes/genomesとToMMo）だけを利用します。
 公開済みClinGen/VCEP仕様から転記したBS1のレビュー用DRAFTは
 [`config/bs1_thresholds_draft.json`](config/bs1_thresholds_draft.json) にあります。DRAFTは実行時の閾値ではありません。
 
@@ -161,6 +164,31 @@ def judge(
 `HGVSP`、`EQUIVALENTS` から読みます。文献だけを評価し患者情報を使わない
 criterionでも、呼び出し境界を揃えるため空の `ClinicalNoteExtraction()` を
 渡してください。出力は従来どおり GA4GH VA-Spec `EvidenceLine` です。
+
+## PVS1が判定に至らない場合の出力
+
+PVS1は、決定木が判定に到達していても**疾患特異的なLoF機序が確認できていない**
+場合は `met` を返しません。strength・direction・evidenceOutcome はいずれも
+付かず、VA-Spec上は他の結論の出なかったcriterionと同じ
+`not_met` + curator hint として報告されます。
+
+**`status` だけで「適用されたか」が分かります。** 他のcriterionと同じ読み方で、
+consumer 側で追加のフィールドを確認する必要はありません。
+
+### 捨てていない情報
+
+判定に至らなくても、variant側の評価結果は `bh26AssessmentDetails` に残ります。
+
+| 場所 | 内容 |
+|---|---|
+| `provenance.preliminary_assessment` | 決定木がどのノードまで到達したか、疾患機序が確認できれば何になるか(`candidate_strength`) |
+| `provenance.candidate_conditions` | 疾患未指定時の候補疾患(病名・機序・遺伝形式付き) |
+| `missingInputs` | 何が足りないか |
+| `curatorHints` | 人が何を判断すればよいか |
+
+`candidate_strength` は criterion の `strength` には**なりません**。
+「疾患機序が確認できればこうなる」という仮定の結論であって、確認された
+という主張ではないためです。VA-Spec にも `PVS1 supports` としては出ません。
 
 ## APIサーバーの起動
 

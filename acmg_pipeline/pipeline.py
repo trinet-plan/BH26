@@ -71,18 +71,21 @@ from acmg_pipeline.classification import (
     AUTOMATED_CODES,
     IMPLEMENTED_CODES,
     LITERATURE_CODES,
+    PHENOTYPE_SEGREGATION_CODES,
     ClassificationResult,
     classify,
     from_aggregated_judgment,
 )
 from acmg_pipeline.criteria import stubs
+from acmg_pipeline.criteria import pp1_bs4_pp4_engine
 from acmg_pipeline.api_input import ApiCaseInput
 from acmg_pipeline.clinical_note import ClinicalNoteExtraction
 from acmg_pipeline.inputs import empty_clinical_note
 from acmg_pipeline.vcf_record import VariantRecord
+from acmg_pipeline.automated_core.identity import reconcile
 from acmg_pipeline.automated_core.models import CRITERIA as AUTOMATED_CRITERIA
 from acmg_pipeline.automated_core.models import Variant as AutomatedVariant
-from acmg_pipeline.services.resolve import ProviderEvidenceResolver
+from acmg_pipeline.services.resolve import PROVIDER_ERRORS, ProviderEvidenceResolver
 from acmg_pipeline.automated_engine import evaluate_record as evaluate_automated_record, make_services
 
 VA_SPEC_OUTPUT_DIR = Path("va_spec_output")
@@ -804,7 +807,7 @@ async def judge_variant_from_shared_input(
     return results
 
 
-_IDENTITY_INFO_KEYS = ("GENE", "TRANSCRIPT", "HGVSC", "HGVSP", "CLNVARIATIONID")
+_IDENTITY_INFO_KEYS = ("GENE", "TRANSCRIPT", "HGVSC", "HGVSP", "CLNVARIATIONID", "CONDITION")
 
 
 def _identity_from_info(variant: VariantRecord) -> dict:
@@ -813,6 +816,11 @@ def _identity_from_info(variant: VariantRecord) -> dict:
     Deliberately an allowlist, not the whole INFO dict: CLNSIG and
     ACMG_CODES sit in the same column and are conclusions, not lookup
     keys - nothing downstream should be able to reach them by accident.
+    CONDITION (a MONDO ID) is included so the resolver's optional
+    gene-disease-draft step (ClinGen Gene-Disease Validity + gnomAD
+    constraint, see services/resolve.py's _add_gene_disease_draft()) can
+    tell which of a gene's several curated diseases applies - it is
+    identity/context the same way GENE/TRANSCRIPT are, not a conclusion.
     """
     wanted = {key.casefold(): key for key in _IDENTITY_INFO_KEYS}
     identity = {}
@@ -821,6 +829,124 @@ def _identity_from_info(variant: VariantRecord) -> dict:
         if key is not None and value not in (None, ""):
             identity[key] = str(value)
     return identity
+
+
+_curated_context_cache: dict[str, dict] = {}
+
+
+def _apply_curated_context(variant: VariantRecord, automated_config: dict) -> None:
+    """Merges config/curated-context.json's BA1 exception check (and any per-variant
+    condition/disease-threshold override it records) into `variant.info`, in place.
+
+    Opt-in via automated_config["curated_context_path"] (unset by default, so existing
+    callers are unaffected). Before this, InitiationProvider/UpstreamPathogenicProvider's
+    fix pattern repeated: acmg_pipeline.automated_core.context's load_context()/
+    apply_context() already resolve the BA1 exception list precisely for every variant
+    (not just the ones it lists - "complete": true means absence from it is itself
+    resolved as is_exception=False), but only automated_cli.py's separate batch path ever
+    called them - a live BA1 evaluation through this module always saw
+    ba1_exception_assessment as absent, regardless of what curated-context.json already
+    had recorded. See acmg_pipeline.automated_core.context's own docstring for why this
+    lives in a separate versioned document rather than being read off VCF INFO directly.
+    """
+    path = automated_config.get("curated_context_path")
+    if not path:
+        return
+    if path not in _curated_context_cache:
+        from acmg_pipeline.automated_core.context import load_context
+        document = json.loads(Path(path).read_text(encoding="utf-8"))
+        _curated_context_cache[path] = load_context(document)
+    from acmg_pipeline.automated_core.context import apply_context
+    record = {
+        "variant": {"assembly": "GRCh38", "chrom": variant.chrom, "pos": variant.pos,
+                    "ref": variant.ref, "alt": variant.alt},
+        "record_id": variant.id,
+    }
+    updated = apply_context(record, _curated_context_cache[path])
+    for key in ("condition", "condition_label", "inheritance",
+                "disease_frequency_threshold", "ba1_exception_assessment"):
+        if key in updated:
+            variant.info[key] = updated[key]
+
+
+# What a request carries about which variant it means, in the shape reconcile() audits.
+_IDENTITY_KEYS = ("TRANSCRIPT", "HGVSC", "CLNVARIATIONID")
+
+
+def _resolve_identity(variant: VariantRecord, resolver) -> list[str]:
+    """Settle which variant a request means, and say so, before anything is evaluated.
+
+    A request names a variant twice: as coordinates, and as a transcript HGVS or a ClinVar
+    accession. Those can disagree, and one of them can be missing - the project's own demo
+    request bodies leave ALT as "." and put the identity in TRANSCRIPT/HGVSC, which nothing
+    on this path was resolving, so evaluation stopped before it began.
+
+    acmg_pipeline.automated_core.identity.reconcile() is what settles it, and it is an audit
+    rather than a lookup: a candidate has to match the identifiers this request supplied,
+    version included, and carry its own provenance, and a coordinate the request got wrong is
+    corrected only on corroborated evidence. It already backs the batch command; this is the
+    same function, on the same Ensembl provider the evidence comes from.
+
+    Evaluation continues either way. An unresolved identity is reported, not raised: the
+    criteria will see whatever coordinates the request gave and answer from those, and a
+    caller that cannot tell a verified variant from an unverified one is worse off than one
+    holding an answer it has been told to check. The issues are returned for the caller to
+    surface, and the status travels on the variant.
+    """
+    record = {
+        "record_id": variant.id,
+        "raw_variant": {"assembly": "GRCh38", "chrom": variant.chrom, "pos": variant.pos,
+                        "ref": variant.ref, "alt": variant.alt},
+        "parsed_variant": None,
+        "identity": {key: value for key, value in variant.info.items()
+                     if key.upper() in _IDENTITY_KEYS},
+        "issues": [],
+    }
+    try:
+        record["parsed_variant"] = AutomatedVariant(
+            assembly="GRCh38", chrom=variant.chrom, pos=int(variant.pos),
+            ref=variant.ref, alt=variant.alt).to_dict()
+    except (ValueError, TypeError):
+        # ALT "." and the like: nothing to compare a candidate against, which is exactly the
+        # case reconcile() reports as CORRECTED rather than VERIFIED.
+        pass
+    provider = getattr(resolver, "identity_provider", None)
+    if provider is None:
+        # A caller that injected its own resolver supplied the evidence itself and has said,
+        # by doing so, which variant it is about. There is nothing independent to audit
+        # against, so the request's own coordinates stand.
+        return
+    try:
+        candidate, _annotation, _predictions = provider.map_record_with_evidence(record)
+        candidates = [candidate]
+    except PROVIDER_ERRORS as exc:
+        record["issues"].append(f"IDENTITY_PROVIDER_ERROR: {exc}")
+        candidates = []
+    outcome = reconcile(record, candidates, provider.reference)
+    variant.info["identity_status"] = outcome["identity_status"]
+    resolution = outcome.get("resolution")
+    if resolution:
+        settled = resolution["variant"]
+        variant.chrom, variant.pos = settled["chrom"], settled["pos"]
+        variant.ref, variant.alt = settled["ref"], settled["alt"]
+        variant.info["identity_provenance"] = resolution["evidence"]
+    if outcome["issues"]:
+        variant.info["identity_issues"] = list(outcome["issues"])
+
+
+def _apply_condition_mapping(variant: VariantRecord, resolver) -> None:
+    """Record how the case's condition resolves to MONDO, beside the identifier it came in as.
+
+    PVS1's disease gate compares identifiers, so a case recorded in OMIM never matches a
+    curation recorded in MONDO. The mapping travels as `condition_mapping` in variant.info -
+    which is how criteria read case context on this path - and the original identifier stays
+    exactly as it arrived.
+    """
+    condition = next(
+        (value for name, value in variant.info.items() if name.casefold() == "condition"), None)
+    mapping = getattr(resolver, "normalize_condition", lambda _condition: None)(condition)
+    if mapping:
+        variant.info["condition_mapping"] = mapping
 
 
 def _automated_variant(variant: VariantRecord) -> AutomatedVariant:
@@ -874,11 +1000,31 @@ async def evaluate_variant_evidence_lines(
         automated_config.get("evidence_cache_dir", "cache/evidence"),
         offline=bool(automated_config.get("offline")),
         ensembl_release=automated_config.get("ensembl_release"),
+        population_sources=automated_config.get("population_sources"),
+        hotspot_policy=automated_config.get("PM1", {}).get("hotspot"),
+        with_clingen_dosage=bool(automated_config.get("with_clingen_dosage")),
+        with_pvs1_transcript_gates=bool(automated_config.get("with_pvs1_transcript_gates")),
+        with_gene_disease_draft=bool(automated_config.get("gene_disease_draft")),
+        gene_disease_draft_policy=automated_config.get("gene_disease_draft"),
+        with_clinvar_spectrum=bool(automated_config.get("with_clinvar_spectrum")),
+        with_splice_default=bool(automated_config.get("PVS1", {}).get("splice_default_policy_version")),
+        splice_default_policy_version=automated_config.get("PVS1", {}).get("splice_default_policy_version"),
+        with_initiation_assessment=bool(automated_config.get("PVS1", {}).get("with_initiation_assessment")),
+        with_gene2phenotype=bool(automated_config.get("with_gene2phenotype")),
+        with_disease_matching=bool(automated_config.get("with_disease_matching")),
+        with_gene_disease_associations=bool(
+            automated_config.get("with_gene_disease_associations")),
     )
+    # Identity first: the curated context is looked up by the variant's own key, and a
+    # request that named its variant only as a transcript HGVS has no key until this runs.
+    _resolve_identity(variant, resolver)
+    _apply_curated_context(variant, automated_config)
+    _apply_condition_mapping(variant, resolver)
     resolved = resolver.resolve(_identity_from_info(variant), _automated_variant(variant))
     services = make_services(
         resolved.records,
         automated_config.get("population_providers"),
+        failures=resolved.failures,
     )
     automated_results = evaluate_automated_record(
         variant,
@@ -934,6 +1080,12 @@ async def evaluate_variant_evidence_lines(
                 variant=variant,
             )
 
+    phenotype_segregation_results = await pp1_bs4_pp4_engine.evaluate(variant, clinical_note, automated_config)
+    for code in PHENOTYPE_SEGREGATION_CODES:
+        by_code[code] = pp1_bs4_pp4_engine.build_evidence_line(
+            code, phenotype_segregation_results[code], variant,
+        )
+
     for code in ALL_ACMG_CODES:
         if code not in IMPLEMENTED_CODES:
             by_code[code] = build_stub_evidence_line(code, variant)
@@ -983,6 +1135,9 @@ async def evaluate_selected_criteria(
     requested = set(criteria)
     automated_subset = tuple(code for code in ALL_ACMG_CODES if code in requested and code in AUTOMATED_CODES)
     literature_subset = tuple(code for code in ALL_ACMG_CODES if code in requested and code in LITERATURE_CODES)
+    phenotype_segregation_subset = tuple(
+        code for code in ALL_ACMG_CODES if code in requested and code in PHENOTYPE_SEGREGATION_CODES
+    )
     stub_subset = [code for code in criteria if code not in IMPLEMENTED_CODES]
 
     if literature_subset and (mcp is None or erepo_client is None):
@@ -998,9 +1153,28 @@ async def evaluate_selected_criteria(
             automated_config.get("evidence_cache_dir", "cache/evidence"),
             offline=bool(automated_config.get("offline")),
             ensembl_release=automated_config.get("ensembl_release"),
+            population_sources=automated_config.get("population_sources"),
+            hotspot_policy=automated_config.get("PM1", {}).get("hotspot"),
+            with_clingen_dosage=bool(automated_config.get("with_clingen_dosage")),
+            with_pvs1_transcript_gates=bool(automated_config.get("with_pvs1_transcript_gates")),
+            with_gene_disease_draft=bool(automated_config.get("gene_disease_draft")),
+            gene_disease_draft_policy=automated_config.get("gene_disease_draft"),
+            with_clinvar_spectrum=bool(automated_config.get("with_clinvar_spectrum")),
+            with_splice_default=bool(automated_config.get("PVS1", {}).get("splice_default_policy_version")),
+            splice_default_policy_version=automated_config.get("PVS1", {}).get("splice_default_policy_version"),
+            with_initiation_assessment=bool(automated_config.get("PVS1", {}).get("with_initiation_assessment")),
+            with_gene2phenotype=bool(automated_config.get("with_gene2phenotype")),
+            with_disease_matching=bool(automated_config.get("with_disease_matching")),
+            with_gene_disease_associations=bool(
+                automated_config.get("with_gene_disease_associations")),
         )
+        # Identity first - see evaluate_variant_evidence_lines() for why.
+        _resolve_identity(variant, resolver)
+        _apply_curated_context(variant, automated_config)
+        _apply_condition_mapping(variant, resolver)
         resolved = resolver.resolve(_identity_from_info(variant), _automated_variant(variant))
-        services = make_services(resolved.records, automated_config.get("population_providers"))
+        services = make_services(resolved.records, automated_config.get("population_providers"),
+                                 failures=resolved.failures)
         automated_results = evaluate_automated_record(
             variant, clinical_note, services, automated_config, criteria=automated_subset,
         )
@@ -1035,6 +1209,13 @@ async def evaluate_selected_criteria(
                 by_code[code] = build_evidence_line(
                     aggregated, gene, hgvsc, code, vcep_name=vcep_name, variant=variant,
                 )
+
+    if phenotype_segregation_subset:
+        phenotype_segregation_results = await pp1_bs4_pp4_engine.evaluate(variant, clinical_note, automated_config)
+        for code in phenotype_segregation_subset:
+            by_code[code] = pp1_bs4_pp4_engine.build_evidence_line(
+                code, phenotype_segregation_results[code], variant,
+            )
 
     for code in stub_subset:
         by_code[code] = build_stub_evidence_line(code, variant)
@@ -1153,6 +1334,10 @@ async def connect_pubmed(stack: AsyncExitStack) -> ClientSession:
 
 
 async def main():
+    # One timestamp for the whole run, prefixed onto every output filename so
+    # files from different runs sort together and never silently clobber an
+    # earlier run's output for the same variant.
+    run_ts = datetime.now().strftime("%Y%m%d%H%M%S")
     async with AsyncExitStack() as stack:
         mcp = await connect_pubmed(stack)
         show(f"[MCP] Connected to PubMed")
@@ -1402,7 +1587,7 @@ async def main():
                 aggregated, gene=gene, hgvsc=hgvsc,
                 criterion=case["criterion"], vcep_name=case.get("vcep_name"),
             )
-            out_path = VA_SPEC_OUTPUT_DIR / f"{evidence_line['id'].replace('evline:', '')}.json"
+            out_path = VA_SPEC_OUTPUT_DIR / f"{run_ts}_{evidence_line['id'].replace('evline:', '')}.json"
             with out_path.open("w", encoding="utf-8") as f:
                 json.dump(evidence_line, f, ensure_ascii=False, indent=2)
             show(f"[VA-Spec] Wrote EvidenceLine -> {out_path}")

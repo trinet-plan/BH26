@@ -34,7 +34,12 @@ class PipelineOutput:
     evidence_lines: dict[str, dict]
     # clinical_noteから抽出された自由文の診断名。VA-Spec Statementの
     # objectConditionに使う(acmg_pipeline/va_spec_statement.py参照)。
-    # extract_clinical_note()が未実装のため現状は常にNone。
+    # PVS1のcandidate_conditionsもこれを読み、候補の並べ替えと照合表示に使う
+    # (疾患の確定には使わない - acmg_pipeline/criteria/pvs1.pyの
+    # _stated_diagnosis_match()参照)。
+    # extract_clinical_note()自体は実装済みだが、抽出プロンプトがdiagnosisを
+    # 要求していないため現状は常にNone。プロンプトがこのフィールドを返せば
+    # 経路はそのまま通る。
     diagnosis: Optional[str] = None
 
 def load_automated_config() -> dict:
@@ -44,10 +49,32 @@ def load_automated_config() -> dict:
 
 
 def _assessment(line: dict) -> dict:
+    """`status` (met/not_met/unknown) is its own top-level extension now, not
+    grouped under one bh26AssessmentDetails object (2026-09-18, per the
+    user's direction) - see acmg_pipeline.automated_va_spec.
+    details_as_extensions(). This function's only caller only ever reads
+    `status`, so it looks for that one extension directly."""
     for extension in line.get("extensions", []):
-        if extension.get("name") == "bh26AssessmentDetails":
-            return extension.get("value") or {}
+        if extension.get("name") == "status":
+            return {"status": extension.get("value")}
     return {}
+
+
+# The inverse of acmg_pipeline.automated_va_spec.STRENGTHS (this project's internal
+# Strength enum -> GA4GH's own ACMG coding string, e.g. "very_strong" -> "very strong",
+# "stand_alone" -> "standalone"). Written out explicitly rather than inverting that dict:
+# STRENGTHS has two internal keys ("stand_alone" and "standalone") mapping to the same
+# GA4GH string, so a naive {v: k for k, v in STRENGTHS.items()} silently picks whichever
+# entry iterates last - found 2026-09-17 when a real PVS1 "very strong" line (the GA4GH
+# space-separated form) reached Strength("very strong") directly and raised ValueError,
+# since acmg_pipeline.classification.Strength.VERY_STRONG's own value is "very_strong".
+_STRENGTH_FROM_GA4GH_CODE = {
+    "standalone": Strength.STAND_ALONE,
+    "very strong": Strength.VERY_STRONG,
+    "strong": Strength.STRONG,
+    "moderate": Strength.MODERATE,
+    "supporting": Strength.SUPPORTING,
+}
 
 
 def _evidence_from_line(code: str, line: dict) -> CriterionEvidence:
@@ -55,8 +82,11 @@ def _evidence_from_line(code: str, line: dict) -> CriterionEvidence:
     status = CriterionStatus(details.get("status", CriterionStatus.UNKNOWN.value))
     if status != CriterionStatus.MET:
         return CriterionEvidence(code=code, status=status, source="integrated_pipeline")
-    strength = line.get("strengthOfEvidenceProvided", {}).get("primaryCoding", {}).get("code")
-    return CriterionEvidence(code=code, status=status, strength=Strength(strength), source="integrated_pipeline")
+    ga4gh_code = line.get("strengthOfEvidenceProvided", {}).get("primaryCoding", {}).get("code")
+    strength = _STRENGTH_FROM_GA4GH_CODE.get(ga4gh_code)
+    if strength is None:
+        raise ValueError(f"Unrecognized GA4GH ACMG strength code for {code}: {ga4gh_code!r}")
+    return CriterionEvidence(code=code, status=status, strength=strength, source="integrated_pipeline")
 
 
 async def run_pipeline(

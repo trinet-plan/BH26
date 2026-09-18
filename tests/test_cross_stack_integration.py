@@ -185,8 +185,11 @@ def lines_by_code() -> dict[str, dict]:
 
 
 def _details(line: dict) -> dict:
-    extensions = {item["name"]: item["value"] for item in line["extensions"]}
-    return extensions["bh26AssessmentDetails"]
+    """Each detail field (status/direction/...) is its own top-level
+    extension now, not grouped under one bh26AssessmentDetails object
+    (2026-09-18, per the user's direction)."""
+    from acmg_pipeline.automated_va_spec import details_from_extensions
+    return details_from_extensions(line["extensions"])
 
 
 def test_evidence_cli_criteria_are_really_evaluated(lines_by_code):
@@ -225,7 +228,7 @@ def test_combined_document_is_valid_va_spec(lines_by_code):
     for code, line in lines_by_code.items():
         EvidenceLine.model_validate(line)
         schema_validator.validate(line)
-        assert _details(line)["criterion"] == code
+        assert line["specifiedBy"]["methodType"] == code
 
 
 def test_every_line_passes_the_1_0_1_validator(lines_by_code):

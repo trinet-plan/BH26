@@ -69,7 +69,12 @@ class GeneDiseaseDraftProviderTests(unittest.TestCase):
         self.assertEqual(draft["suggestions"]["PVS1"]["status"], "CANDIDATE")
         self.assertIsNone(draft["suggestions"]["PP2"]["criterion_met"])
 
-    def test_draft_cannot_drive_a_criterion(self):
+    def test_draft_reaches_a_flagged_prediction_not_a_reviewed_result(self):
+        """(2026-09-17 policy change) A CANDIDATE draft now reaches a flagged
+        MET/supporting prediction via acmg_pipeline.criteria.mechanism's
+        _mechanism_from_draft(), instead of withholding the call as UNKNOWN -
+        but it is never confused with a curator-reviewed gene_disease record:
+        the caveat travels in review_points/provenance instead."""
         annotation = source(
             category="annotation",
             quality_status="PASS",
@@ -93,8 +98,10 @@ class GeneDiseaseDraftProviderTests(unittest.TestCase):
             {},
             ["PP2"],
         )[0]
-        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
-        self.assertIn("gene_disease", value.missing_inputs)
+        self.assertEqual(value.status, CriterionStatus.MET)
+        self.assertEqual(value.strength, "supporting")
+        self.assertEqual(value.provenance["assessment_method"], "gene_disease_draft")
+        self.assertTrue(value.review_points)
 
     def test_incomplete_spectrum_is_not_read_as_absence(self):
         draft = self.build(clinvar_spectrum=source(

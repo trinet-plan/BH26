@@ -30,6 +30,8 @@ TEST_FILES = [
     "test_full_criteria_ground_truth.py",
     "test_automated_criteria_ground_truth.py",
     "test_pp4_pp1_bs4.py",
+    "test_pp1_pp4_strength_table.py",
+    "test_pp1_bs4_pp4_engine.py",
 ]
 
 

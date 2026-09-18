@@ -50,6 +50,25 @@ class VaSpecTests(unittest.TestCase):
         self.assertEqual(study["cohort"]["type"], "StudyGroup")
         self.assertEqual(study["specifiedBy"]["type"], "Method")
 
+    def test_togovar_population_provenance_is_exported(self):
+        evidence = deepcopy(EVIDENCE)
+        evidence[0].update({
+            "evidence_id": "https://grch38.togovar.org/variant/tgv123#frequency:tommo",
+            "source": "TogoVar",
+            "source_version": "API 0.9.1",
+            "population": "tommo:global",
+        })
+        result = CriterionResult(
+            "PM2", CriterionStatus.MET, VARIANT, "rare", "supporting", "supports",
+            "PM2_supporting", evidence=evidence,
+        )
+        study = to_evidence_line(result)["hasEvidenceItems"][0]
+        self.assertEqual(study["sourceDataSet"]["id"], "https://grch38.togovar.org/")
+        self.assertEqual(study["sourceDataSet"]["version"], "API 0.9.1")
+        self.assertEqual(study["cohort"]["name"], "tommo:global")
+        self.assertEqual(study["specifiedBy"]["name"],
+                         "TogoVar API allele frequency aggregation")
+
     def test_not_met_maps_to_machine_readable_neutral(self):
         result = CriterionResult("PM2", CriterionStatus.NOT_MET, VARIANT, "not rare", None, "none",
                                  "PM2_not_met", evidence=EVIDENCE)
@@ -145,11 +164,17 @@ class VaSpecTests(unittest.TestCase):
         self.assertEqual(observations["AN"], 100000)
         self.assertEqual(len(evidence_hash), 64)
         self.assertEqual(wrapped["assessment_details"]["status"], "not_met")
-        self.assertEqual(wrapped["assessment_details"]["evidenceItemIds"], [identifier])
-        extension = wrapped["evidence_line"]["extensions"][0]
-        self.assertEqual(extension["name"], "bh26AssessmentDetails")
-        self.assertEqual(extension["value"]["status"], "not_met")
-        self.assertEqual(extension["value"]["evidenceItemIds"], [identifier])
+        # evidenceItemIds lives only in the audit-index entry now, not in the
+        # embedded VA-Spec content (see automated_va_spec.assessment_details()'s
+        # docstring, 2026-09-18).
+        self.assertEqual(
+            record["criterion_assessments"][0]["evidenceItemIds"], [identifier])
+        # status is its own top-level extension now, not grouped under one
+        # bh26AssessmentDetails object (2026-09-18, per the user's direction).
+        line_extensions = {item["name"]: item["value"]
+                           for item in wrapped["evidence_line"]["extensions"]}
+        self.assertEqual(line_extensions["status"], "not_met")
+        self.assertNotIn("evidenceItemIds", line_extensions)
 
     def test_pvs1_assessment_details_keep_decision_trace(self):
         result = CriterionResult(
@@ -220,6 +245,7 @@ class VaSpecTests(unittest.TestCase):
         assessment = record["criterion_assessments"][0]
         self.assertEqual(assessment["status"], "unknown")
         self.assertEqual(assessment["missingInputs"], ["region"])
+        self.assertNotIn("reviewPoints", assessment)
         self.assertNotIn("reviewPoints", assessment)
         self.assertIn(evidence[0]["evidence_id"], record["referenced_evidence"])
 

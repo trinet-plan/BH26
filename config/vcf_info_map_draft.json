@@ -1,0 +1,170 @@
+{
+  "schema_version": "1.0",
+  "registry_status": "DRAFT",
+  "purpose": "Maps an annotated VCF's INFO fields onto evidence fields for acmg_pipeline.providers.vcf_annotation. Which field means what is a property of the annotator that wrote the file, so this MUST be checked against a real header from the annotator actually in use before it is applied. Nothing here has been validated against an operational file.",
+  "limitations": [
+    "The VEP entry is derived from VEP's documented CSQ layout, not from an output file this project has seen. VEP's field set depends on which plugins and --fields were used, so the subfield names present in a real header may differ.",
+    "The bcftools entry assumes gnomAD-prefixed field names from `bcftools annotate -a gnomad.vcf.gz -c INFO/gnomAD_AF,...`. The names are whatever the -c argument assigned, so they are installation-specific.",
+    "Both are starting points for reading a real header, not defaults to apply unseen.",
+    "Fields a curator already concluded (CLNSIG, ACMG_CODES and the rest of providers.vcf_annotation.REFUSED) cannot appear here; the provider raises if they do.",
+    "The cross-gene-annotation-explorer entry is the one checked against a real file (selected_variants_2026-09-14testyuko.vcf, 44 variants). Its version_declaration is a stated assumption, not something the file says - see the note on that entry."
+  ],
+  "annotators": {
+    "ensembl-vep-vcf": {
+      "note": "`vep --vcf` packs every subfield into CSQ and declares the order in the ##INFO header's Format clause. The provider reads that clause, so the order below is not relied on - only the names are. One entry per transcript is present; only the entry matching the transcript being evaluated is read.",
+      "reference": "https://www.ensembl.org/info/docs/tools/vep/vep_formats.html",
+      "mapping": {
+        "CSQ": {
+          "category": "annotation",
+          "group": "Ensembl VEP",
+          "compound": {
+            "transcript_subfield": "Feature",
+            "list_separator": "&",
+            "list_fields": [
+              "consequences"
+            ],
+            "fields": {
+              "Consequence": "consequences",
+              "SYMBOL": "gene",
+              "Feature": "transcript",
+              "EXON": "exon",
+              "INTRON": "intron",
+              "HGVSc": "hgvsc",
+              "HGVSp": "hgvsp",
+              "Protein_position": "protein_start",
+              "ENSP": "protein_id"
+            }
+          }
+        }
+      }
+    },
+    "snpeff-vcf": {
+      "note": "SnpEff's ANN field has the same shape with different subfield names, declared as \"Functional annotations: 'Allele | Annotation | ...'\". Included to show the second shape the provider handles; the field list is illustrative.",
+      "reference": "https://pcingola.github.io/SnpEff/snpeff/inputoutput/",
+      "mapping": {
+        "ANN": {
+          "category": "annotation",
+          "group": "SnpEff",
+          "compound": {
+            "transcript_subfield": "Feature_ID",
+            "list_separator": "&",
+            "list_fields": [
+              "consequences"
+            ],
+            "fields": {
+              "Annotation": "consequences",
+              "Gene_Name": "gene",
+              "Feature_ID": "transcript",
+              "HGVS.c": "hgvsc",
+              "HGVS.p": "hgvsp"
+            }
+          }
+        }
+      }
+    },
+    "bcftools-annotate-gnomad": {
+      "note": "Flat one-field-per-value output. Fields sharing a `group` become one evidence record, so AF, AC and AN arrive together as a single population observation. `callable` is not derivable from these fields and is deliberately absent - usable_observations() requires it for an AC of 0, so an absent variant still cannot be read as AF 0.",
+      "reference": "https://samtools.github.io/bcftools/bcftools.html#annotate",
+      "mapping": {
+        "gnomAD_AF": {
+          "category": "population",
+          "group": "gnomAD",
+          "field": "AF"
+        },
+        "gnomAD_AC": {
+          "category": "population",
+          "group": "gnomAD",
+          "field": "AC"
+        },
+        "gnomAD_AN": {
+          "category": "population",
+          "group": "gnomAD",
+          "field": "AN"
+        },
+        "gnomAD_popmax": {
+          "category": "population",
+          "group": "gnomAD",
+          "field": "population"
+        }
+      }
+    },
+    "cross-gene-annotation-explorer": {
+      "note": "VEP output flattened into VEP_* fields rather than a CSQ block, so the flat shape applies. The file names no fileDate, no reference, and no Source or Version on any INFO line - it says only that it used VEP - so without the declaration below nothing in it can be pinned and every field is skipped.",
+      "checked_against": "selected_variants_2026-09-14testyuko.vcf (44 variants, 2026-09-14)",
+      "version_declaration": {
+        "matches_source": "Cross-Gene Annotation Explorer",
+        "declared_versions": {
+          "gnomAD": "4.1.1"
+        },
+        "declared_by": "BH26 project configuration",
+        "justification": "The exporter reports that it annotated with VEP and gnomAD but names no release in the file, so the releases are declared here instead. gnomAD 4.1.1 is not a guess: the GNOMAD_AF of four variants was compared against the gnomAD 4.1.1 API and matched its exome global allele frequency to six significant figures (CHRNA1 2-174757593-C-T 1.094500e-05, MBD4 3-129437103-G-A 1.094720e-05, IDUA 4-1001742-T-C 1.589390e-05, OSGEP 14-20449182-G-A 1.851240e-05); the genome frequencies of the same release differ, so the field is the exome subset specifically. The VEP release is still unconfirmed - consequence terms are stable across releases, so the file's own values cannot date it - and must come from the exporter's configuration. Every record built under this declaration carries version_status=DECLARED with this text, so a curator can see which version was verified and which was asserted.",
+        "declared_at": "2026-09-17",
+        "undeclared": {
+          "Ensembl VEP": "Unconfirmed. Left out of declared_versions on purpose rather than left as a placeholder, because a placeholder string would satisfy the declaration and pass as a version. While it is absent, VEP_* fields stay unpinned and the Ensembl provider fetches the annotation instead. Add it once the exporter's configured release is known.",
+          "dbNSFP": "Never stated by the file and not verifiable from it."
+        }
+      },
+      "mapping": {
+        "GNOMAD_AF": {
+          "category": "population",
+          "group": "gnomAD",
+          "field": "AF"
+        },
+        "GNOMAD_AF_GRPMAX": {
+          "category": "population",
+          "group": "gnomAD",
+          "field": "AF_grpmax"
+        },
+        "VEP_CONSEQUENCE": {
+          "category": "annotation",
+          "group": "Ensembl VEP",
+          "field": "consequences"
+        },
+        "VEP_TRANSCRIPT": {
+          "category": "annotation",
+          "group": "Ensembl VEP",
+          "field": "transcript"
+        },
+        "VEP_HGVSC": {
+          "category": "annotation",
+          "group": "Ensembl VEP",
+          "field": "hgvsc"
+        },
+        "VEP_HGVSP": {
+          "category": "annotation",
+          "group": "Ensembl VEP",
+          "field": "hgvsp"
+        },
+        "GENE": {
+          "category": "annotation",
+          "group": "Ensembl VEP",
+          "field": "gene"
+        },
+        "DBNSFP_REVEL": {
+          "category": "computational",
+          "group": "dbNSFP",
+          "field": "score"
+        },
+        "DBNSFP_CADD": {
+          "category": "computational",
+          "group": "dbNSFP",
+          "field": "cadd_phred"
+        }
+      },
+      "not_usable_from_this_file": {
+        "population": "GNOMAD_AF is gnomAD 4.1.1's exome global frequency (verified, see the declaration) but arrives with no AC or AN, and usable_observations() needs both - so PM2, BA1 and BS1 cannot run on it, and BS1's filtering allele frequency cannot be computed either. An AF of 0 also cannot be read as absence, because nothing in the file states callability. GNOMAD_AF_GRPMAX is a second statistic over the same release rather than a population observation of its own, so it is mapped to its own field rather than joining the AF record as though it were one.",
+        "transcript": "VEP_TRANSCRIPT holds an Ensembl accession (ENST...) while the pipeline evaluates RefSeq (NM_...). The MANE summary carries both, so a translation step is possible, but none exists yet.",
+        "AM_CLASS": "A classification with no score, and computational.py scores against calibrated intervals.",
+        "biotype": "Some rows are annotated on retained_intron or nonsense_mediated_decay transcripts, which may not be the transcript to evaluate.",
+        "assembly": "No ##reference and no ASSEMBLY in INFO. Without an assembly passed in, all 44 rows fail as INVALID_VARIANT and none reaches the pipeline. See declared_assembly."
+      },
+      "declared_assembly": {
+        "assembly": "GRCh38",
+        "declared_by": "BH26 project configuration",
+        "declared_at": "2026-09-17",
+        "justification": "The file states no ##reference and carries no ASSEMBLY in INFO, so audit_vcf() rejects every row with INVALID_VARIANT - the same coordinates mean different variants on GRCh37 and GRCh38, and guessing is not detectable after the fact. GRCh38 is not a guess here: the file's GNOMAD_AF matched gnomAD 4.1.1, which is GRCh38-only, to six significant figures on four variants (see version_declaration). Pass it as audit_vcf(path, assembly=\"GRCh38\"). The declaration is not visible in the row itself - a declared build looks exactly like a read one - so it is legible only here and in the run manifest, and it applies only to files matching applies_when. A file that does state its own ##reference stays the authority: audit_vcf keeps the row and marks it ASSEMBLY_CONFLICT rather than letting the declaration overwrite it.",
+        "applies_when": "The file's ##source matches version_declaration.matches_source and it states no ##reference of its own."
+      }
+    }
+  }
+}

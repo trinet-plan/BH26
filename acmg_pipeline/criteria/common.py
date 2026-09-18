@@ -13,7 +13,7 @@ DEFAULT_STRENGTH = {
 
 def result(code, input_data, status, summary, *, strength=None, evidence=None,
            missing=None, review=None, provenance=None, evaluation_context=None,
-           decision_trace=None, rules_used=None, warnings=None, unresolved_requirements=None):
+           decision_trace=None, rules_used=None, warnings=None):
     direction, outcome = None, None
     if status == CriterionStatus.MET:
         direction = "disputes" if code.startswith("B") else "supports"
@@ -26,7 +26,6 @@ def result(code, input_data, status, summary, *, strength=None, evidence=None,
         provenance={"rule_version": f"{code}-v1", **(provenance or {})},
         evaluation_context=evaluation_context, decision_trace=decision_trace or [],
         rules_used=rules_used or [], warnings=warnings or [],
-        unresolved_requirements=unresolved_requirements or [],
     )
 
 
@@ -47,7 +46,18 @@ def citable(assessment):
     return [assessment] if assessment.get("evidence_id") else []
 
 
-def population_context(code, input_data, services, config):
+def population_context(code, input_data, services, config, *, treat_total_absence_as_evidence=False):
+    """`treat_total_absence_as_evidence`: only PM2 passes this. For a rarity-seeking
+    criterion, a variant that no queried population source returned ANYTHING for (not
+    even a rejected/low-quality record) is itself a weak signal of rarity, not merely an
+    unanswerable gap - unlike BA1/BS1, where the same silence cannot argue a variant is
+    common. When true and every provider resolved cleanly with nothing to report (no real
+    fetch error - see the NO_OBSERVATION check below), the early UNKNOWN below is skipped
+    and an empty-but-valid context is returned instead, so the caller can score the absence
+    itself (with its own caveat) rather than being forced into UNKNOWN here. A provider that
+    could not be reached at all (a real error, not a confirmed empty result) still blocks
+    this path - that is a search gap, not an observation.
+    """
     rule = config.get(code, {})
     minimum_an = number(rule.get("minimum_an"))
     if minimum_an is None or minimum_an < 1 or minimum_an != minimum_an.to_integral_value():
@@ -62,6 +72,13 @@ def population_context(code, input_data, services, config):
     provenance = {"policy_source": rule["policy_source"], "policy_version": rule["policy_version"],
                   "rejected_observations": rejected, "provider_failures": resolved["failures"]}
     if not valid:
+        total_absence = (
+            treat_total_absence_as_evidence
+            and not resolved["observations"]
+            and all(f.get("reason") == "NO_OBSERVATION" for f in resolved["failures"])
+        )
+        if total_absence:
+            return None, (rule, [], rejected, resolved["failures"], provenance)
         return result(code, input_data, CriterionStatus.UNKNOWN, "No reliable population observation",
                       evidence=resolved["observations"], missing=["population"],
                       provenance=provenance), None
@@ -72,11 +89,53 @@ def get_evidence(category, input_data, services):
     return services.evidence.get(category, Variant(**input_data["variant"]), input_data)
 
 
+# Which provider supplies each evidence category, so a criterion left with nothing can name
+# the one that failed rather than every failure of the run. The comparator search is absorbed
+# per criterion ("ClinVar protein comparator search:PS1"), so these match on the name before
+# the colon as well as on the whole.
+CATEGORY_PROVIDERS = {
+    "region": ("ClinVar protein hotspot density",),
+    "comparator_search": ("ClinVar protein comparator search",),
+}
+
+
+def retrieval_failures(services, provider=None, *, exact=False):
+    """What the resolver could not retrieve, so a criterion can say why it has nothing.
+
+    Without this, a provider that errored and a provider that legitimately returned nothing
+    are indistinguishable downstream, and the curator is told only that evidence is absent -
+    which is the one thing they could already see.
+
+    `provider` is a name or names. By default a failure also matches that provider's
+    per-criterion entries ("<name>:PS1"); with `exact`, only the names given match - PS1's
+    search failing is not PM5's reason for having nothing.
+    """
+    failures = getattr(services, "failures", None) or []
+    if provider is None:
+        return list(failures)
+    names = (provider,) if isinstance(provider, str) else tuple(provider)
+    return [item for item in failures
+            if any(str(item.get("provider")) == name
+                   or (not exact and str(item.get("provider")).startswith(f"{name}:"))
+                   for name in names)]
+
+
+def failure_detail(failures):
+    """The failures as one readable clause, or "" when nothing failed."""
+    return "; ".join(f"{item.get('provider')}: {item.get('error')}" for item in failures)
+
+
 def annotation_context(code, input_data, services):
     annotations = get_evidence("annotation", input_data, services)
     if not annotations:
-        return result(code, input_data, CriterionStatus.UNKNOWN, "Transcript annotation unavailable",
-                      missing=["annotation", "transcript"]), None
+        failures = retrieval_failures(services)
+        detail = failure_detail(failures)
+        return result(code, input_data, CriterionStatus.UNKNOWN,
+                      f"Transcript annotation unavailable - {detail}" if detail
+                      else "Transcript annotation unavailable; no provider reported an error, "
+                           "so the annotation source returned nothing for this variant",
+                      missing=["annotation", "transcript"],
+                      provenance={"provider_failures": failures}), None
     if len(annotations) != 1:
         return result(code, input_data, CriterionStatus.UNKNOWN, "Multiple transcript annotations require resolution",
                       evidence=annotations, review=["Select disease-relevant transcript"]), None
@@ -144,8 +203,16 @@ def curated_context(code, category, input_data, services, annotation, *, disease
     if not records:
         summary, missing, review = unusable_reason(category, retrieved, annotation, condition,
                                                    disease_required)
-        return result(code, input_data, CriterionStatus.UNKNOWN, summary,
-                      evidence=[annotation, *retrieved], missing=missing, review=review), None
+        # Only when nothing came back at all: if records were retrieved and rejected,
+        # unusable_reason already says which rejection route they took, and a provider that
+        # failed elsewhere in the run did not cause that.
+        failures = (retrieval_failures(services, CATEGORY_PROVIDERS.get(category, ()))
+                    if not retrieved else [])
+        detail = failure_detail(failures)
+        return result(code, input_data, CriterionStatus.UNKNOWN,
+                      f"{summary} - {detail}" if detail else summary,
+                      evidence=[annotation, *retrieved], missing=missing, review=review,
+                      provenance={"provider_failures": failures} if failures else None), None
     if len(records) != 1:
         return result(code, input_data, CriterionStatus.UNKNOWN, f"Multiple {category} assessments",
                       evidence=[annotation, *records], review=[f"Resolve {category} assessments"]), None
@@ -163,3 +230,88 @@ def require_boolean_fields(code, input_data, evidence, assessment, fields):
                       f"{', '.join(missing)}, which {code} requires",
                       evidence=evidence, missing=missing)
     return None
+
+
+# The inheritance-mode vocabularies this pipeline has to reconcile. Curated specifications
+# write "AD"/"AR", clinical notes write "autosomal dominant", and prepared records have been
+# seen carrying "autosomal_recessive". Comparing those as raw strings silently fails to
+# match, and a silent non-match here is worse than a loud one: it drops a disease-specific
+# assessment and falls back to a weaker default without saying so.
+INHERITANCE_MODES = {
+    "autosomal_dominant": ("ad", "autosomal dominant", "autosomal dominant inheritance"),
+    "autosomal_recessive": ("ar", "autosomal recessive", "autosomal recessive inheritance"),
+    "x_linked_dominant": ("xld", "x linked dominant", "x linked dominant inheritance"),
+    "x_linked_recessive": ("xlr", "x linked recessive", "x linked recessive inheritance"),
+    "x_linked": ("xl", "x linked", "x linked inheritance"),
+    "mitochondrial": ("mt", "mitochondrial", "mitochondrial inheritance"),
+}
+
+_INHERITANCE_ALIASES = {alias: canonical
+                       for canonical, aliases in INHERITANCE_MODES.items()
+                       for alias in (canonical.replace("_", " "), *aliases)}
+
+
+def normalize_inheritance(value):
+    """Canonical inheritance-mode token, or None when absent or unrecognized.
+
+    Absent and unrecognized deliberately collapse to None at this level: both mean "this
+    string does not name a mode we can compare". Callers that must tell them apart check the
+    raw value first, because an unrecognized mode is a curation defect a curator should see,
+    while an absent one just means the record is not scoped to a mode.
+    """
+    if not isinstance(value, str):
+        return None
+    token = " ".join(value.strip().lower().replace("-", " ").replace("_", " ").split())
+    return _INHERITANCE_ALIASES.get(token)
+
+
+def resolved_condition(holder):
+    """The disease a case or record is scoped to, and how that identifier was arrived at.
+
+    A case and a curation can name the same disease in different vocabularies, so comparing
+    the identifiers as written answers only when both happen to use the same one. When a
+    `condition_mapping` is attached, the identifier it resolved to is what the two are
+    compared on, and the mapping type it came from says whether that was an identifier match
+    or an equivalence. Without one, the condition stands for itself.
+
+    Returns (identifier, how) where `how` is "identity", the mapping's own type, or None when
+    no disease is named at all.
+    """
+    mapping = holder.get("condition_mapping")
+    if isinstance(mapping, dict) and mapping.get("normalized_condition"):
+        return mapping["normalized_condition"], mapping.get("mapping_type") or "equivalent"
+    condition = holder.get("condition")
+    return condition, "identity" if condition else None
+
+
+def condition_ancestors(holder):
+    """The MONDO terms this holder's disease sits under, as far as they were resolved."""
+    value = holder.get("condition_ancestors")
+    if isinstance(value, dict):
+        value = value.get("ancestors")
+    return set(value) if isinstance(value, (list, set, tuple)) else set()
+
+
+def ontology_related(case, case_condition, record, record_condition):
+    """Whether two diseases are parent and child in MONDO, in either direction.
+
+    Deliberately not equivalence. The same gene can lose function in one subtype and gain it
+    in another, and subtypes can differ in inheritance mode, so this says only that the two
+    terms are on one path - which is a reason to ask a curator, never a reason to decide.
+    """
+    if not case_condition or not record_condition or case_condition == record_condition:
+        return False
+    return (record_condition in condition_ancestors(case)
+            or case_condition in condition_ancestors(record))
+
+
+def condition_scope(record, key):
+    """The phenotypes a curated disease was recorded as covering, or as keeping out.
+
+    An absent scope is an empty set, which is not the same as a scope that says the set is
+    empty: the provider that supplies this never reports an unreadable curation as an empty
+    one, so nothing here has to tell the two apart.
+    """
+    scope = record.get("condition_scope")
+    value = scope.get(key) if isinstance(scope, dict) else None
+    return set(value) if isinstance(value, (list, set, tuple)) else set()

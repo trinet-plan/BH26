@@ -75,9 +75,18 @@ class ClinGenGateTests(unittest.TestCase):
                                  f"{other} should not apply to {record_id}")
 
     def test_loss_of_function_gate_covers_splice_and_frameshift(self):
+        """Both consequences open PVS1, and both stop for want of a disease context.
+
+        These records carry no condition, so the criterion stops before any mechanism could
+        be looked up. What proves the gate opened is the preliminary assessment: PVS1 read
+        the consequence as loss-of-function and ran the variant-level tree on it.
+        """
         for record_id in ("clingen:pvs1-splice", "clingen:pvs1-frameshift"):
             result = self.by_record[record_id]["PVS1"]
-            self.assertEqual(result["missing_inputs"], ["loss-of-function disease mechanism"])
+            self.assertEqual(result["missing_inputs"], ["condition"])
+            self.assertEqual(result["evaluation_context"]["applicability"], "NOT_EVALUATED")
+            self.assertTrue(
+                result["provenance"]["preliminary_assessment"]["eligible_lof_variant"])
             self.assertIsNone(result["strength"])
 
     def test_expert_panel_provenance_travels_with_each_record(self):

@@ -43,6 +43,32 @@ class EvidenceLineByTargetCriteriaRequest(BaseModel):
     criteria: list[str]
 
 
+def describe_failure(exc: BaseException) -> dict:
+    """The job's error, with the cause dug out of any TaskGroup that wrapped it.
+
+    run_pipeline() runs its providers inside an anyio task group, so a plain ValueError from
+    one of them reaches this handler as "ExceptionGroup: unhandled errors in a TaskGroup
+    (1 sub-exception)" - a message that says only that something failed. The curator reading
+    the saved result gets the actual reason instead, with the chain kept when there is more
+    than one.
+    """
+    causes = []
+    pending = [exc]
+    while pending:
+        current = pending.pop(0)
+        nested = getattr(current, "exceptions", None)
+        if nested:
+            pending.extend(nested)
+            continue
+        causes.append({"type": type(current).__name__, "message": str(current)})
+    error = dict(causes[0])  # A group cannot be empty, so there is always at least one.
+    if len(causes) > 1:
+        error["also_failed"] = causes[1:]
+    if type(exc).__name__ != error["type"]:
+        error["raised_as"] = type(exc).__name__
+    return error
+
+
 async def _execute_classify_job(job_id: str, record, clinical_note: str, gene: str, hgvsc: str, hgvsp: str) -> None:
     mark_running(job_id)
     try:
@@ -54,7 +80,7 @@ async def _execute_classify_job(job_id: str, record, clinical_note: str, gene: s
             )
         va_spec = build_variant_statement(output, gene=gene, hgvsc=hgvsc, hgvsp=hgvsp)
     except Exception as e:
-        error = {"type": type(e).__name__, "message": str(e)}
+        error = describe_failure(e)
         mark_failed(job_id, error)
         save_result(endpoint="classify_criteria", variant={"gene": gene, "hgvsc": hgvsc, "hgvsp": hgvsp},
                     criteria=None, payload=error, status="failed", identifier=job_id)
@@ -118,7 +144,7 @@ async def _execute_target_criteria_job(job_id: str, record, clinical_note: str,
                 mcp=mcp, erepo_client=ERepoClient(),
             )
     except Exception as e:
-        error = {"type": type(e).__name__, "message": str(e)}
+        error = describe_failure(e)
         mark_failed(job_id, error)
         save_result(endpoint="get_evidence_line_by_target_criteria", variant=variant,
                     criteria=criteria, payload=error, status="failed", identifier=job_id)

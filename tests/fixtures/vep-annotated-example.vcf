@@ -1,0 +1,11 @@
+##fileformat=VCFv4.2
+##fileDate=20260917
+##source=ensembl-vep-116
+##reference=GRCh38
+##comment=Shaped like `vep --vcf` output: every subfield packed into CSQ, with the order declared in the header. Two transcript entries, so which one is read has to be decided by the caller rather than guessed here.
+##INFO=<ID=GENE,Number=1,Type=String,Description="Gene symbol">
+##INFO=<ID=TRANSCRIPT,Number=1,Type=String,Description="RefSeq transcript">
+##INFO=<ID=CSQ,Number=.,Type=String,Description="Consequence annotations from Ensembl VEP. Format: Allele|Consequence|IMPACT|SYMBOL|Feature|EXON|HGVSc|HGVSp">
+##INFO=<ID=CLNSIG,Number=1,Type=String,Description="Clinical significance as reported">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
+11	47352561	vep-1	G	A	99	PASS	ASSEMBLY=GRCh38;GENE=MYBPC3;TRANSCRIPT=NM_000256.3;CSQ=A|missense_variant&splice_region_variant|MODERATE|MYBPC3|NM_000256.3|2/34|NM_000256.3:c.278G>A|NP_000247.2:p.Arg93His,A|intron_variant|MODIFIER|MYBPC3|NM_001321226.2|||;CLNSIG=Likely_pathogenic

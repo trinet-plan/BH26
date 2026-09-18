@@ -1,14 +1,17 @@
 from acmg_pipeline.constants import (
     ALL_ACMG_CODES, AUTOMATED_CODES, IMPLEMENTED_CODES, LITERATURE_CODES,
-    STUB_CODES, CriterionStatus,
+    PHENOTYPE_SEGREGATION_CODES, STUB_CODES, CriterionStatus,
 )
 
 
 def test_main_constants_cover_acmg_codes_once():
     assert len(ALL_ACMG_CODES) == 28
-    assert len(IMPLEMENTED_CODES) == 19
-    assert len(STUB_CODES) == 9
-    assert IMPLEMENTED_CODES == LITERATURE_CODES | AUTOMATED_CODES
+    # +3 (PP1/BS4/PP4) on 2026-09-17 once acmg_pipeline.criteria.
+    # pp1_bs4_pp4_engine connected the ClinGen 2024 PP4+PP1/BS4 evaluator -
+    # see that module's own docstring.
+    assert len(IMPLEMENTED_CODES) == 22
+    assert len(STUB_CODES) == 6
+    assert IMPLEMENTED_CODES == LITERATURE_CODES | AUTOMATED_CODES | PHENOTYPE_SEGREGATION_CODES
     assert IMPLEMENTED_CODES.isdisjoint(STUB_CODES)
     assert IMPLEMENTED_CODES | STUB_CODES == set(ALL_ACMG_CODES)
 

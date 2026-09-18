@@ -2,6 +2,55 @@
 
 この文書は、criterion の**判定実装の有無**と、判定に必要な**外部データを取得できるか**を分けて記録する。`UNKNOWN` は「陰性」ではなく、必要な根拠を安全に取得・確認できなかった状態である。
 
+## 設計思想
+
+**機械的に判断できないところは、その理由と判断材料を書いて人に渡す。**
+
+推測で埋めない。既定値で黙って通さない。「データが無い」を「陰性」に読み替えない。
+出力には、どこで止まったか・何が足りないか・何を仮定したかが残り、キュレーターがそれを
+見て判断できる状態にする。
+
+この原則が具体的にどう現れているか:
+
+- `UNKNOWN` は陰性ではなく「決められなかった」。`missing_inputs` に何が足りないかを、
+  `review_points` に何を確認すべきかを列挙する
+- 自動導出した値は `assessment_method: "automated"` と `method` / `policy_version` を
+  名乗り、キュレート済み判断と取り違えられないようにする（[1-4](#1-4-pvs1決定木を公開データでどこまで通したか)のPVS1ゲート、PP3/BP4の較正、PM1のhotspot）
+- 仮定を置いた場合は仮定したことを出力に残す（BS1の統計量・比較演算子、
+  `unknown_version_policy` による予測器バージョン不明の受け入れ）
+- 判断が臨床的なものは、暫定値を入れる場合も `PLACEHOLDER` と明記する
+  （`BS1.default_max_credible_af`、`PM2.max_af`）
+
+以下の「未対応事項」は、この原則に照らして**まだ人に渡せていない**か、**人に渡す形は
+できているが判断そのものが未了**かを区別して記録する。
+
+## 決定記録: 未承認の疾患別頻度閾値（PM2 / BS1）
+
+**決定日: 2026-09-17。** 疾患別の閾値が curator / VCEP により承認されていない場合、
+公開情報から導出した値を最終的な ACMG/AMP 判定の根拠にしない。実行時には `MET` にせず
+`UNKNOWN` とし、必要ならキュレーター向けの `DRAFT` 候補としてのみ出力する。
+
+- **PM2** は ClinGen SVI の勧告に従い、成立し得ても強度は `PM2_Supporting` とする。
+  公開DBの未登録は、座位coverage・callabilityが確認できる場合だけ absence の根拠になり得る。
+  TogoVar は座位coverageを返さないため、TogoVarからレコードが返らないことは `AF=0` や
+  absence とみなさず `UNKNOWN` とする。
+- **BS1** は、疾患有病率、遺伝形式、浸透率、遺伝的／アレル不均一性から導く
+  maximum credible AF を用いる。公開された計算法やVCEPの閾値は、候補作成・レビューの
+  出典には使えるが、他疾患へそのまま移植しない。
+- `DRAFT` 候補には、計算法、入力値、有病率、遺伝形式、浸透率、最大遺伝子寄与・
+  最大アレル寄与、対象集団、DB/release、AC/AN/AF（BS1では使用統計量と比較演算子）を残す。
+  `policyStatus: "DRAFT"`、レビュー理由、出典URL・版を必須とする。
+- 承認済みの疾患別仕様は、対象疾患・遺伝子・遺伝形式・DB版・例外変異を照合でき、
+  `reviewed_at` を記録したものだけを runtime の `disease_frequency_threshold` として用いる。
+
+公開根拠:
+
+- ClinGen SVI, *Recommendation for Absence/Rarity (PM2)* v1.0 (2020-09-04):
+  <https://clinicalgenome.org/site/assets/files/5182/pm2_-_svi_recommendation_-_approved_sept2020.pdf>
+- Whiffin et al., *Using high-resolution variant frequencies to empower clinical genome
+  interpretation* (2017): <https://pubmed.ncbi.nlm.nih.gov/28518168/>
+- ClinGen Criteria Specification Registry: <https://cspec.clinicalgenome.org/>
+
 ## 現在の外部データ経路
 
 `acmg_pipeline.services.resolve.ProviderEvidenceResolver` が、VCFの座標を起点に次のプロバイダから normalised evidence を組み立てる。VCF INFO は監査用入力であり、版・assembly・transcript・取得元が明示された根拠へ自動変換しない。
@@ -10,7 +59,7 @@
 |---|---|---|
 | consequence、HGVS、transcript、予測値 | Ensembl VEP | PVS1、PM4、BP3、BP7、PP3、BP4 |
 | REVEL、SpliceAI等の追加予測値 | Ensembl VEP / dbNSFP由来の注釈 | PP3、BP4、PS1、PM5 |
-| AF、AC、AN、FILTER、集団別頻度 | gnomAD GraphQL | PM2、BA1、BS1 |
+| AF、AC、AN、FILTER、データセット別頻度 | TogoVar API 0.9.1（GRCh38） | PM2、BA1、BS1 |
 | individual ClinVar record、同一残基比較、hotspot検索 | NCBI ClinVar | PS1、PM1、PM5、PP5、BP6 |
 | gene--disease mechanism、頻度閾値、領域ポリシー | サーバー設定のreview済みcontext | PVS1、PM1、PP2、BP1、BS1 |
 
@@ -86,12 +135,12 @@ case3-var1  curator: MET -> engine: not_met  [highest AF 0.0000299 exceeds cutof
 
 値は臨床レビュー未実施。`threshold_source` にPLACEHOLDERと明記してある。
 
-#### (b) gnomADに登録がない変異が `UNKNOWN` になる（2件）
+#### (b) 頻度データセットに登録がない変異が `UNKNOWN` になる（2件）
 
 ```
 case1-var1  curator: MET -> engine: unknown  [No reliable population observation]
 case2-var2  curator: MET -> engine: unknown  [No reliable population observation]
-            provider_failures: [{'provider': 'gnomAD', 'reason': 'NO_OBSERVATION'}]
+            provider_failures: [{'provider': 'TogoVar', 'reason': 'NO_OBSERVATION'}]
 ```
 
 `acmg_pipeline/services/resolve.py` の原則「未登録をAF=0として扱わない」による。
@@ -101,8 +150,8 @@ BA1・BS1（「頻度が高すぎる」を見る）では、未登録から何�
 結果、PM2だけ意味が反転している。
 
 区別に必要なのは **その座位のcoverage**。「未登録かつ十分にcallable」なら absent from
-controls だが、「未登録かつcoverage不明」は判断不能。現在のgnomADプロバイダはcoverageを
-取得していない。`usable_observations()` は `AC == 0` の観測に `callable: true` を要求して
+controls だが、「未登録かつcoverage不明」は判断不能。現在のTogoVar APIレスポンスは座位
+coverageを返さない。`usable_observations()` は `AC == 0` の観測に `callable: true` を要求して
 いるが、レコード自体が返らない場合はcallability情報が存在しない。
 
 #### 対応の方向（いずれも未決）
@@ -111,10 +160,123 @@ controls だが、「未登録かつcoverage不明」は判断不能。現在の
 |---|---|---|
 | 1 | ~~`PM2.max_af` に非ゼロの閾値を設定する~~ → 暫定 `5e-5` を設定済み。正式値は臨床レビュー待ち | 臨床判断。ClinGen SVIはPM2をSupportingへ降格し、VCEPごとに「absent or rare」の具体値を定める |
 | 2 | BS1と同じく `frequency_statistic` / `comparison` を対で持たせる | 設計。ただしPM2で保守的なのは信頼区間の**上限**（「稀少と言い切れるか」は最悪ケースで判断する）で、BS1のFAF（下限）とは逆側 |
-| 3 | gnomAD coverageを取得し、「未登録 + 十分なcoverage」を absent as evidence として扱う | 設計 + プロバイダ拡張。クエリ変更はオフラインキャッシュのキーを変えるため再取得が必要 |
+| 3 | coverageを取得できるreview済み経路を追加し、「未登録 + 十分なcoverage」を absent as evidence として扱う | 設計 + プロバイダ拡張。TogoVar APIだけでは現状不足 |
 
 1は3件、3は2件の不一致に対応する。1は暫定値を設定済みで、キュレーター一致率は
 8/15 から 11/15 になった。残る2件は閾値では解消せず、3が必要。
+
+### 1-4. PVS1決定木を公開データでどこまで通したか
+
+PVS1の決定木（545行、4経路17ノード）は、実データに対して長く動いていなかった。ERepoで
+`PVS1=met` とされた変異でも全件が `G01`（LoF機序）で停止し、変異型を読む `V01` にすら
+到達していなかった。必要な値がすべてキュレーター判断で、まだ存在しなかったため。
+
+#### 通した経路と、埋めたゲート
+
+| ゲート | 埋めた方法 | 種別 |
+|---|---|---|
+| `G01`/`G02` LoF機序 | ClinGen Dosage の haploinsufficiency スコア（3 → 確立） | 公開データの参照 |
+| `NF01`/`IC00` transcript関連性 | MANE Select 一致 | 公開データの参照 |
+| `NF02` NMD予測 | ClinGen PVS1 2018 の規則 + VEP エクソン番号 | 規則の適用 |
+| `NF03` exon関連性 | `NF01` の帰結 | 論理的帰結 |
+| `NF07` タンパク損失率 | VEP のタンパク位置 + Ensembl の翻訳長 | 測定 |
+| `IC02` 下流in-frame開始コドン | Ensembl CDS配列を3塩基ずつ読む | 測定 |
+| `IC03` 上流の病的変異 | ClinVar 遺伝子検索（ミスセンス限定を外す） | 公開データの参照 |
+
+いずれも `assessment_method: "automated"` を名乗り、`method` と `policy_version` を持つ。
+キュレート済みレコードがあればそちらが優先される。
+
+#### 到達状況（2026-09-17時点）
+
+| 経路 | 到達点 | 残る判断 | 実変異 |
+|---|---|---|---|
+| truncating | **`MET / very_strong`** | なし | `RUNX1 c.601C>T`、`MYBPC3 c.278delA`、`c.836del`（いずれもパネル判断と強度まで一致） |
+| 領域（NMD逃れ） | `NF06` で停止 | 領域の生物学的関連性 | `VHL c.610G>T`、`c.634G>T`（損失率4.7%は算出済み） |
+| 開始コドン喪失 | `IC01` で停止 | 無傷の代替transcriptの有無 | `GJB2 c.2T>C`（codon 34）、`HNF4A c.3G>A`（codon 71） |
+| スプライス | `SP01` で停止 | 自動化しない判断（後述） | `MYBPC3 c.2905+1G>A` 他25件 |
+
+**残る3経路の停止点は、いずれも「生物学的に関連か」型の判断1つだけ**になっている。
+キュレーターは材料が揃った状態で1問に答えればよい。
+
+#### 機械的に決めない箇所（意図的に未解決のまま返す）
+
+| 状況 | 返り値 | 理由 |
+|---|---|---|
+| haploinsufficiency = 30（常染色体劣性） | レコードを出さない | 「ハプロ不全でない」であって「LoF機序でない」ではない。PAHは30だがPKU VCEPは `PAH c.806delT` にPVS1を適用している |
+| 評価対象transcriptがMANE Selectでない | レコードを出さない | キュレーションは正当に別transcriptを使う（TNNT2の実例、`test_data/resolve_erepo_transcripts.py`） |
+| PTCが**最終前**エクソン内 | レコードを出さない | 「末端50nt以内」の距離はエクソン番号に含まれない。**最終**エクソンは最終ジャンクションを越えているので距離は無関係で、`predicted=False` と言い切れる |
+| エクソン番号が取れない | `exon_relevance` を付けない | 番号が無いことは「エクソンが存在しない」を意味しない |
+| CDSが3の倍数でない/短すぎる | レコードを出さない | 問い自体が成立しない。下流ATGが**無い**ことは答えとして記録する |
+| `IC03` で未配置の病的変異が残る | レコードを出さない | ClinVarは単一残基置換にしか位置を持たない。未配置のナンセンス変異が上流の証拠かもしれないので「無い」とは言えない |
+| `IC03` の検索が打ち切られた | レコードを出さない | どちらの答えも支持できない |
+
+`IC03` は **Yes と No で基準が違う**。配置確定した病的置換が1件でも上流にあれば Yes、
+No には加えて「検索が返した全件が配置できた」ことを要求する。
+
+#### 設計上の制約を2回踏んだ — 1カテゴリ1レコード
+
+`_select_context_record()` は transcript ごとに1レコードしか受け付けず、2件あると
+conflict を返す。これを2度踏んだ。
+
+- `NF03`（`transcript_assessment`）— エクソン取得を共有ヘルパーに切り出し、MANE providerの
+  レコードに渡す形にした
+- `IC03`（`initiation_assessment`）— 別レコードで出したところ実際に
+  `MANUAL_REVIEW / Resolve initiation_assessment assessments` になった。フィールドを
+  `upstream_` 接頭辞付きでIC02のレコードにマージする形に変更
+
+**1つのゲート群に対して provider は1つ**。複数の情報源が同じカテゴリを埋める場合は、
+レコードを増やさずフィールドをマージする。
+
+#### 引いてくるか、予測するか — 今回引いた線
+
+自動化したゲートと、しなかったゲートの違いはここにある。
+
+| | 内容 | 例 |
+|---|---|---|
+| **引いてくる** | 既に決着している事実を公開データから参照する | ClinGen Dosage のスコア、MANE Select、ClinVar の報告 |
+| **規則を適用する** | 公開された規則を、入力が揃っている範囲で適用する | ClinGen PVS1 2018 のNMD規則（境界は適用しない） |
+| **測定する** | 座標や配列から一意に決まる値を計算する | タンパク損失率、下流ATGの位置 |
+| **予測する** | 何が起きるかを推定する | スプライス供与部位喪失の帰結 → **自動化しない** |
+| **判断する** | 生物学的・臨床的な意味づけ | 領域の関連性、代替transcriptの有無 → **人に渡す** |
+
+上3つは自動化し、下2つは人に渡した。`G01`〜`NF03`・`NF07`・`IC02`・`IC03` は上3つに
+収まるが、`SP01` は「予測する」に入るため線の向こう側にある。
+
+`IC01`・`NF04`・`NF06` はいずれも「生物学的に関連か」を問う判断で、材料を揃えたうえで
+未解決のまま返している。
+
+#### `SP01`（スプライス経路）は自動化しない — 実測による判断
+
+`SP01` は `alternative_rescue` / `splice_outcome` / `reading_frame_disrupted` を要求する。
+このうち `splice_outcome` は「エクソンスキップが読み枠を壊すか」なので、エクソン長から
+計算できるように見える。AutoPVS1もこの計算を行う。
+
+**実測すると、この素朴な規則は手元の唯一の実スプライス症例で専門家判断と食い違う。**
+
+```
+MYBPC3 c.2905+1G>A   ClinGen判定: PVS1 very_strong
+  VEP:      intron 27/34  (ENST00000545968 = MANE NM_000256.3)
+  Ensembl:  exon 27 の長さ = 168 bp  ->  168 % 3 == 0  ->  IN_FRAME
+```
+
+素朴な規則なら `IN_FRAME` → `reading_frame_disrupted = False` → `_region_path` へ分岐し、
+`very_strong` にならない。スプライス供与部位の喪失は単純なエクソンスキップとは限らず、
+イントロン保持（多くはframeshift）や隠れスプライス部位の使用など複数の帰結があり、配列
+だけでは決まらない。ClinGenのスプライス仕様(2023)がRNA解析を重視するのはこのため。
+
+`alternative_rescue`（代替スプライシングがLoFを回避するか）はさらに導出元がない。組織
+特異的アイソフォームの知識を要するキュレーター判断で、`False` を既定にすればPVS1は進むが、
+それは過剰判定の方向であり、上表の保守的な選択と逆になる。
+
+**`G01`〜`NF03` は「既に決まっていることを引いてくる」だったが、`SP01` は「予測する」。**
+自動化するなら次のいずれかで、いずれも方針決定が要る（未決）:
+
+- SpliceAI の delta score を使う（取得済みだが `calibration_eligible: False`、モデル版不明）
+- RNA解析データを入力として受け取る（PVS1は `rna` 経路を実装済み: `lof_effect_confirmed`）
+- `alternative_rescue` の扱いを設定でポリシーとして明示する
+
+現状 `MYBPC3 c.2905+1G>A` は `SP01` で停止し、`missing: ['splice_assessment']` を返す。
+キュレーターには「何が足りないか」が出るので、判断の材料は渡せている。
 
 ### 2. 現在はstubとして残すcriterion
 
@@ -130,7 +292,7 @@ controls だが、「未登録かつcoverage不明」は判断不能。現在の
 | BP2 | cis/trans情報、もう一方の変異の病原性 |
 | BP5 | 代替となる分子診断と表現型の整合 |
 
-## TogoVarへ置換する場合の境界
+## TogoVar経由で取得する場合の境界
 
 TogoVarはGRCh38の座標・REF・ALTから、VEP transcript/HGVS/consequence、gnomAD等の頻度、ClinVar/MGeNDラベル、SIFT/PolyPhen/AlphaMissenseを取得できる。従って次は置換候補である。
 
@@ -148,7 +310,9 @@ TogoVarはGRCh38の座標・REF・ALTから、VEP transcript/HGVS/consequence、
 3. TogoVarにない、またはprovenanceが判定要件を満たさないデータは補完・推測しない。
 4. そのcriterionを `UNKNOWN` とし、missing inputs と理由をVA-Specの `bh26AssessmentDetails` に残す。
 
-TogoVarだけを唯一の外部経路とする場合、既存のEnsembl・gnomAD・ClinVar直接呼出しへ暗黙にfallbackしない。必要なら、どのcriterionで別のreview済みデータを許可するかを設定で明示する。
+頻度プロバイダーは設定の `population_sources` で選択する。現在登録されているオンラインプロバイダーはTogoVarで、その内部ソースとして `gnomad` と `tommo` のみを有効にしている。前者はTogoVarレスポンスの `gnomad_exomes` / `gnomad_genomes`、後者は `tommo` に展開される。選択した各データセットは、重複する可能性があるため統合せず別々の観測として保持する。TogoVar内で指定可能なグループは `gnomad`、`tommo`、`jga`、`ncbn`、`gem_j`、`hgvd`。APIが各上流データセットの版を返さないため、`upstream_dataset_version` は `NOT_PROVIDED_BY_TOGOVAR_API` と明示し、TogoVar API版、取得日時、キャッシュ本文hashを監査情報として保持する。
+
+TogoVarとは別の頻度DBを追加する場合は、共通のnormalised evidence形式を返すアダプターを実装し、`population_registry.py` にfactoryを明示登録する。設定ファイルから任意のPythonコードをimportする方式は採用しない。`gnomad.py` は既存キャッシュの参考・互換資産として残すが、このregistryおよび通常の実行経路からは利用しない。
 
 ## キュレーターが関わる箇所
 

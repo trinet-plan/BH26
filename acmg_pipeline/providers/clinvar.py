@@ -37,9 +37,14 @@ GENE_MISSENSE_RETMAX = 5000
 SUMMARY_BATCH = 200
 
 
-def gene_missense_search(client, release, gene, retmax=GENE_MISSENSE_RETMAX):
-    """One gene-wide missense search, shared by the PM1 density and PM5 residue lookups."""
-    term = f'{gene}[gene] AND "missense variant"[molecular consequence]'
+def gene_consequence_search(client, release, gene, consequence_term, retmax=GENE_MISSENSE_RETMAX):
+    """One gene-wide ClinVar search bounded by a molecular-consequence term.
+
+    `gene_missense_search()` below is this with the missense term fixed - kept as its own
+    function so PM1/PM5's existing callers and tests are untouched. providers/
+    clinvar_spectrum.py calls this directly with the truncating (nonsense/frameshift) term.
+    """
+    term = f'{gene}[gene] AND {consequence_term}'
     query = urlencode({"db": "clinvar", "term": term, "retmode": "json", "retmax": retmax})
     response = client.fetch(
         f"https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?{query}",
@@ -61,6 +66,12 @@ def gene_missense_search(client, release, gene, retmax=GENE_MISSENSE_RETMAX):
         "retrieved_at": response["retrieved_at"],
         "digest": hashlib.sha256(canonical_json(body).encode()).hexdigest(),
     }
+
+
+def gene_missense_search(client, release, gene, retmax=GENE_MISSENSE_RETMAX):
+    """One gene-wide missense search, shared by the PM1 density and PM5 residue lookups."""
+    return gene_consequence_search(
+        client, release, gene, '"missense variant"[molecular consequence]', retmax)
 
 
 def summary_documents(client, release, ids, batch=SUMMARY_BATCH):

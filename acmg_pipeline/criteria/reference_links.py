@@ -38,19 +38,26 @@ a later VCF INFO field addition needs no signature change here.
                      itself is still not URL-able, but the UniProt entry
                      page needed to show it is, via a gene-symbol ->
                      UniProt-accession lookup (see gene_to_uniprot_accession())
-  PM2, BA1, BS1, BS2: "show the gnomAD af page"
+  PM2, BA1, BS1, BS2: population-frequency page (TogoVar in current runtime)
   PM3:              "use AI to check if in trans previously reported (ClinVar)"
   PP1:              "use AI to check if segregation previously reported (ClinVar)"
   PP2:              "get the gnomAD zscore" (gene-level, not variant-level)
   PP3, BP4:         "show the predictors, follow thresholds" -> NOT URL-able
                      (a static threshold table, not a single reference page)
 
-[Verified reachable, 2026-09-16]
+[Verified reachable]
+  togovar_variant_url() uses TogoVar's documented GRCh38 coordinate URL.
   gnomad_variant_url() and gnomad_gene_url() confirmed HTTP 200 against a
   real variant (MYH7 c.2155C>T) and gene (MYH7). clinvar_search_url()
   confirmed to 302-redirect to a real ClinVar search results page.
-  autopvs1_url() confirmed HTTP 200 (a fixed URL, not deep-linkable to a
-  specific variant - AutoPVS1 is a form-based tool). gene_to_uniprot_
+  autopvs1_variant_url() confirmed against two real variants via a live
+  browser (2026-09-18, curator-suggested): AutoPVS1 DOES support a
+  positional deep link, `/variant/{hg19|hg38}/{chrom}-{pos}-{ref}-{alt}`,
+  contrary to this module's earlier finding that it was a fixed, form-only
+  URL - MYH9 hg19 22-36678800-G-A rendered a filled-in NF6/Moderate
+  flowchart page, and this project's own MYBPC3 c.278delA (hg38
+  11-47351252-CT-C) rendered NF1/VeryStrong, matching the pipeline's own
+  PVS1 result for that variant. gene_to_uniprot_
   accession()/uniprot_page_url() confirmed against MYH7 -> P12883 (the
   real UniProt accession for human beta-myosin heavy chain), via TogoID's
   public REST API (api.togoid.dbcls.jp) - the same conversion the TogoMCP
@@ -78,12 +85,9 @@ import requests
 
 from acmg_pipeline.vcf_record import VariantRecord
 
-# Criteria: PVS1 (doc: "Add autoPVS1 chart data/result"). Site: AutoPVS1
-# (autopvs1.bgi.com). Logic: none - AutoPVS1 is a form-based web tool with
-# no deep-link/query-string API this project has found, so this is a fixed
-# URL, not built per-variant. Referenced directly in _URL_BUILDERS below
-# rather than via its own function, since there's no per-variant logic to
-# name a function after.
+# Fallback for autopvs1_variant_url() below, when the variant's ref/alt
+# aren't concrete alleles (e.g. this project's demo data uses ALT="." for
+# some indels) - the homepage, not a broken/wrong deep link.
 AUTOPVS1_URL = "https://autopvs1.bgi.com"
 
 _TOGOID_CONVERT_URL = "https://api.togoid.dbcls.jp/convert"
@@ -163,13 +167,13 @@ def uniprot_page_url(variant: VariantRecord) -> str | None:
 
 def clinvar_search_url(variant: VariantRecord) -> str | None:
     """
-    Criteria: PS1 ("show the clinvar page/summary for that codon"), PM3
-      ("use AI to check if in trans previously reported (clinvar)"), PP1
-      ("use AI to check if segregation previously reported (clinvar)") -
-      the doc phrases these three differently but all three point at the
-      same action (open this variant's ClinVar record), so one function
-      serves all three; the AI-driven "check if X was previously reported"
-      part is NOT done here, only the page to check it on.
+    Criteria: PM3 ("use AI to check if in trans previously reported
+      (clinvar)"), PP1 ("use AI to check if segregation previously reported
+      (clinvar)") - both point at the same action (open this variant's
+      ClinVar record), so one function serves both; the AI-driven "check if
+      X was previously reported" part is NOT done here, only the page to
+      check it on. (PS1 used to share this function too - see
+      clinvar_position_url() below for why it now has its own.)
     Site: ClinVar (ncbi.nlm.nih.gov/clinvar), NCBI's search UI.
     Logic: a term-search URL built as "<GENE>[gene] AND <HGVSc>" (e.g.
       "MYH7[gene] AND c.2155C>T"), URL-encoded and appended to
@@ -187,6 +191,68 @@ def clinvar_search_url(variant: VariantRecord) -> str | None:
         return None
     term = f"{gene}[gene] AND {hgvsc}"
     return f"https://www.ncbi.nlm.nih.gov/clinvar/?term={quote(term)}"
+
+
+def clinvar_position_url(variant: VariantRecord, window: int = 10) -> str | None:
+    """
+    Criteria: PS1 (doc: "show the clinvar page/summary for that codon" -
+      PS1 is met by a DIFFERENT nucleotide change producing the same amino
+      acid change, so a search keyed on this variant's own exact HGVSc, as
+      clinvar_search_url() above does for PM3/PP1, would never surface the
+      other variant PS1 is actually about). This module doesn't compute
+      codon boundaries (would need transcript exon/CDS phase, not just
+      chrom/pos), so a `window`-bp genomic range centered on the variant is
+      used instead - wide enough to catch same-codon and immediately
+      adjacent changes, narrow enough to stay readable.
+    Site: ClinVar (ncbi.nlm.nih.gov/clinvar), NCBI's search UI, its
+      "chrpos38" field.
+    Logic: f"{chrom}[chr] AND {pos-window}:{pos+window}[chrpos38]",
+      URL-encoded. Confirmed live (2026-09-18, curator-suggested) against
+      this project's own MYBPC3 c.278delA (11:47351252): an exact
+      `N:N[chrpos38]` single-position range is valid syntax (0 or 1 results,
+      normalization-sensitive for indels - ClinVar may record a deletion at
+      a shifted position), while `N[chrpos38]` with no range at all returns
+      a spurious zero-padded non-match; a +-10bp window reliably returns the
+      surrounding variants (11 for this variant, including a nearby
+      pathogenic frameshift) without a range-parsing surprise. Assumes
+      GRCh38, matching this module's other position-based builders. Returns
+      None if chrom/pos aren't set.
+    Field: EvidenceLine.extensions (Extension(name="referenceLink")) once
+      passed through export.build_reference_extensions() - see this module's
+      own docstring, "Where the returned URL ends up in VA-Spec output".
+    """
+    if not variant.chrom or not variant.pos:
+        return None
+    term = f"{variant.chrom}[chr] AND {variant.pos - window}:{variant.pos + window}[chrpos38]"
+    return f"https://www.ncbi.nlm.nih.gov/clinvar/?term={quote(term)}"
+
+
+def autopvs1_variant_url(variant: VariantRecord, build: str = "hg38") -> str | None:
+    """
+    Criteria: PVS1 (doc: "Add autoPVS1 chart data/result").
+    Site: AutoPVS1 (autopvs1.bgi.com), the per-variant PVS1 flowchart page
+      (decision path, adjusted strength, disease-mechanism table).
+    Logic: positional, same shape as gnomad_variant_url()/togovar_variant_url()
+      below: f".../variant/{build}/{chrom}-{pos}-{ref}-{alt}". `build`
+      defaults to "hg38" (matching this project's own GRCh38 assumption
+      elsewhere in this module); pass "hg19" for a GRCh37-sourced
+      VariantRecord. Confirmed live (2026-09-18) against two real variants -
+      see this module's own docstring, "Verified reachable" - after an
+      earlier version of this module concluded AutoPVS1 had no deep-link
+      API and used a fixed homepage URL for every PVS1 line; that was
+      wrong, AutoPVS1 does answer this URL shape. Falls back to the
+      homepage (AUTOPVS1_URL) rather than None when ref/alt aren't concrete
+      alleles, unlike gnomad_variant_url() - PVS1 previously always carried
+      *some* link, and the homepage still lets a curator paste the variant
+      in by hand, so losing the link entirely would be a regression.
+    Field: EvidenceLine.extensions (Extension(name="referenceLink")) once
+      passed through export.build_reference_extensions() - see this module's
+      own docstring, "Where the returned URL ends up in VA-Spec output".
+    """
+    if not variant.ref or not variant.alt or variant.alt in (".", ""):
+        return AUTOPVS1_URL
+    return (f"https://autopvs1.bgi.com/variant/{build}/"
+            f"{variant.chrom}-{variant.pos}-{variant.ref}-{variant.alt}")
 
 
 def gnomad_variant_url(variant: VariantRecord, dataset: str = "gnomad_r4") -> str | None:
@@ -216,6 +282,14 @@ def gnomad_variant_url(variant: VariantRecord, dataset: str = "gnomad_r4") -> st
             f"{variant.chrom}-{variant.pos}-{variant.ref}-{variant.alt}?dataset={dataset}")
 
 
+def togovar_variant_url(variant: VariantRecord) -> str | None:
+    """Return TogoVar's GRCh38 report page for an exact positional allele."""
+    if not variant.ref or not variant.alt or variant.alt in (".", ""):
+        return None
+    return (f"https://grch38.togovar.org/variant/"
+            f"{variant.chrom}-{variant.pos}-{variant.ref}-{variant.alt}")
+
+
 def gnomad_gene_url(variant: VariantRecord, dataset: str = "gnomad_r4") -> str | None:
     """
     Criteria: PP2 (doc: "get the gnomAD zscore" - the missense Z-score is a
@@ -241,16 +315,16 @@ def gnomad_gene_url(variant: VariantRecord, dataset: str = "gnomad_r4") -> str |
 # produce a URL for. PM1/PM5 use a gene->UniProt lookup; PP3/BP4 are absent
 # because their request is a threshold table, not a single reference page.
 _URL_BUILDERS = {
-    "PVS1": lambda v: AUTOPVS1_URL,
-    "PS1": clinvar_search_url,
+    "PVS1": autopvs1_variant_url,
+    "PS1": clinvar_position_url,
     "PM3": clinvar_search_url,
     "PP1": clinvar_search_url,
     "PM1": uniprot_page_url,
     "PM5": uniprot_page_url,
-    "PM2": gnomad_variant_url,
-    "BA1": gnomad_variant_url,
-    "BS1": gnomad_variant_url,
-    "BS2": gnomad_variant_url,
+    "PM2": togovar_variant_url,
+    "BA1": togovar_variant_url,
+    "BS1": togovar_variant_url,
+    "BS2": togovar_variant_url,
     "PP2": gnomad_gene_url,
 }
 

@@ -12,13 +12,88 @@ from acmg_pipeline.automated_core.reference import FastaReference
 from acmg_pipeline.automated_core.models import CRITERIA, Variant
 from acmg_pipeline.gene_disease import build_assessment_document, build_draft_document
 from acmg_pipeline.automated_output import run_internal
+from acmg_pipeline.criteria.pvs1 import CANONICAL_SPLICE
+from acmg_pipeline.providers.clingen_dosage import METHOD as DOSAGE_METHOD, ClinGenDosageProvider
+from acmg_pipeline.providers.gene2phenotype import (
+    METHOD as G2P_METHOD, Gene2PhenotypeProvider,
+)
+from acmg_pipeline.providers.clingen_gene_validity import ClinGenGeneValidityProvider
+from acmg_pipeline.providers.clingen_lumping import (
+    METHOD as LUMPING_METHOD, ClinGenLumpingProvider,
+)
+from acmg_pipeline.providers.mondo import METHOD as MONDO_METHOD, MondoMappingProvider
+from acmg_pipeline.providers.splice_default import (
+    METHOD as SPLICE_DEFAULT_METHOD, SpliceDefaultProvider,
+)
+from acmg_pipeline.providers.mondo_hierarchy import (
+    METHOD as MONDO_TREE_METHOD, MondoHierarchyProvider,
+)
 from acmg_pipeline.providers.clinvar import (
     VCV, ClinVarComparatorProvider, ClinVarHotspotProvider, ClinVarProvider,
 )
 from acmg_pipeline.providers.ensembl import EnsemblIdentityProvider
 from acmg_pipeline.providers.gnomad import GnomadProvider
+from acmg_pipeline.providers.mane import METHOD as MANE_METHOD, ManeTranscriptProvider
+from acmg_pipeline.providers.initiation import (
+    METHOD as INITIATION_METHOD, START_LOST, InitiationProvider,
+)
+from acmg_pipeline.providers.upstream_pathogenic import (
+    METHOD as UPSTREAM_METHOD, UpstreamPathogenicProvider,
+)
+from acmg_pipeline.providers.protein_region import (
+    METHOD as REGION_METHOD, ProteinRegionProvider,
+)
+from acmg_pipeline.providers.population_registry import (
+    DEFAULT_POPULATION_SOURCES,
+)
+from acmg_pipeline.providers.nmd import (
+    METHOD as NMD_METHOD, RULE_SOURCE as NMD_RULE_SOURCE, TRUNCATING as NMD_TRUNCATING,
+    NmdPredictionProvider,
+)
 from acmg_pipeline.providers.http import CachedHttpClient
-from acmg_pipeline.services.resolve import VariantProviderSuite, splice_score_for
+from acmg_pipeline.providers.togovar import API_VERSION as TOGOVAR_API_VERSION, TogoVarProvider
+from acmg_pipeline.services.resolve import (
+    ProviderEvidenceResolver, VariantProviderSuite, merge_manifests, splice_score_for,
+)
+
+
+def _population_sources(args):
+    """The population sources this run reads frequencies from, or [] for none.
+
+    The rule set is where they belong: which frequency databases a run consults decides what
+    PM2 and BS1 see, so it is a recorded policy rather than a command-line default. This
+    command used to build a TogoVar provider directly and leave frequency_sources unset,
+    which takes every group TogoVar offers - a wider set than config/demo-rules.json asks
+    for, and a different one from what the same variant gets through the API.
+
+    --togovar-api-version still overrides the version, because pinning the API a run replayed
+    is the flag's job; which databases to consult is not.
+    """
+    if not args.with_togovar:
+        return []
+    configured = (json.loads(args.rules.read_text(encoding="utf-8")).get("population_sources")
+                  if args.rules else None)
+    if not configured:
+        return DEFAULT_POPULATION_SOURCES
+    return [{**source, "api_version": args.togovar_api_version}
+            if source.get("provider") == "togovar" else source
+            for source in configured]
+
+
+def _hotspot_policy(args):
+    if not args.rules:
+        raise ValueError("--with-pm1-hotspot requires --rules with PM1.hotspot")
+    return json.loads(args.rules.read_text(encoding="utf-8")).get("PM1", {}).get("hotspot", {})
+
+
+def _splice_default_version(args):
+    if not args.with_splice_default:
+        return None
+    if not args.rules:
+        raise ValueError(
+            "--with-splice-default requires --rules with PVS1.splice_default_policy_version")
+    return (json.loads(args.rules.read_text(encoding="utf-8"))
+            .get("PVS1", {}).get("splice_default_policy_version"))
 
 
 def main(argv=None):
@@ -40,13 +115,53 @@ def main(argv=None):
     online.add_argument("--output-dir", type=Path, required=True)
     online.add_argument("--ensembl-release")
     online.add_argument("--evidence-cache-dir", type=Path)
-    online.add_argument("--with-gnomad", action="store_true")
+    population = online.add_mutually_exclusive_group()
+    population.add_argument(
+        "--with-togovar", action="store_true",
+        help="Fetch population frequencies through the TogoVar GRCh38 API",
+    )
+    population.add_argument(
+        "--with-gnomad", action="store_true",
+        help="Legacy direct gnomAD fetch retained for replaying existing cached runs",
+    )
+    online.add_argument("--togovar-api-version", default=TOGOVAR_API_VERSION)
     online.add_argument("--gnomad-release", default="4.1.1")
     online.add_argument("--with-clinvar", action="store_true")
     online.add_argument("--with-dbnsfp", action="store_true",
                         help="Fetch dbNSFP meta-predictor scores pinned to their dbNSFP release")
     online.add_argument("--with-pm1-hotspot", action="store_true",
                         help="Count ClinVar missense density around each residue as PM1 hotspot proxy")
+    online.add_argument("--with-clingen-dosage", action="store_true",
+                        help="Derive PVS1's LoF-mechanism gate from ClinGen haploinsufficiency "
+                             "scores (automated stand-in for a curated gene_disease record)")
+    online.add_argument("--with-gene2phenotype", action="store_true",
+                        help="Take PVS1's LoF-mechanism gate from G2P curation, which is "
+                             "scoped to one gene-disease pair and names its MONDO disease")
+    online.add_argument("--with-mondo-mapping", action="store_true",
+                        help="Resolve each record's OMIM/Orphanet condition to MONDO so "
+                             "PVS1's disease gate can compare it with curated evidence")
+    online.add_argument("--with-clingen-gene-validity", action="store_true",
+                        help="Attach ClinGen's curated gene-disease associations, so a case "
+                             "with no condition can be offered the diseases the gene is "
+                             "curated for. Never a mechanism - see doc and PVS1's own gate")
+    online.add_argument("--with-clingen-lumping", action="store_true",
+                        help="Attach the phenotypes each curated disease lumps in or keeps "
+                             "out, so an included case is matched and an excluded one is "
+                             "answered instead of being sent to review")
+    online.add_argument("--with-mondo-hierarchy", action="store_true",
+                        help="Look up MONDO ancestry so a mechanism curated for a parent or "
+                             "child disease reaches a curator instead of being reported as "
+                             "no mechanism at all")
+    online.add_argument("--with-mane-transcript", action="store_true",
+                        help="Assert PVS1's transcript-relevance gate when the evaluated "
+                             "transcript is the gene's MANE Select (automated stand-in)")
+    online.add_argument("--with-splice-default", action="store_true",
+                        help="Answer PVS1's SP01/SP02 for canonical splice donor/acceptor "
+                             "variants from the configured default policy, flagged as a "
+                             "prediction rather than a curator's review")
+    online.add_argument("--with-nmd-prediction", action="store_true",
+                        help="Predict NMD from VEP exon numbering for PVS1's NF02 gate "
+                             "(no record for the last two exons, where the rule needs a distance)")
     online.add_argument("--rules", type=Path,
                         help="Rules JSON supplying PM1.hotspot thresholds for --with-pm1-hotspot")
     online.add_argument("--clinvar-release", default=datetime.now(timezone.utc).date().isoformat())
@@ -112,6 +227,10 @@ def main(argv=None):
             return 2 if payload["input_errors"] else 0
         if args.command in {"audit-demo", "prepare-demo", "prepare-demo-online"}:
             records = audit_demo(args.input_dir)
+            # Keyed by the identifier as written, because that is what a record carries and
+            # what a curator will look for in the manifest. Only the online command fills it.
+            condition_mappings = {}
+            condition_ancestry = {}
             if args.command == "prepare-demo":
                 reference = FastaReference(args.reference)
                 candidates = json.loads(args.identity_evidence.read_text(encoding="utf-8-sig"))
@@ -122,47 +241,73 @@ def main(argv=None):
                     raise ValueError(f"Unknown identity record IDs: {sorted(unknown)}")
                 records = [reconcile(r, candidates.get(r["record_id"], []), reference) for r in records]
             if args.command == "prepare-demo-online":
-                client = CachedHttpClient(args.cache_dir, offline=args.offline)
-                release = args.ensembl_release or EnsemblIdentityProvider.current_release(client)
-                provider = EnsemblIdentityProvider(client, release)
+                # One evidence implementation, shared with the API path. The CLI keeps only
+                # what the resolver has no business in: resolving each record's identity, and
+                # the gnomAD batch, whose single multi-variant request is the shape the
+                # committed offline cache holds - a per-variant lookup would replay none of it.
+                resolver = ProviderEvidenceResolver(
+                    args.cache_dir, offline=args.offline,
+                    evidence_cache_dir=args.evidence_cache_dir or args.cache_dir,
+                    ensembl_release=args.ensembl_release,
+                    clinvar_release=args.clinvar_release,
+                    population_sources=_population_sources(args),
+                    hotspot_policy=_hotspot_policy(args) if args.with_pm1_hotspot else None,
+                    with_clingen_dosage=args.with_clingen_dosage,
+                    with_gene2phenotype=args.with_gene2phenotype,
+                    with_disease_matching=(args.with_mondo_mapping or args.with_clingen_lumping
+                                           or args.with_mondo_hierarchy),
+                    with_gene_disease_associations=args.with_clingen_gene_validity,
+                    with_pvs1_transcript_gates=(args.with_mane_transcript
+                                                or args.with_nmd_prediction),
+                    with_initiation_assessment=args.with_nmd_prediction,
+                    with_splice_default=args.with_splice_default,
+                    splice_default_policy_version=_splice_default_version(args),
+                )
+                provider = resolver.identity_provider
                 mapped = {}
-                annotations = []
-                predictions = []
                 for record in records:
                     try:
-                        candidate, annotation, record_predictions = provider.map_record_with_evidence(record)
+                        candidate, _annotation, _predictions = (
+                            provider.map_record_with_evidence(record))
                         mapped[record["record_id"]] = [candidate]
-                        annotations.append(annotation)
-                        predictions.extend(record_predictions)
                     except ValueError as exc:
                         record["issues"].append(f"IDENTITY_PROVIDER_ERROR: {exc}")
                         mapped[record["record_id"]] = []
-                records = [reconcile(r, mapped[r["record_id"]], provider.reference) for r in records]
-                evidence = [*annotations, *predictions]
-                external_client = CachedHttpClient(
-                    args.evidence_cache_dir or args.cache_dir, offline=args.offline
-                )
-                # Everything decided one variant at a time (dbNSFP, the
-                # ClinVar VCV record, the PS1/PM5 comparators) goes through
-                # the same suite the integrated pipeline uses; only the
-                # gnomAD batch below stays here, because its single
-                # multi-variant request is what the committed offline cache
-                # holds. See acmg/services/resolve.py.
-                suite = VariantProviderSuite(
-                    external_client, clinvar_release=args.clinvar_release,
-                    ensembl_provider=provider,
-                )
+                records = [reconcile(r, mapped[r["record_id"]], provider.reference)
+                           for r in records]
+
+                evidence = []
                 external_manifest = []
-                variants = {
-                    row["resolution"]["variant"]["assembly"] + ":" +
-                    row["resolution"]["variant"]["chrom"] + ":" +
-                    str(row["resolution"]["variant"]["pos"]) + ":" +
-                    row["resolution"]["variant"]["ref"] + ":" +
-                    row["resolution"]["variant"]["alt"]: Variant(**row["resolution"]["variant"])
-                    for row in records if row["resolution"]
-                }
+                variants = {}
+                by_variant_key = {}
+                for row in records:
+                    if not row["resolution"]:
+                        continue
+                    variant = Variant(**row["resolution"]["variant"])
+                    variants[variant.key] = variant
+                    by_variant_key.setdefault(variant.key, []).append(row)
+                # Once per variant, not once per row. Several ALT records can resolve to the
+                # same variant, and asking for the same evidence again would replay from
+                # cache but count twice in the manifest.
+                for key, rows in by_variant_key.items():
+                    resolved_evidence = resolver.resolve(rows[0]["identity"], variants[key])
+                    evidence.extend(resolved_evidence.records)
+                    external_manifest = merge_manifests(
+                        [external_manifest, resolved_evidence.manifest])
+                    for row in rows:
+                        # Which ClinVar record this variant was matched to is provenance for
+                        # the identity, not evidence about the variant, so it goes on the row.
+                        row["resolution"]["evidence"].extend(
+                            resolved_evidence.identity_evidence)
+                        for failure in resolved_evidence.failures:
+                            row["issues"].append(
+                                f"{failure['provider'].upper()}_PROVIDER_ERROR: "
+                                f"{failure['error']}")
                 if args.with_gnomad:
-                    gnomad = GnomadProvider(external_client, release=args.gnomad_release)
+                    gnomad = GnomadProvider(
+                        CachedHttpClient(args.evidence_cache_dir or args.cache_dir,
+                                         offline=args.offline),
+                        release=args.gnomad_release)
                     try:
                         batches = gnomad.get_frequencies(variants.values())
                     except ValueError as exc:
@@ -170,7 +315,8 @@ def main(argv=None):
                             if row["resolution"]:
                                 row["issues"].append(f"GNOMAD_PROVIDER_ERROR: {exc}")
                         batches = {}
-                    observations = [item for batch in batches.values() if batch for item in batch]
+                    observations = [item for batch in batches.values() if batch
+                                    for item in batch]
                     evidence.extend(observations)
                     external_manifest.append({
                         "provider": gnomad.name, "provider_version": gnomad.release,
@@ -178,135 +324,20 @@ def main(argv=None):
                             batch is not None for batch in batches.values()),
                         "evidence": len(observations),
                     })
-                if args.with_dbnsfp:
-                    dbnsfp = suite.dbnsfp
-                    transcripts = {item["variant_key"]: item["transcript"] for item in annotations}
-                    scores = 0
-                    dbnsfp_errors = []
-                    for key, variant in sorted(variants.items()):
-                        outcome = suite.predictions(variant, transcripts.get(key))
-                        if outcome.error is not None:
-                            dbnsfp_errors.append({"variant_key": key, "error": outcome.error})
-                            continue
-                        evidence.extend(outcome.records)
-                        scores += len(outcome.records)
-                    external_manifest.append({
-                        "provider": dbnsfp.name,
-                        "provider_version": suite.dbnsfp_version(),
-                        "queried_variants": len(variants), "evidence": scores,
-                        "errors": dbnsfp_errors,
-                        "calibration_use": "PP3_BP4_WITH_CONFIGURED_CALIBRATION",
-                    })
-                if args.with_clinvar:
-                    clinvar = ClinVarProvider(external_client, args.clinvar_release)
-                    seen = set()
-                    clinvar_results = {}
-                    clinvar_count = 0
-                    for row in records:
-                        accession = row["identity"].get("CLNVARIATIONID")
-                        if not accession or not VCV.fullmatch(accession) or not row["resolution"]:
-                            continue
-                        variant = Variant(**row["resolution"]["variant"])
-                        lookup = (accession, variant.key)
-                        if lookup not in seen:
-                            seen.add(lookup)
-                            outcome, identity = suite.clinvar_record(accession, variant)
-                            clinvar_results[lookup] = (outcome, identity)
-                            if outcome.error is None:
-                                clinvar_count += 1
-                        outcome, identity = clinvar_results[lookup]
-                        if outcome.error is None:
-                            evidence.extend(outcome.records)
-                            row["resolution"]["evidence"].append(identity)
-                        else:
-                            row["issues"].append(f"CLINVAR_PROVIDER_ERROR: {outcome.error}")
-                    clinvar_manifest = {
-                        "provider": clinvar.name, "provider_version": clinvar.release,
-                        "queried_accessions": len(seen), "matched_records": clinvar_count,
-                        "evidence": clinvar_count,
-                        "classification_use": "NOT_PP5_BP6",
-                    }
-                    comparator = ClinVarComparatorProvider(
-                        external_client, args.clinvar_release, provider
-                    )
-                    unique_annotations = {
-                        (item["variant_key"], item["transcript"]): item
-                        for item in annotations if "missense_variant" in item["consequences"]
-                    }
-                    comparator_searches = 0
-                    comparator_evidence = 0
-                    comparator_errors = []
-                    pm5_searches = 0
-                    pm5_evidence = 0
-                    tally = {"PS1": [0, 0], "PM5": [0, 0]}
-                    for annotation in unique_annotations.values():
-                        variant = variants[annotation["variant_key"]]
-                        splice_score = splice_score_for(
-                            [item for item in predictions
-                             if item.get("variant_key") == variant.key],
-                            annotation["transcript"],
-                        )
-                        for criterion in ("PS1", "PM5"):
-                            outcome = suite.comparator(
-                                criterion, annotation, variant, splice_score
-                            )
-                            if outcome.error is not None:
-                                comparator_errors.append({
-                                    "variant_key": variant.key, "error": outcome.error,
-                                    "criterion": criterion,
-                                })
-                                continue
-                            evidence.extend(outcome.records)
-                            tally[criterion][0] += 1
-                            tally[criterion][1] += outcome.matches
-                    comparator_searches, comparator_evidence = tally["PS1"]
-                    pm5_searches, pm5_evidence = tally["PM5"]
-                    clinvar_manifest["pm5_residue_searches"] = pm5_searches
-                    clinvar_manifest["pm5_comparator_evidence"] = pm5_evidence
-                    clinvar_manifest["ps1_comparator_searches"] = comparator_searches
-                    clinvar_manifest["ps1_comparator_evidence"] = comparator_evidence
-                    clinvar_manifest["ps1_comparator_errors"] = comparator_errors
-                    external_manifest.append(clinvar_manifest)
-                if args.with_pm1_hotspot:
-                    if not args.rules:
-                        raise ValueError("--with-pm1-hotspot requires --rules with PM1.hotspot")
-                    policy = json.loads(args.rules.read_text(encoding="utf-8"))                         .get("PM1", {}).get("hotspot", {})
-                    hotspot = ClinVarHotspotProvider(external_client, args.clinvar_release, policy)
-                    hotspot_suite = VariantProviderSuite(
-                        external_client, clinvar_release=args.clinvar_release,
-                        ensembl_provider=provider, hotspot_policy=policy,
-                    )
-                    hotspot_regions = 0
-                    hotspot_errors = []
-                    for annotation in {
-                        (item["variant_key"], item["transcript"]): item
-                        for item in annotations
-                        if "missense_variant" in item["consequences"] and item.get("protein_start")
-                    }.values():
-                        outcome = hotspot_suite.hotspot(
-                            annotation, variants[annotation["variant_key"]]
-                        )
-                        if outcome.error is not None:
-                            hotspot_errors.append({"variant_key": annotation["variant_key"],
-                                                   "error": outcome.error})
-                            continue
-                        evidence.extend(outcome.records)
-                        hotspot_regions += outcome.matches
-                    external_manifest.append({
-                        "provider": hotspot.name, "provider_version": args.clinvar_release,
-                        "policy_version": policy.get("policy_version"),
-                        "policy_source": policy.get("policy_source"),
-                        "window_aa": policy.get("window_aa"),
-                        "min_pathogenic": policy.get("min_pathogenic"),
-                        "max_benign": policy.get("max_benign"),
-                        "region_evidence": hotspot_regions, "errors": hotspot_errors,
-                        "use_restriction": "PM1_HOTSPOT_ROUTE_ONLY",
-                    })
             args.output_dir.mkdir(parents=True, exist_ok=False)
             output = args.output_dir / "audit.json"
             output.write_text(json.dumps({"schema_version": "1.0", "records": records},
                                          ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
             resolved = evaluation_inputs(records)
+            for record in resolved:
+                mapping = condition_mappings.get(record.get("condition"))
+                if mapping:
+                    record["condition_mapping"] = mapping
+                # Ancestry is keyed by the MONDO term, which is what the mapping resolved to.
+                term = (mapping or {}).get("normalized_condition") or record.get("condition")
+                ancestors = condition_ancestry.get(term)
+                if ancestors:
+                    record["condition_ancestors"] = ancestors
             if args.command in {"prepare-demo", "prepare-demo-online"}:
                 (args.output_dir / "variants.json").write_text(
                     json.dumps({"schema_version": "1.0", "records": resolved},
@@ -325,6 +356,11 @@ def main(argv=None):
                 (args.output_dir / "evidence.json").write_text(
                     json.dumps({"schema_version": "1.0", "evidence": evidence},
                                ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+                # The resolver owns the caches now, so the reproducibility record is read
+                # off it: which entries a run replayed, and whether it touched the network
+                # at all. An offline run that silently did is the thing this catches.
+                caches = resolver.cache_clients
+                client, external_client = caches["identity"], caches["external"]
                 manifest = {
                     "schema_version": "1.0", "provider": provider.name,
                     "provider_version": provider.release,

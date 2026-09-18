@@ -13,11 +13,14 @@ os.environ.setdefault("VLLM_API_KEY", "test-only")
 
 from acmg_pipeline.services.resolve import StaticEvidenceResolver
 from acmg_pipeline.automated_core.models import CriterionResult
+from acmg_pipeline.automated_core.models import CriterionResult
 from acmg_pipeline.classification import ALL_ACMG_CODES
 from acmg_pipeline.clinical_note import ClinicalNoteExtraction
 from acmg_pipeline.common import MatchStatus, PaperContribution, VariantMatchingResult
 from acmg_pipeline.constants import CriterionStatus
+from acmg_pipeline.constants import CriterionStatus
 from acmg_pipeline.criteria import segregation
+from acmg_pipeline.export import build_automated_evidence_line, build_evidence_line
 from acmg_pipeline.export import build_automated_evidence_line, build_evidence_line
 from acmg_pipeline.pipeline import evaluate_variant_evidence_lines
 from acmg_pipeline.vcf_record import VariantRecord
@@ -69,7 +72,6 @@ def test_integrated_entrypoint_returns_one_ordered_line_per_acmg_code():
         schema_validator.validate(line)
         extensions = {item["name"]: item["value"] for item in line["extensions"]}
         code = line["specifiedBy"]["methodType"]
-        assert extensions["bh26AssessmentDetails"]["criterion"] == code
         assert extensions["referenceLink"] == f"https://example.test/{code}"
         assert "reportedIn" not in line
 

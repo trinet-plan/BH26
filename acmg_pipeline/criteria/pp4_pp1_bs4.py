@@ -409,6 +409,7 @@ def evaluate_locus_evidence(
     ar_case_mode: Optional[str] = None,
     candidate_variants_on_allele: int = 1,
     adjusted_diagnostic_yield: Optional[float] = None,
+    phenotype_match_override: Optional[PhenotypeMatchResult] = None,
 ) -> LocusEvidenceResult:
     """Evaluate PP4 and patient-family PP1/BS4 in one coordinated pass.
 
@@ -433,11 +434,45 @@ def evaluate_locus_evidence(
     adjusted_diagnostic_yield:
         Optional externally curated/recalculated yield after other loci have
         been excluded. The function does not invent this value.
+    phenotype_match_override:
+        When supplied, used instead of calling ``match_phenotype_constellation``
+        against ``reference.phenotype_hpo``. This is the seam
+        ``acmg_pipeline.criteria.pp1_bs4_pp4_engine`` hooks into for a
+        literature-search-derived reference (see that module's own
+        docstring): the search query was itself "this gene + this
+        patient's diagnosis," so phenotype_match is true by construction
+        and there is no curated ``phenotype_hpo`` required-term list to
+        check against.
+
+    [candidate_variants_on_allele also divides PP1's Table 3 points, not just
+     PP4's Table 2 points - added 2026-09-17]
+      Table 3's own footnote b states the same rule as Table 2's footnote a:
+      "these points apply to the allele, and if there is more than one
+      variant on that allele, the evidence for the allele must be divided by
+      the number of variants." Biesecker et al., 2024 only work through a
+      full worked example for PP4 (the CTNS case: divide the POSTERIOR
+      PROBABILITY, then re-derive points from Table 2 - dividing the points
+      themselves would be "mathematically incorrect," per that paper's own
+      text). Table 3 has no such probability to round-trip through - it is
+      a direct empirical points-per-meiosis count, not a probability-to-
+      points conversion - and the paper gives no worked PP1 example for this
+      case, so this project divides the raw PP1 points directly by
+      ``candidate_variants_on_allele`` instead. This is this project's own
+      reading of an underspecified case, not an authoritative ClinGen
+      worked method - flagged the same way other provisional
+      interpretations are in this codebase (see e.g.
+      acmg_pipeline.criteria.pp1_pp4_strength_table's own docstring).
     """
     if adjusted_diagnostic_yield is not None and not 0.0 <= adjusted_diagnostic_yield <= 1.0:
         raise ValueError("adjusted_diagnostic_yield must be between 0 and 1")
+    if candidate_variants_on_allele < 1:
+        raise ValueError("candidate_variants_on_allele must be >= 1")
 
-    phenotype = match_phenotype_constellation(extraction, reference)
+    phenotype = (
+        phenotype_match_override
+        if phenotype_match_override is not None
+        else match_phenotype_constellation(extraction, reference)
+    )
 
     pp4_reference = (
         replace(reference, diagnostic_yield=adjusted_diagnostic_yield)
@@ -471,7 +506,10 @@ def evaluate_locus_evidence(
     )
 
     pp4_points = pp4_result.points if pp4_result and pp4_result.applicable else 0.0
-    raw_pp1 = segregation.pp1_points_raw
+    # segregation.pp1_points_raw stays the true, undivided per-allele evidence
+    # (for audit); raw_pp1 is the per-variant apportioned share actually used
+    # below - see this function's own docstring section on why.
+    raw_pp1 = segregation.pp1_points_raw / candidate_variants_on_allele
 
     # High-yield locus-homogeneous phenotype: PP1 pathogenic support overlaps
     # with PP4 and should not be added again.

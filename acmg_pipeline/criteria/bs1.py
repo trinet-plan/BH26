@@ -107,6 +107,58 @@ def comparison(input_data, applied, scope):
     return None, COMPARISONS[declared], declared, False
 
 
+# The inputs a maximum credible allele frequency is derived from (Whiffin et al. 2017). A
+# threshold that does not record them cannot be checked against the disease it is used for,
+# which is why an unreviewed one is a candidate for a curator rather than a result.
+DERIVATION_INPUTS = ("method", "prevalence", "inheritance", "penetrance",
+                     "max_genetic_contribution", "max_allelic_contribution",
+                     "target_population", "source_url")
+
+APPROVED, DRAFT = "APPROVED", "DRAFT"
+
+
+def policy_status(scope, assessment):
+    """Whether this threshold may carry a final judgment, or only a draft for review.
+
+    A disease-specific threshold has already passed the reviewed_at gate, so it is approved
+    unless it says of itself that it is not - a curator part-way through a specification can
+    mark it DRAFT and have that honoured. The configured default is derived from published
+    information and reviewed for no particular disease, so it is never approved.
+    """
+    if scope != "disease_specific":
+        return DRAFT
+    return DRAFT if str(assessment.get("policy_status", "")).upper() == DRAFT else APPROVED
+
+
+def draft_candidate(applied, threshold, statistic, symbol, reason, observations, scored):
+    """What a curator needs to approve or reject this threshold, and nothing asserted.
+
+    Everything the derivation needs is recorded when it is present and named when it is not:
+    a blank here is a question for the curator, never a value to be assumed.
+    """
+    derivation = applied.get("derivation") or {}
+    return {
+        "policy_status": DRAFT,
+        "max_credible_af": str(threshold),
+        "frequency_statistic": statistic,
+        "comparison": symbol,
+        "source": applied.get("source"),
+        "source_version": applied.get("source_version"),
+        "review_reason": reason,
+        "derivation_inputs": {key: derivation[key] for key in DERIVATION_INPUTS
+                              if derivation.get(key) is not None},
+        "derivation_inputs_missing": [key for key in DERIVATION_INPUTS
+                                      if derivation.get(key) is None],
+        "observations": [{
+            "evidence_id": item.get("evidence_id"),
+            "source": item.get("source"), "source_version": item.get("source_version"),
+            "population": item.get("population"),
+            "AC": item.get("AC"), "AN": item.get("AN"), "AF": item.get("AF"),
+            statistic: str(value) if value is not None else None,
+        } for item, value in zip(observations, [value for _, value in scored])],
+    }
+
+
 def evaluate(variant: VariantRecord, clinical_note: ClinicalNoteExtraction, services, config):
     input_data = criterion_input(variant, clinical_note)
     condition = input_data.get("condition")
@@ -122,6 +174,7 @@ def evaluate(variant: VariantRecord, clinical_note: ClinicalNoteExtraction, serv
         applied = {key: rule.get(f"default_{key}") for key in
                    ("max_credible_af", "source", "source_version", "frequency_statistic")}
         applied["comparison"] = rule.get("default_comparison")
+        applied["derivation"] = rule.get("default_derivation") or {}
         threshold = number(applied["max_credible_af"])
         if not all(applied[key] for key in
                    ("max_credible_af", "source", "source_version", "frequency_statistic")):
@@ -163,7 +216,22 @@ def evaluate(variant: VariantRecord, clinical_note: ClinicalNoteExtraction, serv
                   "highest_observed": str(highest) if highest is not None else None}
     # One summary for all three outcomes would state the verdict without its reason, so each
     # says what was actually compared - and an incomplete search is not a negative result.
-    if exceeding:
+    status_of_policy = policy_status(scope, applied)
+    draft = None
+    if exceeding and status_of_policy == DRAFT:
+        # An unapproved threshold still reflects a real comparison against the best
+        # available number, so it is reported as a (flagged) prediction rather than
+        # withheld outright - the caveat that follows (an unapproved/default threshold, not
+        # a VCEP-reviewed one) travels in `review`/`draft`, not in the status itself.
+        status, strength = CriterionStatus.MET, "strong"
+        draft = draft_candidate(applied, threshold, statistic, symbol,
+                                reason or "the configured default threshold is not disease-specific",
+                                observations, scored)
+        summary = (f"{len(exceeding)} of {len(observations)} resolved observation(s) have "
+                   f"{article(measure)} {symbol} {label} ({threshold}; highest {measure} "
+                   f"{highest}), but that threshold is not approved for this disease context, "
+                   f"so this MET is a prediction pending curator sign-off, not a final call")
+    elif exceeding:
         status, strength = CriterionStatus.MET, "strong"
         summary = (f"{len(exceeding)} of {len(observations)} resolved observation(s) have {article(measure)} "
                    f"{symbol} {label} ({threshold}); highest {measure} {highest}")
@@ -187,8 +255,15 @@ def evaluate(variant: VariantRecord, clinical_note: ClinicalNoteExtraction, serv
                            f"not >="]
     # The threshold is the policy the observations are judged against: always recorded, and
     # cited as an evidence item only when it carries a retrievable identifier.
+    provenance = {**provenance, "threshold_scope": scope, "policy_status": status_of_policy,
+                  "disease_frequency_threshold": applied}
+    if draft:
+        provenance["draft_threshold_candidate"] = draft
+        review = review + ["Approve or replace the draft maximum credible frequency before "
+                           "BS1 is used in a classification"]
+    # An unmet threshold leaves nothing to complete; an incomplete search does.
+    missing = (["complete_population_evidence"]
+               if status == CriterionStatus.UNKNOWN and draft is None else [])
     return result("BS1", input_data, status, summary + fallback_note,
                   strength=strength, evidence=observations + citable(assessment), review=review,
-                  missing=["complete_population_evidence"] if status == CriterionStatus.UNKNOWN else [],
-                  provenance={**provenance, "threshold_scope": scope,
-                              "disease_frequency_threshold": applied})
+                  missing=missing, provenance=provenance)

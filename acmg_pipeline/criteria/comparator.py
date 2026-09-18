@@ -2,7 +2,10 @@ from acmg_pipeline.constants import CriterionStatus
 """Same-residue comparison requires independent, reviewed pathogenic evidence."""
 
 from acmg_pipeline.automated_core.models import Variant
-from acmg_pipeline.criteria.common import NOT_APPLICABLE, annotation_context, get_evidence, result
+from acmg_pipeline.criteria.common import (
+    CATEGORY_PROVIDERS, NOT_APPLICABLE, annotation_context, failure_detail, get_evidence,
+    result, retrieval_failures,
+)
 
 
 def evaluate_comparator(code, input_data, services, config):
@@ -125,7 +128,20 @@ def evaluate_comparator(code, input_data, services, config):
                  == "exact_protein_change"))
         for search in searches
     )
-    return result(code, input_data, CriterionStatus.NOT_MET if complete else CriterionStatus.UNKNOWN,
-                  "No eligible comparator found" if complete else "Comparator search incomplete",
+    if complete:
+        return result(code, input_data, CriterionStatus.NOT_MET, "No eligible comparator found",
+                      evidence=[annotation, *searches, *matching], missing=[])
+    # An incomplete search has two causes a curator acts on differently: the search ran and
+    # covered the wrong scope, or it never ran because the provider failed.
+    # The search is absorbed per criterion, so PS1 reports PS1's failure and PM5 reports PM5's.
+    failures = retrieval_failures(
+        services,
+        [name for base in CATEGORY_PROVIDERS["comparator_search"] for name in (base, f"{base}:{code}")],
+        exact=True)
+    detail = failure_detail(failures)
+    return result(code, input_data, CriterionStatus.UNKNOWN,
+                  f"Comparator search incomplete - {detail}" if detail
+                  else "Comparator search incomplete",
                   evidence=[annotation, *searches, *matching],
-                  missing=[] if complete else ["complete_comparator_search"])
+                  missing=["complete_comparator_search"],
+                  provenance={"provider_failures": failures} if failures else None)

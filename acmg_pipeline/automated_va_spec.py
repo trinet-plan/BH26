@@ -73,7 +73,7 @@ def stable_urn(kind, value):
 
 
 def population_study_result(item, variant):
-    """Represent a normalized population observation like the official gnomAD example."""
+    """Represent a normalized population observation as a VA-Spec StudyResult."""
     try:
         ac = int(item["AC"])
         an = int(item["AN"])
@@ -89,8 +89,23 @@ def population_study_result(item, variant):
                (source, source_version, population)):
         raise ValueError("Population Evidence provenance is incomplete")
     variant_key = f"{variant['assembly']}:{variant['chrom']}:{variant['pos']}:{variant['ref']}:{variant['alt']}"
-    dataset_iri = ("https://gnomad.broadinstitute.org/"
-                   f"?dataset=gnomad_r4&version={source_version}")
+    if source == "TogoVar":
+        dataset_iri = "https://grch38.togovar.org/"
+        method_name = "TogoVar API allele frequency aggregation"
+        method_document = {
+            "type": "Document",
+            "name": "TogoVar API documentation",
+            "urls": ["https://grch38.togovar.org/api/"],
+        }
+    else:
+        dataset_iri = ("https://gnomad.broadinstitute.org/"
+                       f"?dataset=gnomad_r4&version={source_version}")
+        method_name = "gnomAD browser allele frequency calculation"
+        method_document = {
+            "type": "Document",
+            "name": "gnomAD browser help",
+            "urls": ["https://gnomad.broadinstitute.org/help"],
+        }
     return {
         "id": evidence_reference(item),
         "type": "CohortAlleleFrequencyStudyResult",
@@ -108,11 +123,8 @@ def population_study_result(item, variant):
             "type": "StudyGroup", "name": population,
         },
         "specifiedBy": {
-            "type": "Method", "name": "gnomAD browser allele frequency calculation",
-            "reportedIn": {
-                "type": "Document", "name": "gnomAD browser help",
-                "urls": ["https://gnomad.broadinstitute.org/help"],
-            },
+            "type": "Method", "name": method_name,
+            "reportedIn": method_document,
         },
         "qualityMeasures": {
             "qualityStatus": item.get("quality_status"),
@@ -224,24 +236,39 @@ def evidence_catalog_item(item):
 
 
 def assessment_details(result):
-    """Return the complete workflow explanation shared by all criterion outputs."""
+    """Return the complete workflow explanation shared by all criterion outputs.
+
+    No `summary`/`criterion`/`evidenceItemIds` keys here: they would be
+    byte-for-byte copies of standard EvidenceLine fields already carrying
+    the same fact (`description`, `specifiedBy.methodType`, `hasEvidenceItems`
+    respectively). `criterion`/`evidenceItemIds` used to stay anyway because
+    export_record() folded this exact dict, unkeyed by anything else, into
+    `criterion_assessments` - but that was the audit layer leaning on this
+    function's output rather than a reason for the VA-Spec content itself to
+    carry them. export_record() now builds its own `{criterion,
+    evidenceItemIds, ...details}` wrapper instead (2026-09-18), so this
+    function is free to return only what has no standard-field equivalent.
+    """
     value = {
-        "criterion": result.criterion,
         "status": result.status.value,
-        "summary": result.summary,
-        "evidenceItemIds": list(dict.fromkeys(
-            evidence_reference(item) for item in result.evidence
-        )),
         "provenance": result.provenance,
     }
+    # No `strength`/`evidenceOutcome` keys: for a MET line these are exactly
+    # STRENGTHS[result.strength] and result.evidence_outcome, i.e. the same
+    # facts already on the standard top-level strengthOfEvidenceProvided/
+    # evidenceOutcome fields, just unwrapped from their MappableConcept shape
+    # - found alongside the `summary` duplication above, 2026-09-18. `direction`
+    # stays: for a NOT_MET line it is the real computed value (e.g. "none"),
+    # while the top-level directionOfEvidenceProvided is forced to "neutral"
+    # (VA-Spec's Direction enum has no fourth state) - genuinely extra
+    # information, not a restatement.
     optional = {
-        "strength": result.strength,
         "direction": result.direction,
-        "evidenceOutcome": result.evidence_outcome,
         "missingInputs": result.missing_inputs,
         "evaluationContext": result.evaluation_context,
         "decisionTrace": result.decision_trace,
         "rulesUsed": result.rules_used,
+        "warnings": result.warnings,
         "unresolvedRequirements": result.unresolved_requirements,
     }
     value.update({key: field_value for key, field_value in optional.items() if field_value})
@@ -309,17 +336,41 @@ def validate_envelope(document):
         line_ids = set()
         for wrapped in record["evidence_lines"]:
             criterion = wrapped["criterion"]
-            if criterion not in by_code or wrapped["assessment_details"] != by_code[criterion]:
+            # by_code[criterion] carries criterion/evidenceItemIds too (see
+            # export_record()) - wrapped["assessment_details"]/the embedded
+            # extension are the reduced VA-Spec content only, so the audit
+            # index fields are excluded before comparing.
+            audited = {k: v for k, v in by_code.get(criterion, {}).items()
+                       if k not in ("criterion", "evidenceItemIds")}
+            if criterion not in by_code or wrapped["assessment_details"] != audited:
                 raise ValueError("EvidenceLine assessment details disagree with criterion audit")
             line = wrapped["evidence_line"]
             if line["id"] in line_ids:
                 raise ValueError("Duplicate EvidenceLine id in one record")
             line_ids.add(line["id"])
-            details = next((item["value"] for item in line.get("extensions", [])
-                            if item.get("name") == "bh26AssessmentDetails"), None)
-            if details != by_code[criterion]:
+            details = details_from_extensions(line.get("extensions", []))
+            if details != audited:
                 raise ValueError("EvidenceLine extension disagrees with criterion audit")
     return document
+
+
+def extensions_last(line: dict) -> dict:
+    """Reorder so `extensions` prints last in the serialized JSON.
+
+    `extensions` (decisionTrace, curatorHints, ...) is
+    routinely the largest and most deeply nested field on a line - added
+    2026-09-18 so a human skimming an output file sees the compact,
+    identifying fields (id/description/specifiedBy/evidenceOutcome/...)
+    before that block, on every line regardless of which builder produced
+    it. Key order has no effect on schema validation or dict access, only
+    on how the file reads.
+    """
+    if "extensions" not in line:
+        return line
+    extensions = line["extensions"]
+    reordered = {key: value for key, value in line.items() if key != "extensions"}
+    reordered["extensions"] = extensions
+    return reordered
 
 
 def validate_1_0_1(line, criterion):
@@ -341,7 +392,7 @@ def validate_1_0_1(line, criterion):
     )
     if direction != expected:
         raise ValueError("VA-Spec 1.0.1 direction/evidenceOutcome mismatch")
-    return line
+    return extensions_last(line)
 
 
 def to_evidence_line(result):
@@ -368,6 +419,7 @@ def to_evidence_line(result):
         ),
         "name": f"{result.criterion} assessment for {result.variant['assembly']}:{result.variant['chrom']}:{result.variant['pos']}:{result.variant['ref']}:{result.variant['alt']}",
         "description": result.summary,
+        "extensions": extensions,
         "extensions": extensions,
         "specifiedBy": {
             "type": "Method",
@@ -421,7 +473,17 @@ def export_record(record):
 
         value = CriterionResult(**result)
         details = assessment_details(value)
-        assessments.append(details)
+        # criterion/evidenceItemIds live here, not in `details` (see
+        # assessment_details()'s docstring) - this dict, not the VA-Spec
+        # content, is what needs to tell entries apart and cross-check
+        # references.
+        assessments.append({
+            "criterion": value.criterion,
+            "evidenceItemIds": list(dict.fromkeys(
+                evidence_reference(item) for item in value.evidence
+            )),
+            **details,
+        })
         for item in value.evidence:
             identifier = evidence_reference(item)
             if identifier in evidence and evidence[identifier] != item:

@@ -75,12 +75,15 @@ VA-Spec EvidenceLine (as a plain dict, ready for json.dump()).
     2->Moderate, 3+->Strong - all three are real values from
     ga4gh.va_spec.base.enums.STRENGTH_OF_EVIDENCE_PROVIDED_VALUES). This is
     NOT a VCEP-calibrated ACMG strength determination - every EvidenceLine
-    that carries a strength value also carries a `strengthEstimationMethod`
-    extension saying so, so a human curator does not mistake it for an
-    authoritative call.
-  - structuredEvidenceItems: a checklist-style extension (see
-    _structured_items_extension below) added 2026-09-15 in response to a
-    real curator UI requirements doc (doc/recs for expert board.docx).
+    that carries a strength value also carries a `curatorHints` entry
+    (category="strength_estimation") saying so, so a human curator does not
+    mistake it for an authoritative call.
+  - Per-experiment checklist items (see _structured_evidence_item_hints
+    below) added 2026-09-15 in response to a real curator UI requirements
+    doc (doc/recs for expert board.docx) - folded into the same curatorHints
+    list above (2026-09-18) rather than a separate structuredEvidenceItems
+    extension, since both are curator-facing disclosures about the same
+    evidence with no real reason to live in two places.
 """
 
 from __future__ import annotations
@@ -93,7 +96,9 @@ from typing import Any, Optional
 from jsonschema import Draft202012Validator, FormatChecker
 
 from acmg_pipeline.criteria.common import DEFAULT_STRENGTH
-from acmg_pipeline.automated_va_spec import OUTCOME_PATTERN, output_schema
+from acmg_pipeline.automated_va_spec import (
+    OUTCOME_PATTERN, details_as_extensions, extensions_last, output_schema, stable_urn,
+)
 
 from ga4gh.core.models import Coding, Extension, MappableConcept
 from ga4gh.va_spec.base.core import Agent, Contribution, Direction, Document, EvidenceLine, Method
@@ -103,7 +108,7 @@ from acmg_pipeline.common import (
     AggregatedJudgment, CuratorHint, MatchStatus, PaperContribution,
     is_not_clear, strength_tier_from_paper_count,
 )
-from acmg_pipeline.constants import IMPLEMENTED_CODES, CriterionStatus
+from acmg_pipeline.constants import IMPLEMENTED_CODES, PATHOGENIC_CODES, CriterionStatus
 from acmg_pipeline.criteria import curator_info, reference_links
 from acmg_pipeline.vcf_record import VariantRecord
 
@@ -259,6 +264,19 @@ def _integrated_line_schema() -> dict:
     return schema
 
 
+# PS3/BS3 share one literature judgment (acmg_pipeline.criteria.ps3_bs3):
+# the LLM decides the direction actually ESTABLISHED by the evidence (PS3,
+# BS3, or not_clear) independent of which of the pair is being tested right
+# now - _strength_blocks()'s own docstring is explicit that "testing PS3 but
+# finding BS3-direction evidence must be coded BS3_moderate, not
+# PS3_moderate". So a "BS3" line whose evidenceOutcome code starts with
+# "PS3" (or vice versa) is not a bug, it is the correct way to record "this
+# disputes BS3 - the evidence actually shows PS3". Found 2026-09-17 when a
+# real demo case (DSG2 c.1592T>G) had clear PS3-direction literature
+# evidence and building its BS3 line crashed here.
+_ACMG_DISPUTE_SIBLINGS = {"PS3": "BS3", "BS3": "PS3"}
+
+
 def _check_acmg_semantics(line: dict, criterion: str) -> None:
     """The cross-field ACMG rules from validate_1_0_1(), for any line that scores.
 
@@ -272,11 +290,16 @@ def _check_acmg_semantics(line: dict, criterion: str) -> None:
     direction = line["directionOfEvidenceProvided"]
     if line["specifiedBy"]["methodType"] != criterion or not OUTCOME_PATTERN.fullmatch(outcome):
         raise ValueError(f"VA-Spec ACMG criterion mapping mismatch for {criterion}")
-    if outcome.split("_", 1)[0] != criterion:
+    outcome_code = outcome.split("_", 1)[0]
+    sibling = _ACMG_DISPUTE_SIBLINGS.get(criterion)
+    if outcome_code != criterion and outcome_code != sibling:
         raise ValueError(f"VA-Spec methodType/evidenceOutcome mismatch for {criterion}")
-    expected = "neutral" if outcome.endswith("_not_met") else (
-        "disputes" if criterion.startswith("B") else "supports"
-    )
+    if outcome_code == sibling:
+        expected = "disputes"
+    else:
+        expected = "neutral" if outcome.endswith("_not_met") else (
+            "disputes" if criterion.startswith("B") else "supports"
+        )
     if direction != expected:
         raise ValueError(
             f"VA-Spec direction/evidenceOutcome mismatch for {criterion}: "
@@ -304,7 +327,7 @@ def validate_integrated_line(line: dict, criterion: str) -> dict:
         )
     if line.get("evidenceOutcome"):
         _check_acmg_semantics(line, criterion)
-    return line
+    return extensions_last(line)
 
 
 def _pubmed_url(pmid: str) -> str:
@@ -316,21 +339,32 @@ def _document(pmid: str) -> Document:
 
 
 def _direction_of_evidence(direction, criterion: str) -> Direction:
+    """direction/disputes here means "for/against pathogenicity", not "for/against
+    the criterion under test" - so a BS3 line whose evidence actually establishes
+    BS3 (i.e. direction.value == criterion == "BS3") DISPUTES pathogenicity, it
+    does not support it. Only a match on a *pathogenic* criterion (PS3, PS4)
+    supports pathogenicity; a mismatch (the dispute-sibling case, e.g. PS3
+    evidence found while testing BS3) always disputes the criterion under test,
+    regardless of that criterion's own P/B prefix. Found 2026-09-18: this always
+    returned SUPPORTS on a match, so a real BS3_supporting outcome (MYBPC3-class
+    literature, LDLR c.2575G>A) raised acmg_pipeline.export's own
+    _check_acmg_semantics() ValueError the first time it was exercised live -
+    mirrors the same convention acmg_pipeline.criteria.pp1_bs4_pp4_engine's
+    build_evidence_line() already uses via PATHOGENIC_CODES.
+    """
     if is_not_clear(direction):
         return Direction.NEUTRAL
-    return Direction.SUPPORTS if direction.value == criterion else Direction.DISPUTES
+    if direction.value != criterion:
+        return Direction.DISPUTES
+    return Direction.SUPPORTS if criterion in PATHOGENIC_CODES else Direction.DISPUTES
 
 
-def _hints_extension(hints: list[CuratorHint]) -> Optional[Extension]:
-    if not hints:
-        return None
-    return Extension(
-        name="curatorHints",
-        value=[{"severity": h.severity, "message": h.message} for h in hints],
-    )
+def _hint_dicts(hints: list[CuratorHint]) -> list[dict]:
+    return [{"severity": h.severity, "category": h.category, "message": h.message}
+            for h in hints]
 
 
-def _structured_items_extension(judgment) -> Optional[Extension]:
+def _structured_evidence_item_hints(judgment) -> list[dict]:
     """
     Pulls the criterion-specific checklist items off `judgment` via duck
     typing - `structured_evidence_items()` is an OPTIONAL method each
@@ -339,24 +373,43 @@ def _structured_items_extension(judgment) -> Optional[Extension]:
     of those classes, so a getattr probe is how it stays criterion-agnostic
     the same way common.is_not_clear() does for direction.
 
-    Each item is {"label": str, "checked": bool, "detail": str} - see
-    design doc section 15-4-1 for the full convention.
+    Folded into curatorHints (2026-09-18, per the user's direction) rather
+    than its own `structuredEvidenceItems` extension - the two existed side
+    by side on the same per-paper EvidenceLine with no real difference in
+    purpose (both are curator-facing disclosures about this evidence), so
+    one list is enough. `category="evidence_item"` and the extra `checked`/
+    `detail` keys (beyond the shared severity/category/message shape) keep
+    the per-experiment checklist data design doc section 15-4-1 asks for
+    (a definition line plus individually checked/unchecked findings, each
+    with its own supporting detail).
     """
     getter = getattr(judgment, "structured_evidence_items", None)
     if not callable(getter):
+        return []
+    return [
+        {"severity": "info", "category": "evidence_item", "message": item["label"],
+         "checked": item["checked"], "detail": item["detail"]}
+        for item in getter()
+    ]
+
+
+def _hints_extension(hints: list[CuratorHint], *extra_dicts: list[dict]) -> Optional[Extension]:
+    value = _hint_dicts(hints)
+    for extra in extra_dicts:
+        value.extend(extra)
+    if not value:
         return None
-    items = getter()
-    if not items:
-        return None
-    return Extension(name="structuredEvidenceItems", value=items)
+    return Extension(name="curatorHints", value=value)
 
 
 def _strength_blocks(
     direction, n_agreeing_papers: int,
-) -> tuple[Optional[MappableConcept], Optional[MappableConcept], Optional[Extension]]:
+) -> tuple[Optional[MappableConcept], Optional[MappableConcept], Optional[str]]:
     """
     Returns (strengthOfEvidenceProvided, evidenceOutcome, heuristic-disclosure
-    extension), any of which may be None.
+    message for curatorHints - see build_evidence_line()'s own note, this used
+    to be its own `strengthEstimationMethod` extension, folded in 2026-09-18),
+    any of which may be None.
 
     The ACMG code is built from the direction actually established
     (`direction.value`, e.g. "PS3" or "BS3"), NOT from whichever criterion
@@ -385,15 +438,12 @@ def _strength_blocks(
         primaryCoding=Coding(code=outcome_code, system=System.ACMG.value),
         name=f"ACMG 2015 {code_base} {tier} Criterion Met (heuristic estimate, unconfirmed)",
     )
-    disclosure = Extension(
-        name="strengthEstimationMethod",
-        value=(
-            f"heuristic: {n_agreeing_papers} independent paper(s) with agreeing "
-            "direction (1=supporting, 2=moderate, 3+=strong). This is a rough "
-            "proxy, NOT a VCEP-calibrated ACMG strength determination - the "
-            "underlying LLM judgment only assesses direction, never strength "
-            "- and requires human curator confirmation."
-        ),
+    disclosure = (
+        f"heuristic: {n_agreeing_papers} independent paper(s) with agreeing "
+        "direction (1=supporting, 2=moderate, 3+=strong). This is a rough "
+        "proxy, NOT a VCEP-calibrated ACMG strength determination - the "
+        "underlying LLM judgment only assesses direction, never strength "
+        "- and requires human curator confirmation."
     )
     return strength, outcome, disclosure
 
@@ -401,9 +451,9 @@ def _strength_blocks(
 def build_paper_evidence_line(contribution: PaperContribution, criterion: str, index: int) -> EvidenceLine:
     """Builds the nested, per-paper EvidenceLine for one PaperContribution."""
     result = contribution.result
-    hints_ext = _hints_extension(result.curator_hints)
-    items_ext = _structured_items_extension(result.judgment)
-    extensions = [e for e in (hints_ext, items_ext) if e] or None
+    hints_ext = _hints_extension(
+        result.curator_hints, _structured_evidence_item_hints(result.judgment))
+    extensions = [hints_ext] if hints_ext else None
 
     return EvidenceLine(
         id=f"evline:paper-{index}-{contribution.pmid}",
@@ -438,24 +488,46 @@ def build_evidence_line(
     ]
 
     strength, outcome, strength_disclosure = _strength_blocks(direction, len(relevant_pmids))
-    hints_ext = _hints_extension(aggregated.aggregation_hints)
+    # A not_clear judgment is still reported as not_met, not unknown - PS3/BS3/
+    # PS4 always have real judgment logic (the LLM/PubMed literature workflow
+    # ran, it just couldn't reach a verdict from what it read), so this is the
+    # same "implemented but inconclusive" case export.build_automated_evidence_
+    # line() reframes the same way (see that function's note, 2026-09-18). A
+    # curatorHint discloses the real reason so "not met" isn't mistaken for a
+    # confident negative finding.
+    aggregation_hints = list(aggregated.aggregation_hints)
+    if is_not_clear(direction):
+        aggregation_hints.append(CuratorHint(
+            "caution",
+            f"{criterion} could not actually be evaluated from the available "
+            "literature (reported as not_met rather than left unknown).",
+            category="unevaluated",
+        ))
+    # strengthEstimationMethod folded into curatorHints (2026-09-18, per the
+    # user's direction) rather than its own extension - same rationale as
+    # structuredEvidenceItems above: a curator-facing disclosure about this
+    # evidence, no reason to live apart from the others.
+    if strength_disclosure:
+        aggregation_hints.append(CuratorHint(
+            "caution", strength_disclosure, category="strength_estimation"))
+    hints_ext = _hints_extension(aggregation_hints)
     status = (
-        CriterionStatus.UNKNOWN.value if is_not_clear(direction)
-        else CriterionStatus.MET.value if direction.value == criterion
+        CriterionStatus.MET.value if direction.value == criterion
         else CriterionStatus.NOT_MET.value
     )
-    assessment_ext = Extension(
-        name="bh26AssessmentDetails",
-        value={
-            "criterion": criterion,
-            "status": status,
-            "summary": " ".join(h.message for h in aggregated.aggregation_hints)
-            or f"Literature evidence was evaluated for {criterion}.",
-        },
-    )
-    extensions = [e for e in (hints_ext, strength_disclosure, assessment_ext) if e]
+    # No `summary`/`criterion` keys: they would duplicate `description` below
+    # and `specifiedBy.methodType` verbatim. Unlike automated_va_spec.
+    # assessment_details() (see its docstring), nothing here needs `criterion`
+    # as a list-disambiguator - this line is never folded into an unkeyed
+    # list of assessments the way export_record()'s criterion_assessments is.
+    # `status` sits as its own top-level extension, not grouped under one
+    # bh26AssessmentDetails object - see details_as_extensions(), 2026-09-18.
+    extensions = [e for e in (hints_ext,) if e]
+    extensions.extend(Extension(**d) for d in details_as_extensions({"status": status}))
+    reference_evidence_items: list[dict] = []
     if variant is not None:
-        extensions.extend(build_reference_extensions(criterion, variant))
+        ref_extensions, reference_evidence_items = build_reference_extensions(criterion, variant)
+        extensions.extend(ref_extensions)
 
     description = " ".join(h.message for h in aggregated.aggregation_hints) or None
 
@@ -471,7 +543,7 @@ def build_evidence_line(
         hasEvidenceItems=[
             build_paper_evidence_line(c, criterion, i)
             for i, c in enumerate(aggregated.contributions, start=1)
-        ] or None,
+        ] + reference_evidence_items or None,
         strengthOfEvidenceProvided=strength,
         evidenceOutcome=outcome,
         specifiedBy=Method(
@@ -534,8 +606,39 @@ def _serialize_curator_info(ctx) -> Optional[dict]:
     raise TypeError(f"no curatorInfo serialization defined for {type(ctx).__name__}")
 
 
-def build_reference_extensions(code: str, variant: VariantRecord) -> list[Extension]:
-    """Build auxiliary curator links/facts without making them evidence claims."""
+def build_reference_extensions(
+    code: str, variant: VariantRecord,
+) -> tuple[list[Extension], list[dict]]:
+    """Build auxiliary curator links/facts without making them evidence claims.
+
+    Returns (extensions, hasEvidenceItems entries) - curatorInfo moved out of
+    `extensions` into the second list (2026-09-18, per the user's direction):
+    unlike referenceLink (a bare pointer to a page this pipeline never reads -
+    see this function's own "Why extensions, not reportedIn" history, still
+    the reason referenceLink itself stays an extension), curatorInfo already
+    IS the structured result of a real lookup this pipeline performed
+    (UniProt domain boundaries, ClinVar mentions), the same kind of fact the
+    automated engine already reports via `hasEvidenceItems` for population/
+    annotation evidence.
+
+    [Why a nested EvidenceLine, not a plain "StudyResult"-shaped dict]
+      hasEvidenceItems's real GA4GH type is `Union[CohortAlleleFrequency
+      StudyResult, ExperimentalVariantFunctionalImpactStudyResult, Statement,
+      EvidenceLine, iriReference]` - confirmed against the installed
+      ga4gh.va_spec models (2026-09-18): there is no generic/open "StudyResult"
+      member the way acmg_pipeline.automated_va_spec.evidence_catalog_item()'s
+      dict shape assumes (that shape is only ever valid in the STANDALONE
+      CLI's own `referenced_evidence` envelope section, which sits outside
+      any EvidenceLine and is never itself schema-checked against
+      hasEvidenceItems). A bare id string would be technically valid but
+      unresolvable here - the integrated document has no separate evidence
+      catalog to look one up in - so curatorInfo's facts are nested as their
+      own EvidenceLine instead, the same shape build_paper_evidence_line()
+      already uses for per-paper literature items. The facts still end up
+      inside an `extensions` list, just on this nested line instead of the
+      parent's - GA4GH genuinely has no field that fits open-ended structured
+      facts other than an extension.
+    """
     extensions: list[Extension] = []
     try:
         url = reference_links.reference_url_for_criterion(code, variant)
@@ -546,15 +649,25 @@ def build_reference_extensions(code: str, variant: VariantRecord) -> list[Extens
     if url is not None:
         extensions.append(Extension(name="referenceLink", value=url))
 
+    evidence_items: list[dict] = []
     fetcher = _CODE_CURATOR_INFO_FETCHERS.get(code)
     if fetcher is not None:
         try:
-            info_value = _serialize_curator_info(fetcher(variant))
+            facts = _serialize_curator_info(fetcher(variant))
         except Exception:
-            info_value = None
-        if info_value is not None:
-            extensions.append(Extension(name="curatorInfo", value=info_value))
-    return extensions
+            facts = None
+        if facts is not None:
+            gene, _hgvsc, safe_hgvsc = _variant_identity(variant)
+            evidence_items.append(EvidenceLine(
+                id=stable_urn("curator-info", f"{code}:{gene}:{safe_hgvsc}"),
+                directionOfEvidenceProvided=Direction.NEUTRAL,
+                description=(
+                    "Structured facts gathered for a curator's own review "
+                    f"({code}) - not a hotspot/domain-relevance verdict."
+                ),
+                extensions=[Extension(name="curatorInfo", value=facts)],
+            ).model_dump(mode="json", exclude_none=True))
+    return extensions, evidence_items
 
 
 def _variant_identity(variant: VariantRecord) -> tuple[str, str, str]:
@@ -573,21 +686,30 @@ def build_workflow_evidence_line(
     description: str,
     details: Optional[dict[str, Any]] = None,
 ) -> dict:
-    """Emit a neutral VA-Spec line for a non-scoreable workflow state."""
+    """Emit a neutral VA-Spec line for a non-scoreable workflow state.
+
+    `assessment` carries no `summary`/`criterion`: they would duplicate the
+    EvidenceLine's own top-level `description` and `specifiedBy.methodType`
+    below verbatim (see build_evidence_line()'s own note on the same choice,
+    and automated_va_spec.assessment_details()'s docstring for the one case
+    where `criterion` has to stay, 2026-09-18). Each remaining field
+    (status/missingInputs/decisionTrace/...) becomes its own top-level
+    extension rather than one grouping object - see details_as_extensions().
+    """
     gene, _hgvsc, safe_hgvsc = _variant_identity(variant)
     assessment = {
-        "criterion": code,
         "status": status,
-        "summary": description,
     }
     if details:
         assessment.update(details)
-    extensions = [Extension(name="bh26AssessmentDetails", value=assessment)]
-    extensions.extend(build_reference_extensions(code, variant))
+    extensions = [Extension(**d) for d in details_as_extensions(assessment)]
+    ref_extensions, reference_evidence_items = build_reference_extensions(code, variant)
+    extensions.extend(ref_extensions)
     line = EvidenceLine(
         id=evidence_line_id(code, gene, safe_hgvsc),
         directionOfEvidenceProvided=Direction.NEUTRAL,
         description=description,
+        hasEvidenceItems=reference_evidence_items or None,
         specifiedBy=Method(
             methodType=code,
             name=f"ACMG/AMP {code} assessment ({status.lower().replace('_', ' ')})",
@@ -608,14 +730,23 @@ def build_automated_evidence_line(result, variant: VariantRecord) -> dict:
         to_evidence_line,
         validate_1_0_1,
     )
+    from acmg_pipeline.automated_va_spec import (
+        _curator_hints_from_result,
+        assessment_details,
+        to_evidence_line,
+        validate_1_0_1,
+    )
 
     status = CriterionStatus(result.status)
     if status in {CriterionStatus.MET, CriterionStatus.NOT_MET}:
         line = to_evidence_line(result)
-        additions = [e.model_dump(mode="json", exclude_none=True)
-                     for e in build_reference_extensions(result.criterion, variant)]
+        ref_extensions, reference_evidence_items = build_reference_extensions(
+            result.criterion, variant)
+        additions = [e.model_dump(mode="json", exclude_none=True) for e in ref_extensions]
         if additions:
             line.setdefault("extensions", []).extend(additions)
+        if reference_evidence_items:
+            line.setdefault("hasEvidenceItems", []).extend(reference_evidence_items)
         # Re-key onto the integrated document's single id scheme. The urn
         # to_evidence_line() produced is correct for the standalone
         # `acmg evaluate` CLI, but inside the 28-line document it would be
@@ -628,12 +759,24 @@ def build_automated_evidence_line(result, variant: VariantRecord) -> dict:
         # evidenceOutcome) as before the merge.
         return validate_1_0_1(line, result.criterion)
 
+    # Only reachable with status == UNKNOWN (MET/NOT_MET already returned
+    # above) - always for an IMPLEMENTED criterion (a real evaluator module
+    # ran and could not reach a verdict from the data it had), never for a
+    # criterion with no judgment logic at all (build_stub_evidence_line()
+    # handles those separately and keeps their status "unknown" - per the
+    # user's explicit direction, 2026-09-18, only an ATTEMPTED-but-inconclusive
+    # evaluation is reframed this way). Reported as `not_met`, not `unknown`:
+    # directionOfEvidenceProvided was already "neutral" either way, so the
+    # only real change is which bucket classify() puts it in - and a curator
+    # hint discloses the real reason so "not met" here isn't mistaken for a
+    # confident negative finding.
     details = assessment_details(result)
     summary = result.summary or f"{result.criterion} was not scored ({status.value})."
     line = build_workflow_evidence_line(
+    line = build_workflow_evidence_line(
         result.criterion,
         variant,
-        status=status.value,
+        status=CriterionStatus.NOT_MET.value,
         description=summary,
         details={key: value for key, value in details.items()
                  if key not in {"criterion", "status", "summary"}},
