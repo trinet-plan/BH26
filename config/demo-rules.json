@@ -1,8 +1,12 @@
 {
   "curated_context_path": "config/curated-context.json",
+  "ensembl_release": "116",
   "with_clinvar_spectrum": true,
   "with_clingen_dosage": true,
   "with_pvs1_transcript_gates": true,
+  "with_gene2phenotype": true,
+  "with_disease_matching": true,
+  "with_gene_disease_associations": true,
   "population_sources": [
     {
       "provider": "togovar",
