@@ -334,7 +334,6 @@ def _finish(input_data, state, status, summary, *, strength=None, missing=(), re
         },
         evaluation_context=state["context"], decision_trace=state["trace"],
         rules_used=state["rules_used"], warnings=state["warnings"],
-        unresolved_requirements=unresolved,
     )
 
 
@@ -665,7 +664,7 @@ def _preliminary_assessment(input_data, services, annotation, variant_type, stat
         # What the tree would need confirmed if this preliminary run became the verdict.
         "flagged_predictions": list(scratch["pending_review"]),
         "conclusion_if_mechanism_established": scratch["summary"],
-        "unresolved_requirements": list(outcome.unresolved_requirements),
+        "unresolved_requirements": list(outcome.missing_inputs),
         "decision_trace": outcome.decision_trace,
     }
 
@@ -850,7 +849,6 @@ def _evaluate_input(input_data, services, config):
         early.evaluation_context = context
         early.decision_trace = state["trace"]
         early.warnings = warnings
-        early.unresolved_requirements = list(early.missing_inputs)
         return early
     context["gene"] = annotation.get("gene")
     state["evidence"].append(annotation)

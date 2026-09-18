@@ -276,12 +276,14 @@ def build_evidence_line(code: str, evidence: CriterionEvidence, variant: Variant
     extensions = [Extension(name="bh26AssessmentDetails", value=assessment)]
     if curator_hints:
         extensions.append(Extension(name="curatorHints", value=curator_hints))
-    extensions.extend(build_reference_extensions(code, variant))
+    ref_extensions, reference_evidence_items = build_reference_extensions(code, variant)
+    extensions.extend(ref_extensions)
 
     line = EvidenceLine(
         id=evidence_line_id(code, gene, safe_hgvsc),
         directionOfEvidenceProvided=direction,
         description=evidence.source or None,
+        hasEvidenceItems=reference_evidence_items or None,
         specifiedBy=Method(
             methodType=code,
             name=f"ACMG/AMP {code} assessment (family segregation / phenotype specificity)",

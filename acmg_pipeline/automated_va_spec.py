@@ -273,7 +273,6 @@ def assessment_details(result):
         "evaluationContext": result.evaluation_context,
         "decisionTrace": result.decision_trace,
         "rulesUsed": result.rules_used,
-        "unresolvedRequirements": result.unresolved_requirements,
     }
     value.update({key: field_value for key, field_value in optional.items() if field_value})
     return value

@@ -112,7 +112,6 @@ class ClinGenPositiveReferenceTests(unittest.TestCase):
         self.assertEqual(result["evaluation_context"]["mechanism_scope"], "CONDITION_SPECIFIC")
         self.assertTrue(result["decision_trace"])
         self.assertTrue(result["rules_used"])
-        self.assertEqual(result["missing_inputs"], result["unresolved_requirements"])
 
 
 if __name__ == "__main__":
