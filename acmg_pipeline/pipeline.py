@@ -760,9 +760,20 @@ async def judge_variant_from_structured_input(
     this variant at all, in which case the whole result dict is empty and
     the caller should treat this variant as "nothing this pipeline could
     evaluate".
+
+    clinical_note.condition_id is resolved here (EBI OLS4, real candidates
+    only) rather than trusted from extract_clinical_note() alone, which
+    never sets it - see clinical_extraction._force_condition_id_null()'s
+    own docstring for why that path was removed (2026-09-18). The import is
+    local because
+    hpo_mondo_extraction requires VLLM_BASE_URL/VLLM_API_KEY at import
+    time, the same reason acmg_pipeline.criteria.pp1_bs4_pp4_engine.
+    evaluate() imports it lazily too.
     """
     variant = case_input.parse_vcf().record
     clinical_note = extract_clinical_note(case_input.clinical_note)
+    from acmg_pipeline import hpo_mondo_extraction
+    clinical_note = await hpo_mondo_extraction.resolve_diagnosis_mondo(clinical_note)
     return await judge_variant_from_shared_input(
         variant,
         clinical_note,

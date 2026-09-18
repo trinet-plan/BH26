@@ -641,12 +641,12 @@ def build_reference_extensions(
     """
     extensions: list[Extension] = []
     try:
-        url = reference_links.reference_url_for_criterion(code, variant)
+        urls = reference_links.reference_urls_for_criterion(code, variant)
     except Exception:
         # Reference pages are optional navigation aids. Their network/lookup
         # failure must never erase the criterion assessment itself.
-        url = None
-    if url is not None:
+        urls = []
+    for url in urls:
         extensions.append(Extension(name="referenceLink", value=url))
 
     evidence_items: list[dict] = []

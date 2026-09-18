@@ -193,9 +193,17 @@ class DemoPipelineTests(unittest.TestCase):
                                       if result["criterion"] == code_)
                           for status in ("met", "not_met", "unknown")}
                   for code_ in ("PP2", "BP1")}
-        # The 18 unknowns are the non-missense records, which PP2 and BP1 do not evaluate.
+        # 18 of the 28 demo records are missense, but only 10 are evaluated. The other 8 are
+        # missense in a gene-disease pair the review marks the criterion inapplicable to -
+        # the ClinGen Cardiomyopathy VCEP's MYH7 specification (5 records), KCNJ5, whose
+        # validity is for familial hyperaldosteronism rather than HCM, and MYBPC3 and TNNI3
+        # against ARVC, where validity is Limited or is for HCM instead. Those join the 10
+        # non-missense records as unknown, so an unknown here is not one situation.
         self.assertEqual(counts["PP2"], {"met": 1, "not_met": 9, "unknown": 18})
         self.assertEqual(counts["BP1"], {"met": 0, "not_met": 10, "unknown": 18})
+        inapplicable = [result for result in mechanism if result["status"] == "unknown"
+                        and result["provenance"].get("applicability_source")]
+        self.assertEqual(len(inapplicable), 16)
         evaluated_records = [result for result in mechanism if result["status"] != "unknown"]
         self.assertTrue(all(result["provenance"]["assessment_scope"] == "gene_level"
                             for result in evaluated_records))

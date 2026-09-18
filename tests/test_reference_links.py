@@ -14,6 +14,7 @@ from urllib.parse import unquote
 
 from acmg_pipeline.criteria.reference_links import (
     AUTOPVS1_URL, autopvs1_variant_url, clinvar_position_url,
+    franklin_variant_url, reference_urls_for_criterion,
 )
 from acmg_pipeline.vcf_record import VariantRecord
 
@@ -66,6 +67,39 @@ class ClinvarPositionUrlTests(unittest.TestCase):
         self.assertIsNone(clinvar_position_url(VariantRecord(
             chrom="11", pos=0, id="v1", ref="CT", alt="C",
             qual="", filter="", info={})))
+
+
+class MultipleReferenceUrlTests(unittest.TestCase):
+    def test_franklin_builds_a_grch38_small_variant_link(self):
+        self.assertEqual(
+            franklin_variant_url(variant(chrom="chr14", pos=23425971, ref="G", alt="A")),
+            "https://franklin.genoox.com/clinical-db/variant/snp/"
+            "chr14-23425971-G-A-hg38",
+        )
+
+    def test_population_criteria_include_togovar_gnomad_and_franklin(self):
+        urls = reference_urls_for_criterion(
+            "PM2", variant(chrom="14", pos=23425971, ref="G", alt="A")
+        )
+        self.assertEqual(urls, [
+            "https://grch38.togovar.org/variant/14-23425971-G-A",
+            "https://gnomad.broadinstitute.org/variant/"
+            "14-23425971-G-A?dataset=gnomad_r4",
+            "https://franklin.genoox.com/clinical-db/variant/snp/"
+            "chr14-23425971-G-A-hg38",
+        ])
+
+    def test_a_criterion_without_a_specific_page_still_gets_franklin(self):
+        self.assertEqual(
+            reference_urls_for_criterion("PP3", variant()),
+            [
+                "https://franklin.genoox.com/clinical-db/variant/snp/"
+                "chr11-47351252-CT-C-hg38"
+            ],
+        )
+
+    def test_placeholder_allele_does_not_create_variant_specific_links(self):
+        self.assertEqual(reference_urls_for_criterion("PM2", variant(alt=".")), [])
 
 
 if __name__ == "__main__":

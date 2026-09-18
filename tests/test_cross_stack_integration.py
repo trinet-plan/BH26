@@ -159,8 +159,8 @@ def _run_both_stacks() -> list[dict]:
             new=_fake_judge_single_paper,
         ),
         patch(
-            "acmg_pipeline.export.reference_links.reference_url_for_criterion",
-            side_effect=lambda code, _variant: f"https://example.test/{code}",
+            "acmg_pipeline.export.reference_links.reference_urls_for_criterion",
+            side_effect=lambda code, _variant: [f"https://example.test/{code}"],
         ),
         patch.dict("acmg_pipeline.export._CODE_CURATOR_INFO_FETCHERS", {}, clear=True),
     ):
@@ -302,8 +302,8 @@ def test_outcome_code_omits_the_default_strength_suffix():
         PaperContribution("12345678", segregation.finalize(judgment, pmid="12345678"))
     ])
     with patch(
-        "acmg_pipeline.export.reference_links.reference_url_for_criterion",
-        return_value="https://example.test/PP1",
+        "acmg_pipeline.export.reference_links.reference_urls_for_criterion",
+        return_value=["https://example.test/PP1"],
     ):
         line = build_evidence_line(aggregated, "MYH7", "c.2155C>T", "PP1")
 

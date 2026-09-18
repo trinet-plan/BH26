@@ -150,8 +150,9 @@ pp4_literature_search.search_diagnostic_yield = _fake_search(
 # -> +1.0 (PP1), combined and capped at +5 - reproduces test_pp4_pp1_bs4.py's
 # own case (2), through the full engine.evaluate() -> to_criterion_evidence()
 # path. phenotype_match is assumed true (the search query WAS "this gene +
-# this diagnosis"), so locus_model="heterogeneous" (always assumed for a
-# literature-derived reference) keeps PP1 from being suppressed.
+# this diagnosis"). yield=70% is below the 90% locus_model="homogeneous"
+# approximation threshold (_build_reference_from_literature(), 2026-09-18),
+# so locus_model="heterogeneous" here and PP1 is not suppressed.
 note_with_relative = _note(relatives=[Relative("sister", affected_status=True, variant_status=True)])
 sibling_results = run_evaluate(_variant("GENE1"), note_with_relative)
 check("PP4 MET (4.0 points -> STRONG)",
@@ -165,6 +166,30 @@ check("BS4 NOT_MET (no non-segregation observed)",
 check("disclosure is present in PP4's source",
       "auto-extracted via literature search" in sibling_results["PP4"].source)
 check("PMID is present in PP4's source", "99999999" in sibling_results["PP4"].source)
+
+# High yield (>90%) -> locus_model="homogeneous" approximation
+# (_build_reference_from_literature(), 2026-09-18) suppresses PP1 even
+# though family co-segregation data is present, matching the paper's own
+# CTNS/cystinosis argument that PP1 must not be added on top of a
+# locus-homogeneous, high-yield PP4 (double counting the same evidence).
+pp4_literature_search.search_diagnostic_yield = _fake_search(
+    found=True, yield_fraction=0.958, sample_size=100, pmid="22222222",
+)
+high_yield_results = run_evaluate(
+    _variant("HIGH_YIELD_GENE"),
+    _note(relatives=[Relative("sister", affected_status=True, variant_status=True)]),
+)
+check("PP4 MET at the +5.0 cap (95.8% yield -> STRONG)",
+      high_yield_results["PP4"].status == CriterionStatus.MET
+      and high_yield_results["PP4"].strength == Strength.STRONG)
+check("PP1 NOT_MET - suppressed as redundant with a locus-homogeneous, high-yield PP4",
+      high_yield_results["PP1"].status == CriterionStatus.NOT_MET)
+
+# Reset back to the 70%-yield fake before the remaining sections.
+pp4_literature_search.search_diagnostic_yield = _fake_search(
+    found=True, yield_fraction=0.70, sample_size=100, pmid="99999999",
+    quote="70 of 100 patients tested had a pathogenic variant.",
+)
 
 # No family data at all -> PP4 alone (segregation not evaluable).
 note_no_family = _note(relatives=[])
