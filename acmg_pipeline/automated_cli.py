@@ -12,6 +12,7 @@ from acmg_pipeline.automated_core.reference import FastaReference
 from acmg_pipeline.automated_core.models import CRITERIA, Variant
 from acmg_pipeline.gene_disease import build_assessment_document, build_draft_document
 from acmg_pipeline.automated_output import run_internal
+from acmg_pipeline.criteria.pvs1 import CANONICAL_SPLICE
 from acmg_pipeline.providers.clingen_dosage import METHOD as DOSAGE_METHOD, ClinGenDosageProvider
 from acmg_pipeline.providers.gene2phenotype import (
     METHOD as G2P_METHOD, Gene2PhenotypeProvider,
@@ -20,6 +21,9 @@ from acmg_pipeline.providers.clingen_lumping import (
     METHOD as LUMPING_METHOD, ClinGenLumpingProvider,
 )
 from acmg_pipeline.providers.mondo import METHOD as MONDO_METHOD, MondoMappingProvider
+from acmg_pipeline.providers.splice_default import (
+    METHOD as SPLICE_DEFAULT_METHOD, SpliceDefaultProvider,
+)
 from acmg_pipeline.providers.mondo_hierarchy import (
     METHOD as MONDO_TREE_METHOD, MondoHierarchyProvider,
 )
@@ -102,6 +106,10 @@ def main(argv=None):
     online.add_argument("--with-mane-transcript", action="store_true",
                         help="Assert PVS1's transcript-relevance gate when the evaluated "
                              "transcript is the gene's MANE Select (automated stand-in)")
+    online.add_argument("--with-splice-default", action="store_true",
+                        help="Answer PVS1's SP01/SP02 for canonical splice donor/acceptor "
+                             "variants from the configured default policy, flagged as a "
+                             "prediction rather than a curator's review")
     online.add_argument("--with-nmd-prediction", action="store_true",
                         help="Predict NMD from VEP exon numbering for PVS1's NF02 gate "
                              "(no record for the last two exons, where the rule needs a distance)")
@@ -570,15 +578,51 @@ def main(argv=None):
                         "errors": mane_errors,
                         "use_restriction": "PVS1_TRANSCRIPT_RELEVANCE_GATE_ONLY",
                     })
+                if args.with_splice_default:
+                    # SP01/SP02's first pass for canonical splice variants. Reachable from
+                    # pipeline.py through services/resolve.py already; wired here too so the
+                    # CLI's own runs exercise the same path rather than stopping at SP01.
+                    if not args.rules:
+                        raise ValueError(
+                            "--with-splice-default requires --rules with "
+                            "PVS1.splice_default_policy_version")
+                    version = (json.loads(args.rules.read_text(encoding="utf-8"))
+                               .get("PVS1", {}).get("splice_default_policy_version"))
+                    # The provider refuses an unrecorded version; a default answer that
+                    # cannot name the policy it came from is not one a curator can check.
+                    splice = SpliceDefaultProvider(version)
+                    splice_records, splice_errors = [], []
+                    generated_at = datetime.now(timezone.utc).isoformat()
+                    for annotation in annotations:
+                        if not set(annotation.get("consequences") or []) & CANONICAL_SPLICE:
+                            continue
+                        try:
+                            splice_records.extend(splice.get_splice_assessment(
+                                variants[annotation["variant_key"]],
+                                annotation.get("transcript"), generated_at))
+                        except (FetchError, ValueError) as exc:
+                            splice_errors.append(f"{annotation.get('hgvsc')}: {exc}")
+                    evidence.extend(splice_records)
+                    external_manifest.append({
+                        "provider": splice.name, "provider_version": version,
+                        "method": SPLICE_DEFAULT_METHOD,
+                        "evidence": len(splice_records), "errors": splice_errors,
+                        "use_restriction": "PVS1_SPLICE_DEFAULT_ONLY",
+                    })
                 if args.with_nmd_prediction:
                     # PVS1's NF02 gate. Its own VEP request, so the committed offline
                     # annotation cache keeps replaying unchanged - see providers/nmd.py.
                     nmd = NmdPredictionProvider(external_client, args.ensembl_release
                                                 or provider.release)
                     nmd_records, nmd_errors, seen = [], [], set()
+                    # Canonical splice belongs here too: providers/nmd.py answers those from
+                    # intron numbering, and filtering them out at the call site skipped the
+                    # request entirely, so SP01/SP02 handed the truncating path a variant NF02
+                    # then had no prediction for.
+                    nmd_eligible = NMD_TRUNCATING | CANONICAL_SPLICE
                     for annotation in annotations:
                         key = (annotation["variant_key"], annotation.get("transcript"))
-                        if key in seen or not set(annotation.get("consequences") or []) & NMD_TRUNCATING:
+                        if key in seen or not set(annotation.get("consequences") or []) & nmd_eligible:
                             continue
                         seen.add(key)
                         try:
