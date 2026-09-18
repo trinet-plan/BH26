@@ -68,7 +68,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import acmg_pipeline.automated_cli as automated_cli_module
 import acmg_pipeline.pipeline as pl
 from acmg_pipeline.automated_core.input import audit_vcf
-from acmg_pipeline.classification import ALL_ACMG_CODES, classify
+from acmg_pipeline.classification import ALL_ACMG_CODES, classification_to_dict, classify
 from acmg_pipeline.fulltext_cache import DiskBackedFullTextCache
 from acmg_pipeline.gate import ERepoClient
 from acmg_pipeline.inputs import empty_clinical_note
@@ -200,14 +200,19 @@ async def main() -> None:
                 skipped.append(f"{gene} {hgvsc} (error: {exc!r})")
                 continue
 
-            safe = _safe_hgvsc(hgvsc)
-            (OUTPUT_DIR / f"{run_ts}_{gene}_{safe}.json").write_text(
-                json.dumps(lines, indent=2, ensure_ascii=False), encoding="utf-8",
-            )
-
             evidence_lines = dict(zip(ALL_ACMG_CODES, lines))
             evidence = [_evidence_from_line(code, evidence_lines[code]) for code in ALL_ACMG_CODES]
             result = classify(evidence)
+
+            safe = _safe_hgvsc(hgvsc)
+            (OUTPUT_DIR / f"{run_ts}_{gene}_{safe}.json").write_text(
+                json.dumps(
+                    {"classification": classification_to_dict(result), "evidence_lines": lines},
+                    indent=2, ensure_ascii=False,
+                ),
+                encoding="utf-8",
+            )
+
             compared_n += 1
             is_match = result.category.value == real_outcome
             match_n += is_match
