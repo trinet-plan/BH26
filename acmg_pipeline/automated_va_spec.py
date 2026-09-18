@@ -238,24 +238,19 @@ def evidence_catalog_item(item):
 def assessment_details(result):
     """Return the complete workflow explanation shared by all criterion outputs.
 
-    No `summary` key here: it would be a byte-for-byte copy of the standard
-    EvidenceLine's own top-level `description` (both come from
-    `result.summary`) - found 2026-09-18 as reader-visible duplication in
-    every scored/workflow line's JSON. `criterion` and `evidenceItemIds` also
-    duplicate standard fields (`specifiedBy.methodType`, `hasEvidenceItems`)
-    but stay regardless: export_record()/validate_envelope() below use this
-    exact dict, unkeyed by anything else, as one entry of
-    `criterion_assessments` - `criterion` says which code each entry is for,
-    and `evidenceItemIds` is what validate_envelope() cross-checks against
-    `referenced_evidence` for orphan references. Both real uses, not just
-    convenience copies - unlike `summary`, which nothing reads.
+    No `summary`/`criterion`/`evidenceItemIds` keys here: they would be
+    byte-for-byte copies of standard EvidenceLine fields already carrying
+    the same fact (`description`, `specifiedBy.methodType`, `hasEvidenceItems`
+    respectively). `criterion`/`evidenceItemIds` used to stay anyway because
+    export_record() folded this exact dict, unkeyed by anything else, into
+    `criterion_assessments` - but that was the audit layer leaning on this
+    function's output rather than a reason for the VA-Spec content itself to
+    carry them. export_record() now builds its own `{criterion,
+    evidenceItemIds, ...details}` wrapper instead (2026-09-18), so this
+    function is free to return only what has no standard-field equivalent.
     """
     value = {
-        "criterion": result.criterion,
         "status": result.status.value,
-        "evidenceItemIds": list(dict.fromkeys(
-            evidence_reference(item) for item in result.evidence
-        )),
         "provenance": result.provenance,
     }
     # No `strength`/`evidenceOutcome` keys: for a MET line these are exactly
@@ -273,10 +268,38 @@ def assessment_details(result):
         "evaluationContext": result.evaluation_context,
         "decisionTrace": result.decision_trace,
         "rulesUsed": result.rules_used,
-        "unresolvedRequirements": result.unresolved_requirements,
     }
     value.update({key: field_value for key, field_value in optional.items() if field_value})
     return value
+
+
+# The set of keys assessment_details() can ever return - used to reconstruct
+# its dict back out of a flattened extensions list (see details_as_extensions()
+# and validate_envelope() below).
+_DETAIL_EXTENSION_NAMES = frozenset({
+    "status", "direction", "missingInputs", "evaluationContext",
+    "decisionTrace", "rulesUsed", "provenance",
+})
+
+
+def details_as_extensions(details: dict) -> list[dict]:
+    """Flatten an assessment_details()-shaped dict into individual top-level
+    extensions instead of one grouping `bh26AssessmentDetails` object - each
+    field (status/direction/decisionTrace/...) becomes its own named
+    extension, the same level `curatorHints`/`referenceLink` already sit at
+    (2026-09-18, per the user's direction: nothing about VA-Spec's own
+    `extensions` array requires - or even suggests - grouping a project's
+    custom fields under one umbrella object)."""
+    return [{"name": key, "value": value} for key, value in details.items()]
+
+
+def details_from_extensions(extensions: list[dict]) -> dict:
+    """Inverse of details_as_extensions() - picks the assessment_details()
+    fields back out of a line's full (possibly much larger) extensions list,
+    e.g. to compare a real EvidenceLine's content against the audit's own
+    recorded version of it (see validate_envelope())."""
+    return {ext["name"]: ext["value"] for ext in extensions
+            if ext.get("name") in _DETAIL_EXTENSION_NAMES}
 
 
 def _curator_hints_from_result(result):
@@ -340,15 +363,20 @@ def validate_envelope(document):
         line_ids = set()
         for wrapped in record["evidence_lines"]:
             criterion = wrapped["criterion"]
-            if criterion not in by_code or wrapped["assessment_details"] != by_code[criterion]:
+            # by_code[criterion] carries criterion/evidenceItemIds too (see
+            # export_record()) - wrapped["assessment_details"]/the embedded
+            # extension are the reduced VA-Spec content only, so the audit
+            # index fields are excluded before comparing.
+            audited = {k: v for k, v in by_code.get(criterion, {}).items()
+                       if k not in ("criterion", "evidenceItemIds")}
+            if criterion not in by_code or wrapped["assessment_details"] != audited:
                 raise ValueError("EvidenceLine assessment details disagree with criterion audit")
             line = wrapped["evidence_line"]
             if line["id"] in line_ids:
                 raise ValueError("Duplicate EvidenceLine id in one record")
             line_ids.add(line["id"])
-            details = next((item["value"] for item in line.get("extensions", [])
-                            if item.get("name") == "bh26AssessmentDetails"), None)
-            if details != by_code[criterion]:
+            details = details_from_extensions(line.get("extensions", []))
+            if details != audited:
                 raise ValueError("EvidenceLine extension disagrees with criterion audit")
     return document
 
@@ -356,7 +384,7 @@ def validate_envelope(document):
 def extensions_last(line: dict) -> dict:
     """Reorder so `extensions` prints last in the serialized JSON.
 
-    `extensions` (bh26AssessmentDetails' decisionTrace, curatorHints, ...) is
+    `extensions` (decisionTrace, curatorHints, ...) is
     routinely the largest and most deeply nested field on a line - added
     2026-09-18 so a human skimming an output file sees the compact,
     identifying fields (id/description/specifiedBy/evidenceOutcome/...)
@@ -405,8 +433,7 @@ def to_evidence_line(result):
     if direction not in {"supports", "disputes", "neutral"}:
         raise ValueError(f"Invalid VA-Spec direction for {result.criterion}")
     method_type = METHOD_TYPES[result.criterion]
-    extensions = [{"name": "bh26AssessmentDetails",
-                   "value": assessment_details(result)}]
+    extensions = details_as_extensions(assessment_details(result))
     curator_hints = _curator_hints_from_result(result)
     if curator_hints:
         extensions.append({"name": "curatorHints", "value": curator_hints})
@@ -471,7 +498,17 @@ def export_record(record):
 
         value = CriterionResult(**result)
         details = assessment_details(value)
-        assessments.append(details)
+        # criterion/evidenceItemIds live here, not in `details` (see
+        # assessment_details()'s docstring) - this dict, not the VA-Spec
+        # content, is what needs to tell entries apart and cross-check
+        # references.
+        assessments.append({
+            "criterion": value.criterion,
+            "evidenceItemIds": list(dict.fromkeys(
+                evidence_reference(item) for item in value.evidence
+            )),
+            **details,
+        })
         for item in value.evidence:
             identifier = evidence_reference(item)
             if identifier in evidence and evidence[identifier] != item:

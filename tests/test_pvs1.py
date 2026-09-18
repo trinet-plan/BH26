@@ -312,7 +312,7 @@ class PVS1DecisionTreeTests(unittest.TestCase):
         self.assertIsNone(value.strength)
         # Not borrowed - but not discarded either: the curation is named and handed over.
         self.assertIn("disease-specific loss-of-function mechanism",
-                      value.unresolved_requirements)
+                      value.missing_inputs)
         self.assertEqual(value.evaluation_context["applicability"], "MANUAL_REVIEW")
         self.assertIn("MONDO:2", " ".join(value.review_points))
 
@@ -651,7 +651,7 @@ class PVS1DecisionTreeTests(unittest.TestCase):
         items = [self.annotation(), self.mechanism(), self.transcript(exon_relevance="UNKNOWN"), self.nmd()]
         value = self.evaluate_result(*items)
         self.assertEqual(value.status, CriterionStatus.UNKNOWN)
-        self.assertIn("exon_relevance", value.unresolved_requirements)
+        self.assertIn("exon_relevance", value.missing_inputs)
 
     def test_nmd_escape_critical_region_is_strong(self):
         items = [self.annotation(), self.mechanism(), self.transcript(), self.nmd(False),

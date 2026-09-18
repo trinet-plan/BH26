@@ -61,11 +61,6 @@
       "version": "2018+2023-splicing",
       "sources": [
         {
-          "id": "acmg_amp_2015",
-          "doi": "10.1038/gim.2015.30",
-          "pmid": "25741868"
-        },
-        {
           "id": "clingen_pvs1_2018",
           "doi": "10.1002/humu.23626",
           "pmid": "30192042"

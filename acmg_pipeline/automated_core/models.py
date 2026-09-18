@@ -52,6 +52,11 @@ class CriterionResult:
     direction: Optional[str] = None
     evidence_outcome: Optional[str] = None
     evidence: list = field(default_factory=list)
+    # No separate `unresolved_requirements` field: PVS1's _finish() (the only
+    # place that ever populated it) always set it to this exact same list -
+    # tests/test_clingen_positive.py had an assertion proving the invariant
+    # rather than a reason for the second field to exist. Removed 2026-09-18
+    # per the user's direction to fold it into missing_inputs.
     missing_inputs: list[str] = field(default_factory=list)
     review_points: list[str] = field(default_factory=list)
     conflict_flags: list[str] = field(default_factory=list)
@@ -60,7 +65,6 @@ class CriterionResult:
     decision_trace: list[dict] = field(default_factory=list)
     rules_used: list[dict] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
-    unresolved_requirements: list[str] = field(default_factory=list)
 
     def __post_init__(self):
         if self.criterion not in CRITERIA:
@@ -77,7 +81,6 @@ class CriterionResult:
     def to_dict(self):
         value = asdict(self)
         if self.criterion != "PVS1":
-            for key in ("evaluation_context", "decision_trace", "rules_used", "warnings",
-                        "unresolved_requirements"):
+            for key in ("evaluation_context", "decision_trace", "rules_used", "warnings"):
                 value.pop(key)
         return value

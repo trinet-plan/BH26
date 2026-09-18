@@ -164,11 +164,17 @@ class VaSpecTests(unittest.TestCase):
         self.assertEqual(observations["AN"], 100000)
         self.assertEqual(len(evidence_hash), 64)
         self.assertEqual(wrapped["assessment_details"]["status"], "not_met")
-        self.assertEqual(wrapped["assessment_details"]["evidenceItemIds"], [identifier])
-        extension = wrapped["evidence_line"]["extensions"][0]
-        self.assertEqual(extension["name"], "bh26AssessmentDetails")
-        self.assertEqual(extension["value"]["status"], "not_met")
-        self.assertEqual(extension["value"]["evidenceItemIds"], [identifier])
+        # evidenceItemIds lives only in the audit-index entry now, not in the
+        # embedded VA-Spec content (see automated_va_spec.assessment_details()'s
+        # docstring, 2026-09-18).
+        self.assertEqual(
+            record["criterion_assessments"][0]["evidenceItemIds"], [identifier])
+        # status is its own top-level extension now, not grouped under one
+        # bh26AssessmentDetails object (2026-09-18, per the user's direction).
+        line_extensions = {item["name"]: item["value"]
+                           for item in wrapped["evidence_line"]["extensions"]}
+        self.assertEqual(line_extensions["status"], "not_met")
+        self.assertNotIn("evidenceItemIds", line_extensions)
 
     def test_pvs1_assessment_details_keep_decision_trace(self):
         result = CriterionResult(
@@ -186,17 +192,20 @@ class VaSpecTests(unittest.TestCase):
         self.assertEqual(details["decisionTrace"][0]["node_id"], "NF02")
         self.assertEqual(details["evaluationContext"]["gene"], "TEST")
         self.assertEqual(details["rulesUsed"][0]["source"], "ClinGen PVS1 2018")
-        self.assertEqual(wrapped["evidence_line"]["extensions"][0]["value"], details)
+        # Each detail field is its own top-level extension now, not grouped
+        # under one bh26AssessmentDetails object (2026-09-18, per the user's
+        # direction) - reconstruct and compare against the audited version.
+        line_extensions = {item["name"]: item["value"]
+                           for item in wrapped["evidence_line"]["extensions"]}
+        from acmg_pipeline.automated_va_spec import details_from_extensions
+        self.assertEqual(
+            details_from_extensions(wrapped["evidence_line"]["extensions"]), details)
         self.assertNotIn("warnings", details)
-        hints = wrapped["evidence_line"]["extensions"][1]
-        self.assertEqual(hints, {
-            "name": "curatorHints",
-            "value": [{
-                "severity": "warning",
-                "category": "warning",
-                "message": "Condition was not provided.",
-            }],
-        })
+        self.assertEqual(line_extensions["curatorHints"], [{
+            "severity": "warning",
+            "category": "warning",
+            "message": "Condition was not provided.",
+        }])
 
     def test_automated_review_messages_use_shared_curator_hints_extension(self):
         result = CriterionResult(
@@ -208,9 +217,9 @@ class VaSpecTests(unittest.TestCase):
         )
         line = to_evidence_line(result)
         extensions = {item["name"]: item["value"] for item in line["extensions"]}
-        self.assertNotIn("reviewPoints", extensions["bh26AssessmentDetails"])
-        self.assertNotIn("conflictFlags", extensions["bh26AssessmentDetails"])
-        self.assertNotIn("warnings", extensions["bh26AssessmentDetails"])
+        self.assertNotIn("reviewPoints", extensions)
+        self.assertNotIn("conflictFlags", extensions)
+        self.assertNotIn("warnings", extensions)
         self.assertEqual(extensions["curatorHints"], [
             {"severity": "warning", "category": "conflict",
              "message": "Conflicting automated assessments"},

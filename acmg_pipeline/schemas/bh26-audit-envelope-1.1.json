@@ -26,23 +26,30 @@
       },
       "required": ["assembly", "chrom", "pos", "ref", "alt"]
     },
-    "assessment": {
+    "assessmentDetails": {
       "type": "object",
       "properties": {
-        "criterion": {"type": "string", "minLength": 2},
         "status": {
           "enum": [
             "met", "not_met", "unknown"
           ]
         },
+        "provenance": {"type": "object"}
+      },
+      "required": ["status", "provenance"]
+    },
+    "criterionAssessment": {
+      "allOf": [{"$ref": "#/$defs/assessmentDetails"}],
+      "type": "object",
+      "properties": {
+        "criterion": {"type": "string", "minLength": 2},
         "evidenceItemIds": {
           "type": "array",
           "items": {"type": "string", "format": "iri-reference"},
           "uniqueItems": true
-        },
-        "provenance": {"type": "object"}
+        }
       },
-      "required": ["criterion", "status", "evidenceItemIds", "provenance"]
+      "required": ["criterion", "evidenceItemIds"]
     },
     "evidenceItem": {
       "type": "object",
@@ -69,7 +76,7 @@
       "properties": {
         "criterion": {"type": "string", "minLength": 2},
         "evidence_line": {"type": "object"},
-        "assessment_details": {"$ref": "#/$defs/assessment"}
+        "assessment_details": {"$ref": "#/$defs/assessmentDetails"}
       },
       "required": ["criterion", "evidence_line", "assessment_details"]
     },
@@ -81,7 +88,7 @@
         "variant": {"$ref": "#/$defs/variant"},
         "criterion_assessments": {
           "type": "array",
-          "items": {"$ref": "#/$defs/assessment"}
+          "items": {"$ref": "#/$defs/criterionAssessment"}
         },
         "evidence_lines": {
           "type": "array",

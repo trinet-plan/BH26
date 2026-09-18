@@ -18,8 +18,8 @@ config/pp4_reference_records.json before PP4 can produce anything at all.
   than being withheld pending separate approval. A literature-search-
   derived PP4 entry follows the same pattern - see
   acmg_pipeline.criteria.pp1_bs4_pp4_engine.evaluate() and
-  acmg_pipeline.export._strength_blocks()'s own strengthEstimationMethod
-  extension for the precedent.
+  acmg_pipeline.export._strength_blocks()'s own disclosure message (folded
+  into curatorHints, 2026-09-18) for the precedent.
 
 [Why the denominator is checked explicitly, not just "a percentage"]
   Two real experiments (case3/MYH7 against both a GeneReviews entry and a

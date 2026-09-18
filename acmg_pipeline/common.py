@@ -55,6 +55,13 @@ class VariantMatchingResult:
 class CuratorHint:
     severity: str  # "info" / "caution" / "warning"
     message: str
+    # Optional, mirrors the automated engine's own curatorHints convention
+    # (acmg_pipeline.automated_va_spec._curator_hints_from_result(): "review"/
+    # "warning"/"conflict") so the two engines' hints sit in one list with a
+    # consistent shape - added 2026-09-18 when structuredEvidenceItems was
+    # folded into curatorHints (see export._structured_evidence_item_hints()).
+    # None for a plain hint with nothing more specific to say.
+    category: Optional[str] = None
 
 
 @dataclass

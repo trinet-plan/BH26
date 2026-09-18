@@ -165,11 +165,13 @@ def test_unknown_automated_line_keeps_review_points_as_curator_hints():
         line = build_automated_evidence_line(result, variant)
 
     extensions = {item["name"]: item["value"] for item in line["extensions"]}
-    assert "reviewPoints" not in extensions["bh26AssessmentDetails"]
+    assert "reviewPoints" not in extensions
     # An implemented-but-inconclusive line reports not_met, not unknown (see
     # export.build_automated_evidence_line()'s note, 2026-09-18) - the real
     # review_points-derived hint is joined by a second one disclosing that.
-    assert extensions["bh26AssessmentDetails"]["status"] == "not_met"
+    # `status` is its own top-level extension now, not grouped under one
+    # bh26AssessmentDetails object (2026-09-18, per the user's direction).
+    assert extensions["status"] == "not_met"
     assert {
         "severity": "caution",
         "category": "review",

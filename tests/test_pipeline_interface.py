@@ -16,7 +16,7 @@ from acmg_pipeline.pipeline_interface import _evidence_from_line
 
 
 def _line(status, ga4gh_strength_code=None):
-    line = {"extensions": [{"name": "bh26AssessmentDetails", "value": {"status": status}}]}
+    line = {"extensions": [{"name": "status", "value": status}]}
     if ga4gh_strength_code is not None:
         line["strengthOfEvidenceProvided"] = {
             "primaryCoding": {"system": "ACMG Guidelines, 2015", "code": ga4gh_strength_code}
