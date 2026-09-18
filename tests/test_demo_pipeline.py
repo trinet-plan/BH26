@@ -82,7 +82,17 @@ class DemoPipelineTests(unittest.TestCase):
         computational = [result for record in results["records"] for result in record["results"]
                          if result["criterion"] in ("PP3", "BP4")]
         met = [result for result in computational if result["status"] == "met"]
-        self.assertEqual(len(met), 18)
+        # PP3 6 + BP4 16. Four of the BP4 calls rest on SpliceAI 0 while REVEL (0.398, 0.398,
+        # 0.398, 0.404) sits in Pejaver et al. 2022's gap between the PP3 and BP4 intervals.
+        # Those four were not_met while an abstaining mechanism counted as a contradiction;
+        # each now carries its abstention in provenance.uninformative_mechanisms and a review
+        # point, so the benign call still says which mechanism was left open.
+        self.assertEqual(len(met), 22)
+        abstained = [result for result in met
+                     if "uninformative_mechanisms" in result["provenance"]]
+        self.assertEqual(len(abstained), 4)
+        self.assertTrue(all(result["criterion"] == "BP4" and result["review_points"]
+                            for result in abstained))
         strengths = {result["evidence_outcome"] for result in met}
         self.assertEqual(strengths, {"PP3", "PP3_moderate", "PP3_strong",
                                      "BP4", "BP4_moderate"})

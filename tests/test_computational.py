@@ -126,6 +126,51 @@ class SplicingCalibrationTests(unittest.TestCase):
         self.assertEqual(value.status, CriterionStatus.NOT_MET)
         self.assertEqual(value.provenance["benign_blocked_by"][0]["predictor"], "SpliceAI")
 
+    def test_an_indeterminate_mechanism_does_not_block_benign_evidence(self):
+        """A score between the two bands is the calibration abstaining, not objecting.
+
+        MYH7 c.4472C>G scores REVEL 0.398 - above Pejaver et al. 2022's BP4 interval and
+        below its PP3 interval - with SpliceAI 0. Counting that abstention as a contradiction
+        returned not_met against a curator's BP4.
+        """
+        self.protein["score"] = 0.398
+        value = self.run_rule(bp4)
+        self.assertEqual(value.status, CriterionStatus.MET)
+        self.assertEqual(value.strength, "supporting")
+        self.assertNotIn("benign_blocked_by", value.provenance)
+        self.assertEqual([item["predictor"] for item in
+                          value.provenance["uninformative_mechanisms"]], ["REVEL"])
+        self.assertTrue(any("neither supported nor excluded" in point
+                            for point in value.review_points))
+
+    def test_an_opposing_mechanism_is_named_with_the_criterion_it_supports(self):
+        """Blocking is reported as evidence for PP3, not as an unexplained absence."""
+        self.splicing["score"] = 0.9
+        value = self.run_rule(bp4)
+        blocked = value.provenance["benign_blocked_by"][0]
+        self.assertEqual(blocked["opposing_criterion"], "PP3")
+        self.assertEqual(blocked["opposing_strength"], "supporting")
+        self.assertIn("supports PP3", value.summary)
+
+    def test_every_mechanism_abstaining_is_not_met_rather_than_blocked(self):
+        """Nothing supports BP4 and nothing contradicts it - that is an unmet calibration."""
+        self.protein["score"] = 0.398
+        self.splicing["score"] = 0.15
+        value = self.run_rule(bp4)
+        self.assertEqual(value.status, CriterionStatus.NOT_MET)
+        self.assertEqual(value.summary.split(".")[0],
+                         "Score does not meet criterion calibration")
+        self.assertNotIn("benign_blocked_by", value.provenance)
+
+    def test_pp3_is_unchanged_by_the_opposing_band(self):
+        """Only BP4 requires every mechanism to agree; PP3 can rest on one."""
+        self.protein["score"] = 0.1
+        self.splicing["score"] = 0.9
+        value = self.run_rule(pp3)
+        self.assertEqual(value.status, CriterionStatus.MET)
+        self.assertNotIn("benign_blocked_by", value.provenance)
+        self.assertNotIn("uninformative_mechanisms", value.provenance)
+
     def test_splicing_alone_can_carry_pp3(self):
         self.splicing["score"] = 0.9
         value = self.run_rule(pp3)
