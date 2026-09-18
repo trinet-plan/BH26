@@ -477,13 +477,13 @@ def build_evidence_line(
         else CriterionStatus.MET.value if direction.value == criterion
         else CriterionStatus.NOT_MET.value
     )
+    # No `summary` key: it would duplicate `description` below verbatim (see
+    # automated_va_spec.assessment_details()'s docstring, 2026-09-18).
     assessment_ext = Extension(
         name="bh26AssessmentDetails",
         value={
             "criterion": criterion,
             "status": status,
-            "summary": " ".join(h.message for h in aggregated.aggregation_hints)
-            or f"Literature evidence was evaluated for {criterion}.",
         },
     )
     extensions = [e for e in (hints_ext, strength_disclosure, assessment_ext) if e]

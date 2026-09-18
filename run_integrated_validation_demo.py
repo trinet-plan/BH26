@@ -25,6 +25,7 @@ does - see this script's _resolve_demo_coordinates().
 
 from __future__ import annotations
 
+import argparse
 import asyncio
 import json
 import sys
@@ -89,6 +90,12 @@ def _resolve_demo_coordinates() -> dict:
 
 
 async def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--case", choices=[c[0] for c in CASES], default=None,
+                         help="only run this one demo case (default: all 4)")
+    args = parser.parse_args()
+    cases = [c for c in CASES if c[0] == args.case] if args.case else CASES
+
     # One timestamp for the whole run, prefixed onto every output filename so
     # files from different runs sort together and never silently clobber an
     # earlier run's output for the same variant.
@@ -119,7 +126,7 @@ async def main() -> None:
         pl.show("[MCP] Connected to PubMed")
         erepo_client = ERepoClient()
 
-        for case_id, variant_id, gene, hgvsc, note_file in CASES:
+        for case_id, variant_id, gene, hgvsc, note_file in cases:
             pl.show(f"\n{'#'*70}\n# {case_id} ({variant_id}): {gene} {hgvsc}\n{'#'*70}")
             coord_entry = coords.get(variant_id)
             if not coord_entry:
