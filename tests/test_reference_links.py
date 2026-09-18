@@ -10,8 +10,11 @@ verified against this exact URL shape.
 """
 
 import unittest
+from urllib.parse import unquote
 
-from acmg_pipeline.criteria.reference_links import AUTOPVS1_URL, autopvs1_variant_url
+from acmg_pipeline.criteria.reference_links import (
+    AUTOPVS1_URL, autopvs1_variant_url, clinvar_position_url,
+)
 from acmg_pipeline.vcf_record import VariantRecord
 
 
@@ -37,6 +40,32 @@ class AutoPvs1VariantUrlTests(unittest.TestCase):
         for alt in (".", ""):
             with self.subTest(alt=alt):
                 self.assertEqual(autopvs1_variant_url(variant(alt=alt)), AUTOPVS1_URL)
+
+
+class ClinvarPositionUrlTests(unittest.TestCase):
+    """clinvar_position_url() - PS1's genomic-position window, confirmed live
+    2026-09-18 (curator-suggested) against this project's own MYBPC3
+    c.278delA (11:47351252): a +-10bp window returns 11 real ClinVar
+    variants including a nearby pathogenic frameshift."""
+
+    def test_default_window_is_ten_base_pairs_either_side(self):
+        url = clinvar_position_url(VariantRecord(
+            chrom="11", pos=47351252, id="v1", ref="CT", alt="C",
+            qual="", filter="", info={}))
+        term = unquote(url.split("term=")[1])
+        self.assertEqual(term, "11[chr] AND 47351242:47351262[chrpos38]")
+
+    def test_window_is_configurable(self):
+        url = clinvar_position_url(VariantRecord(
+            chrom="11", pos=47351252, id="v1", ref="CT", alt="C",
+            qual="", filter="", info={}), window=3)
+        term = unquote(url.split("term=")[1])
+        self.assertEqual(term, "11[chr] AND 47351249:47351255[chrpos38]")
+
+    def test_missing_position_returns_none(self):
+        self.assertIsNone(clinvar_position_url(VariantRecord(
+            chrom="11", pos=0, id="v1", ref="CT", alt="C",
+            qual="", filter="", info={})))
 
 
 if __name__ == "__main__":

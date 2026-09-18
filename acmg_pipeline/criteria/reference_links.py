@@ -167,13 +167,13 @@ def uniprot_page_url(variant: VariantRecord) -> str | None:
 
 def clinvar_search_url(variant: VariantRecord) -> str | None:
     """
-    Criteria: PS1 ("show the clinvar page/summary for that codon"), PM3
-      ("use AI to check if in trans previously reported (clinvar)"), PP1
-      ("use AI to check if segregation previously reported (clinvar)") -
-      the doc phrases these three differently but all three point at the
-      same action (open this variant's ClinVar record), so one function
-      serves all three; the AI-driven "check if X was previously reported"
-      part is NOT done here, only the page to check it on.
+    Criteria: PM3 ("use AI to check if in trans previously reported
+      (clinvar)"), PP1 ("use AI to check if segregation previously reported
+      (clinvar)") - both point at the same action (open this variant's
+      ClinVar record), so one function serves both; the AI-driven "check if
+      X was previously reported" part is NOT done here, only the page to
+      check it on. (PS1 used to share this function too - see
+      clinvar_position_url() below for why it now has its own.)
     Site: ClinVar (ncbi.nlm.nih.gov/clinvar), NCBI's search UI.
     Logic: a term-search URL built as "<GENE>[gene] AND <HGVSc>" (e.g.
       "MYH7[gene] AND c.2155C>T"), URL-encoded and appended to
@@ -190,6 +190,40 @@ def clinvar_search_url(variant: VariantRecord) -> str | None:
     if not gene or not hgvsc:
         return None
     term = f"{gene}[gene] AND {hgvsc}"
+    return f"https://www.ncbi.nlm.nih.gov/clinvar/?term={quote(term)}"
+
+
+def clinvar_position_url(variant: VariantRecord, window: int = 10) -> str | None:
+    """
+    Criteria: PS1 (doc: "show the clinvar page/summary for that codon" -
+      PS1 is met by a DIFFERENT nucleotide change producing the same amino
+      acid change, so a search keyed on this variant's own exact HGVSc, as
+      clinvar_search_url() above does for PM3/PP1, would never surface the
+      other variant PS1 is actually about). This module doesn't compute
+      codon boundaries (would need transcript exon/CDS phase, not just
+      chrom/pos), so a `window`-bp genomic range centered on the variant is
+      used instead - wide enough to catch same-codon and immediately
+      adjacent changes, narrow enough to stay readable.
+    Site: ClinVar (ncbi.nlm.nih.gov/clinvar), NCBI's search UI, its
+      "chrpos38" field.
+    Logic: f"{chrom}[chr] AND {pos-window}:{pos+window}[chrpos38]",
+      URL-encoded. Confirmed live (2026-09-18, curator-suggested) against
+      this project's own MYBPC3 c.278delA (11:47351252): an exact
+      `N:N[chrpos38]` single-position range is valid syntax (0 or 1 results,
+      normalization-sensitive for indels - ClinVar may record a deletion at
+      a shifted position), while `N[chrpos38]` with no range at all returns
+      a spurious zero-padded non-match; a +-10bp window reliably returns the
+      surrounding variants (11 for this variant, including a nearby
+      pathogenic frameshift) without a range-parsing surprise. Assumes
+      GRCh38, matching this module's other position-based builders. Returns
+      None if chrom/pos aren't set.
+    Field: EvidenceLine.extensions (Extension(name="referenceLink")) once
+      passed through export.build_reference_extensions() - see this module's
+      own docstring, "Where the returned URL ends up in VA-Spec output".
+    """
+    if not variant.chrom or not variant.pos:
+        return None
+    term = f"{variant.chrom}[chr] AND {variant.pos - window}:{variant.pos + window}[chrpos38]"
     return f"https://www.ncbi.nlm.nih.gov/clinvar/?term={quote(term)}"
 
 
@@ -282,7 +316,7 @@ def gnomad_gene_url(variant: VariantRecord, dataset: str = "gnomad_r4") -> str |
 # because their request is a threshold table, not a single reference page.
 _URL_BUILDERS = {
     "PVS1": autopvs1_variant_url,
-    "PS1": clinvar_search_url,
+    "PS1": clinvar_position_url,
     "PM3": clinvar_search_url,
     "PP1": clinvar_search_url,
     "PM1": uniprot_page_url,
