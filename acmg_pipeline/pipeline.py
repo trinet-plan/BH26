@@ -34,6 +34,7 @@ import sys
 import time
 from contextlib import AsyncExitStack
 from datetime import datetime
+from functools import lru_cache
 from pathlib import Path
 
 from mcp import ClientSession
@@ -85,6 +86,7 @@ from acmg_pipeline.vcf_record import VariantRecord
 from acmg_pipeline.automated_core.identity import reconcile
 from acmg_pipeline.automated_core.models import CRITERIA as AUTOMATED_CRITERIA
 from acmg_pipeline.automated_core.models import Variant as AutomatedVariant
+from acmg_pipeline.gene_disease import build_assessment_document
 from acmg_pipeline.services.resolve import PROVIDER_ERRORS, ProviderEvidenceResolver
 from acmg_pipeline.automated_engine import evaluate_record as evaluate_automated_record, make_services
 
@@ -982,6 +984,41 @@ def _automated_variant(variant: VariantRecord) -> AutomatedVariant:
     )
 
 
+@lru_cache(maxsize=4)
+def _reviewed_gene_disease_document(path: str) -> tuple[dict, ...]:
+    """The reviewed gene-disease assessments, expanded once per server process.
+
+    Cached on the path: this is server-owned configuration, read on every request and
+    identical between them, so re-expanding 7 groups per criterion evaluation buys nothing.
+    A change to the file takes effect on restart, like the rest of load_automated_config().
+    """
+    document = json.loads(Path(path).read_text(encoding="utf-8-sig"))
+    return tuple(build_assessment_document(document)["evidence"])
+
+
+def _reviewed_gene_disease_records(variant: AutomatedVariant, automated_config: dict) -> list[dict]:
+    """The reviewed mechanism assessments for exactly this variant, or [].
+
+    PP2 and BP1 read a transcript-scoped mechanism and variant-spectrum review. No provider
+    produces one: ClinGen Dosage and Gene2Phenotype state whether loss of function is a
+    mechanism, which answers PVS1's gate and nothing else. Until this was wired in, the
+    server had no way to reach a reviewed record at all and always fell through to
+    mechanism.py's gene_disease_draft suggestion - so the same variant could be answered
+    from a curator's review through the CLI and from gnomAD constraint through the API.
+
+    Matching is on the exact variant key, never on the gene: a reviewed decision about one
+    variant in a gene is not a decision about another one. A variant with no reviewed record
+    still reaches the draft suggestion, which is the behavior this replaces only where a
+    review exists.
+    """
+    path = automated_config.get("gene_disease_assessments")
+    if not path:
+        return []
+    key = variant.key
+    return [dict(item) for item in _reviewed_gene_disease_document(str(path))
+            if item.get("variant_key") == key]
+
+
 async def evaluate_variant_evidence_lines(
     variant: VariantRecord,
     clinical_note: ClinicalNoteExtraction,
@@ -1036,10 +1073,12 @@ async def evaluate_variant_evidence_lines(
     # request that named its variant only as a transcript HGVS has no key until this runs.
     _resolve_identity(variant, resolver)
     _apply_curated_context(variant, automated_config)
+    automated_variant = _automated_variant(variant)
     resolved = resolver.resolve(
-        _provider_identity(variant, clinical_note), _automated_variant(variant))
+        _provider_identity(variant, clinical_note), automated_variant)
     services = make_services(
-        resolved.records,
+        [*resolved.records,
+         *_reviewed_gene_disease_records(automated_variant, automated_config)],
         automated_config.get("population_providers"),
         failures=resolved.failures,
     )
@@ -1190,10 +1229,16 @@ async def evaluate_selected_criteria(
         # Identity first - see evaluate_variant_evidence_lines() for why.
         _resolve_identity(variant, resolver)
         _apply_curated_context(variant, automated_config)
+        automated_variant = _automated_variant(variant)
         resolved = resolver.resolve(
-            _provider_identity(variant, clinical_note), _automated_variant(variant))
-        services = make_services(resolved.records, automated_config.get("population_providers"),
-                                 failures=resolved.failures)
+            _provider_identity(variant, clinical_note), automated_variant)
+        # The same reviewed assessments the all-28 path gets: a caller asking only for PP2
+        # must not be answered from a weaker source than one asking for everything.
+        services = make_services(
+            [*resolved.records,
+             *_reviewed_gene_disease_records(automated_variant, automated_config)],
+            automated_config.get("population_providers"),
+            failures=resolved.failures)
         criterion_variant = _variant_without_vcf_disease_context(variant)
         automated_results = evaluate_automated_record(
             criterion_variant, clinical_note, services, automated_config, criteria=automated_subset,

@@ -171,6 +171,12 @@ python3 -m acmg_pipeline.automated_cli evaluate   --input work/run/prepared/vari
 要ります。投入しない場合、PP2/BP1は推測せず `unknown` を返し、`missing_inputs` に不足
 フィールド名を列挙します。
 
+**APIサーバーでは不要です。** サーバー経路は同じ
+`config/gene-disease-review-decisions.json` を `demo-rules.json` の
+`gene_disease_assessments` から自動で読みます。CLIとサーバーが同じ変異に別の根拠で答えない
+ようにするためで、review済みの判断が無い変異だけが統計的示唆
+(`gene_disease_draft`)へフォールバックします。
+
 reviewされた決定が無い遺伝子の変異には assessment が付きません(他遺伝子の判断を一般化
 しないため)。demo-dataでは7グループが28件中15件をカバーします。
 

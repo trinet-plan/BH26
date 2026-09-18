@@ -204,3 +204,37 @@ def test_unknown_automated_line_keeps_review_points_as_curator_hints():
         "message": "Curate a disease-relevant functional region",
     } in extensions["curatorHints"]
     assert any(h["category"] == "unevaluated" for h in extensions["curatorHints"])
+
+
+def test_the_server_reaches_the_same_reviewed_mechanism_the_cli_does():
+    """PP2/BP1 must not be answered from a weaker source on the server than on the CLI.
+
+    The providers the server can fetch (ClinGen Dosage, Gene2Phenotype) state whether loss
+    of function is a mechanism, which answers PVS1's gate and nothing else, so PP2 and BP1
+    used to fall through to mechanism.py's gnomAD-constraint suggestion while the CLI
+    answered the same variant from a curator's review. Both paths now read
+    config/gene-disease-review-decisions.json.
+    """
+    from acmg_pipeline.automated_core.models import Variant
+    from acmg_pipeline.pipeline import _reviewed_gene_disease_records
+    from acmg_pipeline.pipeline_interface import load_automated_config
+
+    config = load_automated_config()
+    assert config["gene_disease_assessments"] == "config/gene-disease-review-decisions.json"
+
+    reviewed = _reviewed_gene_disease_records(
+        Variant("GRCh38", "19", 55156239, "G", "A"), config)
+    assert reviewed, "the reviewed decisions must cover this demo variant"
+    assert all(item["category"] == "gene_disease" for item in reviewed)
+    # What the gene-level providers do not carry, and what PP2/BP1 read.
+    assert any(item.get("missense_mechanism_established") is not None for item in reviewed)
+    assert all(item.get("transcript") for item in reviewed)
+
+    # A variant with no reviewed decision gets nothing rather than another variant's, so the
+    # draft suggestion still covers it.
+    assert _reviewed_gene_disease_records(
+        Variant("GRCh38", "1", 100, "A", "G"), config) == []
+
+    # Absent configuration disables the lookup rather than defaulting to a path.
+    assert _reviewed_gene_disease_records(
+        Variant("GRCh38", "19", 55156239, "G", "A"), {}) == []
