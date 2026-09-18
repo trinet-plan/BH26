@@ -113,6 +113,9 @@ class ResolvedEvidence:
     records: list[dict] = field(default_factory=list)
     failures: list[dict] = field(default_factory=list)
     manifest: list[dict] = field(default_factory=list)
+    # Provenance for the identity itself (which ClinVar record this variant was matched to),
+    # which belongs on the audit record rather than in the evidence.
+    identity_evidence: list[dict] = field(default_factory=list)
 
     def absorb(self, provider: str, outcome: ProviderOutcome) -> ProviderOutcome:
         self.records.extend(outcome.records)
@@ -139,9 +142,46 @@ class ResolvedEvidence:
             if isinstance(value, int) and isinstance(existing.get(key), int):
                 existing[key] += value
             elif isinstance(value, list):
-                existing[key] = sorted(set(existing.get(key, [])) | set(value))
+                existing[key] = _extend_unique(existing.get(key) or [], value)
             elif value is not None:
                 existing.setdefault(key, value)
+
+
+def _extend_unique(existing, addition):
+    """Append what is not already there, for lists whose items need not be hashable."""
+    combined = list(existing)
+    for item in addition:
+        if item not in combined:
+            combined.append(item)
+    return combined
+
+
+def merge_manifests(manifests):
+    """Combine per-variant provider manifests into one run-level manifest.
+
+    A resolver answers one variant at a time, so a batch produces one manifest per variant
+    and reporting only the last would understate what ran. Counts add up, lists are unioned,
+    and the constants each provider states about itself - its version, its method, what the
+    evidence may be used for - are kept as they are.
+    """
+    combined = {}
+    for manifest in manifests:
+        for entry in manifest:
+            existing = combined.get(entry["provider"])
+            if existing is None:
+                combined[entry["provider"]] = {**entry,
+                                               "errors": list(entry.get("errors") or [])}
+                continue
+            for key, value in entry.items():
+                if key == "provider":
+                    continue
+                if isinstance(value, bool) or not isinstance(value, (int, list)):
+                    existing.setdefault(key, value)
+                elif isinstance(value, list):
+                    existing[key] = _extend_unique(existing.get(key) or [], value)
+                else:
+                    existing[key] = (existing.get(key) or 0) + value
+    return list(combined.values())
 
 
 def splice_score_for(predictions, transcript):
@@ -316,10 +356,24 @@ class ProviderEvidenceResolver:
 
     def _population_providers(self):
         if self._population is None:
-            self._population = build_population_providers(
-                self._external, self._population_sources
+            # An empty list is "no population sources", distinct from None, which means the
+            # registry's own defaults. A caller that supplies its own frequencies, or wants
+            # none, has to be able to say so without the defaults firing behind it.
+            self._population = (
+                [] if self._population_sources == []
+                else build_population_providers(self._external, self._population_sources)
             )
         return self._population
+
+    @property
+    def identity_provider(self) -> EnsemblIdentityProvider:
+        """The Ensembl provider this resolver annotates with.
+
+        Shared rather than rebuilt so a caller that has to resolve a record's identity before
+        it has a variant to ask about - which is what turns a VCF row into a prepared record -
+        does it against the same release and the same cache the evidence comes from.
+        """
+        return self._ensembl_provider()
 
     @property
     def cache_clients(self):
@@ -358,24 +412,65 @@ class ProviderEvidenceResolver:
             resolved.failures.append({"provider": "Ensembl", "error": str(exc)})
             return resolved
         transcript = annotation.get("transcript") if annotation else None
-        resolved.absorb(DbnsfpProvider.name, suite.predictions(variant, transcript))
-        outcome, _identity_evidence = suite.clinvar_record(
-            identity.get("CLNVARIATIONID"), variant
-        )
+        dbnsfp = resolved.absorb(DbnsfpProvider.name, suite.predictions(variant, transcript))
+        resolved.note(DbnsfpProvider.name, records=dbnsfp.records, error=dbnsfp.error,
+                      provider_version=suite.dbnsfp_version(), queried_variants=1,
+                      calibration_use="PP3_BP4_WITH_CONFIGURED_CALIBRATION",
+                      use_restriction="PP3_BP4_WITH_CONFIGURED_CALIBRATION")
+        accession = identity.get("CLNVARIATIONID")
+        outcome, identity_evidence = suite.clinvar_record(accession, variant)
         resolved.absorb(ClinVarProvider.name, outcome)
+        if identity_evidence:
+            resolved.identity_evidence.append(identity_evidence)
+        # Only a VCV-shaped accession was ever a query; anything else was skipped without
+        # asking, and counting it as a match would report lookups that never happened.
+        if accession and VCV.fullmatch(str(accession)):
+            resolved.note(ClinVarProvider.name, records=outcome.records,
+                          provider_version=self._clinvar_release,
+                          queried_accessions=1,
+                          matched_records=1 if outcome.error is None else 0,
+                          error=outcome.error,
+                          classification_use="NOT_PP5_BP6",
+                          ps1_comparator_errors=[],
+                          use_restriction="NOT_PP5_BP6")
 
         if annotation is None or "missense_variant" not in (annotation.get("consequences") or []):
             return resolved
         # PS1/PM5/PM1 all compare protein-level changes, so they are only
         # meaningful for a missense annotation.
         splice_score = splice_score_for(predictions, annotation.get("transcript"))
+        counts = {"PS1": ("ps1_comparator_searches", "ps1_comparator_evidence"),
+                  "PM5": ("pm5_residue_searches", "pm5_comparator_evidence")}
         for criterion in ("PS1", "PM5"):
-            resolved.absorb(
+            comparison = resolved.absorb(
                 f"{ClinVarComparatorProvider.name}:{criterion}",
                 suite.comparator(criterion, annotation, variant, splice_score),
             )
+            searches, matches = counts[criterion]
+            if comparison.error is not None:
+                resolved.note(ClinVarProvider.name, use_restriction="NOT_PP5_BP6",
+                              ps1_comparator_errors=[{"variant_key": variant.key,
+                                                      "criterion": criterion,
+                                                      "error": comparison.error}])
+                continue
+            resolved.note(ClinVarProvider.name, use_restriction="NOT_PP5_BP6",
+                          **{searches: 1 if comparison.searched else 0,
+                             matches: comparison.matches})
         if self._hotspot_policy and annotation.get("protein_start"):
-            resolved.absorb(ClinVarHotspotProvider.name, suite.hotspot(annotation, variant))
+            hotspot = resolved.absorb(
+                ClinVarHotspotProvider.name, suite.hotspot(annotation, variant))
+            policy = self._hotspot_policy or {}
+            resolved.note(ClinVarHotspotProvider.name, records=hotspot.records,
+                          provider_version=self._clinvar_release,
+                          error=hotspot.error, region_evidence=hotspot.matches,
+                          # The policy the density was counted under travels with the count:
+                          # the same window and thresholds are what make it reproducible.
+                          policy_version=policy.get("policy_version"),
+                          policy_source=policy.get("policy_source"),
+                          window_aa=policy.get("window_aa"),
+                          min_pathogenic=policy.get("min_pathogenic"),
+                          max_benign=policy.get("max_benign"),
+                          use_restriction="PM1_HOTSPOT_ROUTE_ONLY")
         return resolved
 
     def _add_lof_mechanism(self, annotation, variant, resolved):

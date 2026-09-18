@@ -49,7 +49,30 @@ from acmg_pipeline.providers.nmd import (
 )
 from acmg_pipeline.providers.http import CachedHttpClient
 from acmg_pipeline.providers.togovar import API_VERSION as TOGOVAR_API_VERSION, TogoVarProvider
-from acmg_pipeline.services.resolve import VariantProviderSuite, splice_score_for
+from acmg_pipeline.services.resolve import (
+    ProviderEvidenceResolver, VariantProviderSuite, merge_manifests, splice_score_for,
+)
+
+
+def TOGOVAR_SOURCE(api_version):
+    """The one population source this command offers, in the registry's own shape."""
+    return [{"provider": "togovar", "api_version": api_version}]
+
+
+def _hotspot_policy(args):
+    if not args.rules:
+        raise ValueError("--with-pm1-hotspot requires --rules with PM1.hotspot")
+    return json.loads(args.rules.read_text(encoding="utf-8")).get("PM1", {}).get("hotspot", {})
+
+
+def _splice_default_version(args):
+    if not args.with_splice_default:
+        return None
+    if not args.rules:
+        raise ValueError(
+            "--with-splice-default requires --rules with PVS1.splice_default_policy_version")
+    return (json.loads(args.rules.read_text(encoding="utf-8"))
+            .get("PVS1", {}).get("splice_default_policy_version"))
 
 
 def main(argv=None):
@@ -197,72 +220,74 @@ def main(argv=None):
                     raise ValueError(f"Unknown identity record IDs: {sorted(unknown)}")
                 records = [reconcile(r, candidates.get(r["record_id"], []), reference) for r in records]
             if args.command == "prepare-demo-online":
-                client = CachedHttpClient(args.cache_dir, offline=args.offline)
-                release = args.ensembl_release or EnsemblIdentityProvider.current_release(client)
-                provider = EnsemblIdentityProvider(client, release)
+                # One evidence implementation, shared with the API path. The CLI keeps only
+                # what the resolver has no business in: resolving each record's identity, and
+                # the gnomAD batch, whose single multi-variant request is the shape the
+                # committed offline cache holds - a per-variant lookup would replay none of it.
+                resolver = ProviderEvidenceResolver(
+                    args.cache_dir, offline=args.offline,
+                    evidence_cache_dir=args.evidence_cache_dir or args.cache_dir,
+                    ensembl_release=args.ensembl_release,
+                    clinvar_release=args.clinvar_release,
+                    population_sources=(TOGOVAR_SOURCE(args.togovar_api_version)
+                                        if args.with_togovar else []),
+                    hotspot_policy=_hotspot_policy(args) if args.with_pm1_hotspot else None,
+                    with_clingen_dosage=args.with_clingen_dosage,
+                    with_gene2phenotype=args.with_gene2phenotype,
+                    with_disease_matching=(args.with_mondo_mapping or args.with_clingen_lumping
+                                           or args.with_mondo_hierarchy),
+                    with_gene_disease_associations=args.with_clingen_gene_validity,
+                    with_pvs1_transcript_gates=(args.with_mane_transcript
+                                                or args.with_nmd_prediction),
+                    with_initiation_assessment=args.with_nmd_prediction,
+                    with_splice_default=args.with_splice_default,
+                    splice_default_policy_version=_splice_default_version(args),
+                )
+                provider = resolver.identity_provider
                 mapped = {}
-                annotations = []
-                predictions = []
                 for record in records:
                     try:
-                        candidate, annotation, record_predictions = provider.map_record_with_evidence(record)
+                        candidate, _annotation, _predictions = (
+                            provider.map_record_with_evidence(record))
                         mapped[record["record_id"]] = [candidate]
-                        annotations.append(annotation)
-                        predictions.extend(record_predictions)
                     except ValueError as exc:
                         record["issues"].append(f"IDENTITY_PROVIDER_ERROR: {exc}")
                         mapped[record["record_id"]] = []
-                records = [reconcile(r, mapped[r["record_id"]], provider.reference) for r in records]
-                evidence = [*annotations, *predictions]
-                external_client = CachedHttpClient(
-                    args.evidence_cache_dir or args.cache_dir, offline=args.offline
-                )
-                # Everything decided one variant at a time (dbNSFP, the
-                # ClinVar VCV record, the PS1/PM5 comparators) goes through
-                # the same suite the integrated pipeline uses; only the
-                # gnomAD batch below stays here, because its single
-                # multi-variant request is what the committed offline cache
-                # holds. See acmg/services/resolve.py.
-                suite = VariantProviderSuite(
-                    external_client, clinvar_release=args.clinvar_release,
-                    ensembl_provider=provider,
-                )
+                records = [reconcile(r, mapped[r["record_id"]], provider.reference)
+                           for r in records]
+
+                evidence = []
                 external_manifest = []
-                variants = {
-                    row["resolution"]["variant"]["assembly"] + ":" +
-                    row["resolution"]["variant"]["chrom"] + ":" +
-                    str(row["resolution"]["variant"]["pos"]) + ":" +
-                    row["resolution"]["variant"]["ref"] + ":" +
-                    row["resolution"]["variant"]["alt"]: Variant(**row["resolution"]["variant"])
-                    for row in records if row["resolution"]
-                }
-                if args.with_togovar:
-                    togovar = TogoVarProvider(
-                        external_client, api_version=args.togovar_api_version
-                    )
-                    observations = []
-                    observed_variants = 0
-                    errors = []
-                    for key, variant in sorted(variants.items()):
-                        try:
-                            batch = togovar.get_frequency(variant)
-                        except ValueError as exc:
-                            errors.append({"variant_key": key, "error": str(exc)})
-                            continue
-                        if batch:
-                            observed_variants += 1
-                            observations.extend(batch)
-                    evidence.extend(observations)
-                    external_manifest.append({
-                        "provider": togovar.name,
-                        "provider_version": f"API {togovar.api_version}",
-                        "queried_variants": len(variants),
-                        "observed_variants": observed_variants,
-                        "evidence": len(observations),
-                        "errors": errors,
-                    })
+                variants = {}
+                by_variant_key = {}
+                for row in records:
+                    if not row["resolution"]:
+                        continue
+                    variant = Variant(**row["resolution"]["variant"])
+                    variants[variant.key] = variant
+                    by_variant_key.setdefault(variant.key, []).append(row)
+                # Once per variant, not once per row. Several ALT records can resolve to the
+                # same variant, and asking for the same evidence again would replay from
+                # cache but count twice in the manifest.
+                for key, rows in by_variant_key.items():
+                    resolved_evidence = resolver.resolve(rows[0]["identity"], variants[key])
+                    evidence.extend(resolved_evidence.records)
+                    external_manifest = merge_manifests(
+                        [external_manifest, resolved_evidence.manifest])
+                    for row in rows:
+                        # Which ClinVar record this variant was matched to is provenance for
+                        # the identity, not evidence about the variant, so it goes on the row.
+                        row["resolution"]["evidence"].extend(
+                            resolved_evidence.identity_evidence)
+                        for failure in resolved_evidence.failures:
+                            row["issues"].append(
+                                f"{failure['provider'].upper()}_PROVIDER_ERROR: "
+                                f"{failure['error']}")
                 if args.with_gnomad:
-                    gnomad = GnomadProvider(external_client, release=args.gnomad_release)
+                    gnomad = GnomadProvider(
+                        CachedHttpClient(args.evidence_cache_dir or args.cache_dir,
+                                         offline=args.offline),
+                        release=args.gnomad_release)
                     try:
                         batches = gnomad.get_frequencies(variants.values())
                     except ValueError as exc:
@@ -270,486 +295,14 @@ def main(argv=None):
                             if row["resolution"]:
                                 row["issues"].append(f"GNOMAD_PROVIDER_ERROR: {exc}")
                         batches = {}
-                    observations = [item for batch in batches.values() if batch for item in batch]
+                    observations = [item for batch in batches.values() if batch
+                                    for item in batch]
                     evidence.extend(observations)
                     external_manifest.append({
                         "provider": gnomad.name, "provider_version": gnomad.release,
                         "queried_variants": len(variants), "observed_variants": sum(
                             batch is not None for batch in batches.values()),
                         "evidence": len(observations),
-                    })
-                if args.with_dbnsfp:
-                    dbnsfp = suite.dbnsfp
-                    transcripts = {item["variant_key"]: item["transcript"] for item in annotations}
-                    scores = 0
-                    dbnsfp_errors = []
-                    for key, variant in sorted(variants.items()):
-                        outcome = suite.predictions(variant, transcripts.get(key))
-                        if outcome.error is not None:
-                            dbnsfp_errors.append({"variant_key": key, "error": outcome.error})
-                            continue
-                        evidence.extend(outcome.records)
-                        scores += len(outcome.records)
-                    external_manifest.append({
-                        "provider": dbnsfp.name,
-                        "provider_version": suite.dbnsfp_version(),
-                        "queried_variants": len(variants), "evidence": scores,
-                        "errors": dbnsfp_errors,
-                        "calibration_use": "PP3_BP4_WITH_CONFIGURED_CALIBRATION",
-                    })
-                if args.with_clinvar:
-                    clinvar = ClinVarProvider(external_client, args.clinvar_release)
-                    seen = set()
-                    clinvar_results = {}
-                    clinvar_count = 0
-                    for row in records:
-                        accession = row["identity"].get("CLNVARIATIONID")
-                        if not accession or not VCV.fullmatch(accession) or not row["resolution"]:
-                            continue
-                        variant = Variant(**row["resolution"]["variant"])
-                        lookup = (accession, variant.key)
-                        if lookup not in seen:
-                            seen.add(lookup)
-                            outcome, identity = suite.clinvar_record(accession, variant)
-                            clinvar_results[lookup] = (outcome, identity)
-                            if outcome.error is None:
-                                clinvar_count += 1
-                        outcome, identity = clinvar_results[lookup]
-                        if outcome.error is None:
-                            evidence.extend(outcome.records)
-                            row["resolution"]["evidence"].append(identity)
-                        else:
-                            row["issues"].append(f"CLINVAR_PROVIDER_ERROR: {outcome.error}")
-                    clinvar_manifest = {
-                        "provider": clinvar.name, "provider_version": clinvar.release,
-                        "queried_accessions": len(seen), "matched_records": clinvar_count,
-                        "evidence": clinvar_count,
-                        "classification_use": "NOT_PP5_BP6",
-                    }
-                    comparator = ClinVarComparatorProvider(
-                        external_client, args.clinvar_release, provider
-                    )
-                    unique_annotations = {
-                        (item["variant_key"], item["transcript"]): item
-                        for item in annotations if "missense_variant" in item["consequences"]
-                    }
-                    comparator_searches = 0
-                    comparator_evidence = 0
-                    comparator_errors = []
-                    pm5_searches = 0
-                    pm5_evidence = 0
-                    tally = {"PS1": [0, 0], "PM5": [0, 0]}
-                    for annotation in unique_annotations.values():
-                        variant = variants[annotation["variant_key"]]
-                        splice_score = splice_score_for(
-                            [item for item in predictions
-                             if item.get("variant_key") == variant.key],
-                            annotation["transcript"],
-                        )
-                        for criterion in ("PS1", "PM5"):
-                            outcome = suite.comparator(
-                                criterion, annotation, variant, splice_score
-                            )
-                            if outcome.error is not None:
-                                comparator_errors.append({
-                                    "variant_key": variant.key, "error": outcome.error,
-                                    "criterion": criterion,
-                                })
-                                continue
-                            evidence.extend(outcome.records)
-                            tally[criterion][0] += 1
-                            tally[criterion][1] += outcome.matches
-                    comparator_searches, comparator_evidence = tally["PS1"]
-                    pm5_searches, pm5_evidence = tally["PM5"]
-                    clinvar_manifest["pm5_residue_searches"] = pm5_searches
-                    clinvar_manifest["pm5_comparator_evidence"] = pm5_evidence
-                    clinvar_manifest["ps1_comparator_searches"] = comparator_searches
-                    clinvar_manifest["ps1_comparator_evidence"] = comparator_evidence
-                    clinvar_manifest["ps1_comparator_errors"] = comparator_errors
-                    external_manifest.append(clinvar_manifest)
-                if args.with_pm1_hotspot:
-                    if not args.rules:
-                        raise ValueError("--with-pm1-hotspot requires --rules with PM1.hotspot")
-                    policy = json.loads(args.rules.read_text(encoding="utf-8"))                         .get("PM1", {}).get("hotspot", {})
-                    hotspot = ClinVarHotspotProvider(external_client, args.clinvar_release, policy)
-                    hotspot_suite = VariantProviderSuite(
-                        external_client, clinvar_release=args.clinvar_release,
-                        ensembl_provider=provider, hotspot_policy=policy,
-                    )
-                    hotspot_regions = 0
-                    hotspot_errors = []
-                    for annotation in {
-                        (item["variant_key"], item["transcript"]): item
-                        for item in annotations
-                        if "missense_variant" in item["consequences"] and item.get("protein_start")
-                    }.values():
-                        outcome = hotspot_suite.hotspot(
-                            annotation, variants[annotation["variant_key"]]
-                        )
-                        if outcome.error is not None:
-                            hotspot_errors.append({"variant_key": annotation["variant_key"],
-                                                   "error": outcome.error})
-                            continue
-                        evidence.extend(outcome.records)
-                        hotspot_regions += outcome.matches
-                    external_manifest.append({
-                        "provider": hotspot.name, "provider_version": args.clinvar_release,
-                        "policy_version": policy.get("policy_version"),
-                        "policy_source": policy.get("policy_source"),
-                        "window_aa": policy.get("window_aa"),
-                        "min_pathogenic": policy.get("min_pathogenic"),
-                        "max_benign": policy.get("max_benign"),
-                        "region_evidence": hotspot_regions, "errors": hotspot_errors,
-                        "use_restriction": "PM1_HOTSPOT_ROUTE_ONLY",
-                    })
-                if args.with_clingen_dosage:
-                    # PVS1 stops at G01 without a gene_disease record. This supplies one
-                    # from published dosage curation, marked automated so it can never be
-                    # mistaken for the per-gene review it stands in for.
-                    dosage = ClinGenDosageProvider(external_client)
-                    dosage_records, dosage_errors, seen_genes = [], [], set()
-                    for annotation in annotations:
-                        gene = annotation.get("gene")
-                        key = (annotation["variant_key"], gene)
-                        if not gene or key in seen_genes:
-                            continue
-                        seen_genes.add(key)
-                        try:
-                            dosage_records.extend(
-                                dosage.get_mechanism(variants[annotation["variant_key"]], gene))
-                        except (FetchError, ValueError) as exc:
-                            dosage_errors.append(f"{gene}: {exc}")
-                    evidence.extend(dosage_records)
-                    external_manifest.append({
-                        "provider": dosage.name,
-                        "provider_version": dosage_records[0]["source_version"] if dosage_records else None,
-                        "method": DOSAGE_METHOD,
-                        "genes_queried": len(seen_genes), "evidence": len(dosage_records),
-                        "errors": dosage_errors,
-                        "use_restriction": "PVS1_LOF_MECHANISM_GATE_ONLY",
-                    })
-                if args.with_gene2phenotype:
-                    # Disease-scoped where ClinGen dosage is gene-scoped, so it separates a
-                    # gene that loses function in one disease from one that gains it in
-                    # another - the case a single per-gene score cannot.
-                    g2p = Gene2PhenotypeProvider(external_client)
-                    g2p_records, g2p_errors, g2p_seen = [], [], set()
-                    for annotation in annotations:
-                        gene = annotation.get("gene")
-                        key = (annotation["variant_key"], gene)
-                        if not gene or key in g2p_seen:
-                            continue
-                        g2p_seen.add(key)
-                        try:
-                            g2p_records.extend(
-                                g2p.get_mechanism(variants[annotation["variant_key"]], gene))
-                        except (FetchError, ValueError, KeyError) as exc:
-                            g2p_errors.append(f"{gene}: {exc}")
-                    evidence.extend(g2p_records)
-                    external_manifest.append({
-                        "provider": g2p.name,
-                        "provider_version": sorted(
-                            {item["source_version"] for item in g2p_records}) or None,
-                        "method": G2P_METHOD,
-                        "genes_queried": len(g2p_seen), "evidence": len(g2p_records),
-                        "errors": g2p_errors,
-                        "use_restriction": "PVS1_LOF_MECHANISM_GATE_ONLY",
-                    })
-                if args.with_mondo_mapping:
-                    # PVS1's disease gate compares identifiers, so a case in OMIM and a
-                    # curation in MONDO have to be resolved to one vocabulary first. The
-                    # original identifier is kept; the mapping travels beside it.
-                    mondo = MondoMappingProvider(external_client)
-                    mondo_errors = []
-                    for record in records:
-                        condition = record.get("condition")
-                        if not condition or condition in condition_mappings:
-                            continue
-                        try:
-                            mapping = mondo.normalize(condition)
-                        except (FetchError, ValueError) as exc:
-                            mondo_errors.append(f"{condition}: {exc}")
-                            continue
-                        if mapping:
-                            condition_mappings[condition] = mapping
-                    resolvable = {record.get("condition") for record in records
-                                  if record.get("condition")}
-                    external_manifest.append({
-                        "provider": mondo.name,
-                        "provider_version": next(
-                            (item["source_version"] for item in condition_mappings.values()
-                             if item.get("source_version")), None),
-                        "method": MONDO_METHOD,
-                        "conditions_queried": len(resolvable),
-                        "evidence": len(condition_mappings),
-                        "unresolved": sorted(resolvable - set(condition_mappings)),
-                        "errors": mondo_errors,
-                        "use_restriction": "DISEASE_MATCH_EQUIVALENCE_ONLY",
-                    })
-                if args.with_clingen_gene_validity:
-                    # Suggestion material only. These are gene-disease associations, not
-                    # mechanism assessments, and they carry their own category so that
-                    # PVS1's mechanism lookup cannot reach them even by accident - a
-                    # validity classification is not a statement that loss of function is
-                    # the mechanism, which is the conflation gene_disease_draft.py exists
-                    # to prevent.
-                    validity = ClinGenGeneValidityProvider(external_client)
-                    validity_records, validity_errors, validity_seen = [], [], set()
-                    for annotation in annotations:
-                        gene = annotation.get("gene")
-                        key = (annotation["variant_key"], gene)
-                        if not gene or key in validity_seen:
-                            continue
-                        validity_seen.add(key)
-                        try:
-                            rows = validity.get_validity(gene)
-                        except (FetchError, ValueError) as exc:
-                            validity_errors.append(f"{gene}: {exc}")
-                            continue
-                        for row in rows:
-                            if not str(row.get("condition") or "").startswith("MONDO:"):
-                                continue
-                            validity_records.append({
-                                **row,
-                                "variant_key": annotation["variant_key"],
-                                # Per variant, for the same reason the dosage provider's ids
-                                # are: the CLI deduplicates by evidence_id, and a row-only id
-                                # collapses every variant in one gene down to the first.
-                                "evidence_id": f"{row['evidence_id']}:{annotation['variant_key']}",
-                            })
-                    evidence.extend(validity_records)
-                    external_manifest.append({
-                        "provider": validity.name,
-                        "provider_version": validity_records[0]["source_version"]
-                        if validity_records else None,
-                        "genes_queried": len(validity_seen),
-                        "evidence": len(validity_records), "errors": validity_errors,
-                        "use_restriction": "CANDIDATE_CONDITION_SUGGESTION_ONLY",
-                    })
-                if args.with_clingen_lumping:
-                    # The scope belongs to the curated disease, so it is attached to the
-                    # mechanism records rather than to the case: one case can meet several
-                    # curations, and each of them drew its own boundary.
-                    lumping = ClinGenLumpingProvider(
-                        external_client, MondoMappingProvider(external_client))
-                    lump_errors, scoped, pairs = [], 0, set()
-                    for item in evidence:
-                        if item.get("category") != "gene_disease":
-                            continue
-                        pair = (item.get("gene"), item.get("condition"))
-                        if not all(pair) or not str(pair[1]).startswith("MONDO:"):
-                            continue
-                        pairs.add(pair)
-                        try:
-                            scope = lumping.get_scope(*pair)
-                        except (FetchError, ValueError, KeyError) as exc:
-                            lump_errors.append(f"{pair[0]} {pair[1]}: {exc}")
-                            continue
-                        if scope:
-                            item["condition_scope"] = scope
-                            scoped += 1
-                    external_manifest.append({
-                        "provider": lumping.name, "provider_version": None,
-                        "method": LUMPING_METHOD,
-                        "curations_queried": len(pairs), "evidence": scoped,
-                        "errors": lump_errors,
-                        "use_restriction": "DISEASE_MATCH_SCOPE_ONLY",
-                    })
-                if args.with_mondo_hierarchy:
-                    # Ancestry is asked of both sides, because the case can be the broader
-                    # term or the narrower one and the gate has to recognise either.
-                    tree = MondoHierarchyProvider(external_client)
-                    tree_errors = []
-                    wanted = {item["normalized_condition"]
-                              for item in condition_mappings.values()}
-                    wanted.update(item["condition"] for item in evidence
-                                  if item.get("category") == "gene_disease"
-                                  and str(item.get("condition", "")).startswith("MONDO:"))
-                    for term in sorted(wanted):
-                        try:
-                            ancestry = tree.ancestors(term)
-                        except (FetchError, ValueError, KeyError) as exc:
-                            tree_errors.append(f"{term}: {exc}")
-                            continue
-                        if ancestry:
-                            condition_ancestry[term] = ancestry["ancestors"]
-                    for item in evidence:
-                        if item.get("category") == "gene_disease":
-                            found = condition_ancestry.get(item.get("condition"))
-                            if found:
-                                item["condition_ancestors"] = found
-                    external_manifest.append({
-                        "provider": tree.name, "provider_version": None,
-                        "method": MONDO_TREE_METHOD,
-                        "conditions_queried": len(wanted),
-                        "evidence": len(condition_ancestry),
-                        "unresolved": sorted(wanted - set(condition_ancestry)),
-                        "errors": tree_errors,
-                        "use_restriction": "DISEASE_MATCH_RELATEDNESS_ONLY",
-                    })
-                if args.with_mane_transcript:
-                    # PVS1's NF01 gate. Only a MANE Select match produces a record; see
-                    # providers/mane.py for why a non-match is not NOT_RELEVANT.
-                    mane = ManeTranscriptProvider.from_directory(external_client)
-                    mane_records, mane_errors, seen = [], [], set()
-                    for annotation in annotations:
-                        key = (annotation["variant_key"], annotation.get("transcript"))
-                        if key in seen:
-                            continue
-                        seen.add(key)
-                        try:
-                            # The exon also answers NF03 - see providers/mane.py. It is
-                            # looked up only when this run is deriving NMD anyway, so no
-                            # extra VEP request is made for a run that is not.
-                            exon = None
-                            if args.with_nmd_prediction:
-                                exon = NmdPredictionProvider(
-                                    external_client,
-                                    args.ensembl_release or provider.release,
-                                ).exon_on_transcript(
-                                    annotation.get("gene"), annotation.get("transcript"),
-                                    annotation.get("hgvsc"))
-                            mane_records.extend(mane.get_transcript_assessment(
-                                variants[annotation["variant_key"]],
-                                annotation.get("gene"), annotation.get("transcript"),
-                                exon=exon))
-                        except (FetchError, ValueError) as exc:
-                            mane_errors.append(f"{annotation.get('gene')}: {exc}")
-                    evidence.extend(mane_records)
-                    external_manifest.append({
-                        "provider": mane.name, "provider_version": f"MANE v{mane.release}",
-                        "method": MANE_METHOD,
-                        "transcripts_queried": len(seen), "evidence": len(mane_records),
-                        "errors": mane_errors,
-                        "use_restriction": "PVS1_TRANSCRIPT_RELEVANCE_GATE_ONLY",
-                    })
-                if args.with_splice_default:
-                    # SP01/SP02's first pass for canonical splice variants. Reachable from
-                    # pipeline.py through services/resolve.py already; wired here too so the
-                    # CLI's own runs exercise the same path rather than stopping at SP01.
-                    if not args.rules:
-                        raise ValueError(
-                            "--with-splice-default requires --rules with "
-                            "PVS1.splice_default_policy_version")
-                    version = (json.loads(args.rules.read_text(encoding="utf-8"))
-                               .get("PVS1", {}).get("splice_default_policy_version"))
-                    # The provider refuses an unrecorded version; a default answer that
-                    # cannot name the policy it came from is not one a curator can check.
-                    splice = SpliceDefaultProvider(version)
-                    splice_records, splice_errors = [], []
-                    generated_at = datetime.now(timezone.utc).isoformat()
-                    for annotation in annotations:
-                        if not set(annotation.get("consequences") or []) & CANONICAL_SPLICE:
-                            continue
-                        try:
-                            splice_records.extend(splice.get_splice_assessment(
-                                variants[annotation["variant_key"]],
-                                annotation.get("transcript"), generated_at))
-                        except (FetchError, ValueError) as exc:
-                            splice_errors.append(f"{annotation.get('hgvsc')}: {exc}")
-                    evidence.extend(splice_records)
-                    external_manifest.append({
-                        "provider": splice.name, "provider_version": version,
-                        "method": SPLICE_DEFAULT_METHOD,
-                        "evidence": len(splice_records), "errors": splice_errors,
-                        "use_restriction": "PVS1_SPLICE_DEFAULT_ONLY",
-                    })
-                if args.with_nmd_prediction:
-                    # PVS1's NF02 gate. Its own VEP request, so the committed offline
-                    # annotation cache keeps replaying unchanged - see providers/nmd.py.
-                    nmd = NmdPredictionProvider(external_client, args.ensembl_release
-                                                or provider.release)
-                    nmd_records, nmd_errors, seen = [], [], set()
-                    # Canonical splice belongs here too: providers/nmd.py answers those from
-                    # intron numbering, and filtering them out at the call site skipped the
-                    # request entirely, so SP01/SP02 handed the truncating path a variant NF02
-                    # then had no prediction for.
-                    nmd_eligible = NMD_TRUNCATING | CANONICAL_SPLICE
-                    for annotation in annotations:
-                        key = (annotation["variant_key"], annotation.get("transcript"))
-                        if key in seen or not set(annotation.get("consequences") or []) & nmd_eligible:
-                            continue
-                        seen.add(key)
-                        try:
-                            nmd_records.extend(nmd.get_nmd_prediction(
-                                variants[annotation["variant_key"]], annotation.get("gene"),
-                                annotation.get("transcript"), annotation.get("hgvsc")))
-                        except (FetchError, ValueError) as exc:
-                            nmd_errors.append(f"{annotation.get('hgvsc')}: {exc}")
-                    evidence.extend(nmd_records)
-                    external_manifest.append({
-                        "provider": nmd.name, "provider_version": nmd.release,
-                        "method": NMD_METHOD, "rule_source": NMD_RULE_SOURCE,
-                        "variants_queried": len(seen), "evidence": len(nmd_records),
-                        "errors": nmd_errors,
-                        "use_restriction": "PVS1_NMD_GATE_ONLY",
-                    })
-                    # PVS1's NF07 measurement, for the variants the NMD rule says escape
-                    # decay. The region gates NF04/NF06 stay unanswered - see
-                    # providers/protein_region.py.
-                    region = ProteinRegionProvider(external_client, nmd.release)
-                    region_records, region_errors = [], []
-                    for annotation in annotations:
-                        if not set(annotation.get("consequences") or []) & NMD_TRUNCATING:
-                            continue
-                        try:
-                            region_records.extend(region.get_protein_region(
-                                variants[annotation["variant_key"]], annotation.get("gene"),
-                                annotation.get("transcript"), annotation.get("hgvsc"),
-                                annotation.get("protein_start")))
-                        except (FetchError, ValueError) as exc:
-                            region_errors.append(f"{annotation.get('hgvsc')}: {exc}")
-                    evidence.extend(region_records)
-                    external_manifest.append({
-                        "provider": region.name, "provider_version": region.release,
-                        "method": REGION_METHOD,
-                        "evidence": len(region_records), "errors": region_errors,
-                        "use_restriction": "PVS1_PROTEIN_LOSS_MEASUREMENT_ONLY",
-                    })
-                    # PVS1's IC02 gate. IC01 and IC03 stay unanswered - see
-                    # providers/initiation.py.
-                    initiation = InitiationProvider(external_client, nmd.release)
-                    init_records, init_errors = [], []
-                    for annotation in annotations:
-                        if START_LOST not in (annotation.get("consequences") or []):
-                            continue
-                        try:
-                            init_records.extend(initiation.get_initiation_assessment(
-                                variants[annotation["variant_key"]], annotation.get("gene"),
-                                annotation.get("transcript"), annotation.get("hgvsc")))
-                        except (FetchError, ValueError) as exc:
-                            init_errors.append(f"{annotation.get('hgvsc')}: {exc}")
-                    evidence.extend(init_records)
-                    external_manifest.append({
-                        "provider": initiation.name, "provider_version": initiation.release,
-                        "method": INITIATION_METHOD,
-                        "evidence": len(init_records), "errors": init_errors,
-                        "use_restriction": "PVS1_DOWNSTREAM_START_ONLY",
-                    })
-                    # PVS1's IC03 gate, bounded by the codon IC02 found.
-                    upstream = UpstreamPathogenicProvider(external_client, args.clinvar_release)
-                    # Merged into the record IC02 built: PVS1 reads two
-                    # initiation_assessment records as a conflict.
-                    answered, up_errors = 0, []
-                    for record in init_records:
-                        codon = record.get("downstream_start_codon")
-                        if not codon:
-                            continue
-                        try:
-                            fields = upstream.get_upstream_evidence(
-                                variants[record["variant_key"]], record["gene"],
-                                record["transcript"], codon)
-                        except (FetchError, ValueError) as exc:
-                            up_errors.append(f"{record['gene']}: {exc}")
-                            continue
-                        if fields:
-                            record.update(fields)
-                            answered += 1
-                    external_manifest.append({
-                        "provider": upstream.name, "provider_version": args.clinvar_release,
-                        "method": UPSTREAM_METHOD,
-                        "evidence": answered, "errors": up_errors,
-                        "use_restriction": "PVS1_UPSTREAM_PATHOGENIC_ONLY",
                     })
             args.output_dir.mkdir(parents=True, exist_ok=False)
             output = args.output_dir / "audit.json"
@@ -783,6 +336,11 @@ def main(argv=None):
                 (args.output_dir / "evidence.json").write_text(
                     json.dumps({"schema_version": "1.0", "evidence": evidence},
                                ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+                # The resolver owns the caches now, so the reproducibility record is read
+                # off it: which entries a run replayed, and whether it touched the network
+                # at all. An offline run that silently did is the thing this catches.
+                caches = resolver.cache_clients
+                client, external_client = caches["identity"], caches["external"]
                 manifest = {
                     "schema_version": "1.0", "provider": provider.name,
                     "provider_version": provider.release,
