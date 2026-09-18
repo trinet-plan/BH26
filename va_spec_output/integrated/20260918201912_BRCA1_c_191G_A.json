@@ -1,0 +1,1744 @@
+{
+  "classification": {
+    "category": "Uncertain Significance",
+    "score": 5,
+    "ba1_override": false,
+    "met": [
+      {
+        "code": "PM2",
+        "status": "met",
+        "strength": "supporting",
+        "source": "integrated_pipeline"
+      },
+      {
+        "code": "PP3",
+        "status": "met",
+        "strength": "strong",
+        "source": "integrated_pipeline"
+      }
+    ],
+    "not_met": [
+      {
+        "code": "PVS1",
+        "status": "not_met",
+        "strength": null,
+        "source": "integrated_pipeline"
+      },
+      {
+        "code": "PS1",
+        "status": "not_met",
+        "strength": null,
+        "source": "integrated_pipeline"
+      },
+      {
+        "code": "PS3",
+        "status": "not_met",
+        "strength": null,
+        "source": "integrated_pipeline"
+      },
+      {
+        "code": "PS4",
+        "status": "not_met",
+        "strength": null,
+        "source": "integrated_pipeline"
+      },
+      {
+        "code": "PM1",
+        "status": "not_met",
+        "strength": null,
+        "source": "integrated_pipeline"
+      },
+      {
+        "code": "PM4",
+        "status": "not_met",
+        "strength": null,
+        "source": "integrated_pipeline"
+      },
+      {
+        "code": "PM5",
+        "status": "not_met",
+        "strength": null,
+        "source": "integrated_pipeline"
+      },
+      {
+        "code": "PP1",
+        "status": "not_met",
+        "strength": null,
+        "source": "integrated_pipeline"
+      },
+      {
+        "code": "PP2",
+        "status": "not_met",
+        "strength": null,
+        "source": "integrated_pipeline"
+      },
+      {
+        "code": "PP4",
+        "status": "not_met",
+        "strength": null,
+        "source": "integrated_pipeline"
+      },
+      {
+        "code": "PP5",
+        "status": "not_met",
+        "strength": null,
+        "source": "integrated_pipeline"
+      },
+      {
+        "code": "BA1",
+        "status": "not_met",
+        "strength": null,
+        "source": "integrated_pipeline"
+      },
+      {
+        "code": "BS1",
+        "status": "not_met",
+        "strength": null,
+        "source": "integrated_pipeline"
+      },
+      {
+        "code": "BS3",
+        "status": "not_met",
+        "strength": null,
+        "source": "integrated_pipeline"
+      },
+      {
+        "code": "BS4",
+        "status": "not_met",
+        "strength": null,
+        "source": "integrated_pipeline"
+      },
+      {
+        "code": "BP1",
+        "status": "not_met",
+        "strength": null,
+        "source": "integrated_pipeline"
+      },
+      {
+        "code": "BP3",
+        "status": "not_met",
+        "strength": null,
+        "source": "integrated_pipeline"
+      },
+      {
+        "code": "BP4",
+        "status": "not_met",
+        "strength": null,
+        "source": "integrated_pipeline"
+      },
+      {
+        "code": "BP6",
+        "status": "not_met",
+        "strength": null,
+        "source": "integrated_pipeline"
+      },
+      {
+        "code": "BP7",
+        "status": "not_met",
+        "strength": null,
+        "source": "integrated_pipeline"
+      }
+    ],
+    "not_evaluated_codes": [
+      "BP2",
+      "BP5",
+      "BS2",
+      "PM3",
+      "PM6",
+      "PS2"
+    ]
+  },
+  "evidence_lines": [
+    {
+      "id": "evline:BRCA1_c_191G_A_PVS1",
+      "type": "EvidenceLine",
+      "description": "PVS1 is not applicable: the annotation does not indicate a truncating, canonical-splice, start-loss, or RNA-confirmed loss-of-function consequence. PVS1 evaluates predicted loss-of-function variants only when loss of function is an established disease mechanism for the gene. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
+      "specifiedBy": {
+        "type": "Method",
+        "name": "ACMG/AMP PVS1 assessment (not met)",
+        "methodType": "PVS1",
+        "reportedIn": {
+          "type": "Document",
+          "name": "Richards et al., 2015, Genet Med.",
+          "doi": "10.1038/gim.2015.30",
+          "pmid": "25741868"
+        }
+      },
+      "directionOfEvidenceProvided": "neutral",
+      "extensions": [
+        {
+          "name": "status",
+          "value": "not_met"
+        },
+        {
+          "name": "provenance",
+          "value": {
+            "rule_version": "PVS1-v1",
+            "assessment_scope": "unknown",
+            "condition_assessment": "NOT_EVALUATED",
+            "pvs1_ruleset": null
+          }
+        },
+        {
+          "name": "evaluationContext",
+          "value": {
+            "gene": "BRCA1",
+            "condition_id": "MONDO:0011450",
+            "condition_label": "BRCA1-related cancer predisposition",
+            "condition_status": "PROVIDED",
+            "condition_specific": false,
+            "mechanism_scope": "UNKNOWN",
+            "disease_match": "UNKNOWN",
+            "mechanism_source": null,
+            "inheritance": null,
+            "moi_match": "UNKNOWN",
+            "applicability": "NOT_APPLICABLE"
+          }
+        },
+        {
+          "name": "decisionTrace",
+          "value": [
+            {
+              "node_id": "C01",
+              "name": "condition_status",
+              "result": "PASS",
+              "value": "PROVIDED",
+              "evidence_ids": [],
+              "rule_id": "C01",
+              "rule_source": "acmg_amp_2015",
+              "next_node": null,
+              "note": null
+            },
+            {
+              "node_id": "V01",
+              "name": "variant_type",
+              "result": "NOT_APPLICABLE",
+              "value": "OTHER",
+              "evidence_ids": [
+                "urn:sha256:b1571935126747a1492b3c28ea2677461d296c41004837b4e48f1c480711d659:annotation:NM_007294.4"
+              ],
+              "rule_id": "V01",
+              "rule_source": "clingen_pvs1_2018",
+              "next_node": null,
+              "note": null
+            }
+          ]
+        },
+        {
+          "name": "referenceLink",
+          "value": "https://autopvs1.bgi.com/variant/hg38/17-43106477-C-T"
+        },
+        {
+          "name": "curatorHints",
+          "value": [
+            {
+              "severity": "caution",
+              "category": "unevaluated",
+              "message": "PVS1 could not actually be evaluated from the available data (reported as not_met rather than left unknown)."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "evline:BRCA1_c_191G_A_PS1",
+      "type": "EvidenceLine",
+      "name": "PS1 assessment for GRCh38:17:43106477:C:T",
+      "description": "No eligible comparator found. PS1 compares a missense variant with an independently established pathogenic variant producing the same amino-acid substitution. Outcome: NOT_MET; PS1 was evaluated but its requirements were not satisfied.",
+      "specifiedBy": {
+        "type": "Method",
+        "name": "ACMG/AMP 2015 with ClinGen General Guidance",
+        "methodType": "PS1",
+        "reportedIn": {
+          "type": "Document",
+          "name": "Richards et al., 2015, Genet Med.",
+          "urls": [
+            "https://pubmed.ncbi.nlm.nih.gov/25741868/"
+          ],
+          "doi": "10.1038/gim.2015.30",
+          "pmid": "25741868"
+        }
+      },
+      "hasEvidenceItems": [
+        "urn:sha256:b1571935126747a1492b3c28ea2677461d296c41004837b4e48f1c480711d659:annotation:NM_007294.4",
+        "urn:sha256:7f5b6fdb0c7d66f547503bd08fe8edb1d81dc1c4fa5fccb5032a393a32a27e14:clinvar-ps1-search:NM_007294.4"
+      ],
+      "directionOfEvidenceProvided": "neutral",
+      "evidenceOutcome": {
+        "name": "ACMG 2015 PS1 criterion not met",
+        "primaryCoding": {
+          "system": "ACMG Guidelines, 2015",
+          "code": "PS1_not_met"
+        }
+      },
+      "extensions": [
+        {
+          "name": "status",
+          "value": "not_met"
+        },
+        {
+          "name": "provenance",
+          "value": {
+            "rule_version": "PS1-v1"
+          }
+        },
+        {
+          "name": "direction",
+          "value": "none"
+        },
+        {
+          "name": "referenceLink",
+          "value": "https://www.ncbi.nlm.nih.gov/clinvar/?term=17%5Bchr%5D%20AND%2043106467%3A43106487%5Bchrpos38%5D"
+        }
+      ]
+    },
+    {
+      "id": "evline:BRCA1_c_191G_A_PS2",
+      "type": "EvidenceLine",
+      "description": "PS2 is not evaluated by this integrated pipeline. No judgment was made; any referenceLink or curatorInfo extension is an auxiliary curation aid only.",
+      "specifiedBy": {
+        "type": "Method",
+        "name": "ACMG/AMP PS2 assessment (unknown)",
+        "methodType": "PS2",
+        "reportedIn": {
+          "type": "Document",
+          "name": "Richards et al., 2015, Genet Med.",
+          "doi": "10.1038/gim.2015.30",
+          "pmid": "25741868"
+        }
+      },
+      "directionOfEvidenceProvided": "neutral",
+      "extensions": [
+        {
+          "name": "status",
+          "value": "unknown"
+        },
+        {
+          "name": "missingInputs",
+          "value": [
+            "criterion implementation"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "evline:BRCA1_c_191G_A_PS3",
+      "type": "EvidenceLine",
+      "description": "None of the 1 paper(s) examined yielded a usable evidence-based judgment for this variant (either the variant could not be identified in the text, or the per-paper judgment was itself inconclusive).",
+      "specifiedBy": {
+        "type": "Method",
+        "name": "Unspecified VCEP ACMG/AMP PS3 evidence assessment (LLM-assisted draft)",
+        "methodType": "PS3",
+        "reportedIn": {
+          "type": "Document",
+          "name": "Richards et al., 2015, Genet Med.",
+          "doi": "10.1038/gim.2015.30",
+          "pmid": "25741868"
+        }
+      },
+      "contributions": [
+        {
+          "type": "Contribution",
+          "contributor": {
+            "id": "acmg-literature-llm-pipeline",
+            "type": "Agent",
+            "name": "ACMG literature-evidence LLM pipeline (gemma-4 via vLLM) - AI-generated draft evidence, requires human curator review before use"
+          },
+          "activityType": "automated evidence evaluation",
+          "date": "2026-09-18T11:19:18.278507Z"
+        }
+      ],
+      "reportedIn": [
+        {
+          "type": "Document",
+          "urls": [
+            "https://pubmed.ncbi.nlm.nih.gov/30209399/"
+          ],
+          "pmid": "30209399"
+        }
+      ],
+      "hasEvidenceItems": [
+        {
+          "id": "evline:paper-1-30209399",
+          "type": "EvidenceLine",
+          "description": "While the paper utilizes a high-throughput functional assay (SGE) that covers the target variant's region, the specific results for c.191G>A are not provided in the text. Therefore, a determination of PS3 or BS3 cannot be made.",
+          "reportedIn": [
+            {
+              "type": "Document",
+              "urls": [
+                "https://pubmed.ncbi.nlm.nih.gov/30209399/"
+              ],
+              "pmid": "30209399"
+            }
+          ],
+          "directionOfEvidenceProvided": "neutral"
+        }
+      ],
+      "directionOfEvidenceProvided": "neutral",
+      "extensions": [
+        {
+          "name": "curatorHints",
+          "value": [
+            {
+              "severity": "info",
+              "category": null,
+              "message": "None of the 1 paper(s) examined yielded a usable evidence-based judgment for this variant (either the variant could not be identified in the text, or the per-paper judgment was itself inconclusive)."
+            },
+            {
+              "severity": "caution",
+              "category": "unevaluated",
+              "message": "PS3 could not actually be evaluated from the available literature (reported as not_met rather than left unknown)."
+            }
+          ]
+        },
+        {
+          "name": "status",
+          "value": "not_met"
+        }
+      ]
+    },
+    {
+      "id": "evline:BRCA1_c_191G_A_PS4",
+      "type": "EvidenceLine",
+      "description": "None of the 1 paper(s) examined yielded a usable evidence-based judgment for this variant (either the variant could not be identified in the text, or the per-paper judgment was itself inconclusive).",
+      "specifiedBy": {
+        "type": "Method",
+        "name": "Unspecified VCEP ACMG/AMP PS4 evidence assessment (LLM-assisted draft)",
+        "methodType": "PS4",
+        "reportedIn": {
+          "type": "Document",
+          "name": "Richards et al., 2015, Genet Med.",
+          "doi": "10.1038/gim.2015.30",
+          "pmid": "25741868"
+        }
+      },
+      "contributions": [
+        {
+          "type": "Contribution",
+          "contributor": {
+            "id": "acmg-literature-llm-pipeline",
+            "type": "Agent",
+            "name": "ACMG literature-evidence LLM pipeline (gemma-4 via vLLM) - AI-generated draft evidence, requires human curator review before use"
+          },
+          "activityType": "automated evidence evaluation",
+          "date": "2026-09-18T11:19:18.278230Z"
+        }
+      ],
+      "reportedIn": [
+        {
+          "type": "Document",
+          "urls": [
+            "https://pubmed.ncbi.nlm.nih.gov/30209399/"
+          ],
+          "pmid": "30209399"
+        }
+      ],
+      "hasEvidenceItems": [
+        {
+          "id": "evline:paper-1-30209399",
+          "type": "EvidenceLine",
+          "description": "The paper is a functional genomics study using saturation genome editing in HAP1 cells rather than a clinical case-control study. The target variant was not identified in the text.",
+          "extensions": [
+            {
+              "name": "curatorHints",
+              "value": [
+                {
+                  "severity": "info",
+                  "category": "evidence_item",
+                  "message": "Study design: not_case_control",
+                  "checked": false,
+                  "detail": ""
+                }
+              ]
+            }
+          ],
+          "reportedIn": [
+            {
+              "type": "Document",
+              "urls": [
+                "https://pubmed.ncbi.nlm.nih.gov/30209399/"
+              ],
+              "pmid": "30209399"
+            }
+          ],
+          "directionOfEvidenceProvided": "neutral"
+        }
+      ],
+      "directionOfEvidenceProvided": "neutral",
+      "extensions": [
+        {
+          "name": "curatorHints",
+          "value": [
+            {
+              "severity": "info",
+              "category": null,
+              "message": "None of the 1 paper(s) examined yielded a usable evidence-based judgment for this variant (either the variant could not be identified in the text, or the per-paper judgment was itself inconclusive)."
+            },
+            {
+              "severity": "caution",
+              "category": "unevaluated",
+              "message": "PS4 could not actually be evaluated from the available literature (reported as not_met rather than left unknown)."
+            }
+          ]
+        },
+        {
+          "name": "status",
+          "value": "not_met"
+        }
+      ]
+    },
+    {
+      "id": "evline:BRCA1_c_191G_A_PM1",
+      "type": "EvidenceLine",
+      "description": "No region assessment was retrieved for this variant. PM1 evaluates a variant in a reviewed mutational hotspot or critical functional domain with no conflicting benign variation. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
+      "specifiedBy": {
+        "type": "Method",
+        "name": "ACMG/AMP PM1 assessment (not met)",
+        "methodType": "PM1",
+        "reportedIn": {
+          "type": "Document",
+          "name": "Richards et al., 2015, Genet Med.",
+          "doi": "10.1038/gim.2015.30",
+          "pmid": "25741868"
+        }
+      },
+      "directionOfEvidenceProvided": "neutral",
+      "extensions": [
+        {
+          "name": "status",
+          "value": "not_met"
+        },
+        {
+          "name": "provenance",
+          "value": {
+            "rule_version": "PM1-v1"
+          }
+        },
+        {
+          "name": "missingInputs",
+          "value": [
+            "region"
+          ]
+        },
+        {
+          "name": "referenceLink",
+          "value": "https://franklin.genoox.com/clinical-db/variant/snp/chr17-43106477-C-T-hg38"
+        },
+        {
+          "name": "referenceLink",
+          "value": "https://www.uniprot.org/uniprotkb/P38398/entry"
+        },
+        {
+          "name": "curatorHints",
+          "value": [
+            {
+              "severity": "caution",
+              "category": "unevaluated",
+              "message": "PM1 could not actually be evaluated from the available data (reported as not_met rather than left unknown)."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "evline:BRCA1_c_191G_A_PM2",
+      "type": "EvidenceLine",
+      "name": "PM2 assessment for GRCh38:17:43106477:C:T",
+      "description": "Every population source resolved and the highest observed AF (0.000001379633845177489894182084075) is at or below the configured rarity cutoff (0.00005). PM2 evaluates whether reliable population observations satisfy the configured rarity threshold. Outcome: MET; satisfies PM2.",
+      "specifiedBy": {
+        "type": "Method",
+        "name": "ACMG/AMP 2015 with ClinGen General Guidance",
+        "methodType": "PM2",
+        "reportedIn": {
+          "type": "Document",
+          "name": "Richards et al., 2015, Genet Med.",
+          "urls": [
+            "https://pubmed.ncbi.nlm.nih.gov/25741868/"
+          ],
+          "doi": "10.1038/gim.2015.30",
+          "pmid": "25741868"
+        }
+      },
+      "hasEvidenceItems": [
+        {
+          "id": "https://grch38.togovar.org/variant/tgv417545517#frequency:gnomad_exomes",
+          "type": "CohortAlleleFrequencyStudyResult",
+          "name": "TogoVar gnomad_exomes:global allele frequency for GRCh38:17:43106477:C:T",
+          "focusAllele": "urn:bh26:variant:ff4b0162ef1d25f2cdc11879a2954c2baa7406a00829322f8a31fbb03df0d39d",
+          "focusAlleleFrequency": 1.37963384517749e-06,
+          "focusAlleleCount": 2,
+          "locusAlleleCount": 1449660,
+          "sourceDataSet": {
+            "id": "https://grch38.togovar.org/",
+            "type": "DataSet",
+            "name": "TogoVar vAPI 0.9.1",
+            "version": "API 0.9.1"
+          },
+          "cohort": {
+            "id": "urn:bh26:cohort:cc948813fae7fdb88b015944068d2b0d0e761458668d51638f2a2b5dfda5cc3b",
+            "type": "StudyGroup",
+            "name": "gnomad_exomes:global"
+          },
+          "specifiedBy": {
+            "type": "Method",
+            "name": "TogoVar API allele frequency aggregation",
+            "reportedIn": {
+              "type": "Document",
+              "name": "TogoVar API documentation",
+              "urls": [
+                "https://grch38.togovar.org/api/"
+              ]
+            }
+          },
+          "qualityMeasures": {
+            "qualityStatus": "PASS",
+            "callable": true,
+            "filters": [
+              "PASS"
+            ],
+            "variantFlags": [],
+            "retrievedAt": "2026-09-18T09:07:28.617600+00:00"
+          }
+        }
+      ],
+      "directionOfEvidenceProvided": "supports",
+      "strengthOfEvidenceProvided": {
+        "primaryCoding": {
+          "system": "ACMG Guidelines, 2015",
+          "code": "supporting"
+        }
+      },
+      "evidenceOutcome": {
+        "name": "ACMG 2015 PM2 criterion met",
+        "primaryCoding": {
+          "system": "ACMG Guidelines, 2015",
+          "code": "PM2_supporting"
+        }
+      },
+      "extensions": [
+        {
+          "name": "status",
+          "value": "met"
+        },
+        {
+          "name": "provenance",
+          "value": {
+            "rule_version": "PM2-v1",
+            "policy_source": "BH26 demo population evidence QC policy",
+            "policy_version": "2026-09-15",
+            "rejected_observations": [],
+            "provider_failures": []
+          }
+        },
+        {
+          "name": "direction",
+          "value": "supports"
+        },
+        {
+          "name": "referenceLink",
+          "value": "https://grch38.togovar.org/variant/17-43106477-C-T"
+        },
+        {
+          "name": "referenceLink",
+          "value": "https://gnomad.broadinstitute.org/variant/17-43106477-C-T?dataset=gnomad_r4"
+        }
+      ]
+    },
+    {
+      "id": "evline:BRCA1_c_191G_A_PM3",
+      "type": "EvidenceLine",
+      "description": "PM3 is not evaluated by this integrated pipeline. No judgment was made; any referenceLink or curatorInfo extension is an auxiliary curation aid only.",
+      "specifiedBy": {
+        "type": "Method",
+        "name": "ACMG/AMP PM3 assessment (unknown)",
+        "methodType": "PM3",
+        "reportedIn": {
+          "type": "Document",
+          "name": "Richards et al., 2015, Genet Med.",
+          "doi": "10.1038/gim.2015.30",
+          "pmid": "25741868"
+        }
+      },
+      "directionOfEvidenceProvided": "neutral",
+      "extensions": [
+        {
+          "name": "status",
+          "value": "unknown"
+        },
+        {
+          "name": "missingInputs",
+          "value": [
+            "criterion implementation"
+          ]
+        },
+        {
+          "name": "referenceLink",
+          "value": "https://www.ncbi.nlm.nih.gov/clinvar/?term=BRCA1%5Bgene%5D%20AND%20c.191G%3EA"
+        }
+      ]
+    },
+    {
+      "id": "evline:BRCA1_c_191G_A_PM4",
+      "type": "EvidenceLine",
+      "description": "PM4 is not applicable: the annotation does not indicate an in-frame insertion, in-frame deletion, or stop-loss consequence (annotated: missense_variant). PM4 evaluates protein-length changes caused by an in-frame insertion, in-frame deletion, or stop-loss variant. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
+      "specifiedBy": {
+        "type": "Method",
+        "name": "ACMG/AMP PM4 assessment (not met)",
+        "methodType": "PM4",
+        "reportedIn": {
+          "type": "Document",
+          "name": "Richards et al., 2015, Genet Med.",
+          "doi": "10.1038/gim.2015.30",
+          "pmid": "25741868"
+        }
+      },
+      "directionOfEvidenceProvided": "neutral",
+      "extensions": [
+        {
+          "name": "status",
+          "value": "not_met"
+        },
+        {
+          "name": "provenance",
+          "value": {
+            "rule_version": "PM4-v1",
+            "assessment_outcome": "not_applicable"
+          }
+        },
+        {
+          "name": "curatorHints",
+          "value": [
+            {
+              "severity": "caution",
+              "category": "unevaluated",
+              "message": "PM4 could not actually be evaluated from the available data (reported as not_met rather than left unknown)."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "evline:BRCA1_c_191G_A_PM5",
+      "type": "EvidenceLine",
+      "description": "Comparator search incomplete. PM5 compares a missense variant with an independently established pathogenic variant causing a different amino-acid substitution at the same residue. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
+      "specifiedBy": {
+        "type": "Method",
+        "name": "ACMG/AMP PM5 assessment (not met)",
+        "methodType": "PM5",
+        "reportedIn": {
+          "type": "Document",
+          "name": "Richards et al., 2015, Genet Med.",
+          "doi": "10.1038/gim.2015.30",
+          "pmid": "25741868"
+        }
+      },
+      "directionOfEvidenceProvided": "neutral",
+      "extensions": [
+        {
+          "name": "status",
+          "value": "not_met"
+        },
+        {
+          "name": "provenance",
+          "value": {
+            "rule_version": "PM5-v1"
+          }
+        },
+        {
+          "name": "missingInputs",
+          "value": [
+            "complete_comparator_search"
+          ]
+        },
+        {
+          "name": "referenceLink",
+          "value": "https://franklin.genoox.com/clinical-db/variant/snp/chr17-43106477-C-T-hg38"
+        },
+        {
+          "name": "referenceLink",
+          "value": "https://www.uniprot.org/uniprotkb/P38398/entry"
+        },
+        {
+          "name": "curatorHints",
+          "value": [
+            {
+              "severity": "caution",
+              "category": "unevaluated",
+              "message": "PM5 could not actually be evaluated from the available data (reported as not_met rather than left unknown)."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "evline:BRCA1_c_191G_A_PM6",
+      "type": "EvidenceLine",
+      "description": "PM6 is not evaluated by this integrated pipeline. No judgment was made; any referenceLink or curatorInfo extension is an auxiliary curation aid only.",
+      "specifiedBy": {
+        "type": "Method",
+        "name": "ACMG/AMP PM6 assessment (unknown)",
+        "methodType": "PM6",
+        "reportedIn": {
+          "type": "Document",
+          "name": "Richards et al., 2015, Genet Med.",
+          "doi": "10.1038/gim.2015.30",
+          "pmid": "25741868"
+        }
+      },
+      "directionOfEvidenceProvided": "neutral",
+      "extensions": [
+        {
+          "name": "status",
+          "value": "unknown"
+        },
+        {
+          "name": "missingInputs",
+          "value": [
+            "criterion implementation"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "evline:BRCA1_c_191G_A_PP1",
+      "type": "EvidenceLine",
+      "description": "pp1_bs4_pp4_engine: segregation not evaluable (no family data or unknown inheritance mode)",
+      "specifiedBy": {
+        "type": "Method",
+        "name": "ACMG/AMP PP1 assessment (family segregation / phenotype specificity)",
+        "methodType": "PP1",
+        "reportedIn": {
+          "type": "Document",
+          "name": "Richards et al., 2015, Genet Med.",
+          "doi": "10.1038/gim.2015.30",
+          "pmid": "25741868"
+        }
+      },
+      "directionOfEvidenceProvided": "neutral",
+      "extensions": [
+        {
+          "name": "status",
+          "value": "not_met"
+        },
+        {
+          "name": "curatorHints",
+          "value": [
+            {
+              "severity": "caution",
+              "category": "unevaluated",
+              "message": "PP1 could not actually be evaluated from the available data (reported as not_met rather than left unknown)."
+            }
+          ]
+        },
+        {
+          "name": "referenceLink",
+          "value": "https://www.ncbi.nlm.nih.gov/clinvar/?term=BRCA1%5Bgene%5D%20AND%20c.191G%3EA"
+        }
+      ]
+    },
+    {
+      "id": "evline:BRCA1_c_191G_A_PP2",
+      "type": "EvidenceLine",
+      "description": "No gene_disease assessment was retrieved for this variant. PP2 evaluates missense variants in genes where missense is an established disease mechanism and benign missense variation is constrained. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
+      "specifiedBy": {
+        "type": "Method",
+        "name": "ACMG/AMP PP2 assessment (not met)",
+        "methodType": "PP2",
+        "reportedIn": {
+          "type": "Document",
+          "name": "Richards et al., 2015, Genet Med.",
+          "doi": "10.1038/gim.2015.30",
+          "pmid": "25741868"
+        }
+      },
+      "directionOfEvidenceProvided": "neutral",
+      "extensions": [
+        {
+          "name": "status",
+          "value": "not_met"
+        },
+        {
+          "name": "provenance",
+          "value": {
+            "rule_version": "PP2-v1"
+          }
+        },
+        {
+          "name": "missingInputs",
+          "value": [
+            "gene_disease"
+          ]
+        },
+        {
+          "name": "referenceLink",
+          "value": "https://gnomad.broadinstitute.org/gene/BRCA1?dataset=gnomad_r4"
+        },
+        {
+          "name": "curatorHints",
+          "value": [
+            {
+              "severity": "caution",
+              "category": "unevaluated",
+              "message": "PP2 could not actually be evaluated from the available data (reported as not_met rather than left unknown)."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "evline:BRCA1_c_191G_A_PP3",
+      "type": "EvidenceLine",
+      "name": "PP3 assessment for GRCh38:17:43106477:C:T",
+      "description": "Score meets calibrated interval. PP3 evaluates calibrated computational evidence supporting a damaging effect. Outcome: MET; the available evidence satisfies PP3.",
+      "specifiedBy": {
+        "type": "Method",
+        "name": "ACMG/AMP 2015 with ClinGen General Guidance",
+        "methodType": "PP3",
+        "reportedIn": {
+          "type": "Document",
+          "name": "Richards et al., 2015, Genet Med.",
+          "urls": [
+            "https://pubmed.ncbi.nlm.nih.gov/25741868/"
+          ],
+          "doi": "10.1038/gim.2015.30",
+          "pmid": "25741868"
+        }
+      },
+      "hasEvidenceItems": [
+        "urn:sha256:b1571935126747a1492b3c28ea2677461d296c41004837b4e48f1c480711d659:annotation:NM_007294.4",
+        "urn:sha256:935c883afecc0285142b15196e72cced6bad804979695e14e07b1dae4050fddc:dbnsfp:revel",
+        "urn:sha256:b1571935126747a1492b3c28ea2677461d296c41004837b4e48f1c480711d659:prediction:spliceai:NM_007294.4"
+      ],
+      "directionOfEvidenceProvided": "supports",
+      "strengthOfEvidenceProvided": {
+        "primaryCoding": {
+          "system": "ACMG Guidelines, 2015",
+          "code": "strong"
+        }
+      },
+      "evidenceOutcome": {
+        "name": "ACMG 2015 PP3 criterion met",
+        "primaryCoding": {
+          "system": "ACMG Guidelines, 2015",
+          "code": "PP3_strong"
+        }
+      },
+      "extensions": [
+        {
+          "name": "status",
+          "value": "met"
+        },
+        {
+          "name": "provenance",
+          "value": {
+            "rule_version": "PP3-v1",
+            "applied_calibrations": [
+              {
+                "calibration": "revel-pejaver-2022",
+                "mechanism": "protein",
+                "predictor": "REVEL",
+                "score": "0.954",
+                "strength": "strong",
+                "opposing": null
+              },
+              {
+                "calibration": "spliceai-svi-2023",
+                "mechanism": "splicing",
+                "predictor": "SpliceAI",
+                "score": "0.87",
+                "strength": "supporting",
+                "opposing": null
+              }
+            ],
+            "version_assertions": [
+              {
+                "version_status": "UNKNOWN",
+                "predictor_version": "UNKNOWN",
+                "source": "Ensembl VEP SpliceAI",
+                "source_version": "116",
+                "retrieved_at": "2026-09-18T09:07:12.427991+00:00",
+                "accepted_by": "BH26 project configuration",
+                "justification": "Ensembl REST does not expose the SpliceAI model version. Use the score with predictor_version=UNKNOWN, retaining Ensembl source_version and retrieved_at for audit; do not represent it as SpliceAI-1.3."
+              }
+            ]
+          }
+        },
+        {
+          "name": "direction",
+          "value": "supports"
+        },
+        {
+          "name": "referenceLink",
+          "value": "https://pubmed.ncbi.nlm.nih.gov/36413997/"
+        }
+      ]
+    },
+    {
+      "id": "evline:BRCA1_c_191G_A_PP4",
+      "type": "EvidenceLine",
+      "description": "pp1_bs4_pp4_engine: diagnostic_yield_below_pp4_lower_bound (phenotype_match_assumed_from_literature_search_query)",
+      "specifiedBy": {
+        "type": "Method",
+        "name": "ACMG/AMP PP4 assessment (family segregation / phenotype specificity)",
+        "methodType": "PP4",
+        "reportedIn": {
+          "type": "Document",
+          "name": "Richards et al., 2015, Genet Med.",
+          "doi": "10.1038/gim.2015.30",
+          "pmid": "25741868"
+        }
+      },
+      "directionOfEvidenceProvided": "neutral",
+      "evidenceOutcome": {
+        "name": "ACMG 2015 PP4 criterion not met",
+        "primaryCoding": {
+          "system": "ACMG Guidelines, 2015",
+          "code": "PP4_not_met"
+        }
+      },
+      "extensions": [
+        {
+          "name": "status",
+          "value": "not_met"
+        }
+      ]
+    },
+    {
+      "id": "evline:BRCA1_c_191G_A_PP5",
+      "type": "EvidenceLine",
+      "description": "ClinGen General policy: retrieve primary evidence instead of scoring external assertions. PP5 is not scored from an external assertion alone; the primary evidence must be reviewed. Outcome: UNKNOWN; no MET or NOT_MET judgment is made.",
+      "specifiedBy": {
+        "type": "Method",
+        "name": "ACMG/AMP PP5 assessment (not met)",
+        "methodType": "PP5",
+        "reportedIn": {
+          "type": "Document",
+          "name": "Richards et al., 2015, Genet Med.",
+          "doi": "10.1038/gim.2015.30",
+          "pmid": "25741868"
+        }
+      },
+      "directionOfEvidenceProvided": "neutral",
+      "extensions": [
+        {
+          "name": "status",
+          "value": "not_met"
+        },
+        {
+          "name": "provenance",
+          "value": {
+            "rule_version": "PP5-v1"
+          }
+        },
+        {
+          "name": "curatorHints",
+          "value": [
+            {
+              "severity": "caution",
+              "category": "unevaluated",
+              "message": "PP5 could not actually be evaluated from the available data (reported as not_met rather than left unknown)."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "evline:BRCA1_c_191G_A_BA1",
+      "type": "EvidenceLine",
+      "name": "BA1 assessment for GRCh38:17:43106477:C:T",
+      "description": "Every population source resolved and none has an allele frequency above the configured stand-alone threshold (0.05; highest allele frequency 0.000001379633845177489894182084075). BA1 evaluates whether population allele frequency exceeds the stand-alone benign threshold after exception review. Outcome: NOT_MET; was evaluated but does not satisfy BA1.",
+      "specifiedBy": {
+        "type": "Method",
+        "name": "ACMG/AMP 2015 with ClinGen General Guidance",
+        "methodType": "BA1",
+        "reportedIn": {
+          "type": "Document",
+          "name": "Richards et al., 2015, Genet Med.",
+          "urls": [
+            "https://pubmed.ncbi.nlm.nih.gov/25741868/"
+          ],
+          "doi": "10.1038/gim.2015.30",
+          "pmid": "25741868"
+        }
+      },
+      "hasEvidenceItems": [
+        {
+          "id": "https://grch38.togovar.org/variant/tgv417545517#frequency:gnomad_exomes",
+          "type": "CohortAlleleFrequencyStudyResult",
+          "name": "TogoVar gnomad_exomes:global allele frequency for GRCh38:17:43106477:C:T",
+          "focusAllele": "urn:bh26:variant:ff4b0162ef1d25f2cdc11879a2954c2baa7406a00829322f8a31fbb03df0d39d",
+          "focusAlleleFrequency": 1.37963384517749e-06,
+          "focusAlleleCount": 2,
+          "locusAlleleCount": 1449660,
+          "sourceDataSet": {
+            "id": "https://grch38.togovar.org/",
+            "type": "DataSet",
+            "name": "TogoVar vAPI 0.9.1",
+            "version": "API 0.9.1"
+          },
+          "cohort": {
+            "id": "urn:bh26:cohort:cc948813fae7fdb88b015944068d2b0d0e761458668d51638f2a2b5dfda5cc3b",
+            "type": "StudyGroup",
+            "name": "gnomad_exomes:global"
+          },
+          "specifiedBy": {
+            "type": "Method",
+            "name": "TogoVar API allele frequency aggregation",
+            "reportedIn": {
+              "type": "Document",
+              "name": "TogoVar API documentation",
+              "urls": [
+                "https://grch38.togovar.org/api/"
+              ]
+            }
+          },
+          "qualityMeasures": {
+            "qualityStatus": "PASS",
+            "callable": true,
+            "filters": [
+              "PASS"
+            ],
+            "variantFlags": [],
+            "retrievedAt": "2026-09-18T09:07:28.617600+00:00"
+          }
+        }
+      ],
+      "directionOfEvidenceProvided": "neutral",
+      "evidenceOutcome": {
+        "name": "ACMG 2015 BA1 criterion not met",
+        "primaryCoding": {
+          "system": "ACMG Guidelines, 2015",
+          "code": "BA1_not_met"
+        }
+      },
+      "extensions": [
+        {
+          "name": "status",
+          "value": "not_met"
+        },
+        {
+          "name": "provenance",
+          "value": {
+            "rule_version": "BA1-v1",
+            "policy_source": "BH26 demo population evidence QC policy",
+            "policy_version": "2026-09-15",
+            "rejected_observations": [],
+            "provider_failures": [],
+            "frequency_statistic": "af",
+            "stand_alone_threshold": "0.05",
+            "highest_observed": "0.000001379633845177489894182084075"
+          }
+        },
+        {
+          "name": "direction",
+          "value": "none"
+        },
+        {
+          "name": "referenceLink",
+          "value": "https://grch38.togovar.org/variant/17-43106477-C-T"
+        },
+        {
+          "name": "referenceLink",
+          "value": "https://gnomad.broadinstitute.org/variant/17-43106477-C-T?dataset=gnomad_r4"
+        }
+      ]
+    },
+    {
+      "id": "evline:BRCA1_c_191G_A_BS1",
+      "type": "EvidenceLine",
+      "name": "BS1 assessment for GRCh38:17:43106477:C:T",
+      "description": "Every population source resolved and none has a filtering allele frequency > the configured default maximum credible frequency [BH26 provisional default BS1 threshold for rare Mendelian disease (PLACEHOLDER - not a reviewed clinical value; a real threshold is per-disease, e.g. the ClinGen Inherited Cardiomyopathy VCEP applies 0.0002 for MYH7) 2026-09-17-provisional-2] (0.0001; highest filtering allele frequency 4.56553062154751952975088582E-7) (applied because no curated maximum credible allele frequency was supplied for MONDO:0011450; this is not a disease-specific threshold and has to be confirmed before final classification). BS1 evaluates whether population allele frequency exceeds the reviewed maximum credible frequency for the disease context. Outcome: NOT_MET; was evaluated but does not satisfy BS1.",
+      "specifiedBy": {
+        "type": "Method",
+        "name": "ACMG/AMP 2015 with ClinGen General Guidance",
+        "methodType": "BS1",
+        "reportedIn": {
+          "type": "Document",
+          "name": "Richards et al., 2015, Genet Med.",
+          "urls": [
+            "https://pubmed.ncbi.nlm.nih.gov/25741868/"
+          ],
+          "doi": "10.1038/gim.2015.30",
+          "pmid": "25741868"
+        }
+      },
+      "hasEvidenceItems": [
+        {
+          "id": "https://grch38.togovar.org/variant/tgv417545517#frequency:gnomad_exomes",
+          "type": "CohortAlleleFrequencyStudyResult",
+          "name": "TogoVar gnomad_exomes:global allele frequency for GRCh38:17:43106477:C:T",
+          "focusAllele": "urn:bh26:variant:ff4b0162ef1d25f2cdc11879a2954c2baa7406a00829322f8a31fbb03df0d39d",
+          "focusAlleleFrequency": 1.37963384517749e-06,
+          "focusAlleleCount": 2,
+          "locusAlleleCount": 1449660,
+          "sourceDataSet": {
+            "id": "https://grch38.togovar.org/",
+            "type": "DataSet",
+            "name": "TogoVar vAPI 0.9.1",
+            "version": "API 0.9.1"
+          },
+          "cohort": {
+            "id": "urn:bh26:cohort:cc948813fae7fdb88b015944068d2b0d0e761458668d51638f2a2b5dfda5cc3b",
+            "type": "StudyGroup",
+            "name": "gnomad_exomes:global"
+          },
+          "specifiedBy": {
+            "type": "Method",
+            "name": "TogoVar API allele frequency aggregation",
+            "reportedIn": {
+              "type": "Document",
+              "name": "TogoVar API documentation",
+              "urls": [
+                "https://grch38.togovar.org/api/"
+              ]
+            }
+          },
+          "qualityMeasures": {
+            "qualityStatus": "PASS",
+            "callable": true,
+            "filters": [
+              "PASS"
+            ],
+            "variantFlags": [],
+            "retrievedAt": "2026-09-18T09:07:28.617600+00:00"
+          }
+        }
+      ],
+      "directionOfEvidenceProvided": "neutral",
+      "evidenceOutcome": {
+        "name": "ACMG 2015 BS1 criterion not met",
+        "primaryCoding": {
+          "system": "ACMG Guidelines, 2015",
+          "code": "BS1_not_met"
+        }
+      },
+      "extensions": [
+        {
+          "name": "status",
+          "value": "not_met"
+        },
+        {
+          "name": "provenance",
+          "value": {
+            "rule_version": "BS1-v1",
+            "policy_source": "BH26 demo population evidence QC policy",
+            "policy_version": "2026-09-15",
+            "rejected_observations": [],
+            "provider_failures": [],
+            "faf_method": "Wilson score interval, one-sided 95% lower bound, computed from AC/AN",
+            "frequency_statistic": "faf95",
+            "comparison": ">",
+            "highest_observed": "4.56553062154751952975088582E-7",
+            "threshold_scope": "default",
+            "policy_status": "DRAFT",
+            "disease_frequency_threshold": {
+              "max_credible_af": 0.0001,
+              "source": "BH26 provisional default BS1 threshold for rare Mendelian disease (PLACEHOLDER - not a reviewed clinical value; a real threshold is per-disease, e.g. the ClinGen Inherited Cardiomyopathy VCEP applies 0.0002 for MYH7)",
+              "source_version": "2026-09-17-provisional-2",
+              "frequency_statistic": "faf95",
+              "comparison": ">",
+              "derivation": {
+                "method": "Maximum credible allele frequency (Whiffin et al. 2017), https://pubmed.ncbi.nlm.nih.gov/28518168/",
+                "prevalence": null,
+                "inheritance": null,
+                "penetrance": null,
+                "max_genetic_contribution": null,
+                "max_allelic_contribution": null,
+                "target_population": null,
+                "source_url": "https://clinicalgenome.org/site/assets/files/5182/pm2_-_svi_recommendation_-_approved_sept2020.pdf"
+              }
+            }
+          }
+        },
+        {
+          "name": "direction",
+          "value": "none"
+        },
+        {
+          "name": "curatorHints",
+          "value": [
+            {
+              "severity": "caution",
+              "category": "review",
+              "message": "Confirm BS1 against a disease-specific maximum credible frequency"
+            }
+          ]
+        },
+        {
+          "name": "referenceLink",
+          "value": "https://grch38.togovar.org/variant/17-43106477-C-T"
+        },
+        {
+          "name": "referenceLink",
+          "value": "https://gnomad.broadinstitute.org/variant/17-43106477-C-T?dataset=gnomad_r4"
+        }
+      ]
+    },
+    {
+      "id": "evline:BRCA1_c_191G_A_BS2",
+      "type": "EvidenceLine",
+      "description": "BS2 is not evaluated by this integrated pipeline. No judgment was made; any referenceLink or curatorInfo extension is an auxiliary curation aid only.",
+      "specifiedBy": {
+        "type": "Method",
+        "name": "ACMG/AMP BS2 assessment (unknown)",
+        "methodType": "BS2",
+        "reportedIn": {
+          "type": "Document",
+          "name": "Richards et al., 2015, Genet Med.",
+          "doi": "10.1038/gim.2015.30",
+          "pmid": "25741868"
+        }
+      },
+      "directionOfEvidenceProvided": "neutral",
+      "extensions": [
+        {
+          "name": "status",
+          "value": "unknown"
+        },
+        {
+          "name": "missingInputs",
+          "value": [
+            "criterion implementation"
+          ]
+        },
+        {
+          "name": "referenceLink",
+          "value": "https://grch38.togovar.org/variant/17-43106477-C-T"
+        },
+        {
+          "name": "referenceLink",
+          "value": "https://gnomad.broadinstitute.org/variant/17-43106477-C-T?dataset=gnomad_r4"
+        }
+      ]
+    },
+    {
+      "id": "evline:BRCA1_c_191G_A_BS3",
+      "type": "EvidenceLine",
+      "description": "None of the 1 paper(s) examined yielded a usable evidence-based judgment for this variant (either the variant could not be identified in the text, or the per-paper judgment was itself inconclusive).",
+      "specifiedBy": {
+        "type": "Method",
+        "name": "Unspecified VCEP ACMG/AMP BS3 evidence assessment (LLM-assisted draft)",
+        "methodType": "BS3",
+        "reportedIn": {
+          "type": "Document",
+          "name": "Richards et al., 2015, Genet Med.",
+          "doi": "10.1038/gim.2015.30",
+          "pmid": "25741868"
+        }
+      },
+      "contributions": [
+        {
+          "type": "Contribution",
+          "contributor": {
+            "id": "acmg-literature-llm-pipeline",
+            "type": "Agent",
+            "name": "ACMG literature-evidence LLM pipeline (gemma-4 via vLLM) - AI-generated draft evidence, requires human curator review before use"
+          },
+          "activityType": "automated evidence evaluation",
+          "date": "2026-09-18T11:19:18.277866Z"
+        }
+      ],
+      "reportedIn": [
+        {
+          "type": "Document",
+          "urls": [
+            "https://pubmed.ncbi.nlm.nih.gov/30209399/"
+          ],
+          "pmid": "30209399"
+        }
+      ],
+      "hasEvidenceItems": [
+        {
+          "id": "evline:paper-1-30209399",
+          "type": "EvidenceLine",
+          "description": "While the paper utilizes a high-throughput functional assay (SGE) that covers the target variant's region, the specific results for c.191G>A are not provided in the text. Therefore, a determination of PS3 or BS3 cannot be made.",
+          "reportedIn": [
+            {
+              "type": "Document",
+              "urls": [
+                "https://pubmed.ncbi.nlm.nih.gov/30209399/"
+              ],
+              "pmid": "30209399"
+            }
+          ],
+          "directionOfEvidenceProvided": "neutral"
+        }
+      ],
+      "directionOfEvidenceProvided": "neutral",
+      "extensions": [
+        {
+          "name": "curatorHints",
+          "value": [
+            {
+              "severity": "info",
+              "category": null,
+              "message": "None of the 1 paper(s) examined yielded a usable evidence-based judgment for this variant (either the variant could not be identified in the text, or the per-paper judgment was itself inconclusive)."
+            },
+            {
+              "severity": "caution",
+              "category": "unevaluated",
+              "message": "BS3 could not actually be evaluated from the available literature (reported as not_met rather than left unknown)."
+            }
+          ]
+        },
+        {
+          "name": "status",
+          "value": "not_met"
+        }
+      ]
+    },
+    {
+      "id": "evline:BRCA1_c_191G_A_BS4",
+      "type": "EvidenceLine",
+      "description": "pp1_bs4_pp4_engine: segregation not evaluable (no family data or unknown inheritance mode)",
+      "specifiedBy": {
+        "type": "Method",
+        "name": "ACMG/AMP BS4 assessment (family segregation / phenotype specificity)",
+        "methodType": "BS4",
+        "reportedIn": {
+          "type": "Document",
+          "name": "Richards et al., 2015, Genet Med.",
+          "doi": "10.1038/gim.2015.30",
+          "pmid": "25741868"
+        }
+      },
+      "directionOfEvidenceProvided": "neutral",
+      "extensions": [
+        {
+          "name": "status",
+          "value": "not_met"
+        },
+        {
+          "name": "curatorHints",
+          "value": [
+            {
+              "severity": "caution",
+              "category": "unevaluated",
+              "message": "BS4 could not actually be evaluated from the available data (reported as not_met rather than left unknown)."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "evline:BRCA1_c_191G_A_BP1",
+      "type": "EvidenceLine",
+      "description": "No gene_disease assessment was retrieved for this variant. BP1 evaluates missense variants in genes where disease is predominantly caused by truncating variants rather than missense variation. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
+      "specifiedBy": {
+        "type": "Method",
+        "name": "ACMG/AMP BP1 assessment (not met)",
+        "methodType": "BP1",
+        "reportedIn": {
+          "type": "Document",
+          "name": "Richards et al., 2015, Genet Med.",
+          "doi": "10.1038/gim.2015.30",
+          "pmid": "25741868"
+        }
+      },
+      "directionOfEvidenceProvided": "neutral",
+      "extensions": [
+        {
+          "name": "status",
+          "value": "not_met"
+        },
+        {
+          "name": "provenance",
+          "value": {
+            "rule_version": "BP1-v1"
+          }
+        },
+        {
+          "name": "missingInputs",
+          "value": [
+            "gene_disease"
+          ]
+        },
+        {
+          "name": "curatorHints",
+          "value": [
+            {
+              "severity": "caution",
+              "category": "unevaluated",
+              "message": "BP1 could not actually be evaluated from the available data (reported as not_met rather than left unknown)."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "evline:BRCA1_c_191G_A_BP2",
+      "type": "EvidenceLine",
+      "description": "BP2 is not evaluated by this integrated pipeline. No judgment was made; any referenceLink or curatorInfo extension is an auxiliary curation aid only.",
+      "specifiedBy": {
+        "type": "Method",
+        "name": "ACMG/AMP BP2 assessment (unknown)",
+        "methodType": "BP2",
+        "reportedIn": {
+          "type": "Document",
+          "name": "Richards et al., 2015, Genet Med.",
+          "doi": "10.1038/gim.2015.30",
+          "pmid": "25741868"
+        }
+      },
+      "directionOfEvidenceProvided": "neutral",
+      "extensions": [
+        {
+          "name": "status",
+          "value": "unknown"
+        },
+        {
+          "name": "missingInputs",
+          "value": [
+            "criterion implementation"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "evline:BRCA1_c_191G_A_BP3",
+      "type": "EvidenceLine",
+      "description": "BP3 is not applicable: the annotation does not indicate an in-frame insertion or deletion, which BP3 requires before repeat-region assessment (annotated: missense_variant). BP3 evaluates in-frame insertions or deletions in a repetitive region without known function. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
+      "specifiedBy": {
+        "type": "Method",
+        "name": "ACMG/AMP BP3 assessment (not met)",
+        "methodType": "BP3",
+        "reportedIn": {
+          "type": "Document",
+          "name": "Richards et al., 2015, Genet Med.",
+          "doi": "10.1038/gim.2015.30",
+          "pmid": "25741868"
+        }
+      },
+      "directionOfEvidenceProvided": "neutral",
+      "extensions": [
+        {
+          "name": "status",
+          "value": "not_met"
+        },
+        {
+          "name": "provenance",
+          "value": {
+            "rule_version": "BP3-v1",
+            "assessment_outcome": "not_applicable"
+          }
+        },
+        {
+          "name": "curatorHints",
+          "value": [
+            {
+              "severity": "caution",
+              "category": "unevaluated",
+              "message": "BP3 could not actually be evaluated from the available data (reported as not_met rather than left unknown)."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "evline:BRCA1_c_191G_A_BP4",
+      "type": "EvidenceLine",
+      "name": "BP4 assessment for GRCh38:17:43106477:C:T",
+      "description": "Another predicted mechanism supports PP3 rather than a benign effect (REVEL 0.954, SpliceAI 0.87). BP4 evaluates calibrated computational evidence supporting a benign effect. Outcome: NOT_MET; BP4 was evaluated but its requirements were not satisfied.",
+      "specifiedBy": {
+        "type": "Method",
+        "name": "ACMG/AMP 2015 with ClinGen General Guidance",
+        "methodType": "BP4",
+        "reportedIn": {
+          "type": "Document",
+          "name": "Richards et al., 2015, Genet Med.",
+          "urls": [
+            "https://pubmed.ncbi.nlm.nih.gov/25741868/"
+          ],
+          "doi": "10.1038/gim.2015.30",
+          "pmid": "25741868"
+        }
+      },
+      "hasEvidenceItems": [
+        "urn:sha256:b1571935126747a1492b3c28ea2677461d296c41004837b4e48f1c480711d659:annotation:NM_007294.4",
+        "urn:sha256:935c883afecc0285142b15196e72cced6bad804979695e14e07b1dae4050fddc:dbnsfp:revel",
+        "urn:sha256:b1571935126747a1492b3c28ea2677461d296c41004837b4e48f1c480711d659:prediction:spliceai:NM_007294.4"
+      ],
+      "directionOfEvidenceProvided": "neutral",
+      "evidenceOutcome": {
+        "name": "ACMG 2015 BP4 criterion not met",
+        "primaryCoding": {
+          "system": "ACMG Guidelines, 2015",
+          "code": "BP4_not_met"
+        }
+      },
+      "extensions": [
+        {
+          "name": "status",
+          "value": "not_met"
+        },
+        {
+          "name": "provenance",
+          "value": {
+            "rule_version": "BP4-v1",
+            "applied_calibrations": [
+              {
+                "calibration": "revel-pejaver-2022",
+                "mechanism": "protein",
+                "predictor": "REVEL",
+                "score": "0.954",
+                "strength": null,
+                "opposing": "strong"
+              },
+              {
+                "calibration": "spliceai-svi-2023",
+                "mechanism": "splicing",
+                "predictor": "SpliceAI",
+                "score": "0.87",
+                "strength": null,
+                "opposing": "supporting"
+              }
+            ],
+            "version_assertions": [
+              {
+                "version_status": "UNKNOWN",
+                "predictor_version": "UNKNOWN",
+                "source": "Ensembl VEP SpliceAI",
+                "source_version": "116",
+                "retrieved_at": "2026-09-18T09:07:12.427991+00:00",
+                "accepted_by": "BH26 project configuration",
+                "justification": "Ensembl REST does not expose the SpliceAI model version. Use the score with predictor_version=UNKNOWN, retaining Ensembl source_version and retrieved_at for audit; do not represent it as SpliceAI-1.3."
+              }
+            ],
+            "benign_blocked_by": [
+              {
+                "predictor": "REVEL",
+                "mechanism": "protein",
+                "score": "0.954",
+                "opposing_criterion": "PP3",
+                "opposing_strength": "strong"
+              },
+              {
+                "predictor": "SpliceAI",
+                "mechanism": "splicing",
+                "score": "0.87",
+                "opposing_criterion": "PP3",
+                "opposing_strength": "supporting"
+              }
+            ]
+          }
+        },
+        {
+          "name": "direction",
+          "value": "none"
+        },
+        {
+          "name": "referenceLink",
+          "value": "https://pubmed.ncbi.nlm.nih.gov/36413997/"
+        }
+      ]
+    },
+    {
+      "id": "evline:BRCA1_c_191G_A_BP5",
+      "type": "EvidenceLine",
+      "description": "BP5 is not evaluated by this integrated pipeline. No judgment was made; any referenceLink or curatorInfo extension is an auxiliary curation aid only.",
+      "specifiedBy": {
+        "type": "Method",
+        "name": "ACMG/AMP BP5 assessment (unknown)",
+        "methodType": "BP5",
+        "reportedIn": {
+          "type": "Document",
+          "name": "Richards et al., 2015, Genet Med.",
+          "doi": "10.1038/gim.2015.30",
+          "pmid": "25741868"
+        }
+      },
+      "directionOfEvidenceProvided": "neutral",
+      "extensions": [
+        {
+          "name": "status",
+          "value": "unknown"
+        },
+        {
+          "name": "missingInputs",
+          "value": [
+            "criterion implementation"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "evline:BRCA1_c_191G_A_BP6",
+      "type": "EvidenceLine",
+      "description": "ClinGen General policy: retrieve primary evidence instead of scoring external assertions. BP6 is not scored from an external assertion alone; the primary evidence must be reviewed. Outcome: UNKNOWN; no MET or NOT_MET judgment is made.",
+      "specifiedBy": {
+        "type": "Method",
+        "name": "ACMG/AMP BP6 assessment (not met)",
+        "methodType": "BP6",
+        "reportedIn": {
+          "type": "Document",
+          "name": "Richards et al., 2015, Genet Med.",
+          "doi": "10.1038/gim.2015.30",
+          "pmid": "25741868"
+        }
+      },
+      "directionOfEvidenceProvided": "neutral",
+      "extensions": [
+        {
+          "name": "status",
+          "value": "not_met"
+        },
+        {
+          "name": "provenance",
+          "value": {
+            "rule_version": "BP6-v1"
+          }
+        },
+        {
+          "name": "curatorHints",
+          "value": [
+            {
+              "severity": "caution",
+              "category": "unevaluated",
+              "message": "BP6 could not actually be evaluated from the available data (reported as not_met rather than left unknown)."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "evline:BRCA1_c_191G_A_BP7",
+      "type": "EvidenceLine",
+      "description": "BP7 is not applicable: it evaluates synonymous changes outside splice-critical regions, and the annotation reports missense_variant. BP7 evaluates synonymous variants outside splice-critical regions when splice prediction and conservation evidence support a benign interpretation. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
+      "specifiedBy": {
+        "type": "Method",
+        "name": "ACMG/AMP BP7 assessment (not met)",
+        "methodType": "BP7",
+        "reportedIn": {
+          "type": "Document",
+          "name": "Richards et al., 2015, Genet Med.",
+          "doi": "10.1038/gim.2015.30",
+          "pmid": "25741868"
+        }
+      },
+      "directionOfEvidenceProvided": "neutral",
+      "extensions": [
+        {
+          "name": "status",
+          "value": "not_met"
+        },
+        {
+          "name": "provenance",
+          "value": {
+            "rule_version": "BP7-v1",
+            "assessment_outcome": "not_applicable"
+          }
+        },
+        {
+          "name": "curatorHints",
+          "value": [
+            {
+              "severity": "caution",
+              "category": "unevaluated",
+              "message": "BP7 could not actually be evaluated from the available data (reported as not_met rather than left unknown)."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
