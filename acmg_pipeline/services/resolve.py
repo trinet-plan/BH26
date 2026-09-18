@@ -58,8 +58,16 @@ from acmg_pipeline.automated_core.models import Variant
 from acmg_pipeline.providers.clinvar import (
     VCV, ClinVarComparatorProvider, ClinVarHotspotProvider, ClinVarProvider,
 )
-from acmg_pipeline.providers.clingen_dosage import ClinGenDosageProvider
+from acmg_pipeline.providers.clingen_dosage import (
+    METHOD as DOSAGE_METHOD, ClinGenDosageProvider,
+)
 from acmg_pipeline.providers.clingen_gene_validity import ClinGenGeneValidityProvider
+from acmg_pipeline.providers.clingen_lumping import ClinGenLumpingProvider
+from acmg_pipeline.providers.gene2phenotype import (
+    METHOD as G2P_METHOD, Gene2PhenotypeProvider,
+)
+from acmg_pipeline.providers.mondo import MondoMappingProvider
+from acmg_pipeline.providers.mondo_hierarchy import MondoHierarchyProvider
 from acmg_pipeline.providers.clinvar_spectrum import ClinvarSpectrumProvider
 from acmg_pipeline.providers.gene_disease_draft import GeneDiseaseDraftProvider
 from acmg_pipeline.providers.gnomad_constraint import GnomadConstraintProvider
@@ -92,16 +100,88 @@ class ProviderOutcome:
 
 @dataclass
 class ResolvedEvidence:
-    """Normalized evidence for one variant, plus whatever could not be fetched."""
+    """Normalized evidence for one variant, what could not be fetched, and from where.
+
+    `manifest` is one entry per provider that ran. It is not logging: `use_restriction`
+    records what the evidence may be used for (a dosage score is PVS1's mechanism gate and
+    nothing else; a gene-disease association is a suggestion and never a mechanism), and
+    `unresolved` records what was asked for and came back empty, which a caller cannot
+    otherwise tell from what was never asked. Both were recorded on the CLI's own path and
+    would have been lost by moving to this one.
+    """
 
     records: list[dict] = field(default_factory=list)
     failures: list[dict] = field(default_factory=list)
+    manifest: list[dict] = field(default_factory=list)
+    # Provenance for the identity itself (which ClinVar record this variant was matched to),
+    # which belongs on the audit record rather than in the evidence.
+    identity_evidence: list[dict] = field(default_factory=list)
 
     def absorb(self, provider: str, outcome: ProviderOutcome) -> ProviderOutcome:
         self.records.extend(outcome.records)
         if outcome.error is not None:
             self.failures.append({"provider": provider, "error": outcome.error})
         return outcome
+
+    def note(self, provider, *, use_restriction, records=(), error=None, **details):
+        """Record that `provider` ran, what it produced, and what that may be used for."""
+        entry = {"provider": provider, "evidence": len(records),
+                 "use_restriction": use_restriction,
+                 "errors": [error] if error else []}
+        entry.update({key: value for key, value in details.items() if value is not None})
+        existing = next((item for item in self.manifest
+                         if item["provider"] == provider), None)
+        if existing is None:
+            self.manifest.append(entry)
+            return
+        # One resolver instance answers many variants on the batch path, and a manifest that
+        # reported only the last of them would understate what ran.
+        existing["evidence"] += entry["evidence"]
+        existing["errors"].extend(entry["errors"])
+        for key, value in details.items():
+            if isinstance(value, int) and isinstance(existing.get(key), int):
+                existing[key] += value
+            elif isinstance(value, list):
+                existing[key] = _extend_unique(existing.get(key) or [], value)
+            elif value is not None:
+                existing.setdefault(key, value)
+
+
+def _extend_unique(existing, addition):
+    """Append what is not already there, for lists whose items need not be hashable."""
+    combined = list(existing)
+    for item in addition:
+        if item not in combined:
+            combined.append(item)
+    return combined
+
+
+def merge_manifests(manifests):
+    """Combine per-variant provider manifests into one run-level manifest.
+
+    A resolver answers one variant at a time, so a batch produces one manifest per variant
+    and reporting only the last would understate what ran. Counts add up, lists are unioned,
+    and the constants each provider states about itself - its version, its method, what the
+    evidence may be used for - are kept as they are.
+    """
+    combined = {}
+    for manifest in manifests:
+        for entry in manifest:
+            existing = combined.get(entry["provider"])
+            if existing is None:
+                combined[entry["provider"]] = {**entry,
+                                               "errors": list(entry.get("errors") or [])}
+                continue
+            for key, value in entry.items():
+                if key == "provider":
+                    continue
+                if isinstance(value, bool) or not isinstance(value, (int, list)):
+                    existing.setdefault(key, value)
+                elif isinstance(value, list):
+                    existing[key] = _extend_unique(existing.get(key) or [], value)
+                else:
+                    existing[key] = (existing.get(key) or 0) + value
+    return list(combined.values())
 
 
 def splice_score_for(predictions, transcript):
@@ -224,6 +304,9 @@ class ProviderEvidenceResolver:
         splice_default_policy_version: str | None = None,
         with_initiation_assessment: bool = False,
         with_pvs1_transcript_gates: bool = False,
+        with_gene2phenotype: bool = False,
+        with_disease_matching: bool = False,
+        with_gene_disease_associations: bool = False,
     ):
         self._client = CachedHttpClient(cache_dir, offline=offline)
         self._external = (
@@ -245,6 +328,13 @@ class ProviderEvidenceResolver:
         self._splice_default_policy_version = splice_default_policy_version
         self._with_initiation_assessment = with_initiation_assessment
         self._with_pvs1_transcript_gates = with_pvs1_transcript_gates
+        self._with_gene2phenotype = with_gene2phenotype
+        self._with_gene_disease_associations = with_gene_disease_associations
+        # One switch for the three sources that only ever refine the disease match: mapping
+        # OMIM/Orphanet to MONDO, MONDO ancestry, and ClinGen's lumping decisions. They
+        # answer one question between them and are useless apart, so they are asked for once.
+        self._with_disease_matching = with_disease_matching
+        self._mondo = None
         self._mane = None
         self._clingen_gene_validity = None
         self._gnomad_constraint = None
@@ -266,10 +356,34 @@ class ProviderEvidenceResolver:
 
     def _population_providers(self):
         if self._population is None:
-            self._population = build_population_providers(
-                self._external, self._population_sources
+            # An empty list is "no population sources", distinct from None, which means the
+            # registry's own defaults. A caller that supplies its own frequencies, or wants
+            # none, has to be able to say so without the defaults firing behind it.
+            self._population = (
+                [] if self._population_sources == []
+                else build_population_providers(self._external, self._population_sources)
             )
         return self._population
+
+    @property
+    def identity_provider(self) -> EnsemblIdentityProvider:
+        """The Ensembl provider this resolver annotates with.
+
+        Shared rather than rebuilt so a caller that has to resolve a record's identity before
+        it has a variant to ask about - which is what turns a VCF row into a prepared record -
+        does it against the same release and the same cache the evidence comes from.
+        """
+        return self._ensembl_provider()
+
+    @property
+    def cache_clients(self):
+        """The HTTP caches this resolver replays from, as {label: client}.
+
+        Exposed so a caller can record what a run actually fetched - which cache entries, and
+        whether the network was touched at all. An offline run that silently reached the
+        network would otherwise look identical to one that did not.
+        """
+        return {"identity": self._client, "external": self._external}
 
     def resolve(self, identity: dict, variant: Variant) -> ResolvedEvidence:
         """`identity` is the VCF INFO view: GENE/TRANSCRIPT/HGVSC/CLNVARIATIONID/CONDITION."""
@@ -280,6 +394,9 @@ class ProviderEvidenceResolver:
             resolved.records.extend(predictions)
         self._add_population(variant, resolved)
         self._add_lof_mechanism(annotation, variant, resolved)
+        self._add_gene2phenotype_mechanism(annotation, variant, resolved)
+        self._add_gene_disease_associations(annotation, variant, resolved)
+        self._add_disease_matching(annotation, identity, resolved)
         self._add_gene_disease_draft(annotation, variant, identity, resolved)
         self._add_splice_default(annotation, variant, resolved)
         self._add_initiation_assessment(annotation, variant, identity, resolved)
@@ -295,24 +412,65 @@ class ProviderEvidenceResolver:
             resolved.failures.append({"provider": "Ensembl", "error": str(exc)})
             return resolved
         transcript = annotation.get("transcript") if annotation else None
-        resolved.absorb(DbnsfpProvider.name, suite.predictions(variant, transcript))
-        outcome, _identity_evidence = suite.clinvar_record(
-            identity.get("CLNVARIATIONID"), variant
-        )
+        dbnsfp = resolved.absorb(DbnsfpProvider.name, suite.predictions(variant, transcript))
+        resolved.note(DbnsfpProvider.name, records=dbnsfp.records, error=dbnsfp.error,
+                      provider_version=suite.dbnsfp_version(), queried_variants=1,
+                      calibration_use="PP3_BP4_WITH_CONFIGURED_CALIBRATION",
+                      use_restriction="PP3_BP4_WITH_CONFIGURED_CALIBRATION")
+        accession = identity.get("CLNVARIATIONID")
+        outcome, identity_evidence = suite.clinvar_record(accession, variant)
         resolved.absorb(ClinVarProvider.name, outcome)
+        if identity_evidence:
+            resolved.identity_evidence.append(identity_evidence)
+        # Only a VCV-shaped accession was ever a query; anything else was skipped without
+        # asking, and counting it as a match would report lookups that never happened.
+        if accession and VCV.fullmatch(str(accession)):
+            resolved.note(ClinVarProvider.name, records=outcome.records,
+                          provider_version=self._clinvar_release,
+                          queried_accessions=1,
+                          matched_records=1 if outcome.error is None else 0,
+                          error=outcome.error,
+                          classification_use="NOT_PP5_BP6",
+                          ps1_comparator_errors=[],
+                          use_restriction="NOT_PP5_BP6")
 
         if annotation is None or "missense_variant" not in (annotation.get("consequences") or []):
             return resolved
         # PS1/PM5/PM1 all compare protein-level changes, so they are only
         # meaningful for a missense annotation.
         splice_score = splice_score_for(predictions, annotation.get("transcript"))
+        counts = {"PS1": ("ps1_comparator_searches", "ps1_comparator_evidence"),
+                  "PM5": ("pm5_residue_searches", "pm5_comparator_evidence")}
         for criterion in ("PS1", "PM5"):
-            resolved.absorb(
+            comparison = resolved.absorb(
                 f"{ClinVarComparatorProvider.name}:{criterion}",
                 suite.comparator(criterion, annotation, variant, splice_score),
             )
+            searches, matches = counts[criterion]
+            if comparison.error is not None:
+                resolved.note(ClinVarProvider.name, use_restriction="NOT_PP5_BP6",
+                              ps1_comparator_errors=[{"variant_key": variant.key,
+                                                      "criterion": criterion,
+                                                      "error": comparison.error}])
+                continue
+            resolved.note(ClinVarProvider.name, use_restriction="NOT_PP5_BP6",
+                          **{searches: 1 if comparison.searched else 0,
+                             matches: comparison.matches})
         if self._hotspot_policy and annotation.get("protein_start"):
-            resolved.absorb(ClinVarHotspotProvider.name, suite.hotspot(annotation, variant))
+            hotspot = resolved.absorb(
+                ClinVarHotspotProvider.name, suite.hotspot(annotation, variant))
+            policy = self._hotspot_policy or {}
+            resolved.note(ClinVarHotspotProvider.name, records=hotspot.records,
+                          provider_version=self._clinvar_release,
+                          error=hotspot.error, region_evidence=hotspot.matches,
+                          # The policy the density was counted under travels with the count:
+                          # the same window and thresholds are what make it reproducible.
+                          policy_version=policy.get("policy_version"),
+                          policy_source=policy.get("policy_source"),
+                          window_aa=policy.get("window_aa"),
+                          min_pathogenic=policy.get("min_pathogenic"),
+                          max_benign=policy.get("max_benign"),
+                          use_restriction="PM1_HOTSPOT_ROUTE_ONLY")
         return resolved
 
     def _add_lof_mechanism(self, annotation, variant, resolved):
@@ -326,9 +484,146 @@ class ProviderEvidenceResolver:
             return
         provider = ClinGenDosageProvider(self._external)
         try:
-            resolved.records.extend(provider.get_mechanism(variant, annotation.get("gene")))
+            records = provider.get_mechanism(variant, annotation.get("gene"))
         except PROVIDER_ERRORS as exc:
             resolved.failures.append({"provider": ClinGenDosageProvider.name, "error": str(exc)})
+            resolved.note(ClinGenDosageProvider.name, error=str(exc), genes_queried=1,
+                          use_restriction="PVS1_LOF_MECHANISM_GATE_ONLY")
+            return
+        resolved.records.extend(records)
+        resolved.note(ClinGenDosageProvider.name, records=records, genes_queried=1,
+                      method=DOSAGE_METHOD,
+                      provider_version=records[0]["source_version"] if records else None,
+                      use_restriction="PVS1_LOF_MECHANISM_GATE_ONLY")
+
+    def _add_gene2phenotype_mechanism(self, annotation, variant, resolved):
+        """PVS1's mechanism gate from G2P, which curates per gene-disease pair.
+
+        Off unless asked for, like the dosage stand-in beside it. Where dosage scores one
+        haploinsufficiency judgment per gene, G2P states the molecular mechanism for each
+        disease and names its MONDO term, so it answers for a gene that loses function in one
+        disease and gains it in another - the case a per-gene score cannot separate.
+        """
+        if not self._with_gene2phenotype or annotation is None:
+            return
+        gene = annotation.get("gene")
+        if not gene:
+            return
+        try:
+            records = Gene2PhenotypeProvider(self._external).get_mechanism(variant, gene)
+        except PROVIDER_ERRORS as exc:
+            resolved.failures.append(
+                {"provider": Gene2PhenotypeProvider.name, "error": str(exc)})
+            resolved.note(Gene2PhenotypeProvider.name, error=str(exc), genes_queried=1,
+                          use_restriction="PVS1_LOF_MECHANISM_GATE_ONLY")
+            return
+        resolved.records.extend(records)
+        resolved.note(Gene2PhenotypeProvider.name, records=records, genes_queried=1,
+                      method=G2P_METHOD,
+                      use_restriction="PVS1_LOF_MECHANISM_GATE_ONLY")
+
+    def _add_gene_disease_associations(self, annotation, variant, resolved):
+        """The diseases a gene is curated for, as candidates a curator can be offered.
+
+        Off unless asked for. These are ClinGen gene-disease validity rows, and they carry
+        their own `gene_disease_validity` category so a mechanism lookup cannot reach them: a
+        validity classification says the gene and the disease are related and never that loss
+        of function is why, which is the conflation gene_disease_draft.py exists to prevent.
+
+        The rows are per gene, so an id of their own would collapse every variant in one gene
+        into the first one the run saw - the same defect the dosage provider's ids were fixed
+        for - and the variant key is appended to keep them apart.
+        """
+        if not self._with_gene_disease_associations or annotation is None:
+            return
+        gene = annotation.get("gene")
+        if not gene:
+            return
+        try:
+            rows = self._clingen_gene_validity_provider().get_validity(gene)
+        except PROVIDER_ERRORS as exc:
+            resolved.failures.append(
+                {"provider": ClinGenGeneValidityProvider.name, "error": str(exc)})
+            resolved.note(ClinGenGeneValidityProvider.name, error=str(exc), genes_queried=1,
+                          use_restriction="CANDIDATE_CONDITION_SUGGESTION_ONLY")
+            return
+        records = [{**row, "variant_key": variant.key,
+                    "evidence_id": f"{row['evidence_id']}:{variant.key}"}
+                   for row in rows
+                   if str(row.get("condition") or "").startswith("MONDO:")]
+        resolved.records.extend(records)
+        resolved.note(ClinGenGeneValidityProvider.name, records=records, genes_queried=1,
+                      provider_version=records[0]["source_version"] if records else None,
+                      use_restriction="CANDIDATE_CONDITION_SUGGESTION_ONLY")
+
+    def _mondo_provider(self) -> MondoMappingProvider:
+        if self._mondo is None:
+            self._mondo = MondoMappingProvider(self._external)
+        return self._mondo
+
+    def normalize_condition(self, condition):
+        """The case's condition resolved to MONDO, or None when it is already one or cannot be.
+
+        Called by the caller that owns the case's context rather than returned as evidence:
+        this says which disease the case is about, not something retrieved about the variant.
+        """
+        if not self._with_disease_matching or not condition:
+            return None
+        if str(condition).startswith("MONDO:"):
+            return None
+        try:
+            return self._mondo_provider().normalize(condition)
+        except PROVIDER_ERRORS:
+            return None
+
+    def _add_disease_matching(self, annotation, identity, resolved):
+        """What PVS1's disease gate needs to compare two diseases that are written differently.
+
+        Two things here, and the third (the case's own condition, resolved to MONDO) through
+        normalize_condition() because it belongs to the case rather than to the variant. All
+        of them refinements of one comparison and none of them a mechanism: the
+        case's condition resolved to MONDO when it was recorded in OMIM or Orphanet, the MONDO
+        ancestry of every disease named on a mechanism record, and ClinGen's lumping decisions
+        for each curated gene-disease pair. Without them the gate can only answer on identical
+        identifiers, and withholds PVS1 for evidence that is on file under a neighbouring term.
+
+        They travel beside the records rather than replacing anything: the original identifier
+        is kept, and an exclusion or an ancestry relation is attached to the curation that
+        made it.
+        """
+        if not self._with_disease_matching or annotation is None:
+            return
+        try:
+            lumping = ClinGenLumpingProvider(self._external, self._mondo_provider())
+            tree = MondoHierarchyProvider(self._external)
+            asked, scoped, related, unresolved = 0, 0, 0, []
+            for record in resolved.records:
+                if record.get("category") != "gene_disease":
+                    continue
+                curated = record.get("condition")
+                if not str(curated or "").startswith("MONDO:"):
+                    continue
+                asked += 1
+                scope = lumping.get_scope(record.get("gene"), curated)
+                if scope:
+                    record["condition_scope"] = scope
+                    scoped += 1
+                ancestry = tree.ancestors(curated)
+                if ancestry:
+                    record["condition_ancestors"] = ancestry["ancestors"]
+                    related += 1
+                if not scope and not ancestry:
+                    unresolved.append(curated)
+        except PROVIDER_ERRORS as exc:
+            resolved.failures.append(
+                {"provider": "PVS1 disease matching", "error": str(exc)})
+            resolved.note("PVS1 disease matching", error=str(exc),
+                          use_restriction="DISEASE_MATCH_ONLY")
+            return
+        resolved.note("PVS1 disease matching", conditions_queried=asked,
+                      lumping_scopes=scoped, ancestries=related,
+                      unresolved=sorted(set(unresolved)),
+                      use_restriction="DISEASE_MATCH_ONLY")
 
     def _clingen_gene_validity_provider(self) -> ClinGenGeneValidityProvider:
         if self._clingen_gene_validity is None:

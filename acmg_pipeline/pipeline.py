@@ -82,9 +82,10 @@ from acmg_pipeline.api_input import ApiCaseInput
 from acmg_pipeline.clinical_note import ClinicalNoteExtraction
 from acmg_pipeline.inputs import empty_clinical_note
 from acmg_pipeline.vcf_record import VariantRecord
+from acmg_pipeline.automated_core.identity import reconcile
 from acmg_pipeline.automated_core.models import CRITERIA as AUTOMATED_CRITERIA
 from acmg_pipeline.automated_core.models import Variant as AutomatedVariant
-from acmg_pipeline.services.resolve import ProviderEvidenceResolver
+from acmg_pipeline.services.resolve import PROVIDER_ERRORS, ProviderEvidenceResolver
 from acmg_pipeline.automated_engine import evaluate_record as evaluate_automated_record, make_services
 
 VA_SPEC_OUTPUT_DIR = Path("va_spec_output")
@@ -868,6 +869,86 @@ def _apply_curated_context(variant: VariantRecord, automated_config: dict) -> No
             variant.info[key] = updated[key]
 
 
+# What a request carries about which variant it means, in the shape reconcile() audits.
+_IDENTITY_KEYS = ("TRANSCRIPT", "HGVSC", "CLNVARIATIONID")
+
+
+def _resolve_identity(variant: VariantRecord, resolver) -> list[str]:
+    """Settle which variant a request means, and say so, before anything is evaluated.
+
+    A request names a variant twice: as coordinates, and as a transcript HGVS or a ClinVar
+    accession. Those can disagree, and one of them can be missing - the project's own demo
+    request bodies leave ALT as "." and put the identity in TRANSCRIPT/HGVSC, which nothing
+    on this path was resolving, so evaluation stopped before it began.
+
+    acmg_pipeline.automated_core.identity.reconcile() is what settles it, and it is an audit
+    rather than a lookup: a candidate has to match the identifiers this request supplied,
+    version included, and carry its own provenance, and a coordinate the request got wrong is
+    corrected only on corroborated evidence. It already backs the batch command; this is the
+    same function, on the same Ensembl provider the evidence comes from.
+
+    Evaluation continues either way. An unresolved identity is reported, not raised: the
+    criteria will see whatever coordinates the request gave and answer from those, and a
+    caller that cannot tell a verified variant from an unverified one is worse off than one
+    holding an answer it has been told to check. The issues are returned for the caller to
+    surface, and the status travels on the variant.
+    """
+    record = {
+        "record_id": variant.id,
+        "raw_variant": {"assembly": "GRCh38", "chrom": variant.chrom, "pos": variant.pos,
+                        "ref": variant.ref, "alt": variant.alt},
+        "parsed_variant": None,
+        "identity": {key: value for key, value in variant.info.items()
+                     if key.upper() in _IDENTITY_KEYS},
+        "issues": [],
+    }
+    try:
+        record["parsed_variant"] = AutomatedVariant(
+            assembly="GRCh38", chrom=variant.chrom, pos=int(variant.pos),
+            ref=variant.ref, alt=variant.alt).to_dict()
+    except (ValueError, TypeError):
+        # ALT "." and the like: nothing to compare a candidate against, which is exactly the
+        # case reconcile() reports as CORRECTED rather than VERIFIED.
+        pass
+    provider = getattr(resolver, "identity_provider", None)
+    if provider is None:
+        # A caller that injected its own resolver supplied the evidence itself and has said,
+        # by doing so, which variant it is about. There is nothing independent to audit
+        # against, so the request's own coordinates stand.
+        return
+    try:
+        candidate, _annotation, _predictions = provider.map_record_with_evidence(record)
+        candidates = [candidate]
+    except PROVIDER_ERRORS as exc:
+        record["issues"].append(f"IDENTITY_PROVIDER_ERROR: {exc}")
+        candidates = []
+    outcome = reconcile(record, candidates, provider.reference)
+    variant.info["identity_status"] = outcome["identity_status"]
+    resolution = outcome.get("resolution")
+    if resolution:
+        settled = resolution["variant"]
+        variant.chrom, variant.pos = settled["chrom"], settled["pos"]
+        variant.ref, variant.alt = settled["ref"], settled["alt"]
+        variant.info["identity_provenance"] = resolution["evidence"]
+    if outcome["issues"]:
+        variant.info["identity_issues"] = list(outcome["issues"])
+
+
+def _apply_condition_mapping(variant: VariantRecord, resolver) -> None:
+    """Record how the case's condition resolves to MONDO, beside the identifier it came in as.
+
+    PVS1's disease gate compares identifiers, so a case recorded in OMIM never matches a
+    curation recorded in MONDO. The mapping travels as `condition_mapping` in variant.info -
+    which is how criteria read case context on this path - and the original identifier stays
+    exactly as it arrived.
+    """
+    condition = next(
+        (value for name, value in variant.info.items() if name.casefold() == "condition"), None)
+    mapping = getattr(resolver, "normalize_condition", lambda _condition: None)(condition)
+    if mapping:
+        variant.info["condition_mapping"] = mapping
+
+
 def _automated_variant(variant: VariantRecord) -> AutomatedVariant:
     """The evidence-cli Variant for provider lookups (GRCh38 unless INFO says otherwise)."""
     assembly = next(
@@ -915,8 +996,6 @@ async def evaluate_variant_evidence_lines(
     if not isinstance(automated_config, dict):
         raise TypeError("automated_config must be a dictionary")
 
-    _apply_curated_context(variant, automated_config)
-
     resolver = evidence_resolver or ProviderEvidenceResolver(
         automated_config.get("evidence_cache_dir", "cache/evidence"),
         offline=bool(automated_config.get("offline")),
@@ -931,7 +1010,16 @@ async def evaluate_variant_evidence_lines(
         with_splice_default=bool(automated_config.get("PVS1", {}).get("splice_default_policy_version")),
         splice_default_policy_version=automated_config.get("PVS1", {}).get("splice_default_policy_version"),
         with_initiation_assessment=bool(automated_config.get("PVS1", {}).get("with_initiation_assessment")),
+        with_gene2phenotype=bool(automated_config.get("with_gene2phenotype")),
+        with_disease_matching=bool(automated_config.get("with_disease_matching")),
+        with_gene_disease_associations=bool(
+            automated_config.get("with_gene_disease_associations")),
     )
+    # Identity first: the curated context is looked up by the variant's own key, and a
+    # request that named its variant only as a transcript HGVS has no key until this runs.
+    _resolve_identity(variant, resolver)
+    _apply_curated_context(variant, automated_config)
+    _apply_condition_mapping(variant, resolver)
     resolved = resolver.resolve(_identity_from_info(variant), _automated_variant(variant))
     services = make_services(
         resolved.records,
@@ -1040,8 +1128,6 @@ async def evaluate_selected_criteria(
     if not isinstance(automated_config, dict):
         raise TypeError("automated_config must be a dictionary")
 
-    _apply_curated_context(variant, automated_config)
-
     unknown = [code for code in criteria if code not in ALL_ACMG_CODES]
     if unknown:
         raise ValueError(f"Unrecognized ACMG code(s): {unknown}")
@@ -1077,7 +1163,15 @@ async def evaluate_selected_criteria(
             with_splice_default=bool(automated_config.get("PVS1", {}).get("splice_default_policy_version")),
             splice_default_policy_version=automated_config.get("PVS1", {}).get("splice_default_policy_version"),
             with_initiation_assessment=bool(automated_config.get("PVS1", {}).get("with_initiation_assessment")),
+            with_gene2phenotype=bool(automated_config.get("with_gene2phenotype")),
+            with_disease_matching=bool(automated_config.get("with_disease_matching")),
+            with_gene_disease_associations=bool(
+                automated_config.get("with_gene_disease_associations")),
         )
+        # Identity first - see evaluate_variant_evidence_lines() for why.
+        _resolve_identity(variant, resolver)
+        _apply_curated_context(variant, automated_config)
+        _apply_condition_mapping(variant, resolver)
         resolved = resolver.resolve(_identity_from_info(variant), _automated_variant(variant))
         services = make_services(resolved.records, automated_config.get("population_providers"),
                                  failures=resolved.failures)

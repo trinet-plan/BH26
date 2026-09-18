@@ -1,0 +1,137 @@
+{
+  "schema_version": "1.0",
+  "purpose": "Disease context for the ground-truth variants carrying a PVS1 call, as recorded by the ERepo interpretation itself. This is evaluator INPUT - the expert panel's PVS1 outcome is not here and must not be supplied.",
+  "source": "ClinGen Evidence Repository API",
+  "source_url": "https://erepo.clinicalgenome.org/evrepo/api/classifications",
+  "retrieved_at": "2026-09-18T01:12:28.190109+00:00",
+  "variants_with_a_pvs1_call": 31,
+  "resolved": 23,
+  "unresolved": [
+    "PTEN|c.112C>T",
+    "PTEN|c.170T>G",
+    "PTEN|c.278A>G",
+    "CDH1|c.1057G>A",
+    "CDH1|c.387+5G>A",
+    "MYBPC3|c.278delA",
+    "MYBPC3|c.2905+1G>A",
+    "MYBPC3|c.836del"
+  ],
+  "errors": [],
+  "contexts": {
+    "APC|c.1242C>T": {
+      "condition": "MONDO:0021056",
+      "condition_label": "familial adenomatous polyposis 1",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA026898/MONDO:0021056/089"
+    },
+    "CAPN3|c.-25G>C": {
+      "condition": "MONDO:0015152",
+      "condition_label": "autosomal recessive limb-girdle muscular dystrophy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA618001458/MONDO:0015152/187"
+    },
+    "CDH23|c.380A>G": {
+      "condition": "MONDO:0019501",
+      "condition_label": "Usher syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA10576804/MONDO:0019501/005"
+    },
+    "FBN1|c.4214T>G": {
+      "condition": "MONDO:0007947",
+      "condition_label": "Marfan syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA014858/MONDO:0007947/022"
+    },
+    "KCNQ1|c.477+5G>A": {
+      "condition": "MONDO:0100316",
+      "condition_label": "long QT syndrome 1",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA007174/MONDO:0100316/112"
+    },
+    "LDLR|c.2575G>A": {
+      "condition": "MONDO:0007750",
+      "condition_label": "hypercholesterolemia, familial",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA041346/MONDO:0007750/013"
+    },
+    "MLH1|c.1732-19T>A": {
+      "condition": "MONDO:0007356",
+      "condition_label": "Lynch syndrome 1",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA006607/MONDO:0007356/115"
+    },
+    "MTOR|c.4447T>C": {
+      "condition": "MONDO:0016054",
+      "condition_label": "overgrowth syndrome and/or cerebral malformations due to abnormalities in MTOR pathway genes",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA16602264/MONDO:0016054/018"
+    },
+    "MYO7A|c.1817G>A": {
+      "condition": "MONDO:0019497",
+      "condition_label": "nonsyndromic genetic deafness",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA6197622/MONDO:0019497/005"
+    },
+    "OTOF|c.5374C>T": {
+      "condition": "MONDO:0019497",
+      "condition_label": "nonsyndromic genetic deafness",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA182451/MONDO:0019497/023"
+    },
+    "PIK3CA|c.2198A>G": {
+      "condition": "MONDO:0016054",
+      "condition_label": "overgrowth syndrome and/or cerebral malformations due to abnormalities in MTOR pathway genes",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA2710903/MONDO:0016054/018"
+    },
+    "RPE65|c.495+1dup": {
+      "condition": "MONDO:0100368",
+      "condition_label": "RPE65-related recessive retinopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA226556/MONDO:0100368/120"
+    },
+    "RUNX1|c.601C>T": {
+      "condition": "MONDO:0011071",
+      "condition_label": "hereditary thrombocytopenia and hematologic cancer predisposition syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA16602487/MONDO:0011071/008"
+    },
+    "SCN1A|c.2941C>A": {
+      "condition": "MONDO:0018214",
+      "condition_label": "generalized epilepsy with febrile seizures plus",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA16042438/MONDO:0018214/067"
+    },
+    "SCN8A|c.2534C>G": {
+      "condition": "MONDO:0100038",
+      "condition_label": "complex neurodevelopmental disorder",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA384884778/MONDO:0100038/070"
+    },
+    "SGCA|c.*227G>A": {
+      "condition": "MONDO:0015152",
+      "condition_label": "autosomal recessive limb-girdle muscular dystrophy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA10650515/MONDO:0015152/189"
+    },
+    "SGCB|c.*3043A>G": {
+      "condition": "MONDO:0015152",
+      "condition_label": "autosomal recessive limb-girdle muscular dystrophy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA96772381/MONDO:0015152/184"
+    },
+    "SGCD|c.91C>G": {
+      "condition": "MONDO:0015152",
+      "condition_label": "autosomal recessive limb-girdle muscular dystrophy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA200046/MONDO:0015152/186"
+    },
+    "SGCG|c.*185G>A": {
+      "condition": "MONDO:0015152",
+      "condition_label": "autosomal recessive limb-girdle muscular dystrophy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA10639180/MONDO:0015152/185"
+    },
+    "SLC26A4|c.2291C>T": {
+      "condition": "MONDO:0010134",
+      "condition_label": "Pendred syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA132713/MONDO:0010134/005"
+    },
+    "TECTA|c.3492C>T": {
+      "condition": "MONDO:0019497",
+      "condition_label": "nonsyndromic genetic deafness",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA182519/MONDO:0019497/005"
+    },
+    "TPM1|c.215C>T": {
+      "condition": "MONDO:0005045",
+      "condition_label": "hypertrophic cardiomyopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA029091/MONDO:0005045/100"
+    },
+    "USH2A|c.8559-2A>G": {
+      "condition": "MONDO:0019501",
+      "condition_label": "Usher syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA262122/MONDO:0019501/005"
+    }
+  }
+}

@@ -35,12 +35,14 @@ RULES = {"PVS1": {
 GENE = "MYBPC3"
 TRANSCRIPT = "NM_000256.3"
 HGVSC = "NM_000256.3:c.278delA"
+CONDITION = "MONDO:0005045"
 
 
 class Pvs1AutomatedGateTests(unittest.TestCase):
     def setUp(self):
         self.variant = Variant("GRCh38", "11", 47351252, "CT", "C")
-        self.input = {"variant": self.variant.to_dict(), "transcript": TRANSCRIPT}
+        self.input = {"variant": self.variant.to_dict(), "transcript": TRANSCRIPT,
+                      "condition": CONDITION}
 
     def annotation(self, consequence_term="frameshift_variant"):
         """Shaped like the record the Ensembl provider emits - note it has no exon."""
@@ -54,9 +56,22 @@ class Pvs1AutomatedGateTests(unittest.TestCase):
             "exon": None,
         }
 
-    def dosage(self, score="3", gene=GENE):
-        provider = ClinGenDosageProvider(DosageClient(curation_list([row(gene, score)])))
+    def dosage(self, score="3", gene=GENE, disease=CONDITION):
+        provider = ClinGenDosageProvider(
+            DosageClient(curation_list([row(gene, score, disease=disease)])))
         return provider.get_mechanism(self.variant, gene)
+
+    def curated_mechanism(self, established=True):
+        """A reviewed mechanism for the same gene and disease the dosage score names, for
+        the one test about which of the two decides."""
+        return [{
+            "category": "gene_disease", "variant_key": self.variant.key,
+            "evidence_id": f"curated:mechanism:{self.variant.key}",
+            "source": "curator", "source_version": "1", "retrieved_at": "2026-09-17",
+            "quality_status": "PASS", "curator": "test", "reviewed_at": "2026-09-17",
+            "gene": GENE, "condition": CONDITION,
+            "lof_mechanism_established": established,
+        }]
 
     def mane(self, exon="2/34", accession=TRANSCRIPT):
         provider = ManeTranscriptProvider.from_directory(
@@ -105,9 +120,41 @@ class Pvs1AutomatedGateTests(unittest.TestCase):
         self.assertEqual(result.strength, "very_strong")
         self.assertEqual(
             self.nodes(result),
-            {"C01": "PASS", "G01": "PASS", "G02": "PASS", "V01": "PASS",
+            {"C01": "PASS", "D01": "PASS", "G01": "PASS", "G02": "PASS", "V01": "PASS",
              "NF01": "PASS", "NF02": "PASS", "NF03": "PASS"},
         )
+        # D01 passes on ClinGen's own curation: the haploinsufficiency score is curated
+        # against a named disease, and the record says which.
+        self.assertEqual(result.evaluation_context["disease_match"], "EXACT")
+
+    def test_a_dosage_row_naming_no_disease_stops_at_the_disease_gate(self):
+        """A score with no disease attached cannot settle a mechanism for this one.
+
+        The finding is not discarded: the record is attached and the variant-level tree still
+        runs, so a curator sees both the haploinsufficiency score and what PVS1 would have
+        concluded once a disease-scoped mechanism is supplied.
+        """
+        exon = self.exon_from_vep()
+        result = self.evaluate(self.dosage(disease=""), self.mane(exon=exon), self.nmd())
+        # Applied provisionally on the tree alone, and never as a settled verdict.
+        self.assertEqual(result.status, CriterionStatus.MET)
+        self.assertEqual(result.evaluation_context["applicability"], "MANUAL_REVIEW")
+        self.assertEqual(self.nodes(result)["D01"], "UNKNOWN")
+        self.assertIn("disease-specific loss-of-function mechanism", result.missing_inputs)
+        self.assertTrue(any(item["source"].startswith("ClinGen") for item in result.evidence))
+        preliminary = result.provenance["preliminary_assessment"]
+        self.assertEqual(preliminary["candidate_strength"], "very_strong")
+        self.assertEqual(preliminary["decision_path"], "NF03")
+
+    def test_a_reviewed_mechanism_outranks_the_dosage_score_rather_than_conflicting(self):
+        """Source precedence, and both records stay visible so the disagreement is legible."""
+        result = self.evaluate(self.dosage(), self.curated_mechanism(established=False),
+                               self.mane(), self.nmd())
+        self.assertEqual(self.nodes(result)["G02"], "NOT_APPLICABLE")
+        self.assertNotIn("Conflicting", result.summary)
+        sources = {item["source"] for item in result.evidence}
+        self.assertIn("curator", sources)
+        self.assertIn("ClinGen Dosage Sensitivity Map", sources)
 
     def test_one_provider_supplies_the_transcript_assessment(self):
         """Two records in that category make _select_context_record() report a conflict, so
@@ -140,6 +187,7 @@ class Pvs1AutomatedGateTests(unittest.TestCase):
     def test_a_gene_scored_against_dosage_sensitivity_is_denied_at_g02(self):
         result = self.evaluate(self.dosage(score="40"), self.mane(), self.nmd())
         self.assertEqual(self.nodes(result)["G02"], "NOT_APPLICABLE")
+        self.assertEqual(result.evaluation_context["applicability"], "NOT_APPLICABLE")
         self.assertEqual(result.status, CriterionStatus.UNKNOWN)
 
     def test_without_the_mane_record_the_tree_stops_at_nf01(self):

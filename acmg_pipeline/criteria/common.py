@@ -231,3 +231,88 @@ def require_boolean_fields(code, input_data, evidence, assessment, fields):
                       f"{', '.join(missing)}, which {code} requires",
                       evidence=evidence, missing=missing)
     return None
+
+
+# The inheritance-mode vocabularies this pipeline has to reconcile. Curated specifications
+# write "AD"/"AR", clinical notes write "autosomal dominant", and prepared records have been
+# seen carrying "autosomal_recessive". Comparing those as raw strings silently fails to
+# match, and a silent non-match here is worse than a loud one: it drops a disease-specific
+# assessment and falls back to a weaker default without saying so.
+INHERITANCE_MODES = {
+    "autosomal_dominant": ("ad", "autosomal dominant", "autosomal dominant inheritance"),
+    "autosomal_recessive": ("ar", "autosomal recessive", "autosomal recessive inheritance"),
+    "x_linked_dominant": ("xld", "x linked dominant", "x linked dominant inheritance"),
+    "x_linked_recessive": ("xlr", "x linked recessive", "x linked recessive inheritance"),
+    "x_linked": ("xl", "x linked", "x linked inheritance"),
+    "mitochondrial": ("mt", "mitochondrial", "mitochondrial inheritance"),
+}
+
+_INHERITANCE_ALIASES = {alias: canonical
+                       for canonical, aliases in INHERITANCE_MODES.items()
+                       for alias in (canonical.replace("_", " "), *aliases)}
+
+
+def normalize_inheritance(value):
+    """Canonical inheritance-mode token, or None when absent or unrecognized.
+
+    Absent and unrecognized deliberately collapse to None at this level: both mean "this
+    string does not name a mode we can compare". Callers that must tell them apart check the
+    raw value first, because an unrecognized mode is a curation defect a curator should see,
+    while an absent one just means the record is not scoped to a mode.
+    """
+    if not isinstance(value, str):
+        return None
+    token = " ".join(value.strip().lower().replace("-", " ").replace("_", " ").split())
+    return _INHERITANCE_ALIASES.get(token)
+
+
+def resolved_condition(holder):
+    """The disease a case or record is scoped to, and how that identifier was arrived at.
+
+    A case and a curation can name the same disease in different vocabularies, so comparing
+    the identifiers as written answers only when both happen to use the same one. When a
+    `condition_mapping` is attached, the identifier it resolved to is what the two are
+    compared on, and the mapping type it came from says whether that was an identifier match
+    or an equivalence. Without one, the condition stands for itself.
+
+    Returns (identifier, how) where `how` is "identity", the mapping's own type, or None when
+    no disease is named at all.
+    """
+    mapping = holder.get("condition_mapping")
+    if isinstance(mapping, dict) and mapping.get("normalized_condition"):
+        return mapping["normalized_condition"], mapping.get("mapping_type") or "equivalent"
+    condition = holder.get("condition")
+    return condition, "identity" if condition else None
+
+
+def condition_ancestors(holder):
+    """The MONDO terms this holder's disease sits under, as far as they were resolved."""
+    value = holder.get("condition_ancestors")
+    if isinstance(value, dict):
+        value = value.get("ancestors")
+    return set(value) if isinstance(value, (list, set, tuple)) else set()
+
+
+def ontology_related(case, case_condition, record, record_condition):
+    """Whether two diseases are parent and child in MONDO, in either direction.
+
+    Deliberately not equivalence. The same gene can lose function in one subtype and gain it
+    in another, and subtypes can differ in inheritance mode, so this says only that the two
+    terms are on one path - which is a reason to ask a curator, never a reason to decide.
+    """
+    if not case_condition or not record_condition or case_condition == record_condition:
+        return False
+    return (record_condition in condition_ancestors(case)
+            or case_condition in condition_ancestors(record))
+
+
+def condition_scope(record, key):
+    """The phenotypes a curated disease was recorded as covering, or as keeping out.
+
+    An absent scope is an empty set, which is not the same as a scope that says the set is
+    empty: the provider that supplies this never reports an unreadable curation as an empty
+    one, so nothing here has to tell the two apart.
+    """
+    scope = record.get("condition_scope")
+    value = scope.get(key) if isinstance(scope, dict) else None
+    return set(value) if isinstance(value, (list, set, tuple)) else set()
