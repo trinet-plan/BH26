@@ -1007,6 +1007,43 @@ def _evaluate_input(input_data, services, config):
         # nobody filled in. The message says which.
         declared = (f"{context['inheritance']!r}" if context["inheritance"]
                     else f"unrecognized {raw!r}" if raw else "unstated")
+        # An UNSTATED case mode (this case's inheritance was simply never recorded) is not
+        # the same finding as a MISMATCH (the case's own stated mode contradicts every
+        # curated record) - context["moi_match"] already distinguishes them (see
+        # _resolve_mechanism()). Per the user's explicit direction (2026-09-19), the same
+        # "unstated is not the same as contradicted" reasoning already applied to a
+        # parent/child disease match above is extended here: when the case's mode is merely
+        # unstated, every curated record names the SAME single mode, and all of them agree
+        # the mechanism is established, apply PVS1 on that basis - assuming the case follows
+        # the gene's only known mode of inheritance - rather than withholding it, and
+        # disclose the assumption via a curatorHint. A record that disagrees on the mode, or
+        # that the case's own stated mode actually contradicts (MISMATCH), keeps the
+        # previous conservative MANUAL_REVIEW behavior unchanged.
+        established_values = {item.get("lof_mechanism_established") for item in mechanism_records}
+        if (context["moi_match"] == "UNSTATED" and len(modes) == 1
+                and established_values == {True}):
+            state["pending_review"].append(
+                f"PVS1's disease mechanism gate assumed this case follows {modes[0]} "
+                f"inheritance - the only mode curated for this gene/disease - because this "
+                f"case's own inheritance mode was never recorded, not because it was "
+                f"confirmed. Confirm the inheritance mode before relying on this MET result.")
+            context["mechanism_scope"] = "CONDITION_SPECIFIC"
+            context["condition_specific"] = True
+            state["trace"].append(_node(
+                "G01", "lof_mechanism_available", "PASS", declared, mechanism_records))
+            state["evidence"].extend(mechanism_records)
+            state["trace"].append(_node(
+                "G02", "lof_mechanism_established", "PASS", True, mechanism_records))
+            state["trace"].append(_node(
+                "V01", "variant_type", "PASS", variant_type, [annotation],
+                "clingen_splicing_2023" if variant_type == "SPLICE_LOF_CONFIRMED" else "clingen_pvs1_2018"))
+            if variant_type in {"STOP_GAINED", "FRAMESHIFT"}:
+                return _truncating_path(input_data, services, annotation, state)
+            if variant_type in {"CANONICAL_SPLICE", "SPLICE_LOF_CONFIRMED"}:
+                return _splice_path(input_data, services, annotation, state, confirmed_rna)
+            if variant_type == "START_LOST":
+                return _start_loss_path(input_data, services, annotation, state)
+            raise AssertionError(f"Unhandled PVS1 variant type: {variant_type}")
         # Not borrowed, and not buried either. A mechanism curated for another mode is
         # material a curator can act on, and the two ways of failing to match call for
         # different actions: record the mode this case was assessed under, or decide whether

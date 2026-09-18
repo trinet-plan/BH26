@@ -549,17 +549,20 @@ class PVS1DecisionTreeTests(unittest.TestCase):
         self.assertIn("'autosomal_recessive'", value.summary)
         self.assertTrue(any(item.get("inheritance") == "AD" for item in value.evidence))
 
-    def test_mode_scoped_mechanism_is_not_used_when_the_case_declares_no_mode(self):
-        """Not borrowed, and not buried either: an unrecorded mode is a field somebody can
-        fill in, so the curation is named and the question goes to a person."""
+    def test_mode_scoped_mechanism_is_applied_when_the_case_declares_no_mode(self):
+        """An unrecorded case mode is not the same finding as a contradicted one. Per the
+        user's explicit direction (2026-09-19), when the gene/disease has exactly one
+        curated mode and every record for it agrees the mechanism is established, PVS1
+        assumes the case follows that mode rather than withholding the verdict - flagged via
+        a curatorHint so a curator can still confirm or correct the assumption."""
         items = [self.annotation(), self.transcript(), self.nmd(),
                  self.mechanism(True, inheritance="AR")]
         value = self.evaluate_result(*items)
         self.assertEqual(value.evaluation_context["moi_match"], "UNSTATED")
-        self.assertEqual(value.evaluation_context["applicability"], "MANUAL_REVIEW")
-        self.assertIn("Record the inheritance mode", " ".join(value.review_points))
-        self.assertEqual(value.provenance["preliminary_assessment"]["candidate_strength"],
-                         "very_strong")
+        self.assertEqual(value.evaluation_context["applicability"], "APPLICABLE")
+        self.assertEqual(value.status, CriterionStatus.MET)
+        self.assertEqual(value.strength, "very_strong")
+        self.assertIn("AR", " ".join(value.review_points))
 
     def test_a_contradicted_mode_asks_a_different_question_from_an_unstated_one(self):
         """Both fail to match; a curator fixes them differently, so they are not merged."""
