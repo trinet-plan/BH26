@@ -33,18 +33,32 @@ a later VCF INFO field addition needs no signature change here.
 
 [Source: doc/recs for expert board.docx, verbatim per-criterion asks]
   PVS1:            "Add autoPVS1 chart data/result" -> https://autopvs1.bgi.com
-  PS1:              "show the clinvar page/summary for that codon"
+  PS1:              "show the clinvar page/summary for that codon" -> a
+                     ClinVar search at the variant's own residue, the search
+                     the document's screenshot shows ("brca1, tyr1127"); the
+                     genomic window is only the fallback when no residue is
+                     given (see clinvar_codon_url())
   PM1, PM5:         "show variant location/domain, use AI to check hotspot/
                      nearby benign variants" -> the domain/hotspot judgment
-                     itself is still not URL-able, but the UniProt entry
-                     page needed to show it is, via a gene-symbol ->
-                     UniProt-accession lookup (see gene_to_uniprot_accession())
-  PM2, BA1, BS1, BS2: population-frequency page (TogoVar in current runtime)
+                     itself is still not URL-able. The document's own
+                     screenshots for these two are Franklin's Region Viewer
+                     and its PM1 verdict, so Franklin's variant page leads,
+                     followed by the UniProt entry page the domain boundaries
+                     come from (see gene_to_uniprot_accession())
+  PM2, BA1, BS1, BS2: population-frequency page (gnomAD per the document,
+                     plus TogoVar, the provider actually queried at runtime)
   PM3:              "use AI to check if in trans previously reported (ClinVar)"
   PP1:              "use AI to check if segregation previously reported (ClinVar)"
   PP2:              "get the gnomAD zscore" (gene-level, not variant-level)
-  PP3, BP4:         "show the predictors, follow thresholds" -> NOT URL-able
-                     (a static threshold table, not a single reference page)
+  PP3, BP4:         "show the predictors, follow thresholds" -> the thresholds
+                     are a published table, not a per-variant page: the
+                     document reproduces Table 2 of Pejaver et al. 2022, the
+                     same calibration config/demo-rules.json already applies,
+                     so the link is to that paper (see
+                     pp3_bp4_calibration_url())
+
+  No other code appears in that document, and no reference link is emitted
+  for one - see _URL_BUILDERS.
 
 [Verified reachable]
   togovar_variant_url() uses TogoVar's documented GRCh38 coordinate URL.
@@ -80,6 +94,7 @@ a later VCF INFO field addition needs no signature change here.
 
 from __future__ import annotations
 
+import re
 from urllib.parse import quote
 
 import requests
@@ -87,13 +102,74 @@ import requests
 from acmg_pipeline.constants import ALL_ACMG_CODES
 from acmg_pipeline.vcf_record import VariantRecord
 
-# Fallback for autopvs1_variant_url() below, when the variant's ref/alt
-# aren't concrete alleles (e.g. this project's demo data uses ALT="." for
-# some indels) - the homepage, not a broken/wrong deep link.
+# Each site's own unparameterized landing page: what a builder returns when it
+# cannot address this variant there (see positional_allele() for what makes a
+# record unaddressable, and reference_urls_for_criterion() for the rule).
+# Confirmed reachable 2026-09-18; TogoVar answers 403 to a scripted request,
+# as it does for its variant pages too, but serves the page in a browser.
 AUTOPVS1_URL = "https://autopvs1.bgi.com"
+TOGOVAR_URL = "https://grch38.togovar.org/"
+GNOMAD_URL = "https://gnomad.broadinstitute.org/"
+FRANKLIN_URL = "https://franklin.genoox.com/"
+CLINVAR_URL = "https://www.ncbi.nlm.nih.gov/clinvar/"
+UNIPROT_URL = "https://www.uniprot.org/"
+
+# PP3/BP4's threshold table (doc: "follow below thresholds"). PMID 36413997,
+# confirmed 2026-09-18 to be the paper whose Table 2 the doc reproduces.
+PP3_BP4_CALIBRATION_URL = "https://pubmed.ncbi.nlm.nih.gov/36413997/"
 
 _TOGOID_CONVERT_URL = "https://api.togoid.dbcls.jp/convert"
 _TOGOID_TIMEOUT_SEC = 15
+
+
+_CONCRETE_ALLELE = re.compile(r"^[ACGTNacgtn]+$")
+# Assemblies the positional builders below can address. A record that names any
+# other one is not linked rather than linked to the wrong coordinate.
+_GRCH38_NAMES = frozenset({"grch38", "hg38", "grch38.p14", "genome_reference_consortium_human_build_38"})
+
+
+def positional_allele(variant: VariantRecord) -> tuple[str, int, str, str] | None:
+    """The variant as (chrom, pos, ref, alt) if it can address an external page.
+
+    Returns None - no link at all - rather than let a builder below format a URL
+    that resolves to nothing. None of these sites say so when it does: checked
+    live (2026-09-18), gnomAD answers a malformed allele with HTTP 200 and the
+    byte-identical single-page-app shell it serves for a real one, Franklin and
+    AutoPVS1 also answer 200, and TogoVar answers 403 for real and malformed
+    alike. So a broken link cannot be detected by fetching it, and is rejected
+    here on the record's own shape instead.
+
+    Rejected:
+      - a multi-ALT row ("A,T"), a symbolic ALT ("<DEL>", "<DUP>"), the
+        upstream-deletion ALT ("*"), the missing value ("."), and anything else
+        that is not a run of bases. All of these formatted straight into a URL
+        before this existed.
+      - a record that declares an assembly other than GRCh38 in INFO/ASSEMBLY.
+        Every positional builder here is GRCh38-only (gnomad_r4, grch38.togovar,
+        hg38), so a GRCh37 record used to be linked to whatever sits at those
+        coordinates in GRCh38 - a wrong page, silently. An absent INFO/ASSEMBLY
+        still means GRCh38, matching automated_core.interface.criterion_input().
+
+    Normalized: a "chr14"-style CHROM to "14" (TogoVar, gnomAD and AutoPVS1 all
+    want it bare; only franklin_variant_url() was stripping it before), and
+    lower-case bases to upper case.
+    """
+    assembly = variant.info.get("ASSEMBLY")
+    if assembly and str(assembly).strip().casefold() not in _GRCH38_NAMES:
+        return None
+    if not variant.chrom or not variant.pos or int(variant.pos) < 1:
+        return None
+    ref, alt = variant.ref, variant.alt
+    if not ref or not alt:
+        return None
+    if not _CONCRETE_ALLELE.match(str(ref)) or not _CONCRETE_ALLELE.match(str(alt)):
+        return None
+    chrom = str(variant.chrom)
+    if chrom.casefold().startswith("chr"):
+        chrom = chrom[3:]
+    if not chrom:
+        return None
+    return chrom, int(variant.pos), str(ref).upper(), str(alt).upper()
 
 
 def gene_to_uniprot_accession(gene_symbol: str) -> str | None:
@@ -160,10 +236,13 @@ def uniprot_page_url(variant: VariantRecord) -> str | None:
     """
     gene = variant.info.get("GENE")
     if not gene:
-        return None
+        return UNIPROT_URL
     accession = gene_to_uniprot_accession(gene)
     if not accession:
-        return None
+        # The gene symbol did not resolve (unknown symbol, or the TogoID
+        # lookup was unreachable). UniProt's own search page, unqueried,
+        # rather than nothing - see reference_urls_for_criterion().
+        return UNIPROT_URL
     return f"https://www.uniprot.org/uniprotkb/{accession}/entry"
 
 
@@ -190,7 +269,7 @@ def clinvar_search_url(variant: VariantRecord) -> str | None:
     gene = variant.info.get("GENE")
     hgvsc = variant.info.get("HGVSC")
     if not gene or not hgvsc:
-        return None
+        return CLINVAR_URL
     term = f"{gene}[gene] AND {hgvsc}"
     return f"https://www.ncbi.nlm.nih.gov/clinvar/?term={quote(term)}"
 
@@ -223,9 +302,67 @@ def clinvar_position_url(variant: VariantRecord, window: int = 10) -> str | None
       passed through export.build_reference_extensions() - see this module's
       own docstring, "Where the returned URL ends up in VA-Spec output".
     """
-    if not variant.chrom or not variant.pos:
+    allele = positional_allele(variant)
+    if allele is None:
+        # ClinVar's chrpos38 field is GRCh38-specific, and this builder needs a
+        # real position; an unaddressable record gets ClinVar's own search page
+        # with no query rather than a window around a coordinate that does not
+        # mean here what it means there.
+        return CLINVAR_URL
+    chrom, pos, _ref, _alt = allele
+    term = f"{chrom}[chr] AND {pos - window}:{pos + window}[chrpos38]"
+    return f"https://www.ncbi.nlm.nih.gov/clinvar/?term={quote(term)}"
+
+
+_AA3 = (
+    "Ala|Arg|Asn|Asp|Cys|Gln|Glu|Gly|His|Ile|Leu|Lys|Met|Phe|Pro|Sec|Ser|Thr|Trp|Tyr|Val|Ter"
+)
+_RESIDUE = re.compile(rf"p\.\(?({_AA3})(\d+)")
+
+
+def protein_residue(variant: VariantRecord) -> str | None:
+    """The variant's own residue as ClinVar writes it (e.g. "Arg719"), or None.
+
+    Reads INFO/HGVSP, which this project's demo data writes in 3-letter form
+    with optional parentheses ("p.(Arg719Trp)"). Only the reference residue
+    and its position are kept - the substituted residue is deliberately
+    dropped, because both criteria that use this are about OTHER changes at
+    the same residue.
+    """
+    hgvsp = variant.info.get("HGVSP")
+    if not hgvsp:
         return None
-    term = f"{variant.chrom}[chr] AND {variant.pos - window}:{variant.pos + window}[chrpos38]"
+    match = _RESIDUE.search(str(hgvsp))
+    return f"{match.group(1)}{match.group(2)}" if match else None
+
+
+def clinvar_codon_url(variant: VariantRecord) -> str | None:
+    """
+    Criteria: PS1 (doc: "show the clinvar page/summary for that codon").
+    Site: ClinVar (ncbi.nlm.nih.gov/clinvar), NCBI's search UI.
+    Logic: "<GENE>[gene] AND <residue>" (e.g. "MYH7[gene] AND Arg719"),
+      which is the search the doc's own screenshot shows ("brca1, tyr1127"):
+      every ClinVar record at this residue, whatever the nucleotide change.
+      That is what PS1 asks about - PS1 is met by a DIFFERENT nucleotide
+      change producing the same amino acid change, so a search keyed on this
+      variant's own exact HGVSc (clinvar_search_url(), used by PM3/PP1) would
+      never surface it. Confirmed live (2026-09-18) for this project's own
+      MYH7 c.2155C>T: "MYH7[gene] AND Arg719" returns exactly the 5 records
+      at residue 719, including p.Arg719Gln (Pathogenic) and p.Arg719Trp.
+      Falls back to clinvar_position_url()'s genomic window when INFO/HGVSP
+      is absent and no residue can be named - a coarser answer to the same
+      question, not a different one.
+    Field: EvidenceLine.extensions (Extension(name="referenceLink")) once
+      passed through export.build_reference_extensions() - see this module's
+      own docstring, "Where the returned URL ends up in VA-Spec output".
+    """
+    gene = variant.info.get("GENE")
+    residue = protein_residue(variant)
+    if not gene or not residue:
+        # No residue to search at: the genomic window, or - if the record is not
+        # addressable by coordinate either - ClinVar's own unqueried page.
+        return clinvar_position_url(variant)
+    term = f"{gene}[gene] AND {residue}"
     return f"https://www.ncbi.nlm.nih.gov/clinvar/?term={quote(term)}"
 
 
@@ -251,10 +388,11 @@ def autopvs1_variant_url(variant: VariantRecord, build: str = "hg38") -> str | N
       passed through export.build_reference_extensions() - see this module's
       own docstring, "Where the returned URL ends up in VA-Spec output".
     """
-    if not variant.ref or not variant.alt or variant.alt in (".", ""):
+    allele = positional_allele(variant)
+    if allele is None:
         return AUTOPVS1_URL
-    return (f"https://autopvs1.bgi.com/variant/{build}/"
-            f"{variant.chrom}-{variant.pos}-{variant.ref}-{variant.alt}")
+    chrom, pos, ref, alt = allele
+    return f"https://autopvs1.bgi.com/variant/{build}/{chrom}-{pos}-{ref}-{alt}"
 
 
 def gnomad_variant_url(variant: VariantRecord, dataset: str = "gnomad_r4") -> str | None:
@@ -278,18 +416,21 @@ def gnomad_variant_url(variant: VariantRecord, dataset: str = "gnomad_r4") -> st
       passed through export.build_reference_extensions() - see this module's
       own docstring, "Where the returned URL ends up in VA-Spec output".
     """
-    if not variant.ref or not variant.alt or variant.alt in (".", ""):
-        return None
+    allele = positional_allele(variant)
+    if allele is None:
+        return GNOMAD_URL
+    chrom, pos, ref, alt = allele
     return (f"https://gnomad.broadinstitute.org/variant/"
-            f"{variant.chrom}-{variant.pos}-{variant.ref}-{variant.alt}?dataset={dataset}")
+            f"{chrom}-{pos}-{ref}-{alt}?dataset={dataset}")
 
 
 def togovar_variant_url(variant: VariantRecord) -> str | None:
     """Return TogoVar's GRCh38 report page for an exact positional allele."""
-    if not variant.ref or not variant.alt or variant.alt in (".", ""):
-        return None
-    return (f"https://grch38.togovar.org/variant/"
-            f"{variant.chrom}-{variant.pos}-{variant.ref}-{variant.alt}")
+    allele = positional_allele(variant)
+    if allele is None:
+        return TOGOVAR_URL
+    chrom, pos, ref, alt = allele
+    return f"https://grch38.togovar.org/variant/{chrom}-{pos}-{ref}-{alt}"
 
 
 def franklin_variant_url(variant: VariantRecord, build: str = "hg38") -> str | None:
@@ -300,14 +441,13 @@ def franklin_variant_url(variant: VariantRecord, build: str = "hg38") -> str | N
     is omitted for placeholder alleles rather than sending the curator to a
     page that cannot identify a variant.
     """
-    if not variant.chrom or not variant.pos:
-        return None
-    if not variant.ref or not variant.alt or variant.alt in (".", ""):
-        return None
-    chrom = str(variant.chrom).removeprefix("chr")
+    allele = positional_allele(variant)
+    if allele is None:
+        return FRANKLIN_URL
+    chrom, pos, ref, alt = allele
     return (
         "https://franklin.genoox.com/clinical-db/variant/snp/"
-        f"chr{chrom}-{variant.pos}-{variant.ref}-{variant.alt}-{build}"
+        f"chr{chrom}-{pos}-{ref}-{alt}-{build}"
     )
 
 
@@ -328,25 +468,70 @@ def gnomad_gene_url(variant: VariantRecord, dataset: str = "gnomad_r4") -> str |
     """
     gene = variant.info.get("GENE")
     if not gene:
-        return None
+        return GNOMAD_URL
     return f"https://gnomad.broadinstitute.org/gene/{quote(gene)}?dataset={dataset}"
 
 
-# code -> criterion-specific reference-link builders.  Franklin is added
-# separately for every ACMG criterion by reference_urls_for_criterion().
-# Population-frequency criteria intentionally carry both TogoVar and gnomAD.
+def pp3_bp4_calibration_url(variant: VariantRecord) -> str:
+    """
+    Criteria: PP3, BP4 (doc: "show the predictors, and follow below
+      thresholds", followed by that paper's Table 2 - the score intervals
+      for thirteen missense tools across four pathogenic and four benign
+      strengths).
+    Site: PubMed, Pejaver et al. 2022 (Am J Hum Genet 109:2163-2177), the
+      ClinGen SVI PP3/BP4 calibration.
+    Logic: constant - the thresholds are a published table, not a
+      per-variant page, so this ignores `variant` (kept in the signature so
+      it composes with the other builders). This is the same source
+      config/demo-rules.json's `computational.calibrations.
+      revel-pejaver-2022` already names and whose REVEL row it already
+      implements, so the link points a curator at the table the pipeline
+      actually applied rather than at a generic predictor page.
+    Field: EvidenceLine.extensions (Extension(name="referenceLink")) once
+      passed through export.build_reference_extensions() - see this module's
+      own docstring, "Where the returned URL ends up in VA-Spec output".
+    """
+    return PP3_BP4_CALIBRATION_URL
+
+
+# code -> the reference-link builders for that criterion, in the order a
+# curator should see them.
+#
+# [Scope: only the criteria the source document names, 2026-09-18]
+#   Every entry below answers a per-criterion ask in doc/recs for expert
+#   board.docx (quoted in this module's own docstring and in each builder).
+#   The 15 codes that document says nothing about - PS2, PS3, PS4, PM4, PM6,
+#   PP4, PP5, BS3, BS4, BP1, BP2, BP3, BP5, BP6, BP7 - get no reference link,
+#   per the user's direction. This replaces the earlier arrangement in which
+#   reference_urls_for_criterion() appended Franklin's variant page to ALL
+#   ALL_ACMG_CODES, which put a link on codes nothing had asked for one on.
+#
+# Two deliberate departures from a literal reading of that document:
+#   - PM2/BA1/BS1/BS2 carry TogoVar as well as the gnomAD page the document
+#     asks for. TogoVar is the population provider this pipeline actually
+#     queries (config/demo-rules.json's `population_sources`), so dropping it
+#     would leave the curator without a link to the source the judgment was
+#     made from.
+#   - PM1/PM5 lead with Franklin's variant page, which is where the document's
+#     own screenshots for those two codes come from (its Region Viewer shows
+#     the domain track and the neighbouring ClinVar/UniProt assessments the
+#     document asks for). Franklin exposes no deep link to that viewer alone
+#     (checked live, 2026-09-18), so the variant page is the linkable target.
+#     UniProt follows it as the source of the domain boundaries themselves.
 _URL_BUILDERS = {
     "PVS1": (autopvs1_variant_url,),
-    "PS1": (clinvar_position_url,),
+    "PS1": (clinvar_codon_url,),
     "PM3": (clinvar_search_url,),
     "PP1": (clinvar_search_url,),
-    "PM1": (uniprot_page_url,),
-    "PM5": (uniprot_page_url,),
+    "PM1": (franklin_variant_url, uniprot_page_url),
+    "PM5": (franklin_variant_url, uniprot_page_url),
     "PM2": (togovar_variant_url, gnomad_variant_url),
     "BA1": (togovar_variant_url, gnomad_variant_url),
     "BS1": (togovar_variant_url, gnomad_variant_url),
     "BS2": (togovar_variant_url, gnomad_variant_url),
     "PP2": (gnomad_gene_url,),
+    "PP3": (pp3_bp4_calibration_url,),
+    "BP4": (pp3_bp4_calibration_url,),
 }
 
 # Public: the codes this module can build a reference URL for at all (a
@@ -355,21 +540,31 @@ _URL_BUILDERS = {
 # defined URL strategy). Callers building a UI/EvidenceLine per code (see
 # acmg_pipeline.export.build_reference_extensions()) can use this to know
 # which criteria have a curator-facing reference link worth generating.
-CODES_WITH_REFERENCE_URL = frozenset(ALL_ACMG_CODES)
+CODES_WITH_REFERENCE_URL = frozenset(_URL_BUILDERS)
 
 
 def reference_urls_for_criterion(code: str, variant: VariantRecord) -> list[str]:
     """Return every curator-facing URL for one criterion.
 
+    Returns [] for a criterion the source document names no reference page
+    for - see _URL_BUILDERS' own note on that scope. For a criterion it does
+    name, the list is never empty: a builder that cannot address this variant
+    returns that site's own unparameterized landing page (AUTOPVS1_URL,
+    TOGOVAR_URL, GNOMAD_URL, FRANKLIN_URL, CLINVAR_URL, UNIPROT_URL) instead
+    of nothing, so the curator still reaches the right site and can enter the
+    variant by hand (2026-09-18, per the user's direction). What is never
+    emitted is a URL that encodes this variant wrongly - see
+    positional_allele().
+
     Builder failures are isolated so an optional external lookup (for
-    example, gene-to-UniProt resolution) cannot suppress deterministic links
-    such as Franklin. Duplicate URLs are removed while preserving order.
+    example, gene-to-UniProt resolution) cannot suppress a deterministic link
+    beside it. Duplicate URLs are removed while preserving order.
     """
     if code not in ALL_ACMG_CODES:
         return []
 
     urls: list[str] = []
-    builders = (*_URL_BUILDERS.get(code, ()), franklin_variant_url)
+    builders = _URL_BUILDERS.get(code, ())
     for builder in builders:
         try:
             url = builder(variant)
