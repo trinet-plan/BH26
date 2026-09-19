@@ -45,8 +45,6 @@ logs/                      実行ログ(git管理対象外)
 ref_impl/                  参考実装アーカイブ
 
 test_*.py                  スタンドアロンのテストスクリプト(pytest不要)
-demo_ps3_bs3_judgment.py   LLM API接続なしのエンドツーエンドデモ
-mcp_sample_multi.py        TogoMCP + PubMed MCP 接続サンプル
 ```
 
 ## セットアップ
@@ -55,7 +53,7 @@ mcp_sample_multi.py        TogoMCP + PubMed MCP 接続サンプル
 
 - Python 3.10+ 推奨(開発環境は Python 3.14.5)
 - vLLMサーバー、およびPubMed MCPサーバーへのネットワーク到達性
-  (`python -m acmg_pipeline.pipeline` / `mcp_sample_multi.py` の実行時のみ必要)
+  (`python -m acmg_pipeline.pipeline` / `scripts/check_mcp_llm_connection.py` の実行時のみ必要)
 
 ### 1. リポジトリを取得
 
@@ -90,7 +88,7 @@ cp .env.example .env
 
 `.env` を開き、`VLLM_BASE_URL` / `VLLM_API_KEY` を実際の値に書き換えてください
 (値の入手方法はプロジェクト管理者に確認してください)。`.env` が無い、または
-値が空の場合、`mcp_sample_multi.py` / `acmg_pipeline/pipeline.py` は起動時に
+値が空の場合、`scripts/check_mcp_llm_connection.py` / `acmg_pipeline/pipeline.py` は起動時に
 `RuntimeError` を送出します。
 
 ## 動作確認
@@ -135,7 +133,7 @@ python3 test_classification.py
 python3 test_ps3_bs3_judgment.py
 python3 test_ps3_bs3_ps4_gate.py
 python3 test_ps3_bs3_ps4_gate_full.py
-python3 demo_ps3_bs3_judgment.py
+python3 scripts/demo_ps3_bs3_judgment.py
 pytest tests -q
 ```
 
@@ -144,21 +142,8 @@ pytest tests -q
 
 ### LLM/MCP経由の実行(`.env` 設定 + ネットワーク到達性が必要)
 
-```bash
-# TogoMCP + PubMed MCPに接続し、固定の質問に対してLLMがツールを呼び出しながら
-# 回答する一連の流れを実行。ログは logs/run_YYYYmmdd_HHMMSS.log に保存。
-python3 mcp_sample_multi.py
-
-# PS3/BS3・PS4・PP1/BS4の各判定エンジンで、コード内定義済みのテストケース
-# (MYH7・PTEN等)を対象に、PubMed MCPから論文全文取得 → LLM判定 →
-# ACMG/AMP分類までを一気通貫で実行。
-# 結果は logs/ps3bs3_run_YYYYmmdd_HHMMSS.log と va_spec_output/ 以下のJSONに出力。
-python3 -m acmg_pipeline.pipeline
-```
-
-CLI引数は用意されていません。対象の遺伝子/変異を変えたい場合は
-`acmg_pipeline/pipeline.py` の `main()` 内 `test_cases`(505行目付近)を
-直接編集してください。
+vLLM・PubMed MCP・TogoMCPへ実際に接続して動かす手順は
+[`doc/llm_mcp_execution_ja.md`](doc/llm_mcp_execution_ja.md) を参照してください。
 
 ## 自動判定CLIの実行手順(democase)
 

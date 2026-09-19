@@ -37,7 +37,7 @@ import sys
 from contextlib import AsyncExitStack
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from acmg_pipeline.api_input import ApiCaseInput
 from acmg_pipeline.fulltext_cache import DiskBackedFullTextCache

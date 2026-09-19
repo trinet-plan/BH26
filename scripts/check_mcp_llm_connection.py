@@ -27,7 +27,7 @@ from openai import OpenAI
 # ---------------------------------------------------------------------------
 # 設定
 # ---------------------------------------------------------------------------
-ROOT_DIR = Path(__file__).resolve().parent
+ROOT_DIR = Path(__file__).resolve().parent.parent
 
 
 def _load_env_file(path: Path = ROOT_DIR / ".env") -> None:
