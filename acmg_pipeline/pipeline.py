@@ -771,7 +771,7 @@ async def judge_variant_from_structured_input(
     variant = case_input.parse_vcf().record
     clinical_note = extract_clinical_note(case_input.clinical_note)
     from acmg_pipeline import hpo_mondo_extraction
-    clinical_note = await hpo_mondo_extraction.resolve_diagnosis_mondo(clinical_note)
+    clinical_note = await hpo_mondo_extraction.resolve_diagnosis_mondo(clinical_note, case_input.clinical_note)
     return await judge_variant_from_shared_input(
         variant,
         clinical_note,
