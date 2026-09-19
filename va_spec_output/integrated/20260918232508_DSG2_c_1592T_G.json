@@ -5,15 +5,9 @@
     "ba1_override": false,
     "met": [
       {
-        "code": "PS3",
-        "status": "met",
-        "strength": "supporting",
-        "source": "integrated_pipeline"
-      },
-      {
         "code": "PS4",
         "status": "met",
-        "strength": "supporting",
+        "strength": "moderate",
         "source": "integrated_pipeline"
       },
       {
@@ -32,6 +26,12 @@
       },
       {
         "code": "PS1",
+        "status": "not_met",
+        "strength": null,
+        "source": "integrated_pipeline"
+      },
+      {
+        "code": "PS3",
         "status": "not_met",
         "strength": null,
         "source": "integrated_pipeline"
@@ -183,9 +183,9 @@
           "name": "evaluationContext",
           "value": {
             "gene": "DSG2",
-            "condition_id": null,
-            "condition_label": null,
-            "condition_status": "NOT_PROVIDED",
+            "condition_id": "MONDO:0016587",
+            "condition_label": "arrhythmogenic right ventricular cardiomyopathy",
+            "condition_status": "PROVIDED",
             "condition_specific": false,
             "mechanism_scope": "UNKNOWN",
             "disease_match": "UNKNOWN",
@@ -201,8 +201,8 @@
             {
               "node_id": "C01",
               "name": "condition_status",
-              "result": "UNKNOWN",
-              "value": "NOT_PROVIDED",
+              "result": "PASS",
+              "value": "PROVIDED",
               "evidence_ids": [],
               "rule_id": "C01",
               "rule_source": "acmg_amp_2015",
@@ -231,16 +231,6 @@
         {
           "name": "curatorHints",
           "value": [
-            {
-              "severity": "warning",
-              "category": "warning",
-              "message": "Condition was not provided."
-            },
-            {
-              "severity": "warning",
-              "category": "warning",
-              "message": "Variant-level loss-of-function assessment was retained as a preliminary result; PVS1 itself was not evaluated."
-            },
             {
               "severity": "caution",
               "category": "unevaluated",
@@ -299,7 +289,7 @@
         },
         {
           "name": "referenceLink",
-          "value": "https://www.ncbi.nlm.nih.gov/clinvar/?term=18%5Bchr%5D%20AND%2031536360%3A31536380%5Bchrpos38%5D"
+          "value": "https://www.ncbi.nlm.nih.gov/clinvar/?term=DSG2%5Bgene%5D%20AND%20Phe531"
         }
       ]
     },
@@ -335,7 +325,7 @@
     {
       "id": "evline:DSG2_c_1592T_G_PS3",
       "type": "EvidenceLine",
-      "description": "Only 1 of 10 paper(s) examined yielded usable evidence (this count is computed directly from the papers actually fetched and judged, not from any self-report on a single paper).",
+      "description": "None of the 10 paper(s) examined yielded a usable evidence-based judgment for this variant (either the variant could not be identified in the text, or the per-paper judgment was itself inconclusive).",
       "specifiedBy": {
         "type": "Method",
         "name": "Unspecified VCEP ACMG/AMP PS3 evidence assessment (LLM-assisted draft)",
@@ -356,116 +346,86 @@
             "name": "ACMG literature-evidence LLM pipeline (gemma-4 via vLLM) - AI-generated draft evidence, requires human curator review before use"
           },
           "activityType": "automated evidence evaluation",
-          "date": "2026-09-18T06:24:21.485863Z"
+          "date": "2026-09-18T14:48:17.591571Z"
         }
       ],
       "reportedIn": [
         {
           "type": "Document",
           "urls": [
-            "https://pubmed.ncbi.nlm.nih.gov/40956261/"
+            "https://pubmed.ncbi.nlm.nih.gov/41980193/"
           ],
-          "pmid": "40956261"
+          "pmid": "41980193"
         },
         {
           "type": "Document",
           "urls": [
-            "https://pubmed.ncbi.nlm.nih.gov/39989366/"
+            "https://pubmed.ncbi.nlm.nih.gov/41662985/"
           ],
-          "pmid": "39989366"
+          "pmid": "41662985"
         },
         {
           "type": "Document",
           "urls": [
-            "https://pubmed.ncbi.nlm.nih.gov/39227800/"
+            "https://pubmed.ncbi.nlm.nih.gov/35941102/"
           ],
-          "pmid": "39227800"
+          "pmid": "35941102"
         },
         {
           "type": "Document",
           "urls": [
-            "https://pubmed.ncbi.nlm.nih.gov/38551768/"
+            "https://pubmed.ncbi.nlm.nih.gov/31645976/"
           ],
-          "pmid": "38551768"
+          "pmid": "31645976"
         },
         {
           "type": "Document",
           "urls": [
-            "https://pubmed.ncbi.nlm.nih.gov/37895213/"
+            "https://pubmed.ncbi.nlm.nih.gov/30454721/"
           ],
-          "pmid": "37895213"
+          "pmid": "30454721"
         },
         {
           "type": "Document",
           "urls": [
-            "https://pubmed.ncbi.nlm.nih.gov/35721821/"
+            "https://pubmed.ncbi.nlm.nih.gov/41158880/"
           ],
-          "pmid": "35721821"
+          "pmid": "41158880"
         },
         {
           "type": "Document",
           "urls": [
-            "https://pubmed.ncbi.nlm.nih.gov/34993452/"
+            "https://pubmed.ncbi.nlm.nih.gov/40887256/"
           ],
-          "pmid": "34993452"
+          "pmid": "40887256"
         },
         {
           "type": "Document",
           "urls": [
-            "https://pubmed.ncbi.nlm.nih.gov/34393635/"
+            "https://pubmed.ncbi.nlm.nih.gov/40123482/"
           ],
-          "pmid": "34393635"
+          "pmid": "40123482"
         },
         {
           "type": "Document",
           "urls": [
-            "https://pubmed.ncbi.nlm.nih.gov/34300226/"
+            "https://pubmed.ncbi.nlm.nih.gov/40115818/"
           ],
-          "pmid": "34300226"
+          "pmid": "40115818"
         },
         {
           "type": "Document",
           "urls": [
-            "https://pubmed.ncbi.nlm.nih.gov/34095246/"
+            "https://pubmed.ncbi.nlm.nih.gov/40106965/"
           ],
-          "pmid": "34095246"
+          "pmid": "40106965"
         }
       ],
       "hasEvidenceItems": [
         {
-          "id": "evline:paper-1-40956261",
+          "id": "evline:paper-1-41980193",
           "type": "EvidenceLine",
-          "description": "The paper does not report any functional data or even mention the target variant c.1592T>G; it focuses on a different splice-site variant (c.523+2T>C).",
-          "reportedIn": [
-            {
-              "type": "Document",
-              "urls": [
-                "https://pubmed.ncbi.nlm.nih.gov/40956261/"
-              ],
-              "pmid": "40956261"
-            }
-          ],
-          "directionOfEvidenceProvided": "neutral"
-        },
-        {
-          "id": "evline:paper-2-39989366",
-          "type": "EvidenceLine",
-          "description": "The paper does not test or report functional results for the specific target variant c.1592T>G. It is a clinical/epidemiological study of a genome-first cohort rather than a functional assay study.",
-          "reportedIn": [
-            {
-              "type": "Document",
-              "urls": [
-                "https://pubmed.ncbi.nlm.nih.gov/39989366/"
-              ],
-              "pmid": "39989366"
-            }
-          ],
-          "directionOfEvidenceProvided": "neutral"
-        },
-        {
-          "id": "evline:paper-3-39227800",
-          "type": "EvidenceLine",
-          "description": "The variant was shown to cause significant functional abnormalities across multiple systems, including protein degradation, ER stress/signaling activation, and a clear disease phenotype in a knock-in mouse model. The combination of in vitro protein instability and in vivo physiological dysfunction provides strong functional evidence.",
+          "description": "The study uses a CRISPR knock-in mouse model to demonstrate multiple highly relevant functional abnormalities, including structural remodeling, metabolic dysfunction, and electrophysiological instability caused by the p.Phe531Cys mutation. These comprehensive phenotype results support a deleterious effect on protein function.",
           "extensions": [
             {
               "name": "curatorHints",
@@ -473,38 +433,38 @@
                 {
                   "severity": "warning",
                   "category": null,
-                  "message": "This paper (PMID:39227800) self-reports multiple experimental systems: In vivo mouse model (Knock-in) (functionally_abnormal); Protein stability/degradation assay (functionally_abnormal); ER stress and signaling pathway assay (functionally_abnormal). It is recommended to go back to the relevant part of the full text and manually confirm which of these is genuinely the most direct functional evidence for the overall direction below (there is a past instance of an indirect results table being cited by mistake)."
+                  "message": "This paper (PMID:41980193) self-reports multiple experimental systems: In vivo phenotyping (histopathology/imaging/ECG) (functionally_abnormal); Molecular/Cellular profiling (functionally_abnormal); Electrophysiological mapping (functionally_abnormal). It is recommended to go back to the relevant part of the full text and manually confirm which of these is genuinely the most direct functional evidence for the overall direction below (there is a past instance of an indirect results table being cited by mistake)."
                 },
                 {
                   "severity": "caution",
                   "category": null,
-                  "message": "This judgment (PMID:39227800) is based on a single study only. For criterion codes on the ClinGen side that require reproducibility across multiple studies (e.g., PS3_Moderate or stronger), this evidence alone may not be sufficient in strength."
+                  "message": "This judgment (PMID:41980193) is based on a single study only. For criterion codes on the ClinGen side that require reproducibility across multiple studies (e.g., PS3_Moderate or stronger), this evidence alone may not be sufficient in strength."
                 },
                 {
                   "severity": "warning",
                   "category": null,
-                  "message": "In this paper (PMID:39227800), none of the extracted experiments' key_findings contain any numeric detail, yet the LLM confidently concluded PS3. This suggests the extraction may describe the paper's general methodology rather than a measurement specifically reported for the target variant, so the judgment has been forced to not_clear (real-world instance: TP53 c.875A>G, where the paper is a large-scale saturation screen and the target variant's specific score was only in supplementary data)."
+                  "message": "In this paper (PMID:41980193), none of the extracted experiments' key_findings contain any numeric detail, yet the LLM confidently concluded PS3. This suggests the extraction may describe the paper's general methodology rather than a measurement specifically reported for the target variant, so the judgment has been forced to not_clear (real-world instance: TP53 c.875A>G, where the paper is a large-scale saturation screen and the target variant's specific score was only in supplementary data)."
                 },
                 {
                   "severity": "info",
                   "category": "evidence_item",
-                  "message": "In vivo mouse model (Knock-in): functionally_abnormal",
+                  "message": "In vivo phenotyping (histopathology/imaging/ECG): functionally_abnormal",
                   "checked": true,
-                  "detail": "mouse, readout: Cardiac geometry, systolic function, ECG, and histological fibrosis, vs Wild-type and heterozygous mice - Homozygous knock-in mice exhibited cardiac enlargement, systolic dysfunction, and progressive cardiac fibrosis.; ECG showed conduction abnormalities (increased P-wave duration, prolonged QRS).; Heterozygous mice were phenotypically normal even under ISO stress."
+                  "detail": "mouse, readout: cardiac hypertrophy, fibrosis, lipid accumulation, and ventricular arrhythmias, vs wild-type mice - Mice developed progressive cardiac hypertrophy, interstitial fibrosis, and lipid accumulation.; Inducible ventricular arrhythmias followed isoproterenol infusion and programmed electrical stimulation.; Severe cardiac dysfunction and reduced survival were observed."
                 },
                 {
                   "severity": "info",
                   "category": "evidence_item",
-                  "message": "Protein stability/degradation assay: functionally_abnormal",
+                  "message": "Molecular/Cellular profiling: functionally_abnormal",
                   "checked": true,
-                  "detail": "cell line (HL-1 and HEK293T), readout: Protein levels via Western Blot and ubiquitination levels, vs Wild-type DSG2 - The variant protein was significantly decreased in level compared to wild-type.; vDSG2 showed increased ubiquitination and was degraded via the ubiquitin-proteasome system."
+                  "detail": "mouse, readout: protein levels and nuclear localization, vs wild-type mice - Reduced DSG2 expression.; Nuclear accumulation of β-catenin and PPAR-γ."
                 },
                 {
                   "severity": "info",
                   "category": "evidence_item",
-                  "message": "ER stress and signaling pathway assay: functionally_abnormal",
+                  "message": "Electrophysiological mapping: functionally_abnormal",
                   "checked": true,
-                  "detail": "cell line (HL-1) and mouse cardiomyocytes, readout: Expression of BiP, CHOP, ATF4, and TGF-β1, vs Wild-type cells/tissue - The variant induced ER stress (increased BiP, CHOP) and activated the PERK-ATF4 signaling pathway.; This led to increased expression of TGF-β1 in cardiomyocytes."
+                  "detail": "mouse (ex vivo), readout: action potential duration and arrhythmia mechanism, vs wild-type mice - Prolonged and heterogeneous action potential duration.; Presence of reentrant and focal ectopic mechanisms of ventricular tachycardia."
                 }
               ]
             }
@@ -513,32 +473,62 @@
             {
               "type": "Document",
               "urls": [
-                "https://pubmed.ncbi.nlm.nih.gov/39227800/"
+                "https://pubmed.ncbi.nlm.nih.gov/41980193/"
               ],
-              "pmid": "39227800"
+              "pmid": "41980193"
             }
           ],
           "directionOfEvidenceProvided": "neutral"
         },
         {
-          "id": "evline:paper-4-38551768",
+          "id": "evline:paper-2-41662985",
           "type": "EvidenceLine",
-          "description": "The provided text is an abstract of a clinical cohort study that identifies variants in several genes, including DSG2, but it does not provide specific functional assay data for the target variant c.1592T>G. Without specific experimental readouts for this variant, functional evidence cannot be assessed.",
+          "description": "The provided text describes a clinical/observational study of patients carrying the variant, not a functional laboratory assay (e.g., in vitro or in vivo) that measures protein function. While it provides strong clinical evidence of pathogenicity, it does not meet the criteria for PS3/BS3 functional evidence.",
           "reportedIn": [
             {
               "type": "Document",
               "urls": [
-                "https://pubmed.ncbi.nlm.nih.gov/38551768/"
+                "https://pubmed.ncbi.nlm.nih.gov/41662985/"
               ],
-              "pmid": "38551768"
+              "pmid": "41662985"
             }
           ],
           "directionOfEvidenceProvided": "neutral"
         },
         {
-          "id": "evline:paper-5-37895213",
+          "id": "evline:paper-3-35941102",
           "type": "EvidenceLine",
-          "description": "The paper reports a patient with a homozygous c.1592T>G mutation exhibiting significant clinical and biochemical markers of cardiomyopathy (elevated troponin I and ECG abnormalities). While this is a case report of clinical phenotype rather than a controlled laboratory functional assay, it provides direct evidence of a deleterious effect in a human patient.",
+          "description": "The paper provides clinical/segregation evidence and in silico predictions, but it does not describe any functional assays (e.g., cell-based or animal models) to evaluate the protein's function directly. Therefore, it cannot be used to satisfy PS3 or BS3 criteria.",
+          "reportedIn": [
+            {
+              "type": "Document",
+              "urls": [
+                "https://pubmed.ncbi.nlm.nih.gov/35941102/"
+              ],
+              "pmid": "35941102"
+            }
+          ],
+          "directionOfEvidenceProvided": "neutral"
+        },
+        {
+          "id": "evline:paper-4-31645976",
+          "type": "EvidenceLine",
+          "description": "The paper provides clinical evidence of segregation and mentions previous literature suggesting the variant causes adverse changes in protein structure, but it does not describe any specific, direct functional laboratory assays (e.g., cell-based adhesion assays or protein stability assays) performed in this study to support PS3/BS3.",
+          "reportedIn": [
+            {
+              "type": "Document",
+              "urls": [
+                "https://pubmed.ncbi.nlm.nih.gov/31645976/"
+              ],
+              "pmid": "31645976"
+            }
+          ],
+          "directionOfEvidenceProvided": "neutral"
+        },
+        {
+          "id": "evline:paper-5-30454721",
+          "type": "EvidenceLine",
+          "description": "The paper provides functional evidence via immunofluorescence staining on patient-derived myocardial tissue showing protein expression abnormalities in homozygous carriers. While the abstract does not provide specific quantitative details for the staining, it links the variant to protein expression changes in affected tissue.",
           "extensions": [
             {
               "name": "curatorHints",
@@ -546,19 +536,19 @@
                 {
                   "severity": "caution",
                   "category": null,
-                  "message": "This judgment (PMID:37895213) is based on a single study only. For criterion codes on the ClinGen side that require reproducibility across multiple studies (e.g., PS3_Moderate or stronger), this evidence alone may not be sufficient in strength."
+                  "message": "This judgment (PMID:30454721) is based on a single study only. For criterion codes on the ClinGen side that require reproducibility across multiple studies (e.g., PS3_Moderate or stronger), this evidence alone may not be sufficient in strength."
                 },
                 {
                   "severity": "warning",
                   "category": null,
-                  "message": "In this paper (PMID:37895213), none of the extracted experiments' key_findings contain any numeric detail, yet the LLM confidently concluded PS3. This suggests the extraction may describe the paper's general methodology rather than a measurement specifically reported for the target variant, so the judgment has been forced to not_clear (real-world instance: TP53 c.875A>G, where the paper is a large-scale saturation screen and the target variant's specific score was only in supplementary data)."
+                  "message": "In this paper (PMID:30454721), none of the extracted experiments' key_findings contain any numeric detail, yet the LLM confidently concluded PS3. This suggests the extraction may describe the paper's general methodology rather than a measurement specifically reported for the target variant, so the judgment has been forced to not_clear (real-world instance: TP53 c.875A>G, where the paper is a large-scale saturation screen and the target variant's specific score was only in supplementary data)."
                 },
                 {
                   "severity": "info",
                   "category": "evidence_item",
-                  "message": "clinical/phenotypic characterization: functionally_abnormal",
+                  "message": "immunofluorescence staining: functionally_abnormal",
                   "checked": true,
-                  "detail": "patient-derived, readout: cardiac phenotype (troponin I, myocardial edema, ECG, clinical diagnosis), vs not specified - increased levels of cardiac troponin I; myocardial edema in the lateral ventricular wall and apex; electrocardiogram with multiple premature ventricular beats; resulted in an initial diagnosis of pediatric myocarditis subsequently classified as ACM"
+                  "detail": "patient-derived (myocardial tissue), readout: protein expression, vs not specified - The study examined protein expression using immunofluorescence staining on the myocardial tissue of two probands undergoing heart transplant."
                 }
               ]
             }
@@ -567,183 +557,116 @@
             {
               "type": "Document",
               "urls": [
-                "https://pubmed.ncbi.nlm.nih.gov/37895213/"
+                "https://pubmed.ncbi.nlm.nih.gov/30454721/"
               ],
-              "pmid": "37895213"
+              "pmid": "30454721"
             }
           ],
           "directionOfEvidenceProvided": "neutral"
         },
         {
-          "id": "evline:paper-6-35721821",
+          "id": "evline:paper-6-41158880",
           "type": "EvidenceLine",
-          "description": "The paper does not test or report any data for the target variant c.1592T>G. It describes a different variant (c.152G>C) in the DSG2 gene.",
+          "description": "The paper does not evaluate the target variant (p.Phe531Cys); it evaluates a different splice-site variant (c.1880-2A>G).",
           "reportedIn": [
             {
               "type": "Document",
               "urls": [
-                "https://pubmed.ncbi.nlm.nih.gov/35721821/"
+                "https://pubmed.ncbi.nlm.nih.gov/41158880/"
               ],
-              "pmid": "35721821"
+              "pmid": "41158880"
             }
           ],
           "directionOfEvidenceProvided": "neutral"
         },
         {
-          "id": "evline:paper-7-34993452",
+          "id": "evline:paper-7-40887256",
           "type": "EvidenceLine",
-          "description": "The provided text does not contain any functional data or even any mention of the specific variant DSG2 c.1592T>G. Therefore, no functional evidence can be assessed.",
+          "description": "The study does not test the target variant (p.F531C); it only evaluates p.R292C and p.D494A. Therefore, no functional evidence can be attributed to the target variant from this paper.",
           "reportedIn": [
             {
               "type": "Document",
               "urls": [
-                "https://pubmed.ncbi.nlm.nih.gov/34993452/"
+                "https://pubmed.ncbi.nlm.nih.gov/40887256/"
               ],
-              "pmid": "34993452"
+              "pmid": "40887256"
             }
           ],
           "directionOfEvidenceProvided": "neutral"
         },
         {
-          "id": "evline:paper-8-34393635",
+          "id": "evline:paper-8-40123482",
           "type": "EvidenceLine",
-          "description": "The target variant DSG2 c.1592T>G was not identified or tested in the provided text.",
+          "description": "The provided text does not contain any functional assay data (in vitro or in vivo) for the target variant. It is a clinical observational study of patient cohorts, which does not satisfy the requirements for PS3/BS3 evidence.",
           "reportedIn": [
             {
               "type": "Document",
               "urls": [
-                "https://pubmed.ncbi.nlm.nih.gov/34393635/"
+                "https://pubmed.ncbi.nlm.nih.gov/40123482/"
               ],
-              "pmid": "34393635"
+              "pmid": "40123482"
             }
           ],
           "directionOfEvidenceProvided": "neutral"
         },
         {
-          "id": "evline:paper-9-34300226",
+          "id": "evline:paper-9-40115818",
           "type": "EvidenceLine",
-          "description": "The patient-derived hiPSC-CM model harboring the c.2358delA variant demonstrates multiple well-defined functional defects, including reduced protein expression/localization, altered electrophysiology (shortened APD), and increased inflammatory cytokine secretion compared to wild-type controls.",
-          "extensions": [
-            {
-              "name": "curatorHints",
-              "value": [
-                {
-                  "severity": "warning",
-                  "category": null,
-                  "message": "This paper (PMID:34300226) self-reports multiple experimental systems: Immunofluorescence/Immunostaining (functionally_abnormal); RT-qPCR (functionally_abnormal); Western Blot (functionally_abnormal); Optical Mapping (Electrophysiology) (functionally_abnormal); RNA-Seq / Cytokine Array (functionally_abnormal). It is recommended to go back to the relevant part of the full text and manually confirm which of these is genuinely the most direct functional evidence for the overall direction below (there is a past instance of an indirect results table being cited by mistake)."
-                },
-                {
-                  "severity": "caution",
-                  "category": null,
-                  "message": "This judgment (PMID:34300226) is based on a single study only. For criterion codes on the ClinGen side that require reproducibility across multiple studies (e.g., PS3_Moderate or stronger), this evidence alone may not be sufficient in strength."
-                },
-                {
-                  "severity": "info",
-                  "category": "evidence_item",
-                  "message": "Immunofluorescence/Immunostaining: functionally_abnormal",
-                  "checked": true,
-                  "detail": "patient-derived hiPSC-CMs, readout: Protein localization and abundance of DSG2, vs Ctrl1 (age/sex matched) and Ctrl2 (WTC11) - Reduced overall signal intensity of desmoglein-2; Reduced membrane localization with perinuclear accumulation"
-                },
-                {
-                  "severity": "info",
-                  "category": "evidence_item",
-                  "message": "RT-qPCR: functionally_abnormal",
-                  "checked": true,
-                  "detail": "patient-derived hiPSC-CMs, readout: mRNA expression levels of DSG2, vs Ctrl1 and Ctrl2 - Significantly reduced mRNA expression (35.2% and 49.6% reduction)"
-                },
-                {
-                  "severity": "info",
-                  "category": "evidence_item",
-                  "message": "Western Blot: functionally_abnormal",
-                  "checked": true,
-                  "detail": "patient-derived hiPSC-CMs, readout: Protein abundance of full-length DSG2, vs Ctrl1 and Ctrl2 - Much lower expression of full-length (~130kDa) desmoglein-2"
-                },
-                {
-                  "severity": "info",
-                  "category": "evidence_item",
-                  "message": "Optical Mapping (Electrophysiology): functionally_abnormal",
-                  "checked": true,
-                  "detail": "patient-derived hiPSC-CMs, readout: Action potential duration (APD90 and APD50) and calcium transients, vs Ctrl1 and Ctrl2 - Significantly reduced APD90 and APD50; Significantly shorter time-to-peak calcium (CaT); Slower CaT decay at faster pacing rates"
-                },
-                {
-                  "severity": "info",
-                  "category": "evidence_item",
-                  "message": "RNA-Seq / Cytokine Array: functionally_abnormal",
-                  "checked": true,
-                  "detail": "patient-derived hiPSC-CMs, readout: Cytokine and chemokine expression levels, vs Ctrl1 and Ctrl2 - Upregulation of numerous pro-inflammatory cytokines and chemokines (e.g., MCP-1, IL-6, IL-8)"
-                }
-              ]
-            }
-          ],
+          "description": "The target variant DSG2 c.1592T>G (p.Phe531Cys) is not mentioned or tested in the provided text. Therefore, no functional evidence can be extracted.",
           "reportedIn": [
             {
               "type": "Document",
               "urls": [
-                "https://pubmed.ncbi.nlm.nih.gov/34300226/"
+                "https://pubmed.ncbi.nlm.nih.gov/40115818/"
               ],
-              "pmid": "34300226"
+              "pmid": "40115818"
             }
           ],
-          "directionOfEvidenceProvided": "supports"
+          "directionOfEvidenceProvided": "neutral"
         },
         {
-          "id": "evline:paper-10-34095246",
+          "id": "evline:paper-10-40106965",
           "type": "EvidenceLine",
-          "description": "The paper does not evaluate the target variant (DSG2 c.1592T>G). It reports findings for a different gene (PKP2).",
+          "description": "The study focuses on a different DSG2 variant (c.1672C>T) than the target variant (c.1592T>G). Therefore, no functional data for the target variant is provided.",
           "reportedIn": [
             {
               "type": "Document",
               "urls": [
-                "https://pubmed.ncbi.nlm.nih.gov/34095246/"
+                "https://pubmed.ncbi.nlm.nih.gov/40106965/"
               ],
-              "pmid": "34095246"
+              "pmid": "40106965"
             }
           ],
           "directionOfEvidenceProvided": "neutral"
         }
       ],
-      "directionOfEvidenceProvided": "supports",
-      "strengthOfEvidenceProvided": {
-        "type": "MappableConcept",
-        "primaryCoding": {
-          "system": "ACMG Guidelines, 2015",
-          "code": "supporting"
-        }
-      },
-      "evidenceOutcome": {
-        "type": "MappableConcept",
-        "name": "ACMG 2015 PS3 supporting Criterion Met (heuristic estimate, unconfirmed)",
-        "primaryCoding": {
-          "system": "ACMG Guidelines, 2015",
-          "code": "PS3_supporting"
-        }
-      },
+      "directionOfEvidenceProvided": "neutral",
       "extensions": [
         {
           "name": "curatorHints",
           "value": [
             {
-              "severity": "caution",
+              "severity": "info",
               "category": null,
-              "message": "Only 1 of 10 paper(s) examined yielded usable evidence (this count is computed directly from the papers actually fetched and judged, not from any self-report on a single paper)."
+              "message": "None of the 10 paper(s) examined yielded a usable evidence-based judgment for this variant (either the variant could not be identified in the text, or the per-paper judgment was itself inconclusive)."
             },
             {
               "severity": "caution",
-              "category": "strength_estimation",
-              "message": "heuristic: 1 independent paper(s) with agreeing direction (1=supporting, 2=moderate, 3+=strong). This is a rough proxy, NOT a VCEP-calibrated ACMG strength determination - the underlying LLM judgment only assesses direction, never strength - and requires human curator confirmation."
+              "category": "unevaluated",
+              "message": "PS3 could not actually be evaluated from the available literature (reported as not_met rather than left unknown)."
             }
           ]
         },
         {
           "name": "status",
-          "value": "met"
+          "value": "not_met"
         }
       ]
     },
     {
       "id": "evline:DSG2_c_1592T_G_PS4",
       "type": "EvidenceLine",
-      "description": "Only 1 of 10 paper(s) examined yielded usable evidence (this count is computed directly from the papers actually fetched and judged, not from any self-report on a single paper).",
+      "description": "2 independent papers agree on PS4, which is stronger support than a single-paper judgment alone.",
       "specifiedBy": {
         "type": "Method",
         "name": "Unspecified VCEP ACMG/AMP PS4 evidence assessment (LLM-assisted draft)",
@@ -764,86 +687,86 @@
             "name": "ACMG literature-evidence LLM pipeline (gemma-4 via vLLM) - AI-generated draft evidence, requires human curator review before use"
           },
           "activityType": "automated evidence evaluation",
-          "date": "2026-09-18T06:24:21.489913Z"
+          "date": "2026-09-18T14:48:17.589229Z"
         }
       ],
       "reportedIn": [
         {
           "type": "Document",
           "urls": [
-            "https://pubmed.ncbi.nlm.nih.gov/40956261/"
+            "https://pubmed.ncbi.nlm.nih.gov/41980193/"
           ],
-          "pmid": "40956261"
+          "pmid": "41980193"
         },
         {
           "type": "Document",
           "urls": [
-            "https://pubmed.ncbi.nlm.nih.gov/39989366/"
+            "https://pubmed.ncbi.nlm.nih.gov/41662985/"
           ],
-          "pmid": "39989366"
+          "pmid": "41662985"
         },
         {
           "type": "Document",
           "urls": [
-            "https://pubmed.ncbi.nlm.nih.gov/39227800/"
+            "https://pubmed.ncbi.nlm.nih.gov/35941102/"
           ],
-          "pmid": "39227800"
+          "pmid": "35941102"
         },
         {
           "type": "Document",
           "urls": [
-            "https://pubmed.ncbi.nlm.nih.gov/38551768/"
+            "https://pubmed.ncbi.nlm.nih.gov/31645976/"
           ],
-          "pmid": "38551768"
+          "pmid": "31645976"
         },
         {
           "type": "Document",
           "urls": [
-            "https://pubmed.ncbi.nlm.nih.gov/37895213/"
+            "https://pubmed.ncbi.nlm.nih.gov/30454721/"
           ],
-          "pmid": "37895213"
+          "pmid": "30454721"
         },
         {
           "type": "Document",
           "urls": [
-            "https://pubmed.ncbi.nlm.nih.gov/35721821/"
+            "https://pubmed.ncbi.nlm.nih.gov/41158880/"
           ],
-          "pmid": "35721821"
+          "pmid": "41158880"
         },
         {
           "type": "Document",
           "urls": [
-            "https://pubmed.ncbi.nlm.nih.gov/34993452/"
+            "https://pubmed.ncbi.nlm.nih.gov/40887256/"
           ],
-          "pmid": "34993452"
+          "pmid": "40887256"
         },
         {
           "type": "Document",
           "urls": [
-            "https://pubmed.ncbi.nlm.nih.gov/34393635/"
+            "https://pubmed.ncbi.nlm.nih.gov/40123482/"
           ],
-          "pmid": "34393635"
+          "pmid": "40123482"
         },
         {
           "type": "Document",
           "urls": [
-            "https://pubmed.ncbi.nlm.nih.gov/34300226/"
+            "https://pubmed.ncbi.nlm.nih.gov/40115818/"
           ],
-          "pmid": "34300226"
+          "pmid": "40115818"
         },
         {
           "type": "Document",
           "urls": [
-            "https://pubmed.ncbi.nlm.nih.gov/34095246/"
+            "https://pubmed.ncbi.nlm.nih.gov/40106965/"
           ],
-          "pmid": "34095246"
+          "pmid": "40106965"
         }
       ],
       "hasEvidenceItems": [
         {
-          "id": "evline:paper-1-40956261",
+          "id": "evline:paper-1-41980193",
           "type": "EvidenceLine",
-          "description": "The target variant c.1592T>G was not identified or analyzed in this paper; the study reports a different variant (c.523+2T>C).",
+          "description": "The study is a functional/mechanistic study using a knock-in mouse model, not a case-control or cohort study evaluating variant frequency in human populations. Therefore, it cannot provide PS4 evidence.",
           "extensions": [
             {
               "name": "curatorHints",
@@ -862,98 +785,28 @@
             {
               "type": "Document",
               "urls": [
-                "https://pubmed.ncbi.nlm.nih.gov/40956261/"
+                "https://pubmed.ncbi.nlm.nih.gov/41980193/"
               ],
-              "pmid": "40956261"
+              "pmid": "41980193"
             }
           ],
           "directionOfEvidenceProvided": "neutral"
         },
         {
-          "id": "evline:paper-2-39989366",
+          "id": "evline:paper-2-41662985",
           "type": "EvidenceLine",
-          "description": "The target variant c.1592T>G was not identified or reported in the provided text, so no evidence can be extracted.",
+          "description": "The study is a case series of 91 individuals with the variant; it does not provide a comparison group of unaffected/control individuals to assess enrichment (case-control), thus PS4 criteria cannot be evaluated.",
           "extensions": [
             {
               "name": "curatorHints",
               "value": [
-                {
-                  "severity": "info",
-                  "category": "evidence_item",
-                  "message": "Study design: not_case_control",
-                  "checked": false,
-                  "detail": ""
-                }
-              ]
-            }
-          ],
-          "reportedIn": [
-            {
-              "type": "Document",
-              "urls": [
-                "https://pubmed.ncbi.nlm.nih.gov/39989366/"
-              ],
-              "pmid": "39989366"
-            }
-          ],
-          "directionOfEvidenceProvided": "neutral"
-        },
-        {
-          "id": "evline:paper-3-39227800",
-          "type": "EvidenceLine",
-          "description": "The study reports 8 ACM patients were homozygous for the variant, while only 1 heterozygous variant was found among 950 healthy controls. The text indicates the variant is associated with ACM in a large family, though the specific statistical enrichment (OR/p-value) for the case-control comparison was not explicitly provided in the text.",
-          "extensions": [
-            {
-              "name": "curatorHints",
-              "value": [
-                {
-                  "severity": "caution",
-                  "category": null,
-                  "message": "This judgment (PMID:39227800) is based on a single study only (self-reported). Design doc section 4 found a real case (MYH7 c.2155C>T, p.Arg719Trp, an HCM variant) where the true ERepo PS4 basis was 9+ pooled papers, not the single PMID initially checked - confirm via ERepo's full evidenceLinks list, not this paper alone."
-                },
                 {
                   "severity": "info",
                   "category": "evidence_item",
                   "message": "Affected-side counts",
                   "checked": true,
-                  "detail": "8/48 affected individuals carry the variant"
+                  "detail": "91/91 affected individuals carry the variant"
                 },
-                {
-                  "severity": "info",
-                  "category": "evidence_item",
-                  "message": "Control-side counts",
-                  "checked": true,
-                  "detail": "1/950 unaffected/control individuals carry the variant"
-                },
-                {
-                  "severity": "info",
-                  "category": "evidence_item",
-                  "message": "Study design: case_control",
-                  "checked": true,
-                  "detail": ""
-                }
-              ]
-            }
-          ],
-          "reportedIn": [
-            {
-              "type": "Document",
-              "urls": [
-                "https://pubmed.ncbi.nlm.nih.gov/39227800/"
-              ],
-              "pmid": "39227800"
-            }
-          ],
-          "directionOfEvidenceProvided": "supports"
-        },
-        {
-          "id": "evline:paper-4-38551768",
-          "type": "EvidenceLine",
-          "description": "The target variant c.1592T>G was not identified or reported in the provided text; the paper only mentions the gene DSG2 generally.",
-          "extensions": [
-            {
-              "name": "curatorHints",
-              "value": [
                 {
                   "severity": "info",
                   "category": "evidence_item",
@@ -968,27 +821,32 @@
             {
               "type": "Document",
               "urls": [
-                "https://pubmed.ncbi.nlm.nih.gov/38551768/"
+                "https://pubmed.ncbi.nlm.nih.gov/41662985/"
               ],
-              "pmid": "38551768"
+              "pmid": "41662985"
             }
           ],
           "directionOfEvidenceProvided": "neutral"
         },
         {
-          "id": "evline:paper-5-37895213",
+          "id": "evline:paper-3-35941102",
           "type": "EvidenceLine",
-          "description": "The paper describes a small number of individuals (two) with a homozygous c.1592T>G mutation associated with ACM, but it does not provide a comparison group (total unaffected) or statistical analysis (odds ratio or p-value) to support a formal case-control enrichment claim.",
+          "description": "The paper describes the variant as a founder variant in East Asian populations, noting that 8 of 118 Chinese ARVC patients were homozygous for the variant, while also providing allele frequencies from general population databases (ToMMo and HGVD) to demonstrate enrichment in the affected group.",
           "extensions": [
             {
               "name": "curatorHints",
               "value": [
                 {
+                  "severity": "caution",
+                  "category": null,
+                  "message": "This paper (PMID:35941102) does not report any control/unaffected-side numbers, nor an odds/risk ratio that would itself imply a comparison group. PS4 requires a comparison against a control/background rate, not just a count of affected carriers; confirm the comparison basis manually."
+                },
+                {
                   "severity": "info",
                   "category": "evidence_item",
                   "message": "Affected-side counts",
-                  "checked": false,
-                  "detail": "affected_carriers=2, total_affected=None"
+                  "checked": true,
+                  "detail": "8/118 affected individuals carry the variant"
                 },
                 {
                   "severity": "info",
@@ -1004,17 +862,92 @@
             {
               "type": "Document",
               "urls": [
-                "https://pubmed.ncbi.nlm.nih.gov/37895213/"
+                "https://pubmed.ncbi.nlm.nih.gov/35941102/"
               ],
-              "pmid": "37895213"
+              "pmid": "35941102"
+            }
+          ],
+          "directionOfEvidenceProvided": "supports"
+        },
+        {
+          "id": "evline:paper-4-31645976",
+          "type": "EvidenceLine",
+          "description": "The study is a report of individual families (case series/family cohort) rather than a case-control study with defined denominators for affected and unaffected groups. While it mentions the prevalence of the variant in Chinese ARVC patients from other studies, it does not provide a formal case-control statistical analysis.",
+          "extensions": [
+            {
+              "name": "curatorHints",
+              "value": [
+                {
+                  "severity": "info",
+                  "category": "evidence_item",
+                  "message": "Study design: family_cohort",
+                  "checked": false,
+                  "detail": ""
+                }
+              ]
+            }
+          ],
+          "reportedIn": [
+            {
+              "type": "Document",
+              "urls": [
+                "https://pubmed.ncbi.nlm.nih.gov/31645976/"
+              ],
+              "pmid": "31645976"
             }
           ],
           "directionOfEvidenceProvided": "neutral"
         },
         {
-          "id": "evline:paper-6-35721821",
+          "id": "evline:paper-5-30454721",
           "type": "EvidenceLine",
-          "description": "The paper does not report the target variant (c.1592T>G) and is a case report of a single family rather than a case-control or cohort study.",
+          "description": "The study reports a high frequency of 8.47% for the p.Phe531Cys variant among Chinese ARVC patients compared to an allele frequency of 0.12% in the general East Asian population, suggesting significant enrichment.",
+          "extensions": [
+            {
+              "name": "curatorHints",
+              "value": [
+                {
+                  "severity": "caution",
+                  "category": null,
+                  "message": "This paper (PMID:30454721) does not report any control/unaffected-side numbers, nor an odds/risk ratio that would itself imply a comparison group. PS4 requires a comparison against a control/background rate, not just a count of affected carriers; confirm the comparison basis manually."
+                },
+                {
+                  "severity": "caution",
+                  "category": null,
+                  "message": "This judgment (PMID:30454721) is based on a single study only (self-reported). Design doc section 4 found a real case (MYH7 c.2155C>T, p.Arg719Trp, an HCM variant) where the true ERepo PS4 basis was 9+ pooled papers, not the single PMID initially checked - confirm via ERepo's full evidenceLinks list, not this paper alone."
+                },
+                {
+                  "severity": "info",
+                  "category": "evidence_item",
+                  "message": "Affected-side counts",
+                  "checked": true,
+                  "detail": "8/118 affected individuals carry the variant"
+                },
+                {
+                  "severity": "info",
+                  "category": "evidence_item",
+                  "message": "Study design: case_control",
+                  "checked": true,
+                  "detail": ""
+                }
+              ]
+            }
+          ],
+          "reportedIn": [
+            {
+              "type": "Document",
+              "urls": [
+                "https://pubmed.ncbi.nlm.nih.gov/30454721/"
+              ],
+              "pmid": "30454721"
+            }
+          ],
+          "directionOfEvidenceProvided": "supports"
+        },
+        {
+          "id": "evline:paper-6-41158880",
+          "type": "EvidenceLine",
+          "description": "The paper does not report the target variant (p.Phe531Cys); it describes a different splice-site variant (c.1880-2A>G) in a single case report.",
           "extensions": [
             {
               "name": "curatorHints",
@@ -1033,17 +966,17 @@
             {
               "type": "Document",
               "urls": [
-                "https://pubmed.ncbi.nlm.nih.gov/35721821/"
+                "https://pubmed.ncbi.nlm.nih.gov/41158880/"
               ],
-              "pmid": "35721821"
+              "pmid": "41158880"
             }
           ],
           "directionOfEvidenceProvided": "neutral"
         },
         {
-          "id": "evline:paper-7-34993452",
+          "id": "evline:paper-7-40887256",
           "type": "EvidenceLine",
-          "description": "The paper does not test or report the target variant DSG2 c.1592T>G. The study focuses on the specificity of the anti-DSG2 antibody in athletes and explicitly states that genetic testing was not performed on the athletes in this cohort.",
+          "description": "The target variant DSG2 p.Phe531Cys was not identified in the provided text; the study focuses on a functional mouse model for different variants.",
           "extensions": [
             {
               "name": "curatorHints",
@@ -1062,17 +995,17 @@
             {
               "type": "Document",
               "urls": [
-                "https://pubmed.ncbi.nlm.nih.gov/34993452/"
+                "https://pubmed.ncbi.nlm.nih.gov/40887256/"
               ],
-              "pmid": "34993452"
+              "pmid": "40887256"
             }
           ],
           "directionOfEvidenceProvided": "neutral"
         },
         {
-          "id": "evline:paper-8-34393635",
+          "id": "evline:paper-8-40123482",
           "type": "EvidenceLine",
-          "description": "The target variant was not identified in this study. Furthermore, the study is a single case report, not a case-control or cohort study.",
+          "description": "The target variant is not explicitly mentioned in the provided text, preventing any assessment of its frequency or statistical significance.",
           "extensions": [
             {
               "name": "curatorHints",
@@ -1091,17 +1024,17 @@
             {
               "type": "Document",
               "urls": [
-                "https://pubmed.ncbi.nlm.nih.gov/34393635/"
+                "https://pubmed.ncbi.nlm.nih.gov/40123482/"
               ],
-              "pmid": "34393635"
+              "pmid": "40123482"
             }
           ],
           "directionOfEvidenceProvided": "neutral"
         },
         {
-          "id": "evline:paper-9-34300226",
+          "id": "evline:paper-9-40115818",
           "type": "EvidenceLine",
-          "description": "The paper does not study the target variant c.1592T>G; it focuses on the c.2358delA variant. Therefore, no evidence can be provided for the target variant.",
+          "description": "The target variant was not identified in the provided text; therefore, no evidence for PS4 can be extracted.",
           "extensions": [
             {
               "name": "curatorHints",
@@ -1120,17 +1053,17 @@
             {
               "type": "Document",
               "urls": [
-                "https://pubmed.ncbi.nlm.nih.gov/34300226/"
+                "https://pubmed.ncbi.nlm.nih.gov/40115818/"
               ],
-              "pmid": "34300226"
+              "pmid": "40115818"
             }
           ],
           "directionOfEvidenceProvided": "neutral"
         },
         {
-          "id": "evline:paper-10-34095246",
+          "id": "evline:paper-10-40106965",
           "type": "EvidenceLine",
-          "description": "The paper does not contain information regarding the target variant DSG2 c.1592T>G; it describes a different gene (PKP2) and a different variant.",
+          "description": "The target variant is not mentioned in the text; the study focuses on a different nonsense mutation (c.1672C>T) and describes hiPSC modeling rather than a case-control association study.",
           "extensions": [
             {
               "name": "curatorHints",
@@ -1149,9 +1082,9 @@
             {
               "type": "Document",
               "urls": [
-                "https://pubmed.ncbi.nlm.nih.gov/34095246/"
+                "https://pubmed.ncbi.nlm.nih.gov/40106965/"
               ],
-              "pmid": "34095246"
+              "pmid": "40106965"
             }
           ],
           "directionOfEvidenceProvided": "neutral"
@@ -1162,15 +1095,15 @@
         "type": "MappableConcept",
         "primaryCoding": {
           "system": "ACMG Guidelines, 2015",
-          "code": "supporting"
+          "code": "moderate"
         }
       },
       "evidenceOutcome": {
         "type": "MappableConcept",
-        "name": "ACMG 2015 PS4 supporting Criterion Met (heuristic estimate, unconfirmed)",
+        "name": "ACMG 2015 PS4 moderate Criterion Met (heuristic estimate, unconfirmed)",
         "primaryCoding": {
           "system": "ACMG Guidelines, 2015",
-          "code": "PS4_supporting"
+          "code": "PS4_moderate"
         }
       },
       "extensions": [
@@ -1178,14 +1111,14 @@
           "name": "curatorHints",
           "value": [
             {
-              "severity": "caution",
+              "severity": "info",
               "category": null,
-              "message": "Only 1 of 10 paper(s) examined yielded usable evidence (this count is computed directly from the papers actually fetched and judged, not from any self-report on a single paper)."
+              "message": "2 independent papers agree on PS4, which is stronger support than a single-paper judgment alone."
             },
             {
               "severity": "caution",
               "category": "strength_estimation",
-              "message": "heuristic: 1 independent paper(s) with agreeing direction (1=supporting, 2=moderate, 3+=strong). This is a rough proxy, NOT a VCEP-calibrated ACMG strength determination - the underlying LLM judgment only assesses direction, never strength - and requires human curator confirmation."
+              "message": "heuristic: 2 independent paper(s) with agreeing direction (1=supporting, 2=moderate, 3+=strong). This is a rough proxy, NOT a VCEP-calibrated ACMG strength determination - the underlying LLM judgment only assesses direction, never strength - and requires human curator confirmation."
             }
           ]
         },
@@ -1210,6 +1143,37 @@
           "pmid": "25741868"
         }
       },
+      "hasEvidenceItems": [
+        {
+          "id": "urn:bh26:curator-info:03a5a79caecf0bdfebfef043eb5210eba433cbbe6468e115faa5175e7129b79c",
+          "type": "EvidenceLine",
+          "description": "Structured facts gathered for a curator's own review (PM1) - not a hotspot/domain-relevance verdict.",
+          "extensions": [
+            {
+              "name": "curatorInfo",
+              "value": {
+                "uniprotAccession": "Q14126",
+                "proteinPosition": 531,
+                "coveringDomains": [
+                  {
+                    "type": "Chain",
+                    "start": 50,
+                    "end": 1118,
+                    "description": "Desmoglein-2"
+                  }
+                ],
+                "nearbyVariants": [
+                  {
+                    "position": 531,
+                    "description": "in ARVD10; likely pathogenic; dbSNP:rs200484060"
+                  }
+                ]
+              }
+            }
+          ],
+          "directionOfEvidenceProvided": "neutral"
+        }
+      ],
       "directionOfEvidenceProvided": "neutral",
       "extensions": [
         {
@@ -1238,6 +1202,10 @@
           "value": [
             "pathogenic_density"
           ]
+        },
+        {
+          "name": "referenceLink",
+          "value": "https://franklin.genoox.com/clinical-db/variant/snp/chr18-31536370-T-G-hg38"
         },
         {
           "name": "referenceLink",
@@ -1426,6 +1394,10 @@
         {
           "name": "referenceLink",
           "value": "https://grch38.togovar.org/variant/18-31536370-T-G"
+        },
+        {
+          "name": "referenceLink",
+          "value": "https://gnomad.broadinstitute.org/variant/18-31536370-T-G?dataset=gnomad_r4"
         }
       ]
     },
@@ -1574,7 +1546,36 @@
         "urn:sha256:c20f4d16a9a7874bcb4024a1c3076786836ff07f653239db88ce98bdf54847ce:clinvar-ps1-search:NM_001943.5",
         "urn:sha256:285113a53e20f205d21e2c12332e7b7e8cdb4ada0aebcd9741cedf05ebd8b4a8:clinvar-pm5-search:NP_001934.2:531",
         "https://www.ncbi.nlm.nih.gov/clinvar/variation/3893844/#residue-5a284c0061239478",
-        "https://www.ncbi.nlm.nih.gov/clinvar/variation/3073070/#residue-5a284c0061239478"
+        "https://www.ncbi.nlm.nih.gov/clinvar/variation/3073070/#residue-5a284c0061239478",
+        {
+          "id": "urn:bh26:curator-info:1d0289bc2480de79666bde2eb9a326d4f538abfbbc90510cd62e8de4e53dc7cb",
+          "type": "EvidenceLine",
+          "description": "Structured facts gathered for a curator's own review (PM5) - not a hotspot/domain-relevance verdict.",
+          "extensions": [
+            {
+              "name": "curatorInfo",
+              "value": {
+                "uniprotAccession": "Q14126",
+                "proteinPosition": 531,
+                "coveringDomains": [
+                  {
+                    "type": "Chain",
+                    "start": 50,
+                    "end": 1118,
+                    "description": "Desmoglein-2"
+                  }
+                ],
+                "nearbyVariants": [
+                  {
+                    "position": 531,
+                    "description": "in ARVD10; likely pathogenic; dbSNP:rs200484060"
+                  }
+                ]
+              }
+            }
+          ],
+          "directionOfEvidenceProvided": "neutral"
+        }
       ],
       "directionOfEvidenceProvided": "neutral",
       "evidenceOutcome": {
@@ -1598,6 +1599,10 @@
         {
           "name": "direction",
           "value": "none"
+        },
+        {
+          "name": "referenceLink",
+          "value": "https://franklin.genoox.com/clinical-db/variant/snp/chr18-31536370-T-G-hg38"
         },
         {
           "name": "referenceLink",
@@ -1674,19 +1679,34 @@
     {
       "id": "evline:DSG2_c_1592T_G_PP2",
       "type": "EvidenceLine",
-      "description": "No gene_disease assessment was retrieved for this variant. PP2 evaluates missense variants in genes where missense is an established disease mechanism and benign missense variation is constrained. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
+      "name": "PP2 assessment for GRCh38:18:31536370:T:G",
+      "description": "Reviewed disease mechanism and variant spectrum evaluated. PP2 evaluates missense variants in genes where missense is an established disease mechanism and benign missense variation is constrained. Outcome: NOT_MET; PP2 was evaluated but its requirements were not satisfied.",
       "specifiedBy": {
         "type": "Method",
-        "name": "ACMG/AMP PP2 assessment (not met)",
+        "name": "ACMG/AMP 2015 with ClinGen General Guidance",
         "methodType": "PP2",
         "reportedIn": {
           "type": "Document",
           "name": "Richards et al., 2015, Genet Med.",
+          "urls": [
+            "https://pubmed.ncbi.nlm.nih.gov/25741868/"
+          ],
           "doi": "10.1038/gim.2015.30",
           "pmid": "25741868"
         }
       },
+      "hasEvidenceItems": [
+        "urn:sha256:9908b24cf1b295180f712f6449a8495648a4a1d6c5de16022ec1a2daca0d6678:annotation:NM_001943.5",
+        "urn:bh26:gene-disease-assessment:d5731c27b9f851a2333a06222468c044f1e4ed8d4190c2026614f28cae91803c:a6ef27d4c1c25473"
+      ],
       "directionOfEvidenceProvided": "neutral",
+      "evidenceOutcome": {
+        "name": "ACMG 2015 PP2 criterion not met",
+        "primaryCoding": {
+          "system": "ACMG Guidelines, 2015",
+          "code": "PP2_not_met"
+        }
+      },
       "extensions": [
         {
           "name": "status",
@@ -1695,28 +1715,18 @@
         {
           "name": "provenance",
           "value": {
-            "rule_version": "PP2-v1"
+            "rule_version": "PP2-v1",
+            "assessment_scope": "gene_level",
+            "condition_assessment": "MATCHED"
           }
         },
         {
-          "name": "missingInputs",
-          "value": [
-            "gene_disease"
-          ]
+          "name": "direction",
+          "value": "none"
         },
         {
           "name": "referenceLink",
           "value": "https://gnomad.broadinstitute.org/gene/DSG2?dataset=gnomad_r4"
-        },
-        {
-          "name": "curatorHints",
-          "value": [
-            {
-              "severity": "caution",
-              "category": "unevaluated",
-              "message": "PP2 could not actually be evaluated from the available data (reported as not_met rather than left unknown)."
-            }
-          ]
         }
       ]
     },
@@ -1773,14 +1783,16 @@
                 "mechanism": "protein",
                 "predictor": "REVEL",
                 "score": "0.744",
-                "strength": "supporting"
+                "strength": "supporting",
+                "opposing": null
               },
               {
                 "calibration": "spliceai-svi-2023",
                 "mechanism": "splicing",
                 "predictor": "SpliceAI",
                 "score": "0",
-                "strength": null
+                "strength": null,
+                "opposing": "supporting"
               }
             ],
             "version_assertions": [
@@ -1799,6 +1811,10 @@
         {
           "name": "direction",
           "value": "supports"
+        },
+        {
+          "name": "referenceLink",
+          "value": "https://pubmed.ncbi.nlm.nih.gov/36413997/"
         }
       ]
     },
@@ -2048,6 +2064,10 @@
         {
           "name": "referenceLink",
           "value": "https://grch38.togovar.org/variant/18-31536370-T-G"
+        },
+        {
+          "name": "referenceLink",
+          "value": "https://gnomad.broadinstitute.org/variant/18-31536370-T-G?dataset=gnomad_r4"
         }
       ]
     },
@@ -2055,7 +2075,7 @@
       "id": "evline:DSG2_c_1592T_G_BS1",
       "type": "EvidenceLine",
       "name": "BS1 assessment for GRCh38:18:31536370:T:G",
-      "description": "Every population source resolved and none has a filtering allele frequency > the configured default maximum credible frequency [BH26 provisional default BS1 threshold for rare Mendelian disease (PLACEHOLDER - not a reviewed clinical value; a real threshold is per-disease, e.g. the ClinGen Inherited Cardiomyopathy VCEP applies 0.0002 for MYH7) 2026-09-17-provisional-2] (0.0001; highest filtering allele frequency 0.00004150668083976261773672062839) (applied because no disease context was supplied; this is not a disease-specific threshold and has to be confirmed before final classification). BS1 evaluates whether population allele frequency exceeds the reviewed maximum credible frequency for the disease context. Outcome: NOT_MET; was evaluated but does not satisfy BS1.",
+      "description": "Every population source resolved and none has a filtering allele frequency > the configured default maximum credible frequency [BH26 provisional default BS1 threshold for rare Mendelian disease (PLACEHOLDER - not a reviewed clinical value; a real threshold is per-disease, e.g. the ClinGen Inherited Cardiomyopathy VCEP applies 0.0002 for MYH7) 2026-09-17-provisional-2] (0.0001; highest filtering allele frequency 0.00004150668083976261773672062839) (applied because no curated maximum credible allele frequency was supplied for MONDO:0016587; this is not a disease-specific threshold and has to be confirmed before final classification). BS1 evaluates whether population allele frequency exceeds the reviewed maximum credible frequency for the disease context. Outcome: NOT_MET; was evaluated but does not satisfy BS1.",
       "specifiedBy": {
         "type": "Method",
         "name": "ACMG/AMP 2015 with ClinGen General Guidance",
@@ -2255,6 +2275,10 @@
         {
           "name": "referenceLink",
           "value": "https://grch38.togovar.org/variant/18-31536370-T-G"
+        },
+        {
+          "name": "referenceLink",
+          "value": "https://gnomad.broadinstitute.org/variant/18-31536370-T-G?dataset=gnomad_r4"
         }
       ]
     },
@@ -2288,13 +2312,17 @@
         {
           "name": "referenceLink",
           "value": "https://grch38.togovar.org/variant/18-31536370-T-G"
+        },
+        {
+          "name": "referenceLink",
+          "value": "https://gnomad.broadinstitute.org/variant/18-31536370-T-G?dataset=gnomad_r4"
         }
       ]
     },
     {
       "id": "evline:DSG2_c_1592T_G_BS3",
       "type": "EvidenceLine",
-      "description": "Only 1 of 10 paper(s) examined yielded usable evidence (this count is computed directly from the papers actually fetched and judged, not from any self-report on a single paper).",
+      "description": "None of the 10 paper(s) examined yielded a usable evidence-based judgment for this variant (either the variant could not be identified in the text, or the per-paper judgment was itself inconclusive).",
       "specifiedBy": {
         "type": "Method",
         "name": "Unspecified VCEP ACMG/AMP BS3 evidence assessment (LLM-assisted draft)",
@@ -2315,116 +2343,86 @@
             "name": "ACMG literature-evidence LLM pipeline (gemma-4 via vLLM) - AI-generated draft evidence, requires human curator review before use"
           },
           "activityType": "automated evidence evaluation",
-          "date": "2026-09-18T06:24:21.488506Z"
+          "date": "2026-09-18T14:48:17.593528Z"
         }
       ],
       "reportedIn": [
         {
           "type": "Document",
           "urls": [
-            "https://pubmed.ncbi.nlm.nih.gov/40956261/"
+            "https://pubmed.ncbi.nlm.nih.gov/41980193/"
           ],
-          "pmid": "40956261"
+          "pmid": "41980193"
         },
         {
           "type": "Document",
           "urls": [
-            "https://pubmed.ncbi.nlm.nih.gov/39989366/"
+            "https://pubmed.ncbi.nlm.nih.gov/41662985/"
           ],
-          "pmid": "39989366"
+          "pmid": "41662985"
         },
         {
           "type": "Document",
           "urls": [
-            "https://pubmed.ncbi.nlm.nih.gov/39227800/"
+            "https://pubmed.ncbi.nlm.nih.gov/35941102/"
           ],
-          "pmid": "39227800"
+          "pmid": "35941102"
         },
         {
           "type": "Document",
           "urls": [
-            "https://pubmed.ncbi.nlm.nih.gov/38551768/"
+            "https://pubmed.ncbi.nlm.nih.gov/31645976/"
           ],
-          "pmid": "38551768"
+          "pmid": "31645976"
         },
         {
           "type": "Document",
           "urls": [
-            "https://pubmed.ncbi.nlm.nih.gov/37895213/"
+            "https://pubmed.ncbi.nlm.nih.gov/30454721/"
           ],
-          "pmid": "37895213"
+          "pmid": "30454721"
         },
         {
           "type": "Document",
           "urls": [
-            "https://pubmed.ncbi.nlm.nih.gov/35721821/"
+            "https://pubmed.ncbi.nlm.nih.gov/41158880/"
           ],
-          "pmid": "35721821"
+          "pmid": "41158880"
         },
         {
           "type": "Document",
           "urls": [
-            "https://pubmed.ncbi.nlm.nih.gov/34993452/"
+            "https://pubmed.ncbi.nlm.nih.gov/40887256/"
           ],
-          "pmid": "34993452"
+          "pmid": "40887256"
         },
         {
           "type": "Document",
           "urls": [
-            "https://pubmed.ncbi.nlm.nih.gov/34393635/"
+            "https://pubmed.ncbi.nlm.nih.gov/40123482/"
           ],
-          "pmid": "34393635"
+          "pmid": "40123482"
         },
         {
           "type": "Document",
           "urls": [
-            "https://pubmed.ncbi.nlm.nih.gov/34300226/"
+            "https://pubmed.ncbi.nlm.nih.gov/40115818/"
           ],
-          "pmid": "34300226"
+          "pmid": "40115818"
         },
         {
           "type": "Document",
           "urls": [
-            "https://pubmed.ncbi.nlm.nih.gov/34095246/"
+            "https://pubmed.ncbi.nlm.nih.gov/40106965/"
           ],
-          "pmid": "34095246"
+          "pmid": "40106965"
         }
       ],
       "hasEvidenceItems": [
         {
-          "id": "evline:paper-1-40956261",
+          "id": "evline:paper-1-41980193",
           "type": "EvidenceLine",
-          "description": "The paper does not report any functional data or even mention the target variant c.1592T>G; it focuses on a different splice-site variant (c.523+2T>C).",
-          "reportedIn": [
-            {
-              "type": "Document",
-              "urls": [
-                "https://pubmed.ncbi.nlm.nih.gov/40956261/"
-              ],
-              "pmid": "40956261"
-            }
-          ],
-          "directionOfEvidenceProvided": "neutral"
-        },
-        {
-          "id": "evline:paper-2-39989366",
-          "type": "EvidenceLine",
-          "description": "The paper does not test or report functional results for the specific target variant c.1592T>G. It is a clinical/epidemiological study of a genome-first cohort rather than a functional assay study.",
-          "reportedIn": [
-            {
-              "type": "Document",
-              "urls": [
-                "https://pubmed.ncbi.nlm.nih.gov/39989366/"
-              ],
-              "pmid": "39989366"
-            }
-          ],
-          "directionOfEvidenceProvided": "neutral"
-        },
-        {
-          "id": "evline:paper-3-39227800",
-          "type": "EvidenceLine",
-          "description": "The variant was shown to cause significant functional abnormalities across multiple systems, including protein degradation, ER stress/signaling activation, and a clear disease phenotype in a knock-in mouse model. The combination of in vitro protein instability and in vivo physiological dysfunction provides strong functional evidence.",
+          "description": "The study uses a CRISPR knock-in mouse model to demonstrate multiple highly relevant functional abnormalities, including structural remodeling, metabolic dysfunction, and electrophysiological instability caused by the p.Phe531Cys mutation. These comprehensive phenotype results support a deleterious effect on protein function.",
           "extensions": [
             {
               "name": "curatorHints",
@@ -2432,38 +2430,38 @@
                 {
                   "severity": "warning",
                   "category": null,
-                  "message": "This paper (PMID:39227800) self-reports multiple experimental systems: In vivo mouse model (Knock-in) (functionally_abnormal); Protein stability/degradation assay (functionally_abnormal); ER stress and signaling pathway assay (functionally_abnormal). It is recommended to go back to the relevant part of the full text and manually confirm which of these is genuinely the most direct functional evidence for the overall direction below (there is a past instance of an indirect results table being cited by mistake)."
+                  "message": "This paper (PMID:41980193) self-reports multiple experimental systems: In vivo phenotyping (histopathology/imaging/ECG) (functionally_abnormal); Molecular/Cellular profiling (functionally_abnormal); Electrophysiological mapping (functionally_abnormal). It is recommended to go back to the relevant part of the full text and manually confirm which of these is genuinely the most direct functional evidence for the overall direction below (there is a past instance of an indirect results table being cited by mistake)."
                 },
                 {
                   "severity": "caution",
                   "category": null,
-                  "message": "This judgment (PMID:39227800) is based on a single study only. For criterion codes on the ClinGen side that require reproducibility across multiple studies (e.g., PS3_Moderate or stronger), this evidence alone may not be sufficient in strength."
+                  "message": "This judgment (PMID:41980193) is based on a single study only. For criterion codes on the ClinGen side that require reproducibility across multiple studies (e.g., PS3_Moderate or stronger), this evidence alone may not be sufficient in strength."
                 },
                 {
                   "severity": "warning",
                   "category": null,
-                  "message": "In this paper (PMID:39227800), none of the extracted experiments' key_findings contain any numeric detail, yet the LLM confidently concluded PS3. This suggests the extraction may describe the paper's general methodology rather than a measurement specifically reported for the target variant, so the judgment has been forced to not_clear (real-world instance: TP53 c.875A>G, where the paper is a large-scale saturation screen and the target variant's specific score was only in supplementary data)."
+                  "message": "In this paper (PMID:41980193), none of the extracted experiments' key_findings contain any numeric detail, yet the LLM confidently concluded PS3. This suggests the extraction may describe the paper's general methodology rather than a measurement specifically reported for the target variant, so the judgment has been forced to not_clear (real-world instance: TP53 c.875A>G, where the paper is a large-scale saturation screen and the target variant's specific score was only in supplementary data)."
                 },
                 {
                   "severity": "info",
                   "category": "evidence_item",
-                  "message": "In vivo mouse model (Knock-in): functionally_abnormal",
+                  "message": "In vivo phenotyping (histopathology/imaging/ECG): functionally_abnormal",
                   "checked": true,
-                  "detail": "mouse, readout: Cardiac geometry, systolic function, ECG, and histological fibrosis, vs Wild-type and heterozygous mice - Homozygous knock-in mice exhibited cardiac enlargement, systolic dysfunction, and progressive cardiac fibrosis.; ECG showed conduction abnormalities (increased P-wave duration, prolonged QRS).; Heterozygous mice were phenotypically normal even under ISO stress."
+                  "detail": "mouse, readout: cardiac hypertrophy, fibrosis, lipid accumulation, and ventricular arrhythmias, vs wild-type mice - Mice developed progressive cardiac hypertrophy, interstitial fibrosis, and lipid accumulation.; Inducible ventricular arrhythmias followed isoproterenol infusion and programmed electrical stimulation.; Severe cardiac dysfunction and reduced survival were observed."
                 },
                 {
                   "severity": "info",
                   "category": "evidence_item",
-                  "message": "Protein stability/degradation assay: functionally_abnormal",
+                  "message": "Molecular/Cellular profiling: functionally_abnormal",
                   "checked": true,
-                  "detail": "cell line (HL-1 and HEK293T), readout: Protein levels via Western Blot and ubiquitination levels, vs Wild-type DSG2 - The variant protein was significantly decreased in level compared to wild-type.; vDSG2 showed increased ubiquitination and was degraded via the ubiquitin-proteasome system."
+                  "detail": "mouse, readout: protein levels and nuclear localization, vs wild-type mice - Reduced DSG2 expression.; Nuclear accumulation of β-catenin and PPAR-γ."
                 },
                 {
                   "severity": "info",
                   "category": "evidence_item",
-                  "message": "ER stress and signaling pathway assay: functionally_abnormal",
+                  "message": "Electrophysiological mapping: functionally_abnormal",
                   "checked": true,
-                  "detail": "cell line (HL-1) and mouse cardiomyocytes, readout: Expression of BiP, CHOP, ATF4, and TGF-β1, vs Wild-type cells/tissue - The variant induced ER stress (increased BiP, CHOP) and activated the PERK-ATF4 signaling pathway.; This led to increased expression of TGF-β1 in cardiomyocytes."
+                  "detail": "mouse (ex vivo), readout: action potential duration and arrhythmia mechanism, vs wild-type mice - Prolonged and heterogeneous action potential duration.; Presence of reentrant and focal ectopic mechanisms of ventricular tachycardia."
                 }
               ]
             }
@@ -2472,32 +2470,62 @@
             {
               "type": "Document",
               "urls": [
-                "https://pubmed.ncbi.nlm.nih.gov/39227800/"
+                "https://pubmed.ncbi.nlm.nih.gov/41980193/"
               ],
-              "pmid": "39227800"
+              "pmid": "41980193"
             }
           ],
           "directionOfEvidenceProvided": "neutral"
         },
         {
-          "id": "evline:paper-4-38551768",
+          "id": "evline:paper-2-41662985",
           "type": "EvidenceLine",
-          "description": "The provided text is an abstract of a clinical cohort study that identifies variants in several genes, including DSG2, but it does not provide specific functional assay data for the target variant c.1592T>G. Without specific experimental readouts for this variant, functional evidence cannot be assessed.",
+          "description": "The provided text describes a clinical/observational study of patients carrying the variant, not a functional laboratory assay (e.g., in vitro or in vivo) that measures protein function. While it provides strong clinical evidence of pathogenicity, it does not meet the criteria for PS3/BS3 functional evidence.",
           "reportedIn": [
             {
               "type": "Document",
               "urls": [
-                "https://pubmed.ncbi.nlm.nih.gov/38551768/"
+                "https://pubmed.ncbi.nlm.nih.gov/41662985/"
               ],
-              "pmid": "38551768"
+              "pmid": "41662985"
             }
           ],
           "directionOfEvidenceProvided": "neutral"
         },
         {
-          "id": "evline:paper-5-37895213",
+          "id": "evline:paper-3-35941102",
           "type": "EvidenceLine",
-          "description": "The paper reports a patient with a homozygous c.1592T>G mutation exhibiting significant clinical and biochemical markers of cardiomyopathy (elevated troponin I and ECG abnormalities). While this is a case report of clinical phenotype rather than a controlled laboratory functional assay, it provides direct evidence of a deleterious effect in a human patient.",
+          "description": "The paper provides clinical/segregation evidence and in silico predictions, but it does not describe any functional assays (e.g., cell-based or animal models) to evaluate the protein's function directly. Therefore, it cannot be used to satisfy PS3 or BS3 criteria.",
+          "reportedIn": [
+            {
+              "type": "Document",
+              "urls": [
+                "https://pubmed.ncbi.nlm.nih.gov/35941102/"
+              ],
+              "pmid": "35941102"
+            }
+          ],
+          "directionOfEvidenceProvided": "neutral"
+        },
+        {
+          "id": "evline:paper-4-31645976",
+          "type": "EvidenceLine",
+          "description": "The paper provides clinical evidence of segregation and mentions previous literature suggesting the variant causes adverse changes in protein structure, but it does not describe any specific, direct functional laboratory assays (e.g., cell-based adhesion assays or protein stability assays) performed in this study to support PS3/BS3.",
+          "reportedIn": [
+            {
+              "type": "Document",
+              "urls": [
+                "https://pubmed.ncbi.nlm.nih.gov/31645976/"
+              ],
+              "pmid": "31645976"
+            }
+          ],
+          "directionOfEvidenceProvided": "neutral"
+        },
+        {
+          "id": "evline:paper-5-30454721",
+          "type": "EvidenceLine",
+          "description": "The paper provides functional evidence via immunofluorescence staining on patient-derived myocardial tissue showing protein expression abnormalities in homozygous carriers. While the abstract does not provide specific quantitative details for the staining, it links the variant to protein expression changes in affected tissue.",
           "extensions": [
             {
               "name": "curatorHints",
@@ -2505,19 +2533,19 @@
                 {
                   "severity": "caution",
                   "category": null,
-                  "message": "This judgment (PMID:37895213) is based on a single study only. For criterion codes on the ClinGen side that require reproducibility across multiple studies (e.g., PS3_Moderate or stronger), this evidence alone may not be sufficient in strength."
+                  "message": "This judgment (PMID:30454721) is based on a single study only. For criterion codes on the ClinGen side that require reproducibility across multiple studies (e.g., PS3_Moderate or stronger), this evidence alone may not be sufficient in strength."
                 },
                 {
                   "severity": "warning",
                   "category": null,
-                  "message": "In this paper (PMID:37895213), none of the extracted experiments' key_findings contain any numeric detail, yet the LLM confidently concluded PS3. This suggests the extraction may describe the paper's general methodology rather than a measurement specifically reported for the target variant, so the judgment has been forced to not_clear (real-world instance: TP53 c.875A>G, where the paper is a large-scale saturation screen and the target variant's specific score was only in supplementary data)."
+                  "message": "In this paper (PMID:30454721), none of the extracted experiments' key_findings contain any numeric detail, yet the LLM confidently concluded PS3. This suggests the extraction may describe the paper's general methodology rather than a measurement specifically reported for the target variant, so the judgment has been forced to not_clear (real-world instance: TP53 c.875A>G, where the paper is a large-scale saturation screen and the target variant's specific score was only in supplementary data)."
                 },
                 {
                   "severity": "info",
                   "category": "evidence_item",
-                  "message": "clinical/phenotypic characterization: functionally_abnormal",
+                  "message": "immunofluorescence staining: functionally_abnormal",
                   "checked": true,
-                  "detail": "patient-derived, readout: cardiac phenotype (troponin I, myocardial edema, ECG, clinical diagnosis), vs not specified - increased levels of cardiac troponin I; myocardial edema in the lateral ventricular wall and apex; electrocardiogram with multiple premature ventricular beats; resulted in an initial diagnosis of pediatric myocarditis subsequently classified as ACM"
+                  "detail": "patient-derived (myocardial tissue), readout: protein expression, vs not specified - The study examined protein expression using immunofluorescence staining on the myocardial tissue of two probands undergoing heart transplant."
                 }
               ]
             }
@@ -2526,170 +2554,103 @@
             {
               "type": "Document",
               "urls": [
-                "https://pubmed.ncbi.nlm.nih.gov/37895213/"
+                "https://pubmed.ncbi.nlm.nih.gov/30454721/"
               ],
-              "pmid": "37895213"
+              "pmid": "30454721"
             }
           ],
           "directionOfEvidenceProvided": "neutral"
         },
         {
-          "id": "evline:paper-6-35721821",
+          "id": "evline:paper-6-41158880",
           "type": "EvidenceLine",
-          "description": "The paper does not test or report any data for the target variant c.1592T>G. It describes a different variant (c.152G>C) in the DSG2 gene.",
+          "description": "The paper does not evaluate the target variant (p.Phe531Cys); it evaluates a different splice-site variant (c.1880-2A>G).",
           "reportedIn": [
             {
               "type": "Document",
               "urls": [
-                "https://pubmed.ncbi.nlm.nih.gov/35721821/"
+                "https://pubmed.ncbi.nlm.nih.gov/41158880/"
               ],
-              "pmid": "35721821"
+              "pmid": "41158880"
             }
           ],
           "directionOfEvidenceProvided": "neutral"
         },
         {
-          "id": "evline:paper-7-34993452",
+          "id": "evline:paper-7-40887256",
           "type": "EvidenceLine",
-          "description": "The provided text does not contain any functional data or even any mention of the specific variant DSG2 c.1592T>G. Therefore, no functional evidence can be assessed.",
+          "description": "The study does not test the target variant (p.F531C); it only evaluates p.R292C and p.D494A. Therefore, no functional evidence can be attributed to the target variant from this paper.",
           "reportedIn": [
             {
               "type": "Document",
               "urls": [
-                "https://pubmed.ncbi.nlm.nih.gov/34993452/"
+                "https://pubmed.ncbi.nlm.nih.gov/40887256/"
               ],
-              "pmid": "34993452"
+              "pmid": "40887256"
             }
           ],
           "directionOfEvidenceProvided": "neutral"
         },
         {
-          "id": "evline:paper-8-34393635",
+          "id": "evline:paper-8-40123482",
           "type": "EvidenceLine",
-          "description": "The target variant DSG2 c.1592T>G was not identified or tested in the provided text.",
+          "description": "The provided text does not contain any functional assay data (in vitro or in vivo) for the target variant. It is a clinical observational study of patient cohorts, which does not satisfy the requirements for PS3/BS3 evidence.",
           "reportedIn": [
             {
               "type": "Document",
               "urls": [
-                "https://pubmed.ncbi.nlm.nih.gov/34393635/"
+                "https://pubmed.ncbi.nlm.nih.gov/40123482/"
               ],
-              "pmid": "34393635"
+              "pmid": "40123482"
             }
           ],
           "directionOfEvidenceProvided": "neutral"
         },
         {
-          "id": "evline:paper-9-34300226",
+          "id": "evline:paper-9-40115818",
           "type": "EvidenceLine",
-          "description": "The patient-derived hiPSC-CM model harboring the c.2358delA variant demonstrates multiple well-defined functional defects, including reduced protein expression/localization, altered electrophysiology (shortened APD), and increased inflammatory cytokine secretion compared to wild-type controls.",
-          "extensions": [
-            {
-              "name": "curatorHints",
-              "value": [
-                {
-                  "severity": "warning",
-                  "category": null,
-                  "message": "This paper (PMID:34300226) self-reports multiple experimental systems: Immunofluorescence/Immunostaining (functionally_abnormal); RT-qPCR (functionally_abnormal); Western Blot (functionally_abnormal); Optical Mapping (Electrophysiology) (functionally_abnormal); RNA-Seq / Cytokine Array (functionally_abnormal). It is recommended to go back to the relevant part of the full text and manually confirm which of these is genuinely the most direct functional evidence for the overall direction below (there is a past instance of an indirect results table being cited by mistake)."
-                },
-                {
-                  "severity": "caution",
-                  "category": null,
-                  "message": "This judgment (PMID:34300226) is based on a single study only. For criterion codes on the ClinGen side that require reproducibility across multiple studies (e.g., PS3_Moderate or stronger), this evidence alone may not be sufficient in strength."
-                },
-                {
-                  "severity": "info",
-                  "category": "evidence_item",
-                  "message": "Immunofluorescence/Immunostaining: functionally_abnormal",
-                  "checked": true,
-                  "detail": "patient-derived hiPSC-CMs, readout: Protein localization and abundance of DSG2, vs Ctrl1 (age/sex matched) and Ctrl2 (WTC11) - Reduced overall signal intensity of desmoglein-2; Reduced membrane localization with perinuclear accumulation"
-                },
-                {
-                  "severity": "info",
-                  "category": "evidence_item",
-                  "message": "RT-qPCR: functionally_abnormal",
-                  "checked": true,
-                  "detail": "patient-derived hiPSC-CMs, readout: mRNA expression levels of DSG2, vs Ctrl1 and Ctrl2 - Significantly reduced mRNA expression (35.2% and 49.6% reduction)"
-                },
-                {
-                  "severity": "info",
-                  "category": "evidence_item",
-                  "message": "Western Blot: functionally_abnormal",
-                  "checked": true,
-                  "detail": "patient-derived hiPSC-CMs, readout: Protein abundance of full-length DSG2, vs Ctrl1 and Ctrl2 - Much lower expression of full-length (~130kDa) desmoglein-2"
-                },
-                {
-                  "severity": "info",
-                  "category": "evidence_item",
-                  "message": "Optical Mapping (Electrophysiology): functionally_abnormal",
-                  "checked": true,
-                  "detail": "patient-derived hiPSC-CMs, readout: Action potential duration (APD90 and APD50) and calcium transients, vs Ctrl1 and Ctrl2 - Significantly reduced APD90 and APD50; Significantly shorter time-to-peak calcium (CaT); Slower CaT decay at faster pacing rates"
-                },
-                {
-                  "severity": "info",
-                  "category": "evidence_item",
-                  "message": "RNA-Seq / Cytokine Array: functionally_abnormal",
-                  "checked": true,
-                  "detail": "patient-derived hiPSC-CMs, readout: Cytokine and chemokine expression levels, vs Ctrl1 and Ctrl2 - Upregulation of numerous pro-inflammatory cytokines and chemokines (e.g., MCP-1, IL-6, IL-8)"
-                }
-              ]
-            }
-          ],
+          "description": "The target variant DSG2 c.1592T>G (p.Phe531Cys) is not mentioned or tested in the provided text. Therefore, no functional evidence can be extracted.",
           "reportedIn": [
             {
               "type": "Document",
               "urls": [
-                "https://pubmed.ncbi.nlm.nih.gov/34300226/"
+                "https://pubmed.ncbi.nlm.nih.gov/40115818/"
               ],
-              "pmid": "34300226"
+              "pmid": "40115818"
             }
           ],
-          "directionOfEvidenceProvided": "disputes"
+          "directionOfEvidenceProvided": "neutral"
         },
         {
-          "id": "evline:paper-10-34095246",
+          "id": "evline:paper-10-40106965",
           "type": "EvidenceLine",
-          "description": "The paper does not evaluate the target variant (DSG2 c.1592T>G). It reports findings for a different gene (PKP2).",
+          "description": "The study focuses on a different DSG2 variant (c.1672C>T) than the target variant (c.1592T>G). Therefore, no functional data for the target variant is provided.",
           "reportedIn": [
             {
               "type": "Document",
               "urls": [
-                "https://pubmed.ncbi.nlm.nih.gov/34095246/"
+                "https://pubmed.ncbi.nlm.nih.gov/40106965/"
               ],
-              "pmid": "34095246"
+              "pmid": "40106965"
             }
           ],
           "directionOfEvidenceProvided": "neutral"
         }
       ],
-      "directionOfEvidenceProvided": "disputes",
-      "strengthOfEvidenceProvided": {
-        "type": "MappableConcept",
-        "primaryCoding": {
-          "system": "ACMG Guidelines, 2015",
-          "code": "supporting"
-        }
-      },
-      "evidenceOutcome": {
-        "type": "MappableConcept",
-        "name": "ACMG 2015 PS3 supporting Criterion Met (heuristic estimate, unconfirmed)",
-        "primaryCoding": {
-          "system": "ACMG Guidelines, 2015",
-          "code": "PS3_supporting"
-        }
-      },
+      "directionOfEvidenceProvided": "neutral",
       "extensions": [
         {
           "name": "curatorHints",
           "value": [
             {
-              "severity": "caution",
+              "severity": "info",
               "category": null,
-              "message": "Only 1 of 10 paper(s) examined yielded usable evidence (this count is computed directly from the papers actually fetched and judged, not from any self-report on a single paper)."
+              "message": "None of the 10 paper(s) examined yielded a usable evidence-based judgment for this variant (either the variant could not be identified in the text, or the per-paper judgment was itself inconclusive)."
             },
             {
               "severity": "caution",
-              "category": "strength_estimation",
-              "message": "heuristic: 1 independent paper(s) with agreeing direction (1=supporting, 2=moderate, 3+=strong). This is a rough proxy, NOT a VCEP-calibrated ACMG strength determination - the underlying LLM judgment only assesses direction, never strength - and requires human curator confirmation."
+              "category": "unevaluated",
+              "message": "BS3 could not actually be evaluated from the available literature (reported as not_met rather than left unknown)."
             }
           ]
         },
@@ -2735,19 +2696,34 @@
     {
       "id": "evline:DSG2_c_1592T_G_BP1",
       "type": "EvidenceLine",
-      "description": "No gene_disease assessment was retrieved for this variant. BP1 evaluates missense variants in genes where disease is predominantly caused by truncating variants rather than missense variation. Outcome: UNKNOWN; no MET or NOT_MET judgment is made from the available information.",
+      "name": "BP1 assessment for GRCh38:18:31536370:T:G",
+      "description": "Reviewed disease mechanism and variant spectrum evaluated. BP1 evaluates missense variants in genes where disease is predominantly caused by truncating variants rather than missense variation. Outcome: NOT_MET; BP1 was evaluated but its requirements were not satisfied.",
       "specifiedBy": {
         "type": "Method",
-        "name": "ACMG/AMP BP1 assessment (not met)",
+        "name": "ACMG/AMP 2015 with ClinGen General Guidance",
         "methodType": "BP1",
         "reportedIn": {
           "type": "Document",
           "name": "Richards et al., 2015, Genet Med.",
+          "urls": [
+            "https://pubmed.ncbi.nlm.nih.gov/25741868/"
+          ],
           "doi": "10.1038/gim.2015.30",
           "pmid": "25741868"
         }
       },
+      "hasEvidenceItems": [
+        "urn:sha256:9908b24cf1b295180f712f6449a8495648a4a1d6c5de16022ec1a2daca0d6678:annotation:NM_001943.5",
+        "urn:bh26:gene-disease-assessment:d5731c27b9f851a2333a06222468c044f1e4ed8d4190c2026614f28cae91803c:a6ef27d4c1c25473"
+      ],
       "directionOfEvidenceProvided": "neutral",
+      "evidenceOutcome": {
+        "name": "ACMG 2015 BP1 criterion not met",
+        "primaryCoding": {
+          "system": "ACMG Guidelines, 2015",
+          "code": "BP1_not_met"
+        }
+      },
       "extensions": [
         {
           "name": "status",
@@ -2756,24 +2732,14 @@
         {
           "name": "provenance",
           "value": {
-            "rule_version": "BP1-v1"
+            "rule_version": "BP1-v1",
+            "assessment_scope": "gene_level",
+            "condition_assessment": "MATCHED"
           }
         },
         {
-          "name": "missingInputs",
-          "value": [
-            "gene_disease"
-          ]
-        },
-        {
-          "name": "curatorHints",
-          "value": [
-            {
-              "severity": "caution",
-              "category": "unevaluated",
-              "message": "BP1 could not actually be evaluated from the available data (reported as not_met rather than left unknown)."
-            }
-          ]
+          "name": "direction",
+          "value": "none"
         }
       ]
     },
@@ -2850,7 +2816,7 @@
       "id": "evline:DSG2_c_1592T_G_BP4",
       "type": "EvidenceLine",
       "name": "BP4 assessment for GRCh38:18:31536370:T:G",
-      "description": "Another predicted mechanism does not support benign computational evidence. BP4 evaluates calibrated computational evidence supporting a benign effect. Outcome: NOT_MET; BP4 was evaluated but its requirements were not satisfied.",
+      "description": "Another predicted mechanism supports PP3 rather than a benign effect (REVEL 0.744). BP4 evaluates calibrated computational evidence supporting a benign effect. Outcome: NOT_MET; BP4 was evaluated but its requirements were not satisfied.",
       "specifiedBy": {
         "type": "Method",
         "name": "ACMG/AMP 2015 with ClinGen General Guidance",
@@ -2893,14 +2859,16 @@
                 "mechanism": "protein",
                 "predictor": "REVEL",
                 "score": "0.744",
-                "strength": null
+                "strength": null,
+                "opposing": "supporting"
               },
               {
                 "calibration": "spliceai-svi-2023",
                 "mechanism": "splicing",
                 "predictor": "SpliceAI",
                 "score": "0",
-                "strength": "supporting"
+                "strength": "supporting",
+                "opposing": null
               }
             ],
             "version_assertions": [
@@ -2918,7 +2886,9 @@
               {
                 "predictor": "REVEL",
                 "mechanism": "protein",
-                "score": "0.744"
+                "score": "0.744",
+                "opposing_criterion": "PP3",
+                "opposing_strength": "supporting"
               }
             ]
           }
@@ -2926,6 +2896,10 @@
         {
           "name": "direction",
           "value": "none"
+        },
+        {
+          "name": "referenceLink",
+          "value": "https://pubmed.ncbi.nlm.nih.gov/36413997/"
         }
       ]
     },

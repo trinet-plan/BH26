@@ -57,7 +57,6 @@ except ImportError:
     # Same mcp-version naming difference already worked around in
     # pipeline.py's connect_pubmed() (2026-09-17 fix, applied here too).
     from mcp.client.streamable_http import streamablehttp_client as streamable_http_client
-from openai import OpenAI
 
 from acmg_pipeline.clinical_note import ClinicalFeature, ClinicalNoteExtraction
 
@@ -84,18 +83,14 @@ def _load_env_file(path: Path = ROOT_DIR / ".env") -> None:
 
 _load_env_file()
 
-VLLM_BASE_URL = os.environ.get("VLLM_BASE_URL", "")
-VLLM_API_KEY = os.environ.get("VLLM_API_KEY", "")
-MODEL = os.environ.get("VLLM_MODEL", "google/gemma-4-26B-A4B-it")
 TOGOMCP_URL = os.environ.get("TOGOMCP_URL", "https://togomcp.rdfportal.org/mcp")
 OLS4_MCP_URL = os.environ.get("OLS4_MCP_URL", "https://www.ebi.ac.uk/ols4/api/mcp")
 
-if not VLLM_BASE_URL or not VLLM_API_KEY:
-    raise RuntimeError(
-        "VLLM_BASE_URL / VLLM_API_KEY are not configured in the repository-root .env"
-    )
+from acmg_pipeline.llm_client import make_client as _make_llm_client
 
-client = OpenAI(base_url=VLLM_BASE_URL, api_key=VLLM_API_KEY)
+# See acmg_pipeline.llm_client's own docstring: LLM_PROVIDER in .env picks
+# the backend for every module, this one included.
+client, MODEL = _make_llm_client()
 
 
 def to_openai_tools(mcp_tools: list[Any]) -> list[dict[str, Any]]:

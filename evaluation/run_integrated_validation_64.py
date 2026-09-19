@@ -232,7 +232,24 @@ async def main() -> None:
                     condition_id=erepo_lookup.condition_id,
                 )
             else:
-                clinical_note = empty_clinical_note()
+                # ERepo has nothing at all for some of this dataset's variants
+                # (the democase-sourced entries, e.g. MYBPC3 c.278delA/
+                # c.2905+1G>A/c.836del - real HCM variants ERepo simply has
+                # never curated). Per the user's explicit direction
+                # (2026-09-19): try a live literature search for what
+                # disease the variant is reported to cause before giving up
+                # to an empty clinical note.
+                from acmg_pipeline import condition_from_literature_search
+                lit_condition = await condition_from_literature_search.search_condition_from_literature(
+                    gene, hgvsc,
+                )
+                if lit_condition.found:
+                    from acmg_pipeline import hpo_mondo_extraction
+                    clinical_note = await hpo_mondo_extraction.resolve_diagnosis_mondo(
+                        ClinicalNoteExtraction(diagnosis=lit_condition.condition_name)
+                    )
+                else:
+                    clinical_note = empty_clinical_note()
 
             try:
                 lines = await pl.evaluate_variant_evidence_lines(

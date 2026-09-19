@@ -47,7 +47,7 @@ Docker)から返す。
   (`Method.reportedIn`は単一Documentのみ、`hasEvidenceItems`に汎用StudyResult型が無い、
   `Direction`に「未評価」が表現できない等)を5件のissueとして
   [doc/ga4gh_va_spec_feedback_v1_en.md](ga4gh_va_spec_feedback_v1_en.md) にまとめ、
-  GA4GHへの提案として整理した。
+  GA4GH本家に [Issue #448](https://github.com/ga4gh/va-spec/issues/448) として実際に提出した。
 
 ## 3. 精度検証
 
