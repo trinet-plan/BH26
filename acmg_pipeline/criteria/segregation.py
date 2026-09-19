@@ -144,6 +144,9 @@ class SegregationJudgment:
                 confidence=vm.get("confidence", "low"),
                 notes=vm.get("notes", ""),
             ),
+            # `or []`, not `.get(key, [])` - see ps3_bs3.PS3BS3Judgment.from_json's
+            # own comment: some models emit "families": null outright rather
+            # than omitting the key, and .get()'s default only covers the latter.
             families=[
                 FamilySegregationData(
                     family_id=fam.get("family_id", ""),
@@ -154,7 +157,7 @@ class SegregationJudgment:
                     informative_meioses=fam.get("informative_meioses"),
                     notes=fam.get("notes", ""),
                 )
-                for fam in data.get("families", [])
+                for fam in (data.get("families") or [])
             ],
             overall_evidence=SegregationEvidence(
                 direction=SegregationDirection(_clean_enum_token(data["overall_evidence"]["direction"])),

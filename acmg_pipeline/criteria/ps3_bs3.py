@@ -143,6 +143,15 @@ class PS3BS3Judgment:
                 confidence=vm.get("confidence", "low"),
                 notes=vm.get("notes", ""),
             ),
+            # `or []`, not `.get(key, [])`: dict.get()'s default only fires when
+            # the key is absent, and Claude (observed 2026-09-19, switching
+            # LLM_PROVIDER away from gemma-4) emits "experiments": null and
+            # "key_findings": null outright for the no-functional-assay case,
+            # which .get(key, []) still returns as None, not []. `for e in None`
+            # then crashes with "'NoneType' object is not iterable" - same class
+            # of per-model output-shape quirk as the bare-string variant_matching
+            # fallback above, just the opposite direction (present-but-null
+            # instead of a flattened type).
             experiments=[
                 ExperimentExtraction(
                     assay_type=e["assay_type"],
@@ -150,10 +159,10 @@ class PS3BS3Judgment:
                     readout=e["readout"],
                     comparator=e["comparator"],
                     result_direction=ResultDirection(_clean_enum_token(e["result_direction"])),
-                    key_findings=e.get("key_findings", []),
+                    key_findings=e.get("key_findings") or [],
                     model_system_caveat=e.get("model_system_caveat"),
                 )
-                for e in data.get("experiments", [])
+                for e in (data.get("experiments") or [])
             ],
             overall_evidence=OverallEvidence(
                 direction=OverallDirection(_clean_enum_token(data["overall_evidence"]["direction"])),
