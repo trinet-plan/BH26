@@ -47,7 +47,6 @@ except ImportError:
     # both spellings are supported here.
     from mcp.client.streamable_http import streamablehttp_client as streamable_http_client
 from mcp import types as mcp_types
-from openai import OpenAI
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import types
@@ -185,20 +184,19 @@ def _load_env_file(path: Path = ROOT_DIR / ".env") -> None:
 
 _load_env_file()
 
-VLLM_BASE_URL = os.environ.get("VLLM_BASE_URL", "")
-VLLM_API_KEY = os.environ.get("VLLM_API_KEY", "")
-if not VLLM_BASE_URL or not VLLM_API_KEY:
-    raise RuntimeError(
-        "VLLM_BASE_URL / VLLM_API_KEY が設定されていません。"
-        "リポジトリ直下に .env を作成してください(.env.example を参照)。"
-    )
-MODEL = "google/gemma-4-26B-A4B-it"
+from acmg_pipeline.llm_client import make_client as _make_llm_client
 
 MCP_SERVERS = {
     "pubmed": "https://pubmed.mcp.claude.com/mcp",
 }
 
-client = OpenAI(base_url=VLLM_BASE_URL, api_key=VLLM_API_KEY)
+# Which LLM backend every module downstream of this one talks to (PS3/BS3/
+# PS4, PP4/PP1 literature search, MONDO resolution, ...) is decided in one
+# place now - acmg_pipeline.llm_client - via LLM_PROVIDER in .env. Default
+# stays this project's original self-hosted vLLM server; set
+# LLM_PROVIDER=claude (plus ANTHROPIC_API_KEY) to switch to Claude instead,
+# see that module's own docstring.
+client, MODEL = _make_llm_client()
 
 LOG_DIR = Path("logs")
 LOG_DIR.mkdir(exist_ok=True)

@@ -60,14 +60,13 @@ def _load_env_file(path: Path = ROOT_DIR / ".env") -> None:
 
 _load_env_file()
 
-VLLM_BASE_URL = os.environ.get("VLLM_BASE_URL", "")
-VLLM_API_KEY = os.environ.get("VLLM_API_KEY", "")
-VLLM_MODEL = os.environ.get("VLLM_MODEL", "google/gemma-4-26B-A4B-it")
+from acmg_pipeline.llm_client import make_client as _make_llm_client
 
-if not VLLM_BASE_URL or not VLLM_API_KEY:
-    raise RuntimeError(
-        "VLLM_BASE_URL / VLLM_API_KEY are not configured in the repository-root .env"
-    )
+# See acmg_pipeline.llm_client's own docstring: LLM_PROVIDER in .env picks
+# the backend (default this project's self-hosted vLLM server; "claude"
+# switches to Claude via its OpenAI-compatible endpoint) for every module,
+# this one included.
+_, VLLM_MODEL = _make_llm_client()
 
 
 SYSTEM_PROMPT = """\
@@ -204,7 +203,7 @@ Boolean semantics:
 
 
 def make_client() -> OpenAI:
-    return OpenAI(base_url=VLLM_BASE_URL, api_key=VLLM_API_KEY)
+    return _make_llm_client()[0]
 
 
 def _extract_json_object(text: str) -> dict[str, Any]:
