@@ -154,6 +154,7 @@ def _load_erepo_entries() -> list[GroundTruthEntry]:
     return (
         _load_erepo_snapshot("erepo_full_requery_2026-09-15.json")
         + _load_erepo_snapshot("erepo_full_requery_2026-09-16_batch2.json")
+        + _load_erepo_snapshot("erepo_bulk_expansion_2026-09-19.json")
     )
 
 
