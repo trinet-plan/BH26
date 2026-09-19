@@ -49,6 +49,7 @@ from acmg_pipeline.common import AggregatedJudgment, is_not_clear, strength_tier
 from acmg_pipeline.constants import (
     ALL_ACMG_CODES,
     AUTOMATED_CODES,
+    DE_NOVO_CODES,
     IMPLEMENTED_CODES,
     LITERATURE_CODES,
     PHENOTYPE_SEGREGATION_CODES,

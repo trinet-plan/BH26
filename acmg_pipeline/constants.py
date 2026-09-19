@@ -30,7 +30,12 @@ AUTOMATED_CODES = frozenset({
 # IMPLEMENTED_CODES (as opposed to STUB_CODES) does not overstate today's
 # real coverage.
 PHENOTYPE_SEGREGATION_CODES = frozenset({"PP1", "BS4", "PP4"})
-IMPLEMENTED_CODES = LITERATURE_CODES | AUTOMATED_CODES | PHENOTYPE_SEGREGATION_CODES
+# Connected 2026-09-19 via acmg_pipeline.criteria.ps2_pm6 - a rule-based
+# evaluator (no literature/LLM call) over ClinicalNoteExtraction.de_novo,
+# the exact fields that dataclass's own docstring names as "exactly the
+# data PS2 ... and PM6 ... need". See ps2_pm6.py's own module docstring.
+DE_NOVO_CODES = frozenset({"PS2", "PM6"})
+IMPLEMENTED_CODES = LITERATURE_CODES | AUTOMATED_CODES | PHENOTYPE_SEGREGATION_CODES | DE_NOVO_CODES
 STUB_CODES = frozenset(ALL_ACMG_CODES) - IMPLEMENTED_CODES
 AUTOMATED_CRITERIA = tuple(code for code in ALL_ACMG_CODES if code in AUTOMATED_CODES)
 
