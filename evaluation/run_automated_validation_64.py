@@ -77,14 +77,14 @@ import sys
 import tempfile
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import acmg_pipeline.automated_cli as automated_cli_module
 from acmg_pipeline.automated_core.input import audit_vcf
 from acmg_pipeline.classification import AUTOMATED_CODES
 from test_data.collectors.full_criteria_ground_truth import entries_for, unique_variants
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parent.parent
 TRANSCRIPTS_PATH = ROOT / "test_data" / "fetched_data" / "erepo_variant_transcripts.json"
 CACHE_DIR = ROOT / "cache" / "erepo_automated_ensembl"
 EVIDENCE_CACHE_DIR = ROOT / "cache" / "erepo_automated_evidence"

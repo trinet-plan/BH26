@@ -36,7 +36,7 @@ TEST_FILES = [
 
 
 def main() -> None:
-    root = Path(__file__).resolve().parent
+    root = Path(__file__).resolve().parent.parent
     results: list[tuple[str, int]] = []
 
     for name in TEST_FILES:

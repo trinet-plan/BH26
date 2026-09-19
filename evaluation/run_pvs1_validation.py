@@ -28,8 +28,9 @@ import tempfile
 from collections import Counter
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(Path(__file__).resolve().parent))  # for the sibling import below
 
 import run_automated_validation_64 as base  # noqa: E402
 import acmg_pipeline.automated_cli as cli  # noqa: E402

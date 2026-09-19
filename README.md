@@ -33,6 +33,9 @@ acmg_pipeline/            判定パイプライン本体
 acmg/                     移植した自動判定器(16基準)
 config/                   自動判定の閾値・BA1例外・CLI互換用文脈
 tests/                    自動判定と統合インターフェースのpytest
+test_data/                28基準分のground truthデータ一式(判定ロジックは含まない)。
+  collectors/               ClinGen ERepo/Ensembl MANEから生データを再取得するスクリプト + データ本体(full_criteria_ground_truth.py)
+  fetched_data/             collectors/が生成する生JSONスナップショット。criterion_runner.pyがこのデータで任意の判定関数を採点する
 
 democase/                 デモ用の臨床ノート・VCF・正解データ
 doc/                       設計・参加者向け資料
@@ -92,6 +95,18 @@ cp .env.example .env
 
 ## 動作確認
 
+`evaluation/`(ground truthとの一致率測定)と`scripts/`(実行・出力確認用)。リポジトリルートから`.venv/bin/python3`で実行。
+
+```bash
+.venv/bin/python3 evaluation/run_validation_64.py              # 文献3基準(PS3/BS3/PS4)をground truthと比較
+.venv/bin/python3 evaluation/run_automated_validation_64.py    # 自動判定16基準をground truthと比較
+.venv/bin/python3 evaluation/run_integrated_validation_64.py   # 統合28基準+classify()を64件で検証
+.venv/bin/python3 evaluation/run_integrated_validation_demo.py # 同上、democase 4症例のみの高速版
+.venv/bin/python3 evaluation/run_pvs1_validation.py            # PVS1を専門家パネルと比較(--contexts erepo|curated)
+.venv/bin/python3 scripts/run_automated_api_va_spec.py         # APIパス(自動判定のみ)をin-processで実行しVA-Spec出力
+.venv/bin/python3 scripts/run_all_tests.py                     # ルート直下のtest_*.pyを一括実行
+```
+
 ## 統合インターフェース
 
 他のスクリプトからは `acmg_pipeline.pipeline.evaluate_variant_evidence_lines()` を
@@ -145,17 +160,17 @@ CLI引数は用意されていません。対象の遺伝子/変異を変えた�
 `acmg_pipeline/pipeline.py` の `main()` 内 `test_cases`(505行目付近)を
 直接編集してください。
 
-## 自動判定CLIの実行手順(demo-data)
+## 自動判定CLIの実行手順(democase)
 
 `acmg_pipeline.automated_cli` が16本の自動化criterionを評価します。**4ステップで、
 3番目を飛ばすとPP2/BP1がミスセンス全件で `unknown` になります。**
 
 ```bash
 # 1. 原本VCFを監査(原本は変更しない)
-python3 -m acmg_pipeline.automated_cli audit-demo   --input-dir demo-data --output-dir work/run/audit
+python3 -m acmg_pipeline.automated_cli audit-demo   --input-dir democase --output-dir work/run/audit
 
 # 2. identityを解決し、外部プロバイダから normalised evidence を集める
-python3 -m acmg_pipeline.automated_cli prepare-demo-online   --input-dir demo-data   --cache-dir tests/fixtures/ensembl-cache   --evidence-cache-dir tests/fixtures/external-cache   --output-dir work/run/prepared --ensembl-release 116   --with-gnomad --gnomad-release 4.1.1   --with-clinvar --clinvar-release 2026-09-15   --with-pm1-hotspot --with-dbnsfp   --rules config/demo-rules.json --offline
+python3 -m acmg_pipeline.automated_cli prepare-demo-online   --input-dir democase   --cache-dir tests/fixtures/ensembl-cache   --evidence-cache-dir tests/fixtures/external-cache   --output-dir work/run/prepared --ensembl-release 116   --with-gnomad --gnomad-release 4.1.1   --with-clinvar --clinvar-release 2026-09-15   --with-pm1-hotspot --with-dbnsfp   --rules config/demo-rules.json --offline
 
 # 3. 遺伝子--疾患の機序assessmentを展開して evidence に足す(PP2/BP1に必須)
 python3 -m acmg_pipeline.automated_cli build-gene-disease-evidence   --input config/gene-disease-review-decisions.json   --base-evidence work/run/prepared/evidence.json   --output work/run/evidence.json
@@ -178,7 +193,7 @@ python3 -m acmg_pipeline.automated_cli evaluate   --input work/run/prepared/vari
 (`gene_disease_draft`)へフォールバックします。
 
 reviewされた決定が無い遺伝子の変異には assessment が付きません(他遺伝子の判断を一般化
-しないため)。demo-dataでは7グループが28件中15件をカバーします。
+しないため)。democaseでは7グループが28件中15件をカバーします。
 
 `--offline` はキャッシュ済みレスポンスのみを使い、ネットワークへ出ません。実行可能な形の
 同じ手順が `tests/test_demo_pipeline.py` にあります。

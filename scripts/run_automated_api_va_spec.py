@@ -15,14 +15,17 @@ where they can be changed. Needs the network on a cold cache.
 import argparse
 import asyncio
 import json
+import sys
 from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT))
 
 from acmg_pipeline.automated_engine import CRITERIA as AUTOMATED_CRITERIA
 from acmg_pipeline.pipeline_interface import (
     load_automated_config, parse_request_vcf, run_selected_criteria,
 )
 
-ROOT = Path(__file__).resolve().parent
 RULES_PATH = ROOT / "config" / "demo-rules.json"
 DEFAULT_INPUT = ROOT / "democase" / "case1_api_input_case1-var1.json"
 

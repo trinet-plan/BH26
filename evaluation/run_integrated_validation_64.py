@@ -63,7 +63,7 @@ from datetime import datetime
 from contextlib import AsyncExitStack
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import acmg_pipeline.automated_cli as automated_cli_module
 import acmg_pipeline.pipeline as pl
@@ -78,7 +78,7 @@ from acmg_pipeline.pipeline_interface import _evidence_from_line
 from acmg_pipeline.vcf_record import VariantRecord
 from test_data.collectors.full_criteria_ground_truth import entries_for, unique_variants
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parent.parent
 TRANSCRIPTS_PATH = ROOT / "test_data" / "fetched_data" / "erepo_variant_transcripts.json"
 COORDS_PATH = ROOT / "test_data" / "fetched_data" / "erepo_variant_coordinates.json"
 CACHE_DIR = ROOT / "cache" / "erepo_automated_ensembl"

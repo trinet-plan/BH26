@@ -40,3 +40,6 @@ work/
 # Cached PubMed full-text (acmg_pipeline/fulltext_cache.py) - regenerable,
 # and shouldn't put paper full text into git history
 cache/
+
+# Local, session-scoped PR review notes - not meant to ship in the repo
+PR_REVIEW_NOTES.md
