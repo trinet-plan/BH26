@@ -150,7 +150,17 @@ fixed, RPE65 partially). The full 64-variant set has not yet been re-run with th
 - **6 criteria not yet implemented** (PS2, PM3, PM6, BS2, BP2, BP5) — future work.
 - **RPE65's missing NMD prediction data** — PVS1's mechanism gate now passes, but the
   variant-level decision tree can't reach MET without NMD prediction evidence that isn't
-  available for this variant - a separate data/provider gap to investigate.
+  available for this variant. Root cause found: querying Ensembl VEP directly
+  (`numbers=1`) shows a plain splice_donor_variant (e.g. MYBPC3 c.2905+1G>A) gets a real
+  intron number back, but RPE65 c.495+1dup - a duplication landing exactly on the
+  exon/intron boundary, annotated as frameshift_variant + splice_region_variant - gets
+  neither an exon nor an intron number from VEP at all. `acmg_pipeline/providers/nmd.py`
+  is designed to report no record rather than guess when numbering doesn't settle the
+  question, so this is working as intended, not a bug. A real fix (computing the exon
+  position ourselves from CDS coordinates and transcript structure, or adding another
+  annotation source) is a real implementation effort - **deferred as a known limitation**
+  for now rather than attempted tonight; the current "leave it to a curator"
+  (MANUAL_REVIEW/not_met) behavior stays as-is.
 - **Re-running the full 64-variant set with today's PVS1 fixes** — not yet done; expected
   to improve the MET rate further.
 - **Literature engine accuracy** — the bottleneck is the scarcity of papers that mention
