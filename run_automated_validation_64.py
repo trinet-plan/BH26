@@ -228,15 +228,16 @@ def main() -> None:
     automated_cli_module.audit_demo = _audit_demo_override
 
     prepared = work / "prepared"
+    prepared_pass1 = work / "prepared_pass1"
     evaluated = work / "evaluated"
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
     EVIDENCE_CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
-    prepare_args = [
-        "prepare-demo-online", "--input-dir", str(work),  # ignored by the override above
+    _COMMON_PREPARE_ARGS = [
+        "--input-dir", str(work),  # ignored by the override above
         "--cache-dir", str(CACHE_DIR),
         "--evidence-cache-dir", str(EVIDENCE_CACHE_DIR),
-        "--output-dir", str(prepared), "--ensembl-release", "116",
+        "--ensembl-release", "116",
         # --with-togovar, not --with-gnomad (mutually exclusive - argparse
         # rejects both): this project moved population_sources from gnomAD
         # to TogoVar (see acmg_pipeline.automated_cli._population_sources()'s
@@ -267,16 +268,37 @@ def main() -> None:
         "--with-clingen-gene-validity",
     ]
     if args.offline:
-        prepare_args.append("--offline")
-    exit_code = automated_cli_module.main(prepare_args)
+        _COMMON_PREPARE_ARGS.append("--offline")
+
+    # Pass 1: resolve identities only, so context.json can be built (it needs
+    # prepared/variants.json's variant_id -> record_id mapping - see
+    # _write_context()). --with-gene-disease-draft is deliberately left off
+    # this pass: identity['CONDITION'] is never set yet, so the suggestion
+    # would always come back INSUFFICIENT anyway (see --context's own help
+    # text in automated_cli.py) - no point paying for it twice.
+    exit_code = automated_cli_module.main([
+        "prepare-demo-online", "--output-dir", str(prepared_pass1), *_COMMON_PREPARE_ARGS,
+    ])
     if exit_code:
-        print(f"[run_automated_validation_64] prepare-demo-online exited {exit_code}; stopping")
+        print(f"[run_automated_validation_64] prepare-demo-online (pass 1) exited {exit_code}; stopping")
         sys.exit(exit_code)
 
     context_path = work / "context.json"
-    n_with_condition = _write_context(variants, prepared, context_path)
+    n_with_condition = _write_context(variants, prepared_pass1, context_path)
     print(f"[run_automated_validation_64] {n_with_condition}/{len(variants)} variant(s) "
           f"have an ERepo-interpreted disease condition to evaluate against")
+
+    # Pass 2: re-run with --context now available, so identity['CONDITION'] is
+    # set before --with-gene-disease-draft's evidence is generated - the
+    # per-provider caches from pass 1 make this replay almost everything,
+    # paying real cost only for what actually depends on the condition.
+    exit_code = automated_cli_module.main([
+        "prepare-demo-online", "--output-dir", str(prepared), "--context", str(context_path),
+        "--with-clinvar-spectrum", "--with-gene-disease-draft", *_COMMON_PREPARE_ARGS,
+    ])
+    if exit_code:
+        print(f"[run_automated_validation_64] prepare-demo-online (pass 2) exited {exit_code}; stopping")
+        sys.exit(exit_code)
 
     evaluate_args = [
         "evaluate", "--input", str(prepared / "variants.json"),

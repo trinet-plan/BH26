@@ -96,6 +96,38 @@ def _splice_default_version(args):
             .get("PVS1", {}).get("splice_default_policy_version"))
 
 
+def _gene_disease_draft_policy(args):
+    if not args.with_gene_disease_draft:
+        return None
+    if not args.rules:
+        raise ValueError("--with-gene-disease-draft requires --rules with a gene_disease_draft policy")
+    policy = json.loads(args.rules.read_text(encoding="utf-8")).get("gene_disease_draft")
+    if not policy:
+        raise ValueError("--rules has no gene_disease_draft policy")
+    return policy
+
+
+def _apply_context_conditions(records, context_path):
+    """Set identity['CONDITION'] on every record from --context's record_contexts,
+    BEFORE evidence resolution - see --context's own help text for why this has
+    to happen here rather than at evaluate time.
+
+    Mutates each record's identity dict in place and returns records unchanged
+    otherwise; a record_id --context has nothing for is left alone (no
+    condition, same as not passing --context at all for that record).
+    """
+    if context_path is None:
+        return records
+    document = json.loads(context_path.read_text(encoding="utf-8"))
+    record_contexts = document.get("record_contexts") or {}
+    for record in records:
+        entry = record_contexts.get(record["record_id"])
+        condition = entry.get("condition") if entry else None
+        if condition:
+            record["identity"]["CONDITION"] = condition
+    return records
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(prog="acmg")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -168,8 +200,28 @@ def main(argv=None):
     online.add_argument("--with-nmd-prediction", action="store_true",
                         help="Predict NMD from VEP exon numbering for PVS1's NF02 gate "
                              "(no record for the last two exons, where the rule needs a distance)")
+    online.add_argument("--with-clinvar-spectrum", action="store_true",
+                        help="Attach each gene's ClinVar missense/truncating P/LP counts, an "
+                             "input to --with-gene-disease-draft's suggestion")
+    online.add_argument("--with-gene-disease-draft", action="store_true",
+                        help="Derive PP2/BP1/PVS1's gene-disease mechanism as a flagged "
+                             "statistical suggestion (ClinGen Gene-Disease Validity + gnomAD "
+                             "constraint, thresholds from --rules' gene_disease_draft policy) "
+                             "when no curator-reviewed gene_disease record exists - see "
+                             "acmg_pipeline.criteria.mechanism's evaluate_mechanism(). Needs "
+                             "--context too: ClinGenGeneValidityProvider can only pick the "
+                             "right one of a gene's several curated diseases with a condition "
+                             "to match against.")
     online.add_argument("--rules", type=Path,
-                        help="Rules JSON supplying PM1.hotspot thresholds for --with-pm1-hotspot")
+                        help="Rules JSON supplying PM1.hotspot / gene_disease_draft thresholds")
+    online.add_argument("--context", type=Path,
+                        help="Context JSON (same record_contexts shape as evaluate's --context) "
+                             "supplying each record's disease condition BEFORE evidence "
+                             "resolution runs. Without this, identity['CONDITION'] is never set "
+                             "during prepare-demo-online (only evaluate's own --context sees a "
+                             "condition, too late for --with-gene-disease-draft's generation "
+                             "step) - see acmg_pipeline.services.resolve.ProviderEvidenceResolver."
+                             "_add_gene_disease_draft()'s own docstring")
     online.add_argument("--clinvar-release", default=datetime.now(timezone.utc).date().isoformat())
     online.add_argument("--offline", action="store_true")
     evaluate = sub.add_parser("evaluate", help="Evaluate independently sourced evidence for prepared variants")
@@ -269,6 +321,9 @@ def main(argv=None):
                     with_initiation_assessment=args.with_nmd_prediction,
                     with_splice_default=args.with_splice_default,
                     splice_default_policy_version=_splice_default_version(args),
+                    with_clinvar_spectrum=args.with_clinvar_spectrum,
+                    with_gene_disease_draft=args.with_gene_disease_draft,
+                    gene_disease_draft_policy=_gene_disease_draft_policy(args),
                 )
                 provider = resolver.identity_provider
                 mapped = {}
@@ -282,6 +337,7 @@ def main(argv=None):
                         mapped[record["record_id"]] = []
                 records = [reconcile(r, mapped[r["record_id"]], provider.reference)
                            for r in records]
+                records = _apply_context_conditions(records, args.context)
 
                 evidence = []
                 external_manifest = []
