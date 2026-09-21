@@ -173,6 +173,13 @@ async def main() -> None:
     # validation_demo.py already uses for its own cache.
     automated_config["offline"] = False
     automated_config["ensembl_release"] = "116"
+    # PM4/BP3 (UniProt Repeat/Compositional-bias + SEG complexity) and BP7 (VEP
+    # splice_region_variant + SpliceAI) - see providers/region_repeat.py and
+    # providers/synonymous_assessment.py. Off by default in ProviderEvidenceResolver
+    # and, until now, never turned on by this script - pipeline.py's own resolver
+    # construction only just started reading these two keys (2026-09-22).
+    automated_config["with_region_assessment"] = True
+    automated_config["with_bp7_splice_assessment"] = True
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     full_text_cache = DiskBackedFullTextCache("cache/pubmed_fulltext")

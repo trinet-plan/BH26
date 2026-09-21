@@ -1080,6 +1080,8 @@ async def evaluate_variant_evidence_lines(
         with_disease_matching=bool(automated_config.get("with_disease_matching")),
         with_gene_disease_associations=bool(
             automated_config.get("with_gene_disease_associations")),
+        with_region_assessment=bool(automated_config.get("with_region_assessment")),
+        with_bp7_splice_assessment=bool(automated_config.get("with_bp7_splice_assessment")),
     )
     # Identity first: the curated context is looked up by the variant's own key, and a
     # request that named its variant only as a transcript HGVS has no key until this runs.
@@ -1243,6 +1245,8 @@ async def evaluate_selected_criteria(
             with_disease_matching=bool(automated_config.get("with_disease_matching")),
             with_gene_disease_associations=bool(
                 automated_config.get("with_gene_disease_associations")),
+            with_region_assessment=bool(automated_config.get("with_region_assessment")),
+            with_bp7_splice_assessment=bool(automated_config.get("with_bp7_splice_assessment")),
         )
         # Identity first - see evaluate_variant_evidence_lines() for why.
         _resolve_identity(variant, resolver)
