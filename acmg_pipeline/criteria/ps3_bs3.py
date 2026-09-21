@@ -164,10 +164,18 @@ class PS3BS3Judgment:
                 )
                 for e in (data.get("experiments") or [])
             ],
+            # `data.get("overall_evidence") or {}`, not `data["overall_evidence"]`:
+            # same class of per-model output-shape quirk as `experiments` above -
+            # Claude (observed 2026-09-19, PS3/BS3 judgments for an
+            # match_status=unsuccessful paper) emits "overall_evidence": null
+            # outright rather than omitting the key, and `data["overall_evidence"]`
+            # then crashes with "'NoneType' object is not subscriptable" on the
+            # ["direction"] access that follows.
             overall_evidence=OverallEvidence(
-                direction=OverallDirection(_clean_enum_token(data["overall_evidence"]["direction"])),
-                strength_hint=data["overall_evidence"].get("strength_hint", "not_clear"),
-                rationale=data["overall_evidence"].get("rationale", ""),
+                direction=OverallDirection(_clean_enum_token(
+                    (data.get("overall_evidence") or {}).get("direction", "not_clear"))),
+                strength_hint=(data.get("overall_evidence") or {}).get("strength_hint", "not_clear"),
+                rationale=(data.get("overall_evidence") or {}).get("rationale", ""),
             ),
             multiple_assay_types_in_paper=data.get("multiple_assay_types_in_paper", False),
             single_study_only=data.get("single_study_only", True),

@@ -100,12 +100,11 @@
   }
  },
  "gene_disease_draft": {
-  "policy_version": "gene-disease-draft-v1",
-  "policy_source": "BH26 provisional PP2/BP1/PVS1 gene-disease mechanism suggestion policy (from ClinGen Gene-Disease Validity + gnomAD gene constraint); not a ClinGen VCEP specification. Thresholds are the commonly cited ExAC/gnomAD constraint cutoffs (Lek et al. 2016; Karczewski et al. 2020), not a formal per-gene review - see acmg_pipeline.criteria.mechanism's evaluate_mechanism() for how the suggestion is flagged in curatorHints rather than treated as a reviewed record.",
+  "policy_version": "gene-disease-draft-v2",
+  "policy_source": "BH26 provisional PP2/BP1/PVS1 gene-disease mechanism suggestion policy (from ClinGen Gene-Disease Validity + gnomAD gene constraint + ClinVar spectrum); not a ClinGen VCEP specification. PP2's gnomAD missense z-score threshold matches the published ClinGen SVI recommendation. BP1 was redesigned 2026-09-21 (v1's pLI>=0.9 gate silently failed APC/BRCA1/BRCA2/PALB2 - see acmg_pipeline.providers.gene_disease_draft's own module comment for why): real ClinGen VCEPs determine BP1 from the empirical ClinVar pathogenic missense-vs-truncating ratio, not population constraint, so v2 does the same. PVS1's pLI/LOEUF gate is unchanged and carries the same provisional caveat. See acmg_pipeline.criteria.mechanism's evaluate_mechanism() for how every suggestion here is flagged in curatorHints rather than treated as a reviewed record.",
   "pp2_min_mis_z": 3.09,
-  "bp1_min_p_li": 0.9,
-  "bp1_max_mis_z": 3.09,
-  "bp1_max_pathogenic_missense": 5,
+  "bp1_max_missense_fraction": 0.10,
+  "bp1_min_truncating_count": 10,
   "pvs1_min_p_li": 0.9,
   "pvs1_max_loeuf": 0.35
  },

@@ -1,0 +1,1757 @@
+{
+  "schema_version": "1.0",
+  "purpose": "Disease context for EVERY full_criteria_ground_truth.py variant, as recorded by the ERepo interpretation itself. This is evaluator INPUT - no ground-truth outcome for any criterion is here and must not be supplied.",
+  "source": "ClinGen Evidence Repository API",
+  "source_url": "https://erepo.clinicalgenome.org/evrepo/api/classifications",
+  "retrieved_at": "2026-09-20T00:56:35.895945+00:00",
+  "total_variants": 679,
+  "resolved": 266,
+  "unresolved": [
+    "MYH7|c.1594T>C",
+    "PTEN|c.112C>T",
+    "TP53|c.875A>G",
+    "PTEN|c.170T>G",
+    "PTEN|c.278A>G",
+    "MYOC|c.1187_1188insCCCAGA",
+    "CDH1|c.1057G>A",
+    "CDH1|c.387+5G>A",
+    "PTPN11|c.184T>G",
+    "MYH7|c.2360G>A",
+    "SOS1|c.1018C>T",
+    "MYH7|c.3981C>A",
+    "LDLR|c.58G>A",
+    "MECP2|c.6CGC[4]",
+    "LDLR|c.530C>T",
+    "LDLR|c.662A>G",
+    "APC|c.1627G>T",
+    "APC|c.2476T>G",
+    "APC|c.4399C>T",
+    "APC|c.4420G>A",
+    "APC|c.4732T>G",
+    "APC|c.4906G>T",
+    "APC|c.5465T>A",
+    "APC|c.5761G>A",
+    "APC|c.7862C>G",
+    "APC|c.8438C>A",
+    "PALB2|c.3089C>T",
+    "PALB2|c.721A>G",
+    "PALB2|c.82T>A",
+    "LDLR|c.1027G>A",
+    "HNF4A|c.1321A>G",
+    "FOXG1|c.209_235del",
+    "FOXG1|c.209_235dup",
+    "GCK|c.1024A>C",
+    "FOXG1|c.237_239del",
+    "FOXG1|c.141CCA[4]",
+    "HNF4A|c.341G>A",
+    "APC|c.4735A>T",
+    "APC|c.3950A>G",
+    "APC|c.1902T>G",
+    "APC|c.4139C>T",
+    "RPGR|c.3183GGA[2]",
+    "RPGR|c.3108_3122del",
+    "RPGR|c.2901_2903del",
+    "RPGR|c.2820_2840dup",
+    "RPGR|c.2667_2669del",
+    "RPGR|c.2606_2620del",
+    "BRCA1|c.4159T>C",
+    "BRCA1|c.811G>A",
+    "BRCA2|c.2471T>C",
+    "RPGR|c.2606_2632dup",
+    "RPGR|c.2820_2840del",
+    "RPGR|c.2847_2852del",
+    "RPGR|c.2919_2939dup",
+    "RPGR|c.2976_2990del",
+    "BRCA2|c.121C>T",
+    "FOXG1|c.219GCC[8]",
+    "BRCA2|c.3901ACT[1]",
+    "BRCA2|c.1732G>C",
+    "PTEN|c.1061C>A",
+    "PTEN|c.892C>G",
+    "PTEN|c.685T>A",
+    "MYOC|c.612G>T",
+    "MYOC|c.975G>A",
+    "LDLR|c.1920C>T",
+    "DYSF|c.5884+6C>T",
+    "RAF1|c.94A>G",
+    "PTEN|c.1061C>T",
+    "PTEN|c.1078A>G",
+    "PTEN|c.882T>G",
+    "PTEN|c.914G>A",
+    "RAF1|c.-267G>A",
+    "RUNX1|c.1355T>G",
+    "RUNX1|c.351+15A>G",
+    "RUNX1|c.1257G>A",
+    "RUNX1|c.613+8C>T",
+    "RAF1|c.639T>C",
+    "SOS1|c.*4C>T",
+    "RAF1|c.-339_-338AG[1]",
+    "RAF1|c.-204G>C",
+    "PTEN|c.720C>T",
+    "RUNX1|c.1086G>C",
+    "RUNX1|c.423G>A",
+    "TP53|c.935C>G",
+    "TP53|c.139C>T",
+    "PTEN|c.1105G>A",
+    "USH2A|c.7167C>T",
+    "GAA|c.1332T>C",
+    "RUNX1|c.552G>T",
+    "RUNX1|c.144C>T",
+    "ITGB3|c.1902C>T",
+    "ITGA2B|c.2614C>A",
+    "ITGB3|c.176T>C",
+    "ITGA2B|c.207C>T",
+    "ITGA2B|c.2916G>A",
+    "ITGB3|c.900T>C",
+    "ITGB3|c.180C>T",
+    "ITGB3|c.1299C>T",
+    "MECP2|c.429C>G",
+    "MYOC|c.1317C>T",
+    "MYOC|c.144G>T",
+    "MYOC|c.227G>A",
+    "HNF1A|c.42G>A",
+    "MYOC|c.1188G>A",
+    "MYOC|c.1193A>G",
+    "RUNX1|c.58+265G>A",
+    "RUNX1|c.648C>T",
+    "RUNX1|c.1086G>T",
+    "RUNX1|c.*569T>G",
+    "RUNX1|c.1338C>T",
+    "GCK|c.630G>T",
+    "FBN1|c.1630G>A",
+    "GCK|c.171G>T",
+    "GCK|c.1153G>C",
+    "GCK|c.107G>A",
+    "PTEN|c.132C>T",
+    "PTEN|c.75G>A",
+    "PTEN|c.520T>A",
+    "MYH7|c.327C>T",
+    "CDH1|c.48+1G>A",
+    "CDH1|c.382delC",
+    "CDH1|c.1085delT",
+    "CDH1|c.1792C>T",
+    "PAH|c.820A>G",
+    "BRAF|c.735A>T",
+    "BRAF|c.739T>C",
+    "SOS1|c.512T>C",
+    "PTEN|c.388C>G",
+    "PTEN|c.477G>T",
+    "PTEN|c.700C>T",
+    "PTEN|c.698G>A",
+    "PTEN|c.210-7_210-3del",
+    "PTEN|c.338G>T",
+    "RUNX1|c.167T>C",
+    "RUNX1|c.253C>A",
+    "CDH1|c.521dupA",
+    "CDH1|c.454_460delCAGAAGA",
+    "CDH1|c.2276delG",
+    "CDH1|c.1107del",
+    "CDH1|c.2104G>T",
+    "CDH1|c.1147C>T",
+    "CDH1|c.1565+1G>T",
+    "CDH1|c.2324delG",
+    "CDH1|c.2029dup",
+    "CDH1|c.1895_1896delAC",
+    "CDH1|c.377del",
+    "CDH1|c.308G>A",
+    "CDH1|c.315delC",
+    "CDH1|c.208dup",
+    "CDH1|c.220C>T",
+    "CDH1|c.1137+1delG",
+    "CDH1|c.687+1G>A",
+    "CDH1|c.60G>A",
+    "CDH1|c.1137+1G>A",
+    "CDH1|c.2293C>T",
+    "CDH1|c.1023T>G",
+    "CDH1|c.468G>A",
+    "CDH1|c.337A>T",
+    "CDH1|c.76G>T",
+    "CDH1|c.70G>T",
+    "CDH1|c.457_460delAAGA",
+    "CDH1|c.532-1G>C",
+    "CDH1|c.781G>T",
+    "CDH1|c.1460_1461del",
+    "CDH1|c.707C>A",
+    "CDH1|c.531+1G>A",
+    "CDH1|c.2100del",
+    "CDH1|c.202delT",
+    "CDH1|c.124_126delCCCinsT",
+    "CDH1|c.59G>A",
+    "CDH1|c.12G>A",
+    "CDH1|c.1711+1G>A",
+    "CDH1|c.1711+1G>C",
+    "CDH1|c.1711+2_1711+7delTAAGGG",
+    "PAH|c.60+62C>T",
+    "RUNX1|c.334del",
+    "RUNX1|c.958C>T",
+    "CDH1|c.489C>A",
+    "CDH1|c.832+1G>A",
+    "CDH1|c.1612delG",
+    "CDH1|c.1488_1494delCGAGGAC",
+    "CDH1|c.1476_1477delAG",
+    "CDH1|c.1064delT",
+    "CDH1|c.603delT",
+    "CDH1|c.504delA",
+    "CDH1|c.454_460dup",
+    "CDH1|c.261delG",
+    "CDH1|c.1565+2dupT",
+    "CDH1|c.687+2T>C",
+    "CDH1|c.457A>T",
+    "CDH1|c.360dup",
+    "CDH1|c.467G>A",
+    "TP53|c.847C>T",
+    "PAH|c.837C>T",
+    "GAA|c.2799+2C>A",
+    "BRAF|c.1454T>C",
+    "PTEN|c.114T>G",
+    "PTEN|c.802-2del",
+    "PAH|c.353-22C>T",
+    "PAH|c.510-54G>A",
+    "PAH|c.1316-35C>T",
+    "RUNX1|c.1003C>T",
+    "RUNX1|c.159del",
+    "RUNX1|c.240_241del",
+    "RUNX1|c.501del",
+    "RUNX1|c.508+2T>C",
+    "RUNX1|c.719del",
+    "CDH1|c.1009_1010delAG",
+    "CDH1|c.455_465delAGAAGAGAGAC",
+    "CDH1|c.1008+2T>C",
+    "PTEN|c.210-39A>G",
+    "PAH|c.1065+97G>A",
+    "SOS1|c.1656G>T",
+    "RUNX1|c.179C>T",
+    "RUNX1|c.205G>C",
+    "RYR1|c.6961A>G",
+    "LDLR|c.1A>T",
+    "PAH|c.399T>C",
+    "HNF1A|c.872C>A",
+    "HNF1A|c.871C>T",
+    "HNF1A|c.326+2T>G",
+    "HNF1A|c.327-2A>T",
+    "LDLR|c.1706-10G>A",
+    "PTEN|c.838A>G",
+    "PTEN|c.344A>G",
+    "ACADVL|c.1193_1194insGCA",
+    "ACADVL|c.663C>T",
+    "LDLR|c.1194C>T",
+    "APC|c.1549-13A>T",
+    "ACADVL|c.753-2A>G",
+    "GAA|c.546G>A",
+    "GCK|c.523G>A",
+    "GCK|c.781G>C",
+    "GCK|c.649G>A",
+    "PTEN|c.46T>C",
+    "PTEN|c.106G>C",
+    "PTEN|c.10A>G",
+    "PTEN|c.91A>G",
+    "GAA|c.1437+1G>A",
+    "HNF1A|c.526+1G>C",
+    "GAA|c.-32-3C>A",
+    "GCK|c.203G>A",
+    "MECP2|c.1244dup",
+    "PTEN|c.198G>T",
+    "SLC26A4|c.1061T>C",
+    "PTEN|c.424C>T",
+    "HNF1A|c.1745A>G",
+    "GATM|c.692C>G",
+    "BRCA2|c.7759C>T",
+    "BRCA2|c.9538C>T",
+    "GCK|c.531A>C",
+    "PTEN|c.1212A>C",
+    "BRCA2|c.8702G>A",
+    "GCK|c.1364T>A",
+    "ATM|c.5693G>A",
+    "GCK|c.394G>A",
+    "PTEN|c.538T>C",
+    "PAH|c.310_318delGCCACTGTC",
+    "PAH|c.205_210dup",
+    "PAH|c.967_969delACA",
+    "PAH|c.208_210delTCT",
+    "PTEN|c.521A>G",
+    "PTEN|c.103A>G",
+    "PTEN|c.389G>A",
+    "PTEN|c.407G>A",
+    "PTEN|c.517C>T",
+    "PTEN|c.395G>A",
+    "PTEN|c.510T>A",
+    "PTEN|c.368A>G",
+    "MYH7|c.2539_2541delAAG",
+    "HRAS|c.34G>A",
+    "HRAS|c.37G>T",
+    "PTEN|c.79+7A>G",
+    "PAH|c.865G>C",
+    "PAH|c.1092_1094del",
+    "PAH|c.895_897delTTT",
+    "PTEN|c.634+5G>C",
+    "PAH|c.169_171delGAG",
+    "PAH|c.1357_*2delTAAAG",
+    "PAH|c.281_283TCA[1]",
+    "PTEN|c.1212A>T",
+    "PTEN|c.1133_1136del",
+    "GAA|c.1819_1836dup",
+    "PAH|c.865G>A",
+    "PAH|c.124_126del",
+    "ITGA2B|c.2602-3C>G",
+    "PAH|c.1092_1106del",
+    "RYR1|c.1021G>C",
+    "ITGA2B|c.1878G>C",
+    "ITGA2B|c.1366_1371del",
+    "MYH7|c.2649_2651GAA[1]",
+    "HNF1A|c.801_802insGGG",
+    "MYOC|c.1102C>T",
+    "HNF1A|c.24_35dup",
+    "HNF1A|c.369GCA[4]",
+    "HNF1A|c.663GAA[1]",
+    "HNF1A|c.676_678del",
+    "HNF1A|c.526+2dup",
+    "HNF1A|c.1864_1890dup",
+    "MYOC|c.1440C>A",
+    "GAA|c.1552-3C>G",
+    "ITGA2B|c.1210+105A>G",
+    "DICER1|c.1719AGA[1]",
+    "DICER1|c.4178_4180dup",
+    "DICER1|c.2T>C",
+    "ACADVL|c.1141_1143del",
+    "RYR1|c.742G>C",
+    "GAA|c.1317GAT[1]",
+    "MECP2|c.1497A>G",
+    "MECP2|c.408G>C",
+    "MECP2|c.408G>T",
+    "MECP2|c.507C>G",
+    "MECP2|c.907_1080del",
+    "MECP2|c.1197_1436del",
+    "PAH|c.163_165del",
+    "LDLR|c.2407_2424dup",
+    "LDLR|c.257_265del",
+    "APC|c.3084T>G",
+    "LDLR|c.1199_1207del",
+    "LDLR|c.2475C>G",
+    "MYOC|c.898G>T",
+    "SLC6A8|c.942_944del",
+    "ACADVL|c.1967G>C",
+    "SLC6A8|c.1000_1002AAC[2]",
+    "MYOC|c.741del",
+    "MYOC|c.823A>T",
+    "GCK|c.1279_1358delinsTTACA",
+    "PAH|c.113_115TCT[1]",
+    "SLC6A8|c.1216TTC[2]",
+    "FBN1|c.3632_3634del",
+    "SLC6A8|c.912G>C",
+    "FBN1|c.4407_4409dup",
+    "SLC6A8|c.191_193del",
+    "GCK|c.1130_1138del",
+    "RPE65|c.991_993dup",
+    "ACADVL|c.507_527del",
+    "DICER1|c.5222ACA[1]",
+    "IL2RG|c.455-2A>C",
+    "GCK|c.1020-1G>C",
+    "RPE65|c.1451G>T",
+    "BMPR2|c.968-3C>G",
+    "BMPR2|c.247+1_247+7del",
+    "ITGA2B|c.1005_1013del",
+    "ACADVL|c.830AGA[1]",
+    "SLC6A8|c.467_469del",
+    "RUNX1|c.302TGC[1]",
+    "RUNX1|c.581_586del",
+    "FBN1|c.5073AAG[1]",
+    "BMPR2|c.247+6T>G",
+    "RUNX1|c.316T>C",
+    "RUNX1|c.330_331delinsTT",
+    "RUNX1|c.530_532dup",
+    "RUNX1|c.428_439dup",
+    "RUNX1|c.1162T>A",
+    "ACADVL|c.889_891del",
+    "LDLR|c.1285G>T",
+    "LDLR|c.1204TTC[1]",
+    "IDUA|c.1073_1093del",
+    "IDUA|c.1960T>G",
+    "VWF|c.1213_1214insATCCCA",
+    "GCK|c.48_50del",
+    "BMPR2|c.1228G>A",
+    "BMPR2|c.1228G>C",
+    "CAPN3|c.643_663del(p.Ser215_Gly221del)",
+    "SLC6A8|c.1072_1095del",
+    "LDLR|c.1329G>T",
+    "VWF|c.3831_3833del",
+    "SERPINC1|c.1393T>C",
+    "SERPINC1|c.1273_1275del",
+    "IDUA|c.385+1G>C",
+    "DYSF|c.1722_1723insGTT",
+    "IDUA|c.1962A>T",
+    "RPE65|c.726-2A>T",
+    "DYSF|c.2697+5G>A",
+    "BMPR2|c.1276+3A>G",
+    "BMPR2|c.1276+3A>T",
+    "BMPR2|c.1277-9A>C",
+    "VWF|c.4885G>A",
+    "DYSF|c.1149+1G>C",
+    "APC|c.1312+3A>C",
+    "APC|c.1312+5G>C",
+    "APC|c.531+5G>A",
+    "GAA|c.1551+1G>T",
+    "GAA|c.546G>C",
+    "IDUA|c.386-1G>A",
+    "RPGR|c.934G>A",
+    "RPGR|c.934G>T",
+    "DYSF|c.5546+1G>T",
+    "DYSF|c.991G>C",
+    "DYSF|c.2864+5G>A",
+    "DYSF|c.1149+4A>G",
+    "DYSF|c.5174+5G>T",
+    "RPGR|c.28+1G>C",
+    "RPGR|c.310+1G>C",
+    "GCK|c.679+2T>C",
+    "BMPR2|c.1277-8A>G",
+    "BMPR2|c.418+3A>T",
+    "BMPR2|c.418+5G>A",
+    "RPGR|c.1573-8A>G",
+    "RPGR|c.1573-12A>G",
+    "RPGR|c.154+5G>A",
+    "PAH|c.183C>A",
+    "GCK|c.1019G>A",
+    "GCK|c.864-1G>C",
+    "GAA|c.2238G>T",
+    "GAA|c.1754+2T>C",
+    "MYBPC3|c.278delA",
+    "KCNJ5|c.464G>A",
+    "MYBPC3|c.2905+1G>A",
+    "MYBPC3|c.836del",
+    "MYH7|c.2155C>T",
+    "MYBPC3|c.1000G>A",
+    "DSG2|c.1592T>G"
+  ],
+  "errors": [],
+  "contexts": {
+    "ACADVL|c.1038G>A": {
+      "condition": "MONDO:0008723",
+      "condition_label": "very long chain acyl-CoA dehydrogenase deficiency",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA145601/MONDO:0008723/021"
+    },
+    "ACADVL|c.194C>T": {
+      "condition": "MONDO:0008723",
+      "condition_label": "very long chain acyl-CoA dehydrogenase deficiency",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA285292/MONDO:0008723/021"
+    },
+    "ACTC1|c.1034G>T": {
+      "condition": "MONDO:0005045",
+      "condition_label": "hypertrophic cardiomyopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA391629069/MONDO:0005045/101"
+    },
+    "ACVRL1|c.1445C>T": {
+      "condition": "MONDO:0010880",
+      "condition_label": "telangiectasia, hereditary hemorrhagic, type 2",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA211324/MONDO:0010880/135"
+    },
+    "ACVRL1|c.484C>T": {
+      "condition": "MONDO:0010880",
+      "condition_label": "telangiectasia, hereditary hemorrhagic, type 2",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA245043/MONDO:0010880/135"
+    },
+    "ADA|c.1078+2T>C": {
+      "condition": "MONDO:0007064",
+      "condition_label": "adenosine deaminase deficiency",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA409118267/MONDO:0007064/114"
+    },
+    "ANO5|c.2503_2505del": {
+      "condition": "MONDO:0015152",
+      "condition_label": "autosomal recessive limb-girdle muscular dystrophy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA242118/MONDO:0015152/188"
+    },
+    "APC|c.1240C>T": {
+      "condition": "MONDO:0021056",
+      "condition_label": "familial adenomatous polyposis 1",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA004103/MONDO:0021056/089"
+    },
+    "APC|c.1242C>T": {
+      "condition": "MONDO:0021056",
+      "condition_label": "familial adenomatous polyposis 1",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA026898/MONDO:0021056/089"
+    },
+    "APC|c.1487C>T": {
+      "condition": "MONDO:0021056",
+      "condition_label": "familial adenomatous polyposis 1",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA16024566/MONDO:0021056/089"
+    },
+    "APC|c.235A>G": {
+      "condition": "MONDO:0021056",
+      "condition_label": "familial adenomatous polyposis 1",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA16021856/MONDO:0021056/089"
+    },
+    "APC|c.295C>T": {
+      "condition": "MONDO:0021056",
+      "condition_label": "familial adenomatous polyposis 1",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA007948/MONDO:0021056/089"
+    },
+    "APC|c.420G>C": {
+      "condition": "MONDO:0021056",
+      "condition_label": "familial adenomatous polyposis 1",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA008951/MONDO:0021056/089"
+    },
+    "APC|c.715G>C": {
+      "condition": "MONDO:0021056",
+      "condition_label": "familial adenomatous polyposis 1",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA047113/MONDO:0021056/089"
+    },
+    "APC|c.754A>G": {
+      "condition": "MONDO:0021056",
+      "condition_label": "familial adenomatous polyposis 1",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA16022984/MONDO:0021056/089"
+    },
+    "APC|c.995G>A": {
+      "condition": "MONDO:0021056",
+      "condition_label": "familial adenomatous polyposis 1",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA016051/MONDO:0021056/089"
+    },
+    "ATM|c.1176C>G": {
+      "condition": "MONDO:0700270",
+      "condition_label": "ATM-related cancer predisposition",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA167509/MONDO:0700270/020"
+    },
+    "ATM|c.3284G>A": {
+      "condition": "MONDO:0700270",
+      "condition_label": "ATM-related cancer predisposition",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA165678/MONDO:0700270/020"
+    },
+    "ATM|c.7271T>G": {
+      "condition": "MONDO:0700270",
+      "condition_label": "ATM-related cancer predisposition",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA115930/MONDO:0700270/020"
+    },
+    "BMPR2|c.1472G>A": {
+      "condition": "MONDO:0015924",
+      "condition_label": "pulmonary arterial hypertension",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA278089/MONDO:0015924/125"
+    },
+    "BMPR2|c.2618G>A": {
+      "condition": "MONDO:0015924",
+      "condition_label": "pulmonary arterial hypertension",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA2061553/MONDO:0015924/125"
+    },
+    "BRAF|c.1227A>G": {
+      "condition": "MONDO:0021060",
+      "condition_label": "RASopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA135058/MONDO:0021060/004"
+    },
+    "BRAF|c.1433-19A>G": {
+      "condition": "MONDO:0021060",
+      "condition_label": "RASopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA232434/MONDO:0021060/049"
+    },
+    "BRAF|c.1595G>A": {
+      "condition": "MONDO:0021060",
+      "condition_label": "RASopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA175337/MONDO:0021060/004"
+    },
+    "BRAF|c.1741A>G": {
+      "condition": "MONDO:0015280",
+      "condition_label": "cardiofaciocutaneous syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA279976/MONDO:0015280/004"
+    },
+    "BRAF|c.1785T>G": {
+      "condition": "MONDO:0021060",
+      "condition_label": "RASopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA280058/MONDO:0021060/004"
+    },
+    "BRAF|c.1787G>T": {
+      "condition": "MONDO:0021060",
+      "condition_label": "RASopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA220161/MONDO:0021060/004"
+    },
+    "BRAF|c.736G>C": {
+      "condition": "MONDO:0015280",
+      "condition_label": "cardiofaciocutaneous syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA279968/MONDO:0015280/004"
+    },
+    "BRCA1|c.1233T>G": {
+      "condition": "MONDO:0011450",
+      "condition_label": "BRCA1-related cancer predisposition",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA000811/MONDO:0011450/092"
+    },
+    "BRCA1|c.191G>A": {
+      "condition": "MONDO:0011450",
+      "condition_label": "BRCA1-related cancer predisposition",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA001262/MONDO:0011450/092"
+    },
+    "BRCA1|c.2155A>G": {
+      "condition": "MONDO:0011450",
+      "condition_label": "BRCA1-related cancer predisposition",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA001442/MONDO:0011450/092"
+    },
+    "BRCA1|c.301+7G>A": {
+      "condition": "MONDO:0011450",
+      "condition_label": "BRCA1-related cancer predisposition",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA001969/MONDO:0011450/092"
+    },
+    "BRCA1|c.305C>G": {
+      "condition": "MONDO:0011450",
+      "condition_label": "BRCA1-related cancer predisposition",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA002009/MONDO:0011450/092"
+    },
+    "BRCA1|c.3082C>T": {
+      "condition": "MONDO:0011450",
+      "condition_label": "BRCA1-related cancer predisposition",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA002019/MONDO:0011450/092"
+    },
+    "BRCA1|c.3418A>G": {
+      "condition": "MONDO:0011450",
+      "condition_label": "BRCA1-related cancer predisposition",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA002212/MONDO:0011450/092"
+    },
+    "BRCA2|c.2482T>C": {
+      "condition": "MONDO:0700269",
+      "condition_label": "BRCA2-related cancer predisposition",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA16614121/MONDO:0700269/097"
+    },
+    "BRCA2|c.663T>G": {
+      "condition": "MONDO:0012933",
+      "condition_label": "BRCA2-related cancer predisposition",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA024240/MONDO:0012933/097"
+    },
+    "BRCA2|c.68-7del": {
+      "condition": "MONDO:0012933",
+      "condition_label": "BRCA2-related cancer predisposition",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA024535/MONDO:0012933/097"
+    },
+    "BRCA2|c.831T>G": {
+      "condition": "MONDO:0012933",
+      "condition_label": "BRCA2-related cancer predisposition",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA025568/MONDO:0012933/097"
+    },
+    "BRCA2|c.9699_9702del": {
+      "condition": "MONDO:0012933",
+      "condition_label": "BRCA2-related cancer predisposition",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA026270/MONDO:0012933/097"
+    },
+    "CAPN3|c.-25G>C": {
+      "condition": "MONDO:0015152",
+      "condition_label": "autosomal recessive limb-girdle muscular dystrophy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA618001458/MONDO:0015152/187"
+    },
+    "CAPN3|c.756GAA[1]": {
+      "condition": "MONDO:0015152",
+      "condition_label": "autosomal recessive limb-girdle muscular dystrophy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA346886/MONDO:0015152/187"
+    },
+    "CDH1|c.1003C>T": {
+      "condition": "MONDO:0007648",
+      "condition_label": "CDH1-related diffuse gastric and lobular breast cancer",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA166866/MONDO:0007648/007"
+    },
+    "CDH1|c.187C>T": {
+      "condition": "MONDO:0007648",
+      "condition_label": "CDH1-related diffuse gastric and lobular breast cancer",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CV156496/MONDO:0007648/007"
+    },
+    "CDH1|c.283C>T": {
+      "condition": "MONDO:0007648",
+      "condition_label": "CDH1-related diffuse gastric and lobular breast cancer",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CV463775/MONDO:0007648/007"
+    },
+    "CDH1|c.832+1G>T": {
+      "condition": "MONDO:0007648",
+      "condition_label": "CDH1-related diffuse gastric and lobular breast cancer",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CV239914/MONDO:0007648/007"
+    },
+    "CDH23|c.3625A>G": {
+      "condition": "MONDO:0019501",
+      "condition_label": "Usher syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA137387/MONDO:0019501/005"
+    },
+    "CDH23|c.380A>G": {
+      "condition": "MONDO:0019501",
+      "condition_label": "Usher syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA10576804/MONDO:0019501/005"
+    },
+    "CDH23|c.429+4G>A": {
+      "condition": "MONDO:0019497",
+      "condition_label": "nonsyndromic genetic deafness",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA137421/MONDO:0019497/005"
+    },
+    "CDKL5|c.1296_1298del": {
+      "condition": "MONDO:0100039",
+      "condition_label": "CDKL5 disorder",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA645373290/MONDO:0100039/034"
+    },
+    "CDKL5|c.291C>T": {
+      "condition": "MONDO:0100039",
+      "condition_label": "CDKL5 disorder",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA10360246/MONDO:0100039/016"
+    },
+    "COCH|c.355G>A": {
+      "condition": "MONDO:0019497",
+      "condition_label": "nonsyndromic genetic deafness",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA253893/MONDO:0019497/005"
+    },
+    "DICER1|c.2614G>A": {
+      "condition": "MONDO:0017288",
+      "condition_label": "dicer1 syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA158264/MONDO:0017288/024"
+    },
+    "DICER1|c.5052C>G": {
+      "condition": "MONDO:0017288",
+      "condition_label": "dicer1 syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA7330753/MONDO:0017288/024"
+    },
+    "DYSF|c.1717C>T": {
+      "condition": "MONDO:0015152",
+      "condition_label": "autosomal recessive limb-girdle muscular dystrophy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA222133/MONDO:0015152/180"
+    },
+    "DYSF|c.1906G>C": {
+      "condition": "MONDO:0015152",
+      "condition_label": "autosomal recessive limb-girdle muscular dystrophy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA277611/MONDO:0015152/180"
+    },
+    "DYSF|c.2697+1G>A": {
+      "condition": "MONDO:0015152",
+      "condition_label": "autosomal recessive limb-girdle muscular dystrophy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA222141/MONDO:0015152/180"
+    },
+    "ENG|c.1316A>C": {
+      "condition": "MONDO:0008535",
+      "condition_label": "telangiectasia, hereditary hemorrhagic, type 1",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA5252800/MONDO:0008535/136"
+    },
+    "ENG|c.1510G>A": {
+      "condition": "MONDO:0008535",
+      "condition_label": "telangiectasia, hereditary hemorrhagic, type 1",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA211420/MONDO:0008535/136"
+    },
+    "ENG|c.1517T>A": {
+      "condition": "MONDO:0008535",
+      "condition_label": "telangiectasia, hereditary hemorrhagic, type 1",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA5252743/MONDO:0008535/136"
+    },
+    "ENG|c.1844C>T": {
+      "condition": "MONDO:0008535",
+      "condition_label": "telangiectasia, hereditary hemorrhagic, type 1",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA211415/MONDO:0008535/136"
+    },
+    "ETHE1|c.6G>A": {
+      "condition": "MONDO:0011229",
+      "condition_label": "ethylmalonic encephalopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA9487981/MONDO:0011229/014"
+    },
+    "ETHE1|c.712+181A>G": {
+      "condition": "MONDO:0011229",
+      "condition_label": "ethylmalonic encephalopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA308740635/MONDO:0011229/014"
+    },
+    "FBN1|c.3422C>T": {
+      "condition": "MONDO:0007947",
+      "condition_label": "Marfan syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA014098/MONDO:0007947/022"
+    },
+    "FBN1|c.3689T>C": {
+      "condition": "MONDO:0007947",
+      "condition_label": "Marfan syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA051349/MONDO:0007947/022"
+    },
+    "FBN1|c.4214T>G": {
+      "condition": "MONDO:0007947",
+      "condition_label": "Marfan syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA014858/MONDO:0007947/022"
+    },
+    "FOXG1|c.209_232del24": {
+      "condition": "MONDO:0100040",
+      "condition_label": "FOXG1 disorder",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA238814/MONDO:0100040/016"
+    },
+    "FOXG1|c.670G>A": {
+      "condition": "MONDO:0100040",
+      "condition_label": "FOXG1 disorder",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA234034/MONDO:0100040/035"
+    },
+    "FOXN1|c.1850_1854del": {
+      "condition": "MONDO:0011132",
+      "condition_label": "T-cell immunodeficiency, congenital alopecia, and nail dystrophy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA916081984/MONDO:0011132/113"
+    },
+    "GAA|c.-32-1G>C": {
+      "condition": "MONDO:0009290",
+      "condition_label": "glycogen storage disease II",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA658824771/MONDO:0009290/010"
+    },
+    "GAA|c.1336_1356dup": {
+      "condition": "MONDO:0009290",
+      "condition_label": "glycogen storage disease II",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA658824782/MONDO:0009290/010"
+    },
+    "GAA|c.400_408dup": {
+      "condition": "MONDO:0009290",
+      "condition_label": "glycogen storage disease II",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CV550713/MONDO:0009290/010"
+    },
+    "GAA|c.93_95del": {
+      "condition": "MONDO:0009290",
+      "condition_label": "glycogen storage disease II",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA628018663/MONDO:0009290/010"
+    },
+    "GAMT|c.*11C>T": {
+      "condition": "MONDO:0012999",
+      "condition_label": "guanidinoacetate methyltransferase deficiency",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA291022/MONDO:0012999/026"
+    },
+    "GAMT|c.507_521dup": {
+      "condition": "MONDO:0012999",
+      "condition_label": "guanidinoacetate methyltransferase deficiency",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA9043617/MONDO:0012999/026"
+    },
+    "GATM|c.1239G>A": {
+      "condition": "MONDO:0012996",
+      "condition_label": "AGAT deficiency",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA291041/MONDO:0012996/025"
+    },
+    "GATM|c.1252T>C": {
+      "condition": "MONDO:0012996",
+      "condition_label": "AGAT deficiency",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA152946/MONDO:0012996/025"
+    },
+    "GJB2|c.109G>A": {
+      "condition": "MONDO:0019497",
+      "condition_label": "nonsyndromic genetic deafness",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA172210/MONDO:0019497/005"
+    },
+    "GJB2|c.167delT": {
+      "condition": "MONDO:0019497",
+      "condition_label": "nonsyndromic genetic deafness",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA172217/MONDO:0019497/005"
+    },
+    "GJB2|c.235delC": {
+      "condition": "MONDO:0019497",
+      "condition_label": "nonsyndromic genetic deafness",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA127025/MONDO:0019497/005"
+    },
+    "GJB2|c.2T>C": {
+      "condition": "MONDO:0019497",
+      "condition_label": "nonsyndromic genetic deafness",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA6904336/MONDO:0019497/005"
+    },
+    "GJB2|c.34G>T": {
+      "condition": "MONDO:0019497",
+      "condition_label": "nonsyndromic genetic deafness",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA172224/MONDO:0019497/005"
+    },
+    "GJB2|c.35delG": {
+      "condition": "MONDO:0019497",
+      "condition_label": "nonsyndromic genetic deafness",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA127023/MONDO:0019497/005"
+    },
+    "GJB2|c.71G>A": {
+      "condition": "MONDO:0019497",
+      "condition_label": "nonsyndromic genetic deafness",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA172240/MONDO:0019497/005"
+    },
+    "GUCY2D|c.1762C>T": {
+      "condition": "MONDO:0100453",
+      "condition_label": "GUCY2D-related recessive retinopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA287530833/MONDO:0100453/167"
+    },
+    "HNF1A|c.391C>T": {
+      "condition": "MONDO:0015967",
+      "condition_label": "monogenic diabetes",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA124478/MONDO:0015967/017"
+    },
+    "HNF1A|c.427C>T": {
+      "condition": "MONDO:0015967",
+      "condition_label": "monogenic diabetes",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA386959939/MONDO:0015967/017"
+    },
+    "HNF1A|c.58G>C": {
+      "condition": "MONDO:0015967",
+      "condition_label": "monogenic diabetes",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA386952573/MONDO:0015967/017"
+    },
+    "HNF1A|c.59G>C": {
+      "condition": "MONDO:0015967",
+      "condition_label": "monogenic diabetes",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA386952583/MONDO:0015967/017"
+    },
+    "HNF1A|c.956-1G>A": {
+      "condition": "MONDO:0015967",
+      "condition_label": "monogenic diabetes",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA386967822/MONDO:0015967/017"
+    },
+    "HRAS|c.173C>T": {
+      "condition": "MONDO:0021060",
+      "condition_label": "RASopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA341206/MONDO:0021060/046"
+    },
+    "HRAS|c.508A>T": {
+      "condition": "MONDO:0009026",
+      "condition_label": "Costello syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA296052/MONDO:0009026/004"
+    },
+    "HRAS|c.510G>A": {
+      "condition": "MONDO:0021060",
+      "condition_label": "RASopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA135992/MONDO:0021060/046"
+    },
+    "IDUA|c.46_57del": {
+      "condition": "MONDO:0001586",
+      "condition_label": "mucopolysaccharidosis type 1",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA220509/MONDO:0001586/091"
+    },
+    "IDUA|c.886_894dup": {
+      "condition": "MONDO:0001586",
+      "condition_label": "mucopolysaccharidosis type 1",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA658823287/MONDO:0001586/010"
+    },
+    "IL2RG|c.924G>A": {
+      "condition": "MONDO:0010315",
+      "condition_label": "T-B+ severe combined immunodeficiency due to gamma chain deficiency",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA516771304/MONDO:0010315/129"
+    },
+    "ITGA2B|c.1848G>A": {
+      "condition": "MONDO:0010119",
+      "condition_label": "Glanzmann's thrombasthenia",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA8602928/MONDO:0010119/011"
+    },
+    "ITGA2B|c.3092_3093dup": {
+      "condition": "MONDO:0100326",
+      "condition_label": "Glanzmann thrombasthenia",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA500260678/MONDO:0100326/011"
+    },
+    "ITGA2B|c.891+12del": {
+      "condition": "MONDO:0010119",
+      "condition_label": "Glanzmann's thrombasthenia",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA8603299/MONDO:0010119/011"
+    },
+    "ITGB3|c.1309_1311del": {
+      "condition": "MONDO:0010119",
+      "condition_label": "Glanzmann thrombasthenia",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA8623242/MONDO:0010119/011"
+    },
+    "ITGB3|c.342T>C": {
+      "condition": "MONDO:0010119",
+      "condition_label": "Glanzmann's thrombasthenia",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA8622916/MONDO:0010119/011"
+    },
+    "ITGB3|c.506G>A": {
+      "condition": "MONDO:0010119",
+      "condition_label": "Glanzmann's thrombasthenia",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA123232/MONDO:0010119/011"
+    },
+    "JAK3|c.1744C>T": {
+      "condition": "MONDO:0010938",
+      "condition_label": "T-B+ severe combined immunodeficiency due to JAK3 deficiency",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA214079/MONDO:0010938/121"
+    },
+    "KCNQ1|c.1343C>T": {
+      "condition": "MONDO:0100316",
+      "condition_label": "long QT syndrome 1",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA005629/MONDO:0100316/112"
+    },
+    "KCNQ1|c.477+5G>A": {
+      "condition": "MONDO:0100316",
+      "condition_label": "long QT syndrome 1",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA007174/MONDO:0100316/112"
+    },
+    "KCNQ1|c.514G>A": {
+      "condition": "MONDO:0100316",
+      "condition_label": "long QT syndrome 1",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA007311/MONDO:0100316/112"
+    },
+    "KCNQ4|c.803_805CCT[1]": {
+      "condition": "MONDO:0019497",
+      "condition_label": "nonsyndromic genetic deafness",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CV208366/MONDO:0019497/005"
+    },
+    "KLLN|c.-794_-783del": {
+      "condition": "MONDO:0017623",
+      "condition_label": "PTEN hamartoma tumor syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA163819/MONDO:0017623/003"
+    },
+    "KRAS|c.-160A>G": {
+      "condition": "MONDO:0021060",
+      "condition_label": "RASopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA176498/MONDO:0021060/004"
+    },
+    "KRAS|c.101C>T": {
+      "condition": "MONDO:0018997",
+      "condition_label": "Noonan syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA235301/MONDO:0018997/004"
+    },
+    "KRAS|c.15A>T": {
+      "condition": "MONDO:0021060",
+      "condition_label": "RASopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA234191/MONDO:0021060/044"
+    },
+    "KRAS|c.173C>T": {
+      "condition": "MONDO:0018997",
+      "condition_label": "Noonan syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA256480/MONDO:0018997/004"
+    },
+    "KRAS|c.178G>C": {
+      "condition": "MONDO:0015280",
+      "condition_label": "cardiofaciocutaneous syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA273416/MONDO:0015280/004"
+    },
+    "KRAS|c.40G>A": {
+      "condition": "MONDO:0021060",
+      "condition_label": "RASopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA156358/MONDO:0021060/044"
+    },
+    "KRAS|c.458A>T": {
+      "condition": "MONDO:0021060",
+      "condition_label": "RASopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA256478/MONDO:0021060/044"
+    },
+    "KRAS|c.519T>C": {
+      "condition": "MONDO:0021060",
+      "condition_label": "RASopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA135582/MONDO:0021060/044"
+    },
+    "KRAS|c.65A>G": {
+      "condition": "MONDO:0021060",
+      "condition_label": "RASopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA235299/MONDO:0021060/044"
+    },
+    "LDLR|c.1323C>T": {
+      "condition": "MONDO:0007750",
+      "condition_label": "hypercholesterolemia, familial",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA033568/MONDO:0007750/013"
+    },
+    "LDLR|c.2096C>T": {
+      "condition": "MONDO:0007750",
+      "condition_label": "hypercholesterolemia, familial",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA038525/MONDO:0007750/013"
+    },
+    "LDLR|c.2575G>A": {
+      "condition": "MONDO:0007750",
+      "condition_label": "hypercholesterolemia, familial",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA041346/MONDO:0007750/013"
+    },
+    "LZTR1|c.1149+1G>T": {
+      "condition": "MONDO:0021060",
+      "condition_label": "RASopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA10118733/MONDO:0021060/094"
+    },
+    "LZTR1|c.651+10_651+46del": {
+      "condition": "MONDO:0021060",
+      "condition_label": "RASopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA249117/MONDO:0021060/094"
+    },
+    "MAP2K1|c.158T>C": {
+      "condition": "MONDO:0015280",
+      "condition_label": "RASopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA279966/MONDO:0015280/045"
+    },
+    "MAP2K1|c.169A>C": {
+      "condition": "MONDO:0021060",
+      "condition_label": "RASopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA134595/MONDO:0021060/045"
+    },
+    "MAP2K1|c.199G>A": {
+      "condition": "MONDO:0015280",
+      "condition_label": "cardiofaciocutaneous syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA180743/MONDO:0015280/004"
+    },
+    "MAP2K1|c.388T>C": {
+      "condition": "MONDO:0015280",
+      "condition_label": "cardiofaciocutaneous syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA279999/MONDO:0015280/004"
+    },
+    "MAP2K1|c.389A>G": {
+      "condition": "MONDO:0015280",
+      "condition_label": "cardiofaciocutaneous syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA280036/MONDO:0015280/004"
+    },
+    "MAP2K1|c.608A>G": {
+      "condition": "MONDO:0021060",
+      "condition_label": "RASopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA234222/MONDO:0021060/045"
+    },
+    "MAP2K1|c.694-8_694-7dupTC": {
+      "condition": "MONDO:0021060",
+      "condition_label": "RASopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA147595/MONDO:0021060/045"
+    },
+    "MAP2K2|c.281C>T": {
+      "condition": "MONDO:0021060",
+      "condition_label": "RASopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA180967/MONDO:0021060/004"
+    },
+    "MAP2K2|c.619G>A": {
+      "condition": "MONDO:0015280",
+      "condition_label": "cardiofaciocutaneous syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA180944/MONDO:0015280/004"
+    },
+    "MECP2|c.1140G>A": {
+      "condition": "MONDO:0010726",
+      "condition_label": "Rett syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA208360/MONDO:0010726/016"
+    },
+    "MLH1|c.1732-19T>A": {
+      "condition": "MONDO:0007356",
+      "condition_label": "Lynch syndrome 1",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA006607/MONDO:0007356/115"
+    },
+    "MLH1|c.2074T>C": {
+      "condition": "MONDO:0005835",
+      "condition_label": "Lynch syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA008443/MONDO:0005835/115"
+    },
+    "MLH1|c.42A>C": {
+      "condition": "MONDO:0007356",
+      "condition_label": "Lynch syndrome 1",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA010370/MONDO:0007356/115"
+    },
+    "MLH1|c.649C>T": {
+      "condition": "MONDO:0007356",
+      "condition_label": "Lynch syndrome 1",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA011361/MONDO:0007356/115"
+    },
+    "MRAS|c.203C>T": {
+      "condition": "MONDO:0021060",
+      "condition_label": "RASopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA354672403/MONDO:0021060/087"
+    },
+    "MSH2|c.1012G>A": {
+      "condition": "MONDO:0005835",
+      "condition_label": "Lynch syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA016843/MONDO:0005835/137"
+    },
+    "MSH2|c.913G>A": {
+      "condition": "MONDO:0005835",
+      "condition_label": "Lynch syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA022539/MONDO:0005835/137"
+    },
+    "MSH6|c.884A>G": {
+      "condition": "MONDO:0005835",
+      "condition_label": "Lynch syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA016588/MONDO:0005835/138"
+    },
+    "MTM1|c.1792del": {
+      "condition": "MONDO:0010683",
+      "condition_label": "X-linked centronuclear myopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA271849/MONDO:0010683/149"
+    },
+    "MTOR|c.4447T>C": {
+      "condition": "MONDO:0016054",
+      "condition_label": "overgrowth syndrome and/or cerebral malformations due to abnormalities in MTOR pathway genes",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA16602264/MONDO:0016054/018"
+    },
+    "MYH7|c.2785_2787GAG[2]": {
+      "condition": "MONDO:0005045",
+      "condition_label": "hypertrophic cardiomyopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CV42934/MONDO:0005045/002"
+    },
+    "MYH7|c.3036C>T": {
+      "condition": "MONDO:0005045",
+      "condition_label": "hypertrophic cardiomyopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA013313/MONDO:0005045/002"
+    },
+    "MYH7|c.3382G>A": {
+      "condition": "MONDO:0005045",
+      "condition_label": "hypertrophic cardiomyopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA013661/MONDO:0005045/002"
+    },
+    "MYH7|c.3658_3660delGAG": {
+      "condition": "MONDO:0005045",
+      "condition_label": "hypertrophic cardiomyopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA013921/MONDO:0005045/002"
+    },
+    "MYL2|c.485G>A": {
+      "condition": "MONDO:0005045",
+      "condition_label": "hypertrophic cardiomyopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA010439/MONDO:0005045/102"
+    },
+    "MYL3|c.460C>T": {
+      "condition": "MONDO:0005045",
+      "condition_label": "hypertrophic cardiomyopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA013849/MONDO:0005045/103"
+    },
+    "MYO7A|c.1817G>A": {
+      "condition": "MONDO:0019497",
+      "condition_label": "nonsyndromic genetic deafness",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA6197622/MONDO:0019497/005"
+    },
+    "MYO7A|c.905G>A": {
+      "condition": "MONDO:0019501",
+      "condition_label": "Usher syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA132454/MONDO:0019501/005"
+    },
+    "MYOC|c.1041T>C": {
+      "condition": "MONDO:0005338",
+      "condition_label": "open-angle glaucoma",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA1244091/MONDO:0005338/019"
+    },
+    "MYOC|c.366C>T": {
+      "condition": "MONDO:0005338",
+      "condition_label": "open-angle glaucoma",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA238570/MONDO:0005338/019"
+    },
+    "MYOC|c.39T>G": {
+      "condition": "MONDO:0005338",
+      "condition_label": "open-angle glaucoma",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA1244342/MONDO:0005338/019"
+    },
+    "MYOC|c.477A>G": {
+      "condition": "MONDO:0005338",
+      "condition_label": "open-angle glaucoma",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA1244271/MONDO:0005338/019"
+    },
+    "MYOC|c.648G>A": {
+      "condition": "MONDO:0005338",
+      "condition_label": "open-angle glaucoma",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA1244204/MONDO:0005338/019"
+    },
+    "MYOC|c.855G>T": {
+      "condition": "MONDO:0005338",
+      "condition_label": "open-angle glaucoma",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA202234/MONDO:0005338/019"
+    },
+    "MYOC|c.864C>T": {
+      "condition": "MONDO:0005338",
+      "condition_label": "open-angle glaucoma",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA1244136/MONDO:0005338/019"
+    },
+    "NRAS|c.149C>T": {
+      "condition": "MONDO:0021060",
+      "condition_label": "RASopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA257019/MONDO:0021060/039"
+    },
+    "NRAS|c.173C>T": {
+      "condition": "MONDO:0018997",
+      "condition_label": "Noonan syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA341741642/MONDO:0018997/039"
+    },
+    "OTOF|c.5374C>T": {
+      "condition": "MONDO:0019497",
+      "condition_label": "nonsyndromic genetic deafness",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA182451/MONDO:0019497/023"
+    },
+    "PAH|c.963C>T": {
+      "condition": "MONDO:0009861",
+      "condition_label": "phenylketonuria",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA229873/MONDO:0009861/006"
+    },
+    "PALB2|c.104T>C": {
+      "condition": "MONDO:0700272",
+      "condition_label": "PALB2-related cancer predisposition",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA279502031/MONDO:0700272/077"
+    },
+    "PALB2|c.109C>A": {
+      "condition": "MONDO:0700272",
+      "condition_label": "PALB2-related cancer predisposition",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA191059/MONDO:0700272/077"
+    },
+    "PALB2|c.1748T>G": {
+      "condition": "MONDO:0700272",
+      "condition_label": "PALB2-related cancer predisposition",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA166979/MONDO:0700272/077"
+    },
+    "PALB2|c.2014G>C": {
+      "condition": "MONDO:0700272",
+      "condition_label": "PALB2-related cancer predisposition",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA151230/MONDO:0700272/077"
+    },
+    "PALB2|c.2027T>C": {
+      "condition": "MONDO:0700272",
+      "condition_label": "PALB2-related cancer predisposition",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA294362/MONDO:0700272/077"
+    },
+    "PALB2|c.2831T>A": {
+      "condition": "MONDO:0700272",
+      "condition_label": "PALB2-related cancer predisposition",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA197176/MONDO:0700272/077"
+    },
+    "PALB2|c.3049G>A": {
+      "condition": "MONDO:0700272",
+      "condition_label": "PALB2-related cancer predisposition",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA7963442/MONDO:0700272/077"
+    },
+    "PALB2|c.3054G>C": {
+      "condition": "MONDO:0700272",
+      "condition_label": "PALB2-related cancer predisposition",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA294183/MONDO:0700272/077"
+    },
+    "PALB2|c.338C>T": {
+      "condition": "MONDO:0700272",
+      "condition_label": "PALB2-related cancer predisposition",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA395137757/MONDO:0700272/077"
+    },
+    "PALB2|c.871G>A": {
+      "condition": "MONDO:0700272",
+      "condition_label": "PALB2-related cancer predisposition",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA10583380/MONDO:0700272/077"
+    },
+    "PDHA1|c.795A>G": {
+      "condition": "MONDO:0019169",
+      "condition_label": "pyruvate dehydrogenase deficiency",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA285340/MONDO:0019169/014"
+    },
+    "PIK3CA|c.2015+9A>G": {
+      "condition": "MONDO:0016054",
+      "condition_label": "overgrowth syndrome and/or cerebral malformations due to abnormalities in MTOR pathway genes",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA2710843/MONDO:0016054/018"
+    },
+    "PIK3CA|c.2198A>G": {
+      "condition": "MONDO:0016054",
+      "condition_label": "overgrowth syndrome and/or cerebral malformations due to abnormalities in MTOR pathway genes",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA2710903/MONDO:0016054/018"
+    },
+    "PIK3CA|c.93A>G": {
+      "condition": "MONDO:0100283",
+      "condition_label": "overgrowth syndrome and/or cerebral malformations due to abnormalities in MTOR pathway genes",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA355270988/MONDO:0100283/018"
+    },
+    "PIK3R2|c.322+7A>G": {
+      "condition": "MONDO:0016054",
+      "condition_label": "overgrowth syndrome and/or cerebral malformations due to abnormalities in MTOR pathway genes",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA9306692/MONDO:0016054/018"
+    },
+    "PTEN|c.1104T>C": {
+      "condition": "MONDO:0017623",
+      "condition_label": "PTEN hamartoma tumor syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA000293/MONDO:0017623/003"
+    },
+    "PTEN|c.1171C>T": {
+      "condition": "MONDO:0017623",
+      "condition_label": "PTEN hamartoma tumor syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA000118/MONDO:0017623/003"
+    },
+    "PTEN|c.235G>A": {
+      "condition": "MONDO:0017623",
+      "condition_label": "PTEN hamartoma tumor syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA000358/MONDO:0017623/003"
+    },
+    "PTEN|c.254-39G>T": {
+      "condition": "MONDO:0017623",
+      "condition_label": "PTEN hamartoma tumor syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA000368/MONDO:0017623/003"
+    },
+    "PTEN|c.44G>A": {
+      "condition": "MONDO:0017623",
+      "condition_label": "PTEN hamartoma tumor syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA16613142/MONDO:0017623/003"
+    },
+    "PTEN|c.737C>T": {
+      "condition": "MONDO:0017623",
+      "condition_label": "PTEN hamartoma tumor syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA000559/MONDO:0017623/003"
+    },
+    "PTEN|c.79+35C>T": {
+      "condition": "MONDO:0017623",
+      "condition_label": "PTEN hamartoma tumor syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA000576/MONDO:0017623/003"
+    },
+    "PTPN11|c.1529A>C": {
+      "condition": "MONDO:0007893",
+      "condition_label": "Noonan syndrome with multiple lentigines",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA256758/MONDO:0007893/004"
+    },
+    "PTPN11|c.1530G>C": {
+      "condition": "MONDO:0021060",
+      "condition_label": "RASopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA220143/MONDO:0021060/004"
+    },
+    "PTPN11|c.155C>T": {
+      "condition": "MONDO:0021060",
+      "condition_label": "RASopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA261555/MONDO:0021060/043"
+    },
+    "PTPN11|c.1678C>T": {
+      "condition": "MONDO:0021060",
+      "condition_label": "RASopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA134647/MONDO:0021060/043"
+    },
+    "PTPN11|c.167T>C": {
+      "condition": "MONDO:0021060",
+      "condition_label": "RASopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA243707917/MONDO:0021060/004"
+    },
+    "PTPN11|c.244A>G": {
+      "condition": "MONDO:0021060",
+      "condition_label": "RASopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA243279/MONDO:0021060/004"
+    },
+    "PTPN11|c.781C>T": {
+      "condition": "MONDO:0021060",
+      "condition_label": "RASopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA235373/MONDO:0021060/004"
+    },
+    "PTPN11|c.794G>A": {
+      "condition": "MONDO:0021060",
+      "condition_label": "RASopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA234739/MONDO:0021060/043"
+    },
+    "PTPN11|c.922A>G": {
+      "condition": "MONDO:0021060",
+      "condition_label": "RASopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA177674/MONDO:0021060/004"
+    },
+    "RAF1|c.1082G>C": {
+      "condition": "MONDO:0021060",
+      "condition_label": "RASopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA134687/MONDO:0021060/004"
+    },
+    "RAF1|c.1108+9_1108+21del": {
+      "condition": "MONDO:0021060",
+      "condition_label": "RASopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA182757/MONDO:0021060/040"
+    },
+    "RAF1|c.119G>A": {
+      "condition": "MONDO:0021060",
+      "condition_label": "RASopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA201617/MONDO:0021060/040"
+    },
+    "RAF1|c.66T>G": {
+      "condition": "MONDO:0021060",
+      "condition_label": "RASopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA134746/MONDO:0021060/004"
+    },
+    "RAF1|c.769T>C": {
+      "condition": "MONDO:0021060",
+      "condition_label": "RASopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA184835/MONDO:0021060/004"
+    },
+    "RAF1|c.770C>T": {
+      "condition": "MONDO:0018997",
+      "condition_label": "Noonan syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA235334/MONDO:0018997/004"
+    },
+    "RAF1|c.775T>A": {
+      "condition": "MONDO:0021060",
+      "condition_label": "RASopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA261617/MONDO:0021060/040"
+    },
+    "RAF1|c.781C>T": {
+      "condition": "MONDO:0018997",
+      "condition_label": "Noonan syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA257062/MONDO:0018997/004"
+    },
+    "RAF1|c.788T>G": {
+      "condition": "MONDO:0021060",
+      "condition_label": "RASopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA273745/MONDO:0021060/004"
+    },
+    "RIT1|c.268A>G": {
+      "condition": "MONDO:0021060",
+      "condition_label": "RASopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA342802812/MONDO:0021060/047"
+    },
+    "RPE65|c.495+1dup": {
+      "condition": "MONDO:0100368",
+      "condition_label": "RPE65-related recessive retinopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA226556/MONDO:0100368/120"
+    },
+    "RPGR|c.492G>T": {
+      "condition": "MONDO:0100437",
+      "condition_label": "RPGR-related retinopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA412744921/MONDO:0100437/106"
+    },
+    "RPGR|c.617C>T": {
+      "condition": "MONDO:0100437",
+      "condition_label": "RPGR-related retinopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA412744378/MONDO:0100437/106"
+    },
+    "RRAS2|c.70_78dup": {
+      "condition": "MONDO:0021060",
+      "condition_label": "RASopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA912971829/MONDO:0021060/127"
+    },
+    "RUNX1|c.1269C>T": {
+      "condition": "MONDO:0011071",
+      "condition_label": "hereditary thrombocytopenia and hematologic cancer predisposition syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA10014189/MONDO:0011071/008"
+    },
+    "RUNX1|c.1389C>G": {
+      "condition": "MONDO:0011071",
+      "condition_label": "hereditary thrombocytopenia and hematologic cancer predisposition syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA10014178/MONDO:0011071/008"
+    },
+    "RUNX1|c.215_216dup": {
+      "condition": "MONDO:0011071",
+      "condition_label": "hereditary thrombocytopenia and hematologic cancer predisposition syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA658656806/MONDO:0011071/008"
+    },
+    "RUNX1|c.367G>C": {
+      "condition": "MONDO:0011071",
+      "condition_label": "hereditary thrombocytopenia and hematologic cancer predisposition syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA10014524/MONDO:0011071/008"
+    },
+    "RUNX1|c.442_449del": {
+      "condition": "MONDO:0011071",
+      "condition_label": "hereditary thrombocytopenia and hematologic cancer predisposition syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA248627/MONDO:0011071/008"
+    },
+    "RUNX1|c.601C>T": {
+      "condition": "MONDO:0011071",
+      "condition_label": "hereditary thrombocytopenia and hematologic cancer predisposition syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA16602487/MONDO:0011071/008"
+    },
+    "RUNX1|c.679G>T": {
+      "condition": "MONDO:0011071",
+      "condition_label": "hereditary thrombocytopenia and hematologic cancer predisposition syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA410206910/MONDO:0011071/008"
+    },
+    "RUNX1|c.861C>A": {
+      "condition": "MONDO:0011071",
+      "condition_label": "hereditary thrombocytopenia and hematologic cancer predisposition syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA248619/MONDO:0011071/008"
+    },
+    "SCN1A|c.1170+5G>C": {
+      "condition": "MONDO:0100038",
+      "condition_label": "complex neurodevelopmental disorder",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA16603947/MONDO:0100038/067"
+    },
+    "SCN1A|c.2941C>A": {
+      "condition": "MONDO:0018214",
+      "condition_label": "generalized epilepsy with febrile seizures plus",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA16042438/MONDO:0018214/067"
+    },
+    "SCN2A|c.4782G>C": {
+      "condition": "MONDO:0100038",
+      "condition_label": "complex neurodevelopmental disorder",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA16603919/MONDO:0100038/068"
+    },
+    "SCN2A|c.5317G>A": {
+      "condition": "MONDO:0100038",
+      "condition_label": "complex neurodevelopmental disorder",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA318033/MONDO:0100038/068"
+    },
+    "SCN8A|c.2534C>G": {
+      "condition": "MONDO:0100038",
+      "condition_label": "complex neurodevelopmental disorder",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA384884778/MONDO:0100038/070"
+    },
+    "SERPINC1|c.1154-14G>A": {
+      "condition": "MONDO:0013144",
+      "condition_label": "antithrombin III deficiency",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA16609956/MONDO:0013144/084"
+    },
+    "SERPINC1|c.719A>G": {
+      "condition": "MONDO:0013144",
+      "condition_label": "antithrombin III deficiency",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA1251357/MONDO:0013144/084"
+    },
+    "SGCA|c.*227G>A": {
+      "condition": "MONDO:0015152",
+      "condition_label": "autosomal recessive limb-girdle muscular dystrophy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA10650515/MONDO:0015152/189"
+    },
+    "SGCB|c.*3043A>G": {
+      "condition": "MONDO:0015152",
+      "condition_label": "autosomal recessive limb-girdle muscular dystrophy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA96772381/MONDO:0015152/184"
+    },
+    "SGCB|c.199_210del": {
+      "condition": "MONDO:0015152",
+      "condition_label": "autosomal recessive limb-girdle muscular dystrophy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA10604820/MONDO:0015152/184"
+    },
+    "SGCD|c.91C>G": {
+      "condition": "MONDO:0015152",
+      "condition_label": "autosomal recessive limb-girdle muscular dystrophy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA200046/MONDO:0015152/186"
+    },
+    "SGCG|c.*185G>A": {
+      "condition": "MONDO:0015152",
+      "condition_label": "autosomal recessive limb-girdle muscular dystrophy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA10639180/MONDO:0015152/185"
+    },
+    "SHOC2|c.1302C>T": {
+      "condition": "MONDO:0021060",
+      "condition_label": "RASopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA293482/MONDO:0021060/004"
+    },
+    "SHOC2|c.4A>G": {
+      "condition": "MONDO:0054637",
+      "condition_label": "Noonan syndrome-like disorder with loose anagen hair 1",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA118524/MONDO:0054637/004"
+    },
+    "SHOC2|c.610A>G": {
+      "condition": "MONDO:0021060",
+      "condition_label": "RASopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA5689600/MONDO:0021060/004"
+    },
+    "SLC26A4|c.147C>G": {
+      "condition": "MONDO:0010134",
+      "condition_label": "Pendred syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA4432373/MONDO:0010134/005"
+    },
+    "SLC26A4|c.1614C>T": {
+      "condition": "MONDO:0010134",
+      "condition_label": "Pendred syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA132671/MONDO:0010134/005"
+    },
+    "SLC26A4|c.1708-18T>A": {
+      "condition": "MONDO:0010134",
+      "condition_label": "Pendred syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA4432923/MONDO:0010134/005"
+    },
+    "SLC26A4|c.2291C>T": {
+      "condition": "MONDO:0010134",
+      "condition_label": "Pendred syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA132713/MONDO:0010134/005"
+    },
+    "SLC26A4|c.349C>T": {
+      "condition": "MONDO:0010134",
+      "condition_label": "Pendred syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA132727/MONDO:0010134/005"
+    },
+    "SLC26A4|c.416-7T>C": {
+      "condition": "MONDO:0010134",
+      "condition_label": "Pendred syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA132729/MONDO:0010134/005"
+    },
+    "SLC26A4|c.919-2A>G": {
+      "condition": "MONDO:0010134",
+      "condition_label": "Pendred syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA261445/MONDO:0010134/005"
+    },
+    "SLC9A6|c.-20G>A": {
+      "condition": "MONDO:0010278",
+      "condition_label": "Christianson syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA10524597/MONDO:0010278/033"
+    },
+    "SLC9A6|c.141C>T": {
+      "condition": "MONDO:0010278",
+      "condition_label": "Christianson syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA293620/MONDO:0010278/016"
+    },
+    "SOS1|c.109A>G": {
+      "condition": "MONDO:0021060",
+      "condition_label": "RASopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA136074/MONDO:0021060/004"
+    },
+    "SOS1|c.1230G>A": {
+      "condition": "MONDO:0021060",
+      "condition_label": "RASopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA136077/MONDO:0021060/041"
+    },
+    "SOS1|c.1642A>C": {
+      "condition": "MONDO:0018997",
+      "condition_label": "Noonan syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA234977/MONDO:0018997/004"
+    },
+    "SOS1|c.1654A>G": {
+      "condition": "MONDO:0018997",
+      "condition_label": "Noonan syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA235350/MONDO:0018997/004"
+    },
+    "SOS1|c.2536G>A": {
+      "condition": "MONDO:0018997",
+      "condition_label": "Noonan syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA261734/MONDO:0018997/004"
+    },
+    "SOS1|c.322G>A": {
+      "condition": "MONDO:0018997",
+      "condition_label": "Noonan syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA261739/MONDO:0018997/004"
+    },
+    "SOS1|c.508A>G": {
+      "condition": "MONDO:0018997",
+      "condition_label": "Noonan syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA235342/MONDO:0018997/004"
+    },
+    "SOS1|c.806T>C": {
+      "condition": "MONDO:0018997",
+      "condition_label": "Noonan syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA235344/MONDO:0018997/004"
+    },
+    "TCF4|c.687C>A": {
+      "condition": "MONDO:0012589",
+      "condition_label": "Pitt-Hopkins syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA8970418/MONDO:0012589/016"
+    },
+    "TECTA|c.3492C>T": {
+      "condition": "MONDO:0019497",
+      "condition_label": "nonsyndromic genetic deafness",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA182519/MONDO:0019497/005"
+    },
+    "TNNI3|c.485G>A": {
+      "condition": "MONDO:0005045",
+      "condition_label": "hypertrophic cardiomyopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA021744/MONDO:0005045/098"
+    },
+    "TNNT2|c.311G>A": {
+      "condition": "MONDO:0005045",
+      "condition_label": "hypertrophic cardiomyopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA004294/MONDO:0005045/099"
+    },
+    "TP53|c.1093C>T": {
+      "condition": "MONDO:0018875",
+      "condition_label": "Li-Fraumeni syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA000035/MONDO:0018875/009"
+    },
+    "TP53|c.145G>A": {
+      "condition": "MONDO:0018875",
+      "condition_label": "Li-Fraumeni syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA000056/MONDO:0018875/009"
+    },
+    "TP53|c.217G>A": {
+      "condition": "MONDO:0018875",
+      "condition_label": "Li-Fraumeni syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA000075/MONDO:0018875/009"
+    },
+    "TP53|c.21T>A": {
+      "condition": "MONDO:0018875",
+      "condition_label": "Li-Fraumeni syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA000076/MONDO:0018875/009"
+    },
+    "TP53|c.245C>T": {
+      "condition": "MONDO:0018875",
+      "condition_label": "Li-Fraumeni syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA000080/MONDO:0018875/009"
+    },
+    "TP53|c.319T>C": {
+      "condition": "MONDO:0018875",
+      "condition_label": "Li-Fraumeni syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA000104/MONDO:0018875/009"
+    },
+    "TP53|c.537T>A": {
+      "condition": "MONDO:0018875",
+      "condition_label": "Li-Fraumeni syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA16615708/MONDO:0018875/009"
+    },
+    "TP53|c.704A>G": {
+      "condition": "MONDO:0018875",
+      "condition_label": "Li-Fraumeni syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA000343/MONDO:0018875/009"
+    },
+    "TPM1|c.215C>T": {
+      "condition": "MONDO:0005045",
+      "condition_label": "hypertrophic cardiomyopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA029091/MONDO:0005045/100"
+    },
+    "TPM1|c.797A>G": {
+      "condition": "MONDO:0005045",
+      "condition_label": "hypertrophic cardiomyopathy",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA018361/MONDO:0005045/100"
+    },
+    "UBE3A|c.2563_2568del": {
+      "condition": "MONDO:0007113",
+      "condition_label": "Angelman syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA279164/MONDO:0007113/016"
+    },
+    "UBE3A|c.477A>T": {
+      "condition": "MONDO:0007113",
+      "condition_label": "Angelman syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA149414/MONDO:0007113/016"
+    },
+    "UBE3A|c.618A>T": {
+      "condition": "MONDO:0007113",
+      "condition_label": "Angelman syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA291604/MONDO:0007113/016"
+    },
+    "UBE3A|c.936G>A": {
+      "condition": "MONDO:0007113",
+      "condition_label": "Angelman syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA267785638/MONDO:0007113/037"
+    },
+    "USH2A|c.8559-2A>G": {
+      "condition": "MONDO:0019501",
+      "condition_label": "Usher syndrome",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA262122/MONDO:0019501/005"
+    },
+    "VHL|c.273C>A": {
+      "condition": "MONDO:0008667",
+      "condition_label": "von Hippel-Lindau disease",
+      "erepo_url": "https://erepo.genome.network/evrepo/api/interpretation/CA16611270/MONDO:0008667/078"
+    }
+  }
+}

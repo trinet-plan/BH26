@@ -30,9 +30,10 @@ check("no overlap between pathogenic/benign lists", not (set(PATHOGENIC_CODES) &
 # same team's ClinGen 2024 PP4+PP1/BS4 evaluator (segregation.py is still
 # real, tested code, still exercised directly in section [5] below, but no
 # longer the thing IMPLEMENTED_CODES credits for PP1/BS4 - pp1_bs4_pp4_
-# engine is).
-check("22 implemented codes", len(IMPLEMENTED_CODES) == 22)
-check("6 stub codes", len(stubs.STUB_CODES) == 6)
+# engine is) -> +PS2/PM6 (24) on 2026-09-19 once acmg_pipeline.criteria.
+# ps2_pm6 connected a rule-based de-novo evaluator.
+check("24 implemented codes", len(IMPLEMENTED_CODES) == 24)
+check("4 stub codes", len(stubs.STUB_CODES) == 4)
 check("implemented + stub codes cover all 28 with no overlap",
       set(stubs.STUB_CODES) | IMPLEMENTED_CODES == set(ALL_ACMG_CODES)
       and not (set(stubs.STUB_CODES) & IMPLEMENTED_CODES))

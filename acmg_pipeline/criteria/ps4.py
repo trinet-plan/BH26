@@ -145,10 +145,16 @@ class PS4Judgment:
                 odds_ratio=ccd.get("odds_ratio"),
                 p_value=ccd.get("p_value"),
             ),
+            # `data.get("overall_evidence") or {}`, not `data["overall_evidence"]`:
+            # same null-vs-missing quirk as ps3_bs3.py's PS3BS3Judgment.from_json()
+            # (see its own comment) - Claude can emit "overall_evidence": null
+            # outright, which `data["overall_evidence"]["direction"]` then crashes
+            # on with "'NoneType' object is not subscriptable".
             overall_evidence=CaseControlEvidence(
-                direction=CaseControlDirection(_clean_enum_token(data["overall_evidence"]["direction"])),
-                strength_hint=data["overall_evidence"].get("strength_hint", "not_clear"),
-                rationale=data["overall_evidence"].get("rationale", ""),
+                direction=CaseControlDirection(_clean_enum_token(
+                    (data.get("overall_evidence") or {}).get("direction", "not_clear"))),
+                strength_hint=(data.get("overall_evidence") or {}).get("strength_hint", "not_clear"),
+                rationale=(data.get("overall_evidence") or {}).get("rationale", ""),
             ),
             single_study_only=data.get("single_study_only", True),
         )

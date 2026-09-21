@@ -69,6 +69,7 @@ from acmg_pipeline.export import (
 from acmg_pipeline.classification import (
     ALL_ACMG_CODES,
     AUTOMATED_CODES,
+    DE_NOVO_CODES,
     IMPLEMENTED_CODES,
     LITERATURE_CODES,
     PHENOTYPE_SEGREGATION_CODES,
@@ -78,6 +79,7 @@ from acmg_pipeline.classification import (
 )
 from acmg_pipeline.criteria import stubs
 from acmg_pipeline.criteria import pp1_bs4_pp4_engine
+from acmg_pipeline.criteria import ps2_pm6
 from acmg_pipeline.api_input import ApiCaseInput
 from acmg_pipeline.clinical_note import ClinicalNoteExtraction, extract_clinical_note
 from acmg_pipeline.inputs import empty_clinical_note
@@ -771,7 +773,7 @@ async def judge_variant_from_structured_input(
     variant = case_input.parse_vcf().record
     clinical_note = extract_clinical_note(case_input.clinical_note)
     from acmg_pipeline import hpo_mondo_extraction
-    clinical_note = await hpo_mondo_extraction.resolve_diagnosis_mondo(clinical_note)
+    clinical_note = await hpo_mondo_extraction.resolve_diagnosis_mondo(clinical_note, case_input.clinical_note)
     return await judge_variant_from_shared_input(
         variant,
         clinical_note,
@@ -1154,6 +1156,10 @@ async def evaluate_variant_evidence_lines(
             code, phenotype_segregation_results[code], variant,
         )
 
+    de_novo_results = ps2_pm6.evaluate(variant, clinical_note, automated_config)
+    for code in DE_NOVO_CODES:
+        by_code[code] = ps2_pm6.build_evidence_line(code, de_novo_results[code], variant)
+
     for code in ALL_ACMG_CODES:
         if code not in IMPLEMENTED_CODES:
             by_code[code] = build_stub_evidence_line(code, variant)
@@ -1206,6 +1212,7 @@ async def evaluate_selected_criteria(
     phenotype_segregation_subset = tuple(
         code for code in ALL_ACMG_CODES if code in requested and code in PHENOTYPE_SEGREGATION_CODES
     )
+    de_novo_subset = tuple(code for code in ALL_ACMG_CODES if code in requested and code in DE_NOVO_CODES)
     stub_subset = [code for code in criteria if code not in IMPLEMENTED_CODES]
 
     if literature_subset and (mcp is None or erepo_client is None):
@@ -1292,6 +1299,11 @@ async def evaluate_selected_criteria(
             by_code[code] = pp1_bs4_pp4_engine.build_evidence_line(
                 code, phenotype_segregation_results[code], variant,
             )
+
+    if de_novo_subset:
+        de_novo_results = ps2_pm6.evaluate(variant, clinical_note, automated_config)
+        for code in de_novo_subset:
+            by_code[code] = ps2_pm6.build_evidence_line(code, de_novo_results[code], variant)
 
     for code in stub_subset:
         by_code[code] = build_stub_evidence_line(code, variant)

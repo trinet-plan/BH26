@@ -180,7 +180,7 @@ async def main() -> None:
             # condition_id was always None here, and PVS1's mechanism gate
             # (which requires it) could never do better than NOT_PROVIDED.
             from acmg_pipeline import hpo_mondo_extraction
-            clinical_note = await hpo_mondo_extraction.resolve_diagnosis_mondo(clinical_note)
+            clinical_note = await hpo_mondo_extraction.resolve_diagnosis_mondo(clinical_note, note_text)
 
             variant = VariantRecord(
                 chrom=coord_entry["variant"]["chrom"], pos=coord_entry["variant"]["pos"],

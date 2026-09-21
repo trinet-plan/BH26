@@ -2,6 +2,7 @@
 
 from acmg_pipeline.clinical_note import ClinicalNoteExtraction
 from acmg_pipeline.common import AggregatedJudgment
+from acmg_pipeline.constants import STUB_CODES
 from acmg_pipeline.criteria import ps3_bs3, ps4, segregation, stubs
 from acmg_pipeline.export import build_evidence_line
 from acmg_pipeline.vcf_record import VariantRecord
@@ -47,8 +48,8 @@ for code, module in criterion_modules.items():
     assert "R719W" in prompt
     assert code in {"PS3", "BS3", "PS4", "PP1", "BS4"}
 
-stub_results = stubs.all_stub_evidence(variant, clinical_note)
-assert len(stub_results) == 23
+stub_results = stubs.all_stub_evidence()
+assert len(stub_results) == len(STUB_CODES)
 
 assert clinical_note.proband.phenotype.clinical_features[0].hpo_id == "HP:0001639"
 
@@ -57,7 +58,10 @@ aggregated = AggregatedJudgment(
     aggregated_direction=ps3_bs3.OverallDirection.NOT_CLEAR,
     aggregation_hints=[],
 )
-evidence_line = build_evidence_line(aggregated, variant, criterion="PS3", vcep_name="Cardiomyopathy VCEP")
+evidence_line = build_evidence_line(
+    aggregated, gene="MYH7", hgvsc="c.2155C>T", criterion="PS3",
+    vcep_name="Cardiomyopathy VCEP", variant=variant,
+)
 assert evidence_line["id"] == "evline:MYH7_c_2155C_T_PS3"
 assert evidence_line["specifiedBy"]["methodType"] == "PS3"
 

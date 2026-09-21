@@ -106,7 +106,7 @@ async def run_pipeline(
     """
     extraction = extract_clinical_note(clinical_note)
     from acmg_pipeline import hpo_mondo_extraction
-    extraction = await hpo_mondo_extraction.resolve_diagnosis_mondo(extraction)
+    extraction = await hpo_mondo_extraction.resolve_diagnosis_mondo(extraction, clinical_note)
     lines = await evaluate_variant_evidence_lines(
         variant, extraction,
         automated_config=load_automated_config(),
@@ -155,7 +155,7 @@ async def run_selected_criteria(
     """
     extraction = extract_clinical_note(clinical_note)
     from acmg_pipeline import hpo_mondo_extraction
-    extraction = await hpo_mondo_extraction.resolve_diagnosis_mondo(extraction)
+    extraction = await hpo_mondo_extraction.resolve_diagnosis_mondo(extraction, clinical_note)
     return await evaluate_selected_criteria(
         variant, extraction, criteria,
         automated_config=load_automated_config(),

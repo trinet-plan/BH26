@@ -10,12 +10,11 @@ from acmg_pipeline.providers.gene_disease_draft import GeneDiseaseDraftProvider
 
 
 POLICY = {
-    "policy_version": "test-v1",
+    "policy_version": "test-v2",
     "policy_source": "Synthetic fastVEP-style triage policy",
     "pp2_min_mis_z": 3.09,
-    "bp1_min_p_li": 0.9,
-    "bp1_max_mis_z": 1.0,
-    "bp1_max_pathogenic_missense": 3,
+    "bp1_max_missense_fraction": 0.10,
+    "bp1_min_truncating_count": 10,
     "pvs1_min_p_li": 0.9,
     "pvs1_max_loeuf": 0.35,
 }

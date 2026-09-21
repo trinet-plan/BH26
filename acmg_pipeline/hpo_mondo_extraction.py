@@ -340,9 +340,36 @@ def _primary_diagnosis_clause(diagnosis: str) -> Optional[str]:
     return head if head and head != diagnosis else None
 
 
+def _leading_word_drops(diagnosis: str) -> list[str]:
+    """Progressively shorter suffixes of `diagnosis`, each with one more
+    leading word dropped, e.g. "lethal neonatal hypertrophic cardiomyopathy"
+    -> ["neonatal hypertrophic cardiomyopathy", "hypertrophic
+    cardiomyopathy"]. Stops before the last single word (too generic a
+    search on its own to be a useful OLS4 query).
+
+    _primary_diagnosis_clause() above only broadens a diagnosis that has a
+    qualifier CLAUSE to split off ("X complicated by Y", "X (Y)"). A
+    diagnosis that is instead just a run of leading modifiers with no such
+    connector never reaches that fallback at all - confirmed empirically
+    (2026-09-19, case2 of run_integrated_validation_demo.py's 4 demo cases):
+    OLS4 returns 0 candidates for the full phrase "lethal neonatal
+    hypertrophic cardiomyopathy" (so choose_best_mondo() is never even
+    called - it returns None immediately on an empty candidate list) but 8
+    for "hypertrophic cardiomyopathy" alone, one word-drop short of the
+    original. Used only to build broader FOLLOW-UP search queries, same as
+    _primary_diagnosis_clause(); choose_best_mondo() is still shown the
+    full, original diagnosis text for its final pick, so this can only add
+    candidates to consider, never change what "adequately represents" the
+    diagnosis means.
+    """
+    words = diagnosis.split()
+    return [" ".join(words[i:]) for i in range(1, len(words) - 1)]
+
+
 def choose_best_mondo(
     expression: str,
     candidates: list[dict[str, str]],
+    clinical_note_text: Optional[str] = None,
 ) -> Optional[dict[str, str]]:
     if not candidates:
         return None
@@ -361,6 +388,11 @@ You MUST choose only from the supplied candidates.
 Rules:
 - Do not create a new MONDO label.
 - Do not create or change a MONDO ID.
+- A candidate label sharing a word with the diagnosis (e.g. both mention
+  "neonatal") is NOT sufficient by itself - verify the candidate is
+  actually the same disease/organ system as the diagnosis (and, when the
+  full clinical note is given below, as the patient's actual presentation),
+  not just a superficial text overlap.
 - If none of the candidates adequately represents the diagnosis,
   return exactly: NOT_FOUND
 - Otherwise return exactly one candidate in this format:
@@ -368,11 +400,16 @@ Rules:
 - Do not add explanations.
 """
 
+    note_section = (
+        f"\nFull clinical note (for context/verification only - the diagnosis\n"
+        f"expression above is still what you are matching):\n\n{clinical_note_text}\n"
+        if clinical_note_text else ""
+    )
     question = f"""
 Clinical diagnosis:
 
 {expression}
-
+{note_section}
 MONDO candidates returned by EBI OLS4:
 
 {candidate_text}
@@ -398,6 +435,7 @@ MONDO candidates returned by EBI OLS4:
 
 async def resolve_diagnosis_mondo(
     extraction: ClinicalNoteExtraction,
+    clinical_note_text: Optional[str] = None,
 ) -> ClinicalNoteExtraction:
     """
     Return a deep-copied ClinicalNoteExtraction with condition_id filled,
@@ -418,8 +456,14 @@ async def resolve_diagnosis_mondo(
     set condition_id, and it can only return a real, existing MONDO term
     that OLS4 itself returned as a candidate, never a fabricated one.
 
-    extraction.diagnosis is never replaced or overwritten; only condition_id
-    is added.
+    extraction.diagnosis (the field callers read) is never replaced or
+    overwritten; only condition_id is added. `clinical_note_text` - the raw
+    note extraction.diagnosis was itself extracted from - is used only
+    internally, to re-derive an alternate diagnosis WORDING to search/pick
+    against on retry (2026-09-19, see the OUTER_ATTEMPTS comment below);
+    when omitted (a caller with no raw note, e.g. a literature-derived
+    condition_name with no source text - see run_integrated_validation_64.py),
+    behavior is unchanged from before this parameter existed.
     """
     result = copy.deepcopy(extraction)
     diagnosis = (result.diagnosis or "").strip()
@@ -438,48 +482,82 @@ async def resolve_diagnosis_mondo(
         if "searchClasses" not in tool_names:
             raise RuntimeError("Required OLS4 tool 'searchClasses' is missing")
 
-        print(f"[MONDO] {diagnosis}")
-        candidates = await search_mondo_candidates(mcp, diagnosis)
-        if not candidates:
-            # OLS4 does phrase-relevance matching, not a substring search -
-            # a compound diagnosis ("X complicated by Y") can return zero
-            # candidates for the full text even though its primary clause
-            # alone finds the right term. Broaden the QUERY only; the final
-            # choose_best_mondo() call below still sees the full, original
-            # diagnosis text (see _primary_diagnosis_clause()'s own
-            # docstring for why this cannot introduce a wrong disease).
-            fallback_query = _primary_diagnosis_clause(diagnosis)
-            if fallback_query:
-                print(f"        no candidates for full text, retrying with: {fallback_query}")
-                candidates = await search_mondo_candidates(mcp, fallback_query)
-        # choose_best_mondo() is an LLM call, not a deterministic lookup -
-        # confirmed empirically (2026-09-18) that a borderline diagnosis
-        # (a specific sub-phenotype whose exact MONDO term isn't among the
-        # candidates, e.g. "hypertrophic cardiomyopathy with apical
-        # ventricular aneurysm" vs. plain "hypertrophic cardiomyopathy")
-        # returns NOT_FOUND on roughly 1 in 5 calls, purely from sampling
-        # variance, even though the same candidates are judged sufficient
-        # on the other 4. A missing condition_id here cascades into PVS1's
-        # (and other criteria's) mechanism gate going unevaluated, so a
-        # few independent retries meaningfully reduces the odds a real,
-        # available candidate gets lost to a single unlucky call - this
-        # does not change which candidates are offered, just how many
-        # chances the same judgment gets to land on one of them.
-        #
-        # 3 attempts still missed a particularly borderline diagnosis
-        # ("hypertrophic cardiomyopathy with apical ventricular aneurysm")
-        # in a live 12-variant run (2026-09-18) despite resolving correctly
-        # 10/10 in isolated repeat trials - raised to 5 to push the
-        # remaining miss rate down further (~20%^5 < 0.01% if failures were
-        # truly independent; the real rate is likely a bit higher since the
-        # upstream extract_clinical_note() call also re-runs per attempt
-        # of the OUTER pipeline and can itself vary the exact diagnosis
-        # wording, but more attempts here still only helps).
-        best = None
-        for attempt in range(5):
-            best = choose_best_mondo(diagnosis, candidates)
+        # OUTER_ATTEMPTS re-derives the diagnosis TEXT itself, not just the
+        # MONDO pick, when clinical_note_text is available. Confirmed
+        # empirically (2026-09-19, case2 of run_integrated_validation_demo.py's
+        # 4 demo cases): extract_clinical_note() is itself an uncached LLM
+        # call (see clinical_extraction.py), and its exact diagnosis wording
+        # can vary run to run for the same note text - one run read the note
+        # as "hypertrophic cardiomyopathy", another as the far more specific
+        # "lethal neonatal hypertrophic cardiomyopathy", which then missed
+        # every inner candidate/pick attempt below (a specific sub-phenotype
+        # OLS4 has no close MONDO term for), flipping PVS1's mechanism gate -
+        # and the whole variant's classification - from met to not_met purely
+        # from that upstream sampling variance. Retrying only the inner pick
+        # (as this function did before) cannot recover from a bad diagnosis
+        # WORDING, since it keeps re-asking about the same fixed candidates.
+        # Attempt 0 always reuses the diagnosis `extraction` already carries
+        # (the caller already paid for that extraction); only attempts 1+
+        # pay for a fresh one.
+        OUTER_ATTEMPTS = 3 if clinical_note_text else 1
+        # INNER_ATTEMPTS (was a flat 5 - see the removed comment this
+        # replaces) is lowered to 3 now that OUTER_ATTEMPTS also contributes
+        # independent tries via a different diagnosis wording each time,
+        # keeping the worst-case LLM call count (3 extractions + 9 picks)
+        # in the same ballpark as before (1 extraction + 5 picks) rather
+        # than compounding to 5x5.
+        INNER_ATTEMPTS = 3
+
+        for outer_attempt in range(OUTER_ATTEMPTS):
+            if outer_attempt > 0:
+                from acmg_pipeline.clinical_note import extract_clinical_note
+                print(f"        re-extracting diagnosis (attempt {outer_attempt + 1}/{OUTER_ATTEMPTS})")
+                reextracted = extract_clinical_note(clinical_note_text)
+                diagnosis = (reextracted.diagnosis or "").strip()
+                if not diagnosis:
+                    continue
+
+            print(f"[MONDO] {diagnosis}")
+            candidates = await search_mondo_candidates(mcp, diagnosis)
+            if not candidates:
+                # OLS4 does phrase-relevance matching, not a substring search -
+                # a compound diagnosis ("X complicated by Y") can return zero
+                # candidates for the full text even though its primary clause
+                # alone finds the right term. Broaden the QUERY only; the final
+                # choose_best_mondo() call below still sees the full, original
+                # diagnosis text (see _primary_diagnosis_clause()'s own
+                # docstring for why this cannot introduce a wrong disease).
+                fallback_query = _primary_diagnosis_clause(diagnosis)
+                if fallback_query:
+                    print(f"        no candidates for full text, retrying with: {fallback_query}")
+                    candidates = await search_mondo_candidates(mcp, fallback_query)
+            if not candidates:
+                # The qualifier-clause split above only helps a compound
+                # diagnosis with a connector to split off. A diagnosis that
+                # is just a run of leading modifiers with no such connector
+                # (e.g. "lethal neonatal hypertrophic cardiomyopathy") never
+                # reaches it - see _leading_word_drops()'s own docstring for
+                # the confirmed 0-candidate case this recovers.
+                for broader_query in _leading_word_drops(diagnosis):
+                    print(f"        no candidates for full text, retrying with: {broader_query}")
+                    candidates = await search_mondo_candidates(mcp, broader_query)
+                    if candidates:
+                        break
+            # choose_best_mondo() is an LLM call, not a deterministic lookup -
+            # confirmed empirically (2026-09-18) that a borderline diagnosis
+            # returns NOT_FOUND purely from sampling variance even when the
+            # same candidates are judged sufficient on other attempts. A
+            # missing condition_id here cascades into PVS1's (and other
+            # criteria's) mechanism gate going unevaluated, so a few
+            # independent retries meaningfully reduces the odds a real,
+            # available candidate gets lost to a single unlucky call.
+            for attempt in range(INNER_ATTEMPTS):
+                best = choose_best_mondo(diagnosis, candidates, clinical_note_text)
+                if best is not None:
+                    break
             if best is not None:
                 break
+
         if best is None:
             print("        selected: NOT_FOUND")
         else:

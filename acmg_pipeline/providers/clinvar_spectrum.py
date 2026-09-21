@@ -21,14 +21,21 @@ predominantly caused by truncating rather than missense variation).
 
 from __future__ import annotations
 
-from acmg_pipeline.providers.clinvar import gene_consequence_search, summary_documents
+from acmg_pipeline.providers.clinvar import gene_consequence_search_all, summary_documents
 
 METHOD = "clinvar_gene_classification_counts"
 PATHOGENIC = ("pathogenic", "likely pathogenic")
 BENIGN = ("benign", "likely benign")
 MISSENSE_TERM = '"missense variant"[molecular consequence]'
 TRUNCATING_TERM = '("nonsense"[molecular consequence] OR "frameshift variant"[molecular consequence])'
-RETMAX = 5000
+# A single retmax=5000 (2026-09-19), then a one-shot retmax=20000 (2026-09-21),
+# both eventually needed raising again for real genes: APC/BRCA1/BRCA2 (found
+# while fixing BP1's mechanism suggestion - see gene_disease_draft.py's own
+# module comment) each have 6000-10000+ ClinVar-submitted missense records
+# alone. gene_consequence_search_all() pages through retstart instead, so
+# PAGE_SIZE only bounds how many ESummary calls one page needs, not how large
+# a gene this can ever answer for - see that function's own docstring.
+PAGE_SIZE = 5000
 SUMMARY_BATCH = 200
 
 
@@ -55,18 +62,18 @@ def _bucket(document):
 class ClinvarSpectrumProvider:
     name = "ClinVar gene classification counts"
 
-    def __init__(self, client, release, *, retmax=RETMAX, summary_batch=SUMMARY_BATCH):
+    def __init__(self, client, release, *, page_size=PAGE_SIZE, summary_batch=SUMMARY_BATCH):
         if not release:
             raise ValueError("ClinVar release must be recorded")
         self.client = client
         self.release = release
-        self.retmax = retmax
+        self.page_size = page_size
         self.summary_batch = summary_batch
 
     def _buckets(self, gene, consequence_term):
         """(buckets, retrieved_at), or (None, None) if the search was incomplete."""
-        found = gene_consequence_search(self.client, self.release, gene,
-                                        consequence_term, self.retmax)
+        found = gene_consequence_search_all(self.client, self.release, gene,
+                                            consequence_term, self.page_size)
         if not found["complete"]:
             return None, None
         if not found["ids"]:

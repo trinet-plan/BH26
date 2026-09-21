@@ -55,9 +55,8 @@ class GeneDiseaseDraftProvider:
             "policy_version",
             "policy_source",
             "pp2_min_mis_z",
-            "bp1_min_p_li",
-            "bp1_max_mis_z",
-            "bp1_max_pathogenic_missense",
+            "bp1_max_missense_fraction",
+            "bp1_min_truncating_count",
             "pvs1_min_p_li",
             "pvs1_max_loeuf",
         )
@@ -65,13 +64,13 @@ class GeneDiseaseDraftProvider:
             raise ValueError("Draft policy is incomplete")
         self.policy = dict(policy)
         for key in (
-            "pp2_min_mis_z", "bp1_min_p_li", "bp1_max_mis_z",
+            "pp2_min_mis_z", "bp1_max_missense_fraction",
             "pvs1_min_p_li", "pvs1_max_loeuf",
         ):
             self.policy[key] = _number(self.policy[key], key)
-        self.policy["bp1_max_pathogenic_missense"] = _count(
-            self.policy["bp1_max_pathogenic_missense"],
-            "bp1_max_pathogenic_missense",
+        self.policy["bp1_min_truncating_count"] = _count(
+            self.policy["bp1_min_truncating_count"],
+            "bp1_min_truncating_count",
         )
 
     @staticmethod
@@ -176,28 +175,46 @@ class GeneDiseaseDraftProvider:
                 ["missense mechanism", "low benign missense variation", "spectrum completeness"],
             )
 
-        if p_li is None or mis_z is None or spectrum is None or not spectrum["complete"]:
+        # Real ClinGen VCEPs determine BP1 from the empirical ratio of curated
+        # pathogenic missense vs. truncating variants for the gene (e.g. the
+        # LDLR VCEP: BP1 does not apply because most FH-pathogenic LDLR
+        # variants are missense) - not from gnomAD population constraint.
+        # pLI/mis_z were used here before (2026-09-21, found via the
+        # 679-variant ground-truth run) and silently broke for reduced-
+        # penetrance, adult-onset genes (APC/BRCA1/BRCA2/PALB2): carriers of
+        # a truncating variant in those genes are usually asymptomatic
+        # through reproductive age, so gnomAD - a mostly-healthy population
+        # sample - does not select against them and pLI comes back near 0,
+        # even though truncating variants are the established mechanism.
+        # PALB2 confirms the fix: pLI~0 (would have failed the old gate),
+        # but 9 pathogenic missense vs. 1092 pathogenic truncating
+        # (0.8% missense) is unambiguous by the real method.
+        if spectrum is None or not spectrum["complete"]:
             bp1 = self._suggestion(
-                "INSUFFICIENT", ["Complete constraint and ClinVar spectrum inputs are required"],
+                "INSUFFICIENT", ["Complete ClinVar spectrum input is required"],
                 ["predominantly truncating mechanism", "absence of an established missense mechanism"],
             )
         else:
             pathogenic_missense = spectrum["pathogenic_missense_count"]
-            candidate = (
-                p_li >= self.policy["bp1_min_p_li"]
-                and mis_z <= self.policy["bp1_max_mis_z"]
-                and pathogenic_missense < self.policy["bp1_max_pathogenic_missense"]
-            )
-            bp1 = self._suggestion(
-                "CANDIDATE" if candidate else "NOT_SUGGESTED",
-                [
-                    f"pLI={p_li:g} compared with {self.policy['bp1_min_p_li']:g}",
-                    f"misZ={mis_z:g} compared with {self.policy['bp1_max_mis_z']:g}",
-                    (f"ClinVar pathogenic missense count={pathogenic_missense} compared with "
-                     f"{self.policy['bp1_max_pathogenic_missense']}"),
-                ],
-                ["predominantly truncating mechanism", "ClinVar assertion review", "spectrum completeness"],
-            )
+            pathogenic_truncating = spectrum["pathogenic_truncating_count"]
+            total = pathogenic_missense + pathogenic_truncating
+            if pathogenic_truncating < self.policy["bp1_min_truncating_count"]:
+                bp1 = self._suggestion(
+                    "INSUFFICIENT",
+                    [f"ClinVar pathogenic truncating count={pathogenic_truncating} below the "
+                     f"{self.policy['bp1_min_truncating_count']} needed to conclude predominance"],
+                    ["predominantly truncating mechanism", "ClinVar assertion review"],
+                )
+            else:
+                missense_fraction = pathogenic_missense / total
+                candidate = missense_fraction <= self.policy["bp1_max_missense_fraction"]
+                bp1 = self._suggestion(
+                    "CANDIDATE" if candidate else "NOT_SUGGESTED",
+                    [(f"ClinVar pathogenic missense fraction={missense_fraction:.1%} "
+                      f"({pathogenic_missense}/{total}) compared with "
+                      f"{self.policy['bp1_max_missense_fraction']:.1%}")],
+                    ["predominantly truncating mechanism", "ClinVar assertion review", "spectrum completeness"],
+                )
 
         if p_li is None and loeuf is None:
             pvs1 = self._suggestion(

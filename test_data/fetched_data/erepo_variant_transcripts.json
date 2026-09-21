@@ -1,30 +1,455 @@
 {
+  "ACADVL|c.1038G>A": {
+    "mane_accession": "NM_000018.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000018.4"
+  },
+  "ACADVL|c.1141_1143del": {
+    "mane_accession": "NM_000018.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000018.4"
+  },
+  "ACADVL|c.1193_1194insGCA": {
+    "mane_accession": "NM_000018.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000018.4"
+  },
+  "ACADVL|c.194C>T": {
+    "mane_accession": "NM_000018.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000018.4"
+  },
+  "ACADVL|c.1967G>C": {
+    "mane_accession": "NM_000018.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000018.4"
+  },
+  "ACADVL|c.507_527del": {
+    "mane_accession": "NM_000018.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000018.4"
+  },
+  "ACADVL|c.663C>T": {
+    "mane_accession": "NM_000018.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000018.4"
+  },
+  "ACADVL|c.753-2A>G": {
+    "mane_accession": "NM_000018.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000018.4"
+  },
+  "ACADVL|c.830AGA[1]": {
+    "mane_accession": "NM_000018.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000018.4"
+  },
+  "ACADVL|c.889_891del": {
+    "mane_accession": "NM_000018.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000018.4"
+  },
   "ACTC1|c.1034G>T": {
     "mane_accession": "NM_005159.5",
     "resolution_method": "exact_erepo_match",
     "transcript": "NM_005159.5"
+  },
+  "ACVRL1|c.1445C>T": {
+    "mane_accession": "NM_000020.3",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000020.3"
+  },
+  "ACVRL1|c.484C>T": {
+    "mane_accession": "NM_000020.3",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000020.3"
+  },
+  "ADA|c.1078+2T>C": {
+    "mane_accession": "NM_000022.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000022.4"
+  },
+  "ANO5|c.2503_2505del": {
+    "mane_accession": "NM_213599.3",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_213599.3"
+  },
+  "APC|c.1240C>T": {
+    "mane_accession": "NM_000038.6",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000038.6"
   },
   "APC|c.1242C>T": {
     "mane_accession": "NM_000038.6",
     "resolution_method": "exact_erepo_match",
     "transcript": "NM_000038.6"
   },
+  "APC|c.1312+3A>C": {
+    "mane_accession": "NM_000038.6",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000038.6"
+  },
+  "APC|c.1312+5G>C": {
+    "mane_accession": "NM_000038.6",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000038.6"
+  },
+  "APC|c.1487C>T": {
+    "mane_accession": "NM_000038.6",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000038.6"
+  },
+  "APC|c.1549-13A>T": {
+    "mane_accession": "NM_000038.6",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000038.6"
+  },
+  "APC|c.1627G>T": {
+    "mane_accession": "NM_000038.6",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000038.6"
+  },
+  "APC|c.1902T>G": {
+    "mane_accession": "NM_000038.6",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000038.6"
+  },
+  "APC|c.235A>G": {
+    "mane_accession": "NM_000038.6",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000038.6"
+  },
+  "APC|c.2476T>G": {
+    "mane_accession": "NM_000038.6",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000038.6"
+  },
+  "APC|c.295C>T": {
+    "mane_accession": "NM_000038.6",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000038.6"
+  },
+  "APC|c.3084T>G": {
+    "mane_accession": "NM_000038.6",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000038.6"
+  },
+  "APC|c.3950A>G": {
+    "mane_accession": "NM_000038.6",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000038.6"
+  },
+  "APC|c.4139C>T": {
+    "mane_accession": "NM_000038.6",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000038.6"
+  },
+  "APC|c.420G>C": {
+    "mane_accession": "NM_000038.6",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000038.6"
+  },
+  "APC|c.4399C>T": {
+    "mane_accession": "NM_000038.6",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000038.6"
+  },
+  "APC|c.4420G>A": {
+    "mane_accession": "NM_000038.6",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000038.6"
+  },
+  "APC|c.4732T>G": {
+    "mane_accession": "NM_000038.6",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000038.6"
+  },
+  "APC|c.4735A>T": {
+    "mane_accession": "NM_000038.6",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000038.6"
+  },
+  "APC|c.4906G>T": {
+    "mane_accession": "NM_000038.6",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000038.6"
+  },
+  "APC|c.531+5G>A": {
+    "mane_accession": "NM_000038.6",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000038.6"
+  },
+  "APC|c.5465T>A": {
+    "mane_accession": "NM_000038.6",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000038.6"
+  },
+  "APC|c.5761G>A": {
+    "mane_accession": "NM_000038.6",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000038.6"
+  },
+  "APC|c.715G>C": {
+    "mane_accession": "NM_000038.6",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000038.6"
+  },
+  "APC|c.754A>G": {
+    "mane_accession": "NM_000038.6",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000038.6"
+  },
+  "APC|c.7862C>G": {
+    "mane_accession": "NM_000038.6",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000038.6"
+  },
+  "APC|c.8438C>A": {
+    "mane_accession": "NM_000038.6",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000038.6"
+  },
+  "APC|c.995G>A": {
+    "mane_accession": "NM_000038.6",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000038.6"
+  },
+  "ATM|c.1176C>G": {
+    "mane_accession": "NM_000051.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000051.4"
+  },
+  "ATM|c.3284G>A": {
+    "mane_accession": "NM_000051.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000051.4"
+  },
+  "ATM|c.5693G>A": {
+    "mane_accession": "NM_000051.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000051.4"
+  },
   "ATM|c.7271T>G": {
     "mane_accession": "NM_000051.4",
     "resolution_method": "exact_erepo_match",
     "transcript": "NM_000051.4"
+  },
+  "BMPR2|c.1228G>A": {
+    "mane_accession": "NM_001204.7",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001204.7"
+  },
+  "BMPR2|c.1228G>C": {
+    "mane_accession": "NM_001204.7",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001204.7"
+  },
+  "BMPR2|c.1276+3A>G": {
+    "mane_accession": "NM_001204.7",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001204.7"
+  },
+  "BMPR2|c.1276+3A>T": {
+    "mane_accession": "NM_001204.7",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001204.7"
+  },
+  "BMPR2|c.1277-8A>G": {
+    "mane_accession": "NM_001204.7",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001204.7"
+  },
+  "BMPR2|c.1277-9A>C": {
+    "mane_accession": "NM_001204.7",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001204.7"
   },
   "BMPR2|c.1472G>A": {
     "mane_accession": "NM_001204.7",
     "resolution_method": "exact_erepo_match",
     "transcript": "NM_001204.7"
   },
+  "BMPR2|c.247+1_247+7del": {
+    "mane_accession": "NM_001204.7",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001204.7"
+  },
+  "BMPR2|c.247+6T>G": {
+    "mane_accession": "NM_001204.7",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001204.7"
+  },
+  "BMPR2|c.2618G>A": {
+    "mane_accession": "NM_001204.7",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001204.7"
+  },
+  "BMPR2|c.418+3A>T": {
+    "mane_accession": "NM_001204.7",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001204.7"
+  },
+  "BMPR2|c.418+5G>A": {
+    "mane_accession": "NM_001204.7",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001204.7"
+  },
+  "BMPR2|c.968-3C>G": {
+    "mane_accession": "NM_001204.7",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001204.7"
+  },
+  "BRAF|c.1227A>G": {
+    "mane_accession": "NM_004333.6",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_004333.4"
+  },
+  "BRAF|c.1433-19A>G": {
+    "mane_accession": "NM_004333.6",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_004333.6"
+  },
+  "BRAF|c.1454T>C": {
+    "mane_accession": "NM_004333.6",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_004333.6"
+  },
+  "BRAF|c.1595G>A": {
+    "mane_accession": "NM_004333.6",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_004333.6"
+  },
+  "BRAF|c.1741A>G": {
+    "mane_accession": "NM_004333.6",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_004333.4"
+  },
+  "BRAF|c.1785T>G": {
+    "mane_accession": "NM_004333.6",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_004333.4"
+  },
+  "BRAF|c.1787G>T": {
+    "mane_accession": "NM_004333.6",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_004333.4"
+  },
+  "BRAF|c.735A>T": {
+    "mane_accession": "NM_004333.6",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_004333.4"
+  },
+  "BRAF|c.736G>C": {
+    "mane_accession": "NM_004333.6",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_004333.4"
+  },
+  "BRAF|c.739T>C": {
+    "mane_accession": "NM_004333.6",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_004333.4"
+  },
+  "BRCA1|c.1233T>G": {
+    "mane_accession": "NM_007294.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_007294.4"
+  },
   "BRCA1|c.191G>A": {
     "mane_accession": "NM_007294.4",
     "resolution_method": "exact_erepo_match",
     "transcript": "NM_007294.4"
   },
+  "BRCA1|c.2155A>G": {
+    "mane_accession": "NM_007294.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_007294.4"
+  },
+  "BRCA1|c.301+7G>A": {
+    "mane_accession": "NM_007294.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_007294.4"
+  },
+  "BRCA1|c.305C>G": {
+    "mane_accession": "NM_007294.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_007294.4"
+  },
+  "BRCA1|c.3082C>T": {
+    "mane_accession": "NM_007294.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_007294.4"
+  },
+  "BRCA1|c.3418A>G": {
+    "mane_accession": "NM_007294.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_007294.4"
+  },
+  "BRCA1|c.4159T>C": {
+    "mane_accession": "NM_007294.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_007294.4"
+  },
+  "BRCA1|c.811G>A": {
+    "mane_accession": "NM_007294.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_007294.4"
+  },
+  "BRCA2|c.121C>T": {
+    "mane_accession": "NM_000059.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000059.4"
+  },
+  "BRCA2|c.1732G>C": {
+    "mane_accession": "NM_000059.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000059.4"
+  },
+  "BRCA2|c.2471T>C": {
+    "mane_accession": "NM_000059.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000059.4"
+  },
+  "BRCA2|c.2482T>C": {
+    "mane_accession": "NM_000059.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000059.4"
+  },
+  "BRCA2|c.3901ACT[1]": {
+    "mane_accession": "NM_000059.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000059.4"
+  },
+  "BRCA2|c.663T>G": {
+    "mane_accession": "NM_000059.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000059.4"
+  },
+  "BRCA2|c.68-7del": {
+    "mane_accession": "NM_000059.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000059.4"
+  },
+  "BRCA2|c.7759C>T": {
+    "mane_accession": "NM_000059.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000059.4"
+  },
   "BRCA2|c.831T>G": {
+    "mane_accession": "NM_000059.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000059.4"
+  },
+  "BRCA2|c.8702G>A": {
+    "mane_accession": "NM_000059.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000059.4"
+  },
+  "BRCA2|c.9538C>T": {
+    "mane_accession": "NM_000059.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000059.4"
+  },
+  "BRCA2|c.9699_9702del": {
     "mane_accession": "NM_000059.4",
     "resolution_method": "exact_erepo_match",
     "transcript": "NM_000059.4"
@@ -34,42 +459,812 @@
     "resolution_method": "exact_erepo_match",
     "transcript": "NM_000070.3"
   },
+  "CAPN3|c.643_663del(p.Ser215_Gly221del)": {
+    "mane_accession": "NM_000070.3",
+    "resolution_method": "mane_fallback",
+    "transcript": "NM_000070.3"
+  },
+  "CAPN3|c.756GAA[1]": {
+    "mane_accession": "NM_000070.3",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000070.3"
+  },
+  "CDH1|c.1003C>T": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_004360.5"
+  },
+  "CDH1|c.1008+2T>C": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_004360.5"
+  },
+  "CDH1|c.1009_1010delAG": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_004360.3"
+  },
+  "CDH1|c.1023T>G": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_004360.5"
+  },
   "CDH1|c.1057G>A": {
     "mane_accession": "NM_004360.5",
     "resolution_method": "exact_erepo_match",
     "transcript": "NM_004360.5"
+  },
+  "CDH1|c.1064delT": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_004360.4"
+  },
+  "CDH1|c.1085delT": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_004360.4"
+  },
+  "CDH1|c.1107del": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_004360.5"
+  },
+  "CDH1|c.1137+1G>A": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_004360.5"
+  },
+  "CDH1|c.1137+1delG": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_004360.3"
+  },
+  "CDH1|c.1147C>T": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_004360.5"
+  },
+  "CDH1|c.124_126delCCCinsT": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_004360.4"
+  },
+  "CDH1|c.12G>A": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_004360.5"
+  },
+  "CDH1|c.1460_1461del": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_004360.4"
+  },
+  "CDH1|c.1476_1477delAG": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_004360.3"
+  },
+  "CDH1|c.1488_1494delCGAGGAC": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_004360.4"
+  },
+  "CDH1|c.1565+1G>T": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_004360.5"
+  },
+  "CDH1|c.1565+2dupT": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_004360.4"
+  },
+  "CDH1|c.1612delG": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_004360.4"
+  },
+  "CDH1|c.1711+1G>A": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_004360.5"
+  },
+  "CDH1|c.1711+1G>C": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_004360.5"
+  },
+  "CDH1|c.1711+2_1711+7delTAAGGG": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_004360.4"
+  },
+  "CDH1|c.1792C>T": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_004360.5"
+  },
+  "CDH1|c.187C>T": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_004360.4"
+  },
+  "CDH1|c.1895_1896delAC": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_004360.4"
+  },
+  "CDH1|c.2029dup": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_004360.5"
+  },
+  "CDH1|c.202delT": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_004360.4"
+  },
+  "CDH1|c.208dup": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_004360.5"
+  },
+  "CDH1|c.2100del": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_004360.5"
+  },
+  "CDH1|c.2104G>T": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_004360.5"
+  },
+  "CDH1|c.220C>T": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_004360.5"
+  },
+  "CDH1|c.2276delG": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_004360.3"
+  },
+  "CDH1|c.2293C>T": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_004360.5"
+  },
+  "CDH1|c.2324delG": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_004360.4"
+  },
+  "CDH1|c.261delG": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_004360.4"
+  },
+  "CDH1|c.283C>T": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_004360.4"
+  },
+  "CDH1|c.308G>A": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_004360.5"
+  },
+  "CDH1|c.315delC": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_004360.3"
+  },
+  "CDH1|c.337A>T": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_004360.5"
+  },
+  "CDH1|c.360dup": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_004360.5"
+  },
+  "CDH1|c.377del": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_004360.5"
+  },
+  "CDH1|c.382delC": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_004360.4"
   },
   "CDH1|c.387+5G>A": {
     "mane_accession": "NM_004360.5",
     "resolution_method": "exact_erepo_match",
     "transcript": "NM_004360.5"
   },
+  "CDH1|c.454_460delCAGAAGA": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_004360.3"
+  },
+  "CDH1|c.454_460dup": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_004360.4"
+  },
+  "CDH1|c.455_465delAGAAGAGAGAC": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_004360.4"
+  },
+  "CDH1|c.457A>T": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_004360.5"
+  },
+  "CDH1|c.457_460delAAGA": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_004360.4"
+  },
+  "CDH1|c.467G>A": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_004360.5"
+  },
+  "CDH1|c.468G>A": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_004360.5"
+  },
+  "CDH1|c.48+1G>A": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_004360.5"
+  },
+  "CDH1|c.489C>A": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_004360.5"
+  },
+  "CDH1|c.504delA": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_004360.4"
+  },
+  "CDH1|c.521dupA": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_004360.3"
+  },
+  "CDH1|c.531+1G>A": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_004360.5"
+  },
+  "CDH1|c.532-1G>C": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_004360.5"
+  },
+  "CDH1|c.59G>A": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_004360.5"
+  },
+  "CDH1|c.603delT": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_004360.3"
+  },
+  "CDH1|c.60G>A": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_004360.5"
+  },
+  "CDH1|c.687+1G>A": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_004360.5"
+  },
+  "CDH1|c.687+2T>C": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_004360.5"
+  },
+  "CDH1|c.707C>A": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_004360.5"
+  },
+  "CDH1|c.70G>T": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_004360.5"
+  },
+  "CDH1|c.76G>T": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_004360.5"
+  },
+  "CDH1|c.781G>T": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_004360.5"
+  },
+  "CDH1|c.832+1G>A": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_004360.5"
+  },
+  "CDH1|c.832+1G>T": {
+    "mane_accession": "NM_004360.5",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_004360.4"
+  },
+  "CDH23|c.3625A>G": {
+    "mane_accession": "NM_022124.6",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_022124.5"
+  },
   "CDH23|c.380A>G": {
     "mane_accession": "NM_022124.6",
     "resolution_method": "exact_erepo_match",
     "transcript": "NM_022124.6"
+  },
+  "CDH23|c.429+4G>A": {
+    "mane_accession": "NM_022124.6",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_022124.6"
+  },
+  "CDKL5|c.1296_1298del": {
+    "mane_accession": "NM_001323289.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001323289.2"
+  },
+  "CDKL5|c.291C>T": {
+    "mane_accession": "NM_001323289.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001323289.2"
+  },
+  "COCH|c.355G>A": {
+    "mane_accession": "NM_004086.3",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_004086.3"
+  },
+  "DICER1|c.1719AGA[1]": {
+    "mane_accession": "NM_177438.3",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_177438.3"
+  },
+  "DICER1|c.2614G>A": {
+    "mane_accession": "NM_177438.3",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_177438.3"
+  },
+  "DICER1|c.2T>C": {
+    "mane_accession": "NM_177438.3",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_177438.3"
+  },
+  "DICER1|c.4178_4180dup": {
+    "mane_accession": "NM_177438.3",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_177438.3"
+  },
+  "DICER1|c.5052C>G": {
+    "mane_accession": "NM_177438.3",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_177438.3"
+  },
+  "DICER1|c.5222ACA[1]": {
+    "mane_accession": "NM_177438.3",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_177438.3"
   },
   "DSG2|c.1592T>G": {
     "mane_accession": "NM_001943.5",
     "resolution_method": "mane_fallback",
     "transcript": "NM_001943.5"
   },
+  "DYSF|c.1149+1G>C": {
+    "mane_accession": "NM_001130987.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001130987.2"
+  },
+  "DYSF|c.1149+4A>G": {
+    "mane_accession": "NM_001130987.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001130987.2"
+  },
   "DYSF|c.1717C>T": {
     "mane_accession": "NM_001130987.2",
     "resolution_method": "exact_erepo_match",
     "transcript": "NM_001130987.2"
+  },
+  "DYSF|c.1722_1723insGTT": {
+    "mane_accession": "NM_001130987.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001130987.2"
+  },
+  "DYSF|c.1906G>C": {
+    "mane_accession": "NM_001130987.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001130987.2"
+  },
+  "DYSF|c.2697+1G>A": {
+    "mane_accession": "NM_001130987.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001130987.2"
+  },
+  "DYSF|c.2697+5G>A": {
+    "mane_accession": "NM_001130987.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001130987.2"
+  },
+  "DYSF|c.2864+5G>A": {
+    "mane_accession": "NM_001130987.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001130987.2"
+  },
+  "DYSF|c.5174+5G>T": {
+    "mane_accession": "NM_001130987.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001130987.2"
+  },
+  "DYSF|c.5546+1G>T": {
+    "mane_accession": "NM_001130987.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001130987.2"
+  },
+  "DYSF|c.5884+6C>T": {
+    "mane_accession": "NM_001130987.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001130987.2"
+  },
+  "DYSF|c.991G>C": {
+    "mane_accession": "NM_001130987.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001130987.2"
+  },
+  "ENG|c.1316A>C": {
+    "mane_accession": "NM_001114753.3",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001114753.3"
+  },
+  "ENG|c.1510G>A": {
+    "mane_accession": "NM_001114753.3",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001114753.3"
+  },
+  "ENG|c.1517T>A": {
+    "mane_accession": "NM_001114753.3",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001114753.3"
+  },
+  "ENG|c.1844C>T": {
+    "mane_accession": "NM_001114753.3",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001114753.3"
+  },
+  "ETHE1|c.6G>A": {
+    "mane_accession": "NM_014297.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_014297.5"
+  },
+  "ETHE1|c.712+181A>G": {
+    "mane_accession": "NM_014297.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_014297.5"
+  },
+  "FBN1|c.1630G>A": {
+    "mane_accession": "NM_000138.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000138.5"
+  },
+  "FBN1|c.3422C>T": {
+    "mane_accession": "NM_000138.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000138.5"
+  },
+  "FBN1|c.3632_3634del": {
+    "mane_accession": "NM_000138.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000138.5"
+  },
+  "FBN1|c.3689T>C": {
+    "mane_accession": "NM_000138.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000138.5"
   },
   "FBN1|c.4214T>G": {
     "mane_accession": "NM_000138.5",
     "resolution_method": "exact_erepo_match",
     "transcript": "NM_000138.5"
   },
+  "FBN1|c.4407_4409dup": {
+    "mane_accession": "NM_000138.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000138.5"
+  },
+  "FBN1|c.5073AAG[1]": {
+    "mane_accession": "NM_000138.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000138.5"
+  },
+  "FOXG1|c.141CCA[4]": {
+    "mane_accession": "NM_005249.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_005249.5"
+  },
+  "FOXG1|c.209_232del24": {
+    "mane_accession": "NM_005249.5",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_005249.4"
+  },
+  "FOXG1|c.209_235del": {
+    "mane_accession": "NM_005249.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_005249.5"
+  },
+  "FOXG1|c.209_235dup": {
+    "mane_accession": "NM_005249.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_005249.5"
+  },
+  "FOXG1|c.219GCC[8]": {
+    "mane_accession": "NM_005249.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_005249.5"
+  },
+  "FOXG1|c.237_239del": {
+    "mane_accession": "NM_005249.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_005249.5"
+  },
   "FOXG1|c.670G>A": {
     "mane_accession": "NM_005249.5",
     "resolution_method": "exact_erepo_match",
     "transcript": "NM_005249.5"
   },
+  "FOXN1|c.1850_1854del": {
+    "mane_accession": "NM_001369369.1",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001369369.1"
+  },
+  "GAA|c.-32-1G>C": {
+    "mane_accession": "NM_000152.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000152.5"
+  },
+  "GAA|c.-32-3C>A": {
+    "mane_accession": "NM_000152.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000152.5"
+  },
+  "GAA|c.1317GAT[1]": {
+    "mane_accession": "NM_000152.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000152.5"
+  },
+  "GAA|c.1332T>C": {
+    "mane_accession": "NM_000152.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000152.5"
+  },
+  "GAA|c.1336_1356dup": {
+    "mane_accession": "NM_000152.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000152.5"
+  },
+  "GAA|c.1437+1G>A": {
+    "mane_accession": "NM_000152.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000152.5"
+  },
+  "GAA|c.1551+1G>T": {
+    "mane_accession": "NM_000152.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000152.5"
+  },
+  "GAA|c.1552-3C>G": {
+    "mane_accession": "NM_000152.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000152.5"
+  },
+  "GAA|c.1754+2T>C": {
+    "mane_accession": "NM_000152.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000152.5"
+  },
+  "GAA|c.1819_1836dup": {
+    "mane_accession": "NM_000152.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000152.5"
+  },
+  "GAA|c.2238G>T": {
+    "mane_accession": "NM_000152.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000152.5"
+  },
+  "GAA|c.2799+2C>A": {
+    "mane_accession": "NM_000152.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000152.5"
+  },
+  "GAA|c.400_408dup": {
+    "mane_accession": "NM_000152.5",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_000152.4"
+  },
+  "GAA|c.546G>A": {
+    "mane_accession": "NM_000152.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000152.5"
+  },
+  "GAA|c.546G>C": {
+    "mane_accession": "NM_000152.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000152.5"
+  },
+  "GAA|c.93_95del": {
+    "mane_accession": "NM_000152.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000152.5"
+  },
+  "GAMT|c.*11C>T": {
+    "mane_accession": "NM_000156.6",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000156.6"
+  },
+  "GAMT|c.507_521dup": {
+    "mane_accession": "NM_000156.6",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000156.6"
+  },
+  "GATM|c.1239G>A": {
+    "mane_accession": "NM_001482.3",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001482.3"
+  },
+  "GATM|c.1252T>C": {
+    "mane_accession": "NM_001482.3",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001482.3"
+  },
+  "GATM|c.692C>G": {
+    "mane_accession": "NM_001482.3",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001482.3"
+  },
+  "GCK|c.1019G>A": {
+    "mane_accession": "NM_000162.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000162.5"
+  },
+  "GCK|c.1020-1G>C": {
+    "mane_accession": "NM_000162.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000162.5"
+  },
+  "GCK|c.1024A>C": {
+    "mane_accession": "NM_000162.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000162.5"
+  },
+  "GCK|c.107G>A": {
+    "mane_accession": "NM_000162.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000162.5"
+  },
+  "GCK|c.1130_1138del": {
+    "mane_accession": "NM_000162.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000162.5"
+  },
+  "GCK|c.1153G>C": {
+    "mane_accession": "NM_000162.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000162.5"
+  },
+  "GCK|c.1279_1358delinsTTACA": {
+    "mane_accession": "NM_000162.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000162.5"
+  },
+  "GCK|c.1364T>A": {
+    "mane_accession": "NM_000162.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000162.5"
+  },
+  "GCK|c.171G>T": {
+    "mane_accession": "NM_000162.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000162.5"
+  },
+  "GCK|c.203G>A": {
+    "mane_accession": "NM_000162.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000162.5"
+  },
+  "GCK|c.394G>A": {
+    "mane_accession": "NM_000162.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000162.5"
+  },
+  "GCK|c.48_50del": {
+    "mane_accession": "NM_000162.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000162.5"
+  },
+  "GCK|c.523G>A": {
+    "mane_accession": "NM_000162.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000162.5"
+  },
+  "GCK|c.531A>C": {
+    "mane_accession": "NM_000162.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000162.5"
+  },
+  "GCK|c.630G>T": {
+    "mane_accession": "NM_000162.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000162.5"
+  },
+  "GCK|c.649G>A": {
+    "mane_accession": "NM_000162.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000162.5"
+  },
+  "GCK|c.679+2T>C": {
+    "mane_accession": "NM_000162.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000162.5"
+  },
+  "GCK|c.781G>C": {
+    "mane_accession": "NM_000162.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000162.5"
+  },
+  "GCK|c.864-1G>C": {
+    "mane_accession": "NM_000162.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000162.5"
+  },
   "GJB2|c.109G>A": {
+    "mane_accession": "NM_004004.6",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_004004.6"
+  },
+  "GJB2|c.167delT": {
+    "mane_accession": "NM_004004.6",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_004004.5"
+  },
+  "GJB2|c.235delC": {
+    "mane_accession": "NM_004004.6",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_004004.5"
+  },
+  "GJB2|c.2T>C": {
+    "mane_accession": "NM_004004.6",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_004004.6"
+  },
+  "GJB2|c.34G>T": {
+    "mane_accession": "NM_004004.6",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_004004.6"
+  },
+  "GJB2|c.35delG": {
+    "mane_accession": "NM_004004.6",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_004004.5"
+  },
+  "GJB2|c.71G>A": {
     "mane_accession": "NM_004004.6",
     "resolution_method": "exact_erepo_match",
     "transcript": "NM_004004.6"
@@ -78,6 +1273,36 @@
     "mane_accession": "NM_000180.4",
     "resolution_method": "exact_erepo_match",
     "transcript": "NM_000180.4"
+  },
+  "HNF1A|c.1745A>G": {
+    "mane_accession": "NM_000545.8",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000545.8"
+  },
+  "HNF1A|c.1864_1890dup": {
+    "mane_accession": "NM_000545.8",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000545.8"
+  },
+  "HNF1A|c.24_35dup": {
+    "mane_accession": "NM_000545.8",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000545.8"
+  },
+  "HNF1A|c.326+2T>G": {
+    "mane_accession": "NM_000545.8",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000545.8"
+  },
+  "HNF1A|c.327-2A>T": {
+    "mane_accession": "NM_000545.8",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000545.8"
+  },
+  "HNF1A|c.369GCA[4]": {
+    "mane_accession": "NM_000545.8",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_000545.8"
   },
   "HNF1A|c.391C>T": {
     "mane_accession": "NM_000545.8",
@@ -89,45 +1314,555 @@
     "resolution_method": "exact_erepo_match",
     "transcript": "NM_000545.8"
   },
+  "HNF1A|c.42G>A": {
+    "mane_accession": "NM_000545.8",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000545.8"
+  },
+  "HNF1A|c.526+1G>C": {
+    "mane_accession": "NM_000545.8",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000545.8"
+  },
+  "HNF1A|c.526+2dup": {
+    "mane_accession": "NM_000545.8",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000545.8"
+  },
+  "HNF1A|c.58G>C": {
+    "mane_accession": "NM_000545.8",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000545.8"
+  },
   "HNF1A|c.59G>C": {
     "mane_accession": "NM_000545.8",
     "resolution_method": "exact_erepo_match",
     "transcript": "NM_000545.8"
+  },
+  "HNF1A|c.663GAA[1]": {
+    "mane_accession": "NM_000545.8",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000545.8"
+  },
+  "HNF1A|c.676_678del": {
+    "mane_accession": "NM_000545.8",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000545.8"
+  },
+  "HNF1A|c.801_802insGGG": {
+    "mane_accession": "NM_000545.8",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000545.8"
+  },
+  "HNF1A|c.871C>T": {
+    "mane_accession": "NM_000545.8",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000545.8"
+  },
+  "HNF1A|c.872C>A": {
+    "mane_accession": "NM_000545.8",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000545.8"
+  },
+  "HNF1A|c.956-1G>A": {
+    "mane_accession": "NM_000545.8",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000545.8"
+  },
+  "HNF4A|c.1321A>G": {
+    "mane_accession": "NM_175914.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_175914.5"
+  },
+  "HNF4A|c.341G>A": {
+    "mane_accession": "NM_175914.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_175914.5"
+  },
+  "HRAS|c.173C>T": {
+    "mane_accession": "NM_005343.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_005343.4"
+  },
+  "HRAS|c.34G>A": {
+    "mane_accession": "NM_005343.4",
+    "resolution_method": "mane_fallback",
+    "transcript": "NM_005343.4"
+  },
+  "HRAS|c.37G>T": {
+    "mane_accession": "NM_005343.4",
+    "resolution_method": "mane_fallback",
+    "transcript": "NM_005343.4"
   },
   "HRAS|c.508A>T": {
     "mane_accession": "NM_005343.4",
     "resolution_method": "exact_erepo_match",
     "transcript": "NM_005343.4"
   },
+  "HRAS|c.510G>A": {
+    "mane_accession": "NM_005343.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_005343.4"
+  },
+  "IDUA|c.1073_1093del": {
+    "mane_accession": "NM_000203.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000203.5"
+  },
+  "IDUA|c.1960T>G": {
+    "mane_accession": "NM_000203.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000203.5"
+  },
+  "IDUA|c.1962A>T": {
+    "mane_accession": "NM_000203.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000203.5"
+  },
+  "IDUA|c.385+1G>C": {
+    "mane_accession": "NM_000203.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000203.5"
+  },
+  "IDUA|c.386-1G>A": {
+    "mane_accession": "NM_000203.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000203.5"
+  },
+  "IDUA|c.46_57del": {
+    "mane_accession": "NM_000203.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000203.5"
+  },
+  "IDUA|c.886_894dup": {
+    "mane_accession": "NM_000203.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000203.5"
+  },
+  "IL2RG|c.455-2A>C": {
+    "mane_accession": "NM_000206.3",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000206.3"
+  },
+  "IL2RG|c.924G>A": {
+    "mane_accession": "NM_000206.3",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000206.3"
+  },
+  "ITGA2B|c.1005_1013del": {
+    "mane_accession": "NM_000419.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000419.5"
+  },
+  "ITGA2B|c.1210+105A>G": {
+    "mane_accession": "NM_000419.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000419.5"
+  },
+  "ITGA2B|c.1366_1371del": {
+    "mane_accession": "NM_000419.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000419.5"
+  },
+  "ITGA2B|c.1848G>A": {
+    "mane_accession": "NM_000419.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000419.5"
+  },
+  "ITGA2B|c.1878G>C": {
+    "mane_accession": "NM_000419.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000419.5"
+  },
+  "ITGA2B|c.207C>T": {
+    "mane_accession": "NM_000419.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000419.5"
+  },
+  "ITGA2B|c.2602-3C>G": {
+    "mane_accession": "NM_000419.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000419.5"
+  },
+  "ITGA2B|c.2614C>A": {
+    "mane_accession": "NM_000419.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000419.5"
+  },
+  "ITGA2B|c.2916G>A": {
+    "mane_accession": "NM_000419.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000419.5"
+  },
+  "ITGA2B|c.3092_3093dup": {
+    "mane_accession": "NM_000419.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000419.5"
+  },
+  "ITGA2B|c.891+12del": {
+    "mane_accession": "NM_000419.5",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_000419.4"
+  },
+  "ITGB3|c.1299C>T": {
+    "mane_accession": "NM_000212.3",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000212.3"
+  },
+  "ITGB3|c.1309_1311del": {
+    "mane_accession": "NM_000212.3",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000212.3"
+  },
+  "ITGB3|c.176T>C": {
+    "mane_accession": "NM_000212.3",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000212.3"
+  },
+  "ITGB3|c.180C>T": {
+    "mane_accession": "NM_000212.3",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000212.3"
+  },
+  "ITGB3|c.1902C>T": {
+    "mane_accession": "NM_000212.3",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000212.3"
+  },
+  "ITGB3|c.342T>C": {
+    "mane_accession": "NM_000212.3",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000212.3"
+  },
+  "ITGB3|c.506G>A": {
+    "mane_accession": "NM_000212.3",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000212.3"
+  },
+  "ITGB3|c.900T>C": {
+    "mane_accession": "NM_000212.3",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000212.3"
+  },
+  "JAK3|c.1744C>T": {
+    "mane_accession": "NM_000215.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000215.4"
+  },
   "KCNJ5|c.464G>A": {
     "mane_accession": "NM_000890.5",
     "resolution_method": "mane_fallback",
     "transcript": "NM_000890.5"
+  },
+  "KCNQ1|c.1343C>T": {
+    "mane_accession": "NM_000218.3",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000218.3"
   },
   "KCNQ1|c.477+5G>A": {
     "mane_accession": "NM_000218.3",
     "resolution_method": "exact_erepo_match",
     "transcript": "NM_000218.3"
   },
+  "KCNQ1|c.514G>A": {
+    "mane_accession": "NM_000218.3",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000218.3"
+  },
+  "KCNQ4|c.803_805CCT[1]": {
+    "mane_accession": "NM_004700.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_004700.4"
+  },
+  "KLLN|c.-794_-783del": {
+    "mane_accession": "NM_001126049.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001126049.2"
+  },
+  "KRAS|c.-160A>G": {
+    "mane_accession": "NM_004985.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_004985.5"
+  },
+  "KRAS|c.101C>T": {
+    "mane_accession": "NM_004985.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_004985.5"
+  },
+  "KRAS|c.15A>T": {
+    "mane_accession": "NM_004985.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_004985.5"
+  },
+  "KRAS|c.173C>T": {
+    "mane_accession": "NM_004985.5",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_004985.4"
+  },
+  "KRAS|c.178G>C": {
+    "mane_accession": "NM_004985.5",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_004985.4"
+  },
   "KRAS|c.40G>A": {
     "mane_accession": "NM_004985.5",
     "resolution_method": "exact_erepo_match",
     "transcript": "NM_004985.5"
+  },
+  "KRAS|c.458A>T": {
+    "mane_accession": "NM_004985.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_004985.5"
+  },
+  "KRAS|c.519T>C": {
+    "mane_accession": "NM_004985.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_004985.5"
+  },
+  "KRAS|c.65A>G": {
+    "mane_accession": "NM_004985.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_004985.5"
+  },
+  "LDLR|c.1027G>A": {
+    "mane_accession": "NM_000527.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000527.5"
+  },
+  "LDLR|c.1194C>T": {
+    "mane_accession": "NM_000527.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000527.5"
+  },
+  "LDLR|c.1199_1207del": {
+    "mane_accession": "NM_000527.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000527.5"
+  },
+  "LDLR|c.1204TTC[1]": {
+    "mane_accession": "NM_000527.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000527.5"
+  },
+  "LDLR|c.1285G>T": {
+    "mane_accession": "NM_000527.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000527.5"
+  },
+  "LDLR|c.1323C>T": {
+    "mane_accession": "NM_000527.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000527.5"
+  },
+  "LDLR|c.1329G>T": {
+    "mane_accession": "NM_000527.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000527.5"
+  },
+  "LDLR|c.1706-10G>A": {
+    "mane_accession": "NM_000527.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000527.5"
+  },
+  "LDLR|c.1920C>T": {
+    "mane_accession": "NM_000527.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000527.5"
+  },
+  "LDLR|c.1A>T": {
+    "mane_accession": "NM_000527.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000527.5"
+  },
+  "LDLR|c.2096C>T": {
+    "mane_accession": "NM_000527.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000527.5"
+  },
+  "LDLR|c.2407_2424dup": {
+    "mane_accession": "NM_000527.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000527.5"
+  },
+  "LDLR|c.2475C>G": {
+    "mane_accession": "NM_000527.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000527.5"
   },
   "LDLR|c.2575G>A": {
     "mane_accession": "NM_000527.5",
     "resolution_method": "exact_erepo_match",
     "transcript": "NM_000527.5"
   },
+  "LDLR|c.257_265del": {
+    "mane_accession": "NM_000527.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000527.5"
+  },
+  "LDLR|c.530C>T": {
+    "mane_accession": "NM_000527.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000527.5"
+  },
+  "LDLR|c.58G>A": {
+    "mane_accession": "NM_000527.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000527.5"
+  },
+  "LDLR|c.662A>G": {
+    "mane_accession": "NM_000527.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000527.5"
+  },
+  "LZTR1|c.1149+1G>T": {
+    "mane_accession": "NM_006767.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_006767.4"
+  },
+  "LZTR1|c.651+10_651+46del": {
+    "mane_accession": "NM_006767.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_006767.4"
+  },
+  "MAP2K1|c.158T>C": {
+    "mane_accession": "NM_002755.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_002755.4"
+  },
+  "MAP2K1|c.169A>C": {
+    "mane_accession": "NM_002755.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_002755.4"
+  },
+  "MAP2K1|c.199G>A": {
+    "mane_accession": "NM_002755.4",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_002755.3"
+  },
+  "MAP2K1|c.388T>C": {
+    "mane_accession": "NM_002755.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_002755.4"
+  },
+  "MAP2K1|c.389A>G": {
+    "mane_accession": "NM_002755.4",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_002755.3"
+  },
+  "MAP2K1|c.608A>G": {
+    "mane_accession": "NM_002755.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_002755.4"
+  },
+  "MAP2K1|c.694-8_694-7dupTC": {
+    "mane_accession": "NM_002755.4",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_002755.3"
+  },
+  "MAP2K2|c.281C>T": {
+    "mane_accession": "NM_030662.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_030662.4"
+  },
+  "MAP2K2|c.619G>A": {
+    "mane_accession": "NM_030662.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_030662.4"
+  },
+  "MECP2|c.1140G>A": {
+    "mane_accession": "NM_001110792.2",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_001110792.1"
+  },
+  "MECP2|c.1197_1436del": {
+    "mane_accession": "NM_001110792.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001110792.2"
+  },
+  "MECP2|c.1244dup": {
+    "mane_accession": "NM_001110792.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001110792.2"
+  },
+  "MECP2|c.1497A>G": {
+    "mane_accession": "NM_001110792.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001110792.2"
+  },
+  "MECP2|c.408G>C": {
+    "mane_accession": "NM_001110792.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001110792.2"
+  },
+  "MECP2|c.408G>T": {
+    "mane_accession": "NM_001110792.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001110792.2"
+  },
+  "MECP2|c.429C>G": {
+    "mane_accession": "NM_001110792.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001110792.2"
+  },
+  "MECP2|c.507C>G": {
+    "mane_accession": "NM_001110792.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001110792.2"
+  },
+  "MECP2|c.6CGC[4]": {
+    "mane_accession": "NM_001110792.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001110792.2"
+  },
+  "MECP2|c.907_1080del": {
+    "mane_accession": "NM_001110792.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001110792.2"
+  },
   "MLH1|c.1732-19T>A": {
     "mane_accession": "NM_000249.4",
     "resolution_method": "exact_erepo_match",
     "transcript": "NM_000249.4"
   },
+  "MLH1|c.2074T>C": {
+    "mane_accession": "NM_000249.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000249.4"
+  },
+  "MLH1|c.42A>C": {
+    "mane_accession": "NM_000249.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000249.4"
+  },
+  "MLH1|c.649C>T": {
+    "mane_accession": "NM_000249.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000249.4"
+  },
+  "MRAS|c.203C>T": {
+    "mane_accession": "NM_001085049.3",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001085049.3"
+  },
   "MSH2|c.1012G>A": {
     "mane_accession": "NM_000251.3",
     "resolution_method": "exact_erepo_match",
     "transcript": "NM_000251.3"
+  },
+  "MSH2|c.913G>A": {
+    "mane_accession": "NM_000251.3",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000251.3"
+  },
+  "MSH6|c.884A>G": {
+    "mane_accession": "NM_000179.3",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000179.3"
+  },
+  "MTM1|c.1792del": {
+    "mane_accession": "NM_000252.3",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000252.3"
   },
   "MTOR|c.4447T>C": {
     "mane_accession": "NM_004958.4",
@@ -164,7 +1899,47 @@
     "resolution_method": "exact_erepo_match",
     "transcript": "NM_000257.4"
   },
+  "MYH7|c.2360G>A": {
+    "mane_accession": "NM_000257.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000257.4"
+  },
+  "MYH7|c.2539_2541delAAG": {
+    "mane_accession": "NM_000257.4",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_000257.3"
+  },
+  "MYH7|c.2649_2651GAA[1]": {
+    "mane_accession": "NM_000257.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000257.4"
+  },
+  "MYH7|c.2785_2787GAG[2]": {
+    "mane_accession": "NM_000257.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000257.4"
+  },
+  "MYH7|c.3036C>T": {
+    "mane_accession": "NM_000257.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000257.4"
+  },
+  "MYH7|c.327C>T": {
+    "mane_accession": "NM_000257.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000257.4"
+  },
   "MYH7|c.3382G>A": {
+    "mane_accession": "NM_000257.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000257.4"
+  },
+  "MYH7|c.3658_3660delGAG": {
+    "mane_accession": "NM_000257.4",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_000257.3"
+  },
+  "MYH7|c.3981C>A": {
     "mane_accession": "NM_000257.4",
     "resolution_method": "exact_erepo_match",
     "transcript": "NM_000257.4"
@@ -184,7 +1959,107 @@
     "resolution_method": "exact_erepo_match",
     "transcript": "NM_000260.4"
   },
+  "MYO7A|c.905G>A": {
+    "mane_accession": "NM_000260.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000260.4"
+  },
+  "MYOC|c.1041T>C": {
+    "mane_accession": "NM_000261.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000261.2"
+  },
+  "MYOC|c.1102C>T": {
+    "mane_accession": "NM_000261.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000261.2"
+  },
   "MYOC|c.1187_1188insCCCAGA": {
+    "mane_accession": "NM_000261.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000261.2"
+  },
+  "MYOC|c.1188G>A": {
+    "mane_accession": "NM_000261.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000261.2"
+  },
+  "MYOC|c.1193A>G": {
+    "mane_accession": "NM_000261.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000261.2"
+  },
+  "MYOC|c.1317C>T": {
+    "mane_accession": "NM_000261.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000261.2"
+  },
+  "MYOC|c.1440C>A": {
+    "mane_accession": "NM_000261.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000261.2"
+  },
+  "MYOC|c.144G>T": {
+    "mane_accession": "NM_000261.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000261.2"
+  },
+  "MYOC|c.227G>A": {
+    "mane_accession": "NM_000261.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000261.2"
+  },
+  "MYOC|c.366C>T": {
+    "mane_accession": "NM_000261.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000261.2"
+  },
+  "MYOC|c.39T>G": {
+    "mane_accession": "NM_000261.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000261.2"
+  },
+  "MYOC|c.477A>G": {
+    "mane_accession": "NM_000261.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000261.2"
+  },
+  "MYOC|c.612G>T": {
+    "mane_accession": "NM_000261.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000261.2"
+  },
+  "MYOC|c.648G>A": {
+    "mane_accession": "NM_000261.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000261.2"
+  },
+  "MYOC|c.741del": {
+    "mane_accession": "NM_000261.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000261.2"
+  },
+  "MYOC|c.823A>T": {
+    "mane_accession": "NM_000261.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000261.2"
+  },
+  "MYOC|c.855G>T": {
+    "mane_accession": "NM_000261.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000261.2"
+  },
+  "MYOC|c.864C>T": {
+    "mane_accession": "NM_000261.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000261.2"
+  },
+  "MYOC|c.898G>T": {
+    "mane_accession": "NM_000261.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000261.2"
+  },
+  "MYOC|c.975G>A": {
     "mane_accession": "NM_000261.2",
     "resolution_method": "exact_erepo_match",
     "transcript": "NM_000261.2"
@@ -194,60 +2069,975 @@
     "resolution_method": "exact_erepo_match",
     "transcript": "NM_002524.5"
   },
+  "NRAS|c.173C>T": {
+    "mane_accession": "NM_002524.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_002524.5"
+  },
   "OTOF|c.5374C>T": {
     "mane_accession": "NM_194248.3",
     "resolution_method": "exact_erepo_match",
     "transcript": "NM_194248.3"
+  },
+  "PAH|c.1065+97G>A": {
+    "mane_accession": "NM_000277.3",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000277.3"
+  },
+  "PAH|c.1092_1094del": {
+    "mane_accession": "NM_000277.3",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000277.3"
+  },
+  "PAH|c.1092_1106del": {
+    "mane_accession": "NM_000277.3",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_000277.2"
+  },
+  "PAH|c.113_115TCT[1]": {
+    "mane_accession": "NM_000277.3",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000277.3"
+  },
+  "PAH|c.124_126del": {
+    "mane_accession": "NM_000277.3",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000277.3"
+  },
+  "PAH|c.1316-35C>T": {
+    "mane_accession": "NM_000277.3",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000277.3"
+  },
+  "PAH|c.1357_*2delTAAAG": {
+    "mane_accession": "NM_000277.3",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_000277.2"
+  },
+  "PAH|c.163_165del": {
+    "mane_accession": "NM_000277.3",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000277.3"
+  },
+  "PAH|c.169_171delGAG": {
+    "mane_accession": "NM_000277.3",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_000277.2"
+  },
+  "PAH|c.183C>A": {
+    "mane_accession": "NM_000277.3",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000277.3"
+  },
+  "PAH|c.205_210dup": {
+    "mane_accession": "NM_000277.3",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_000277.2"
+  },
+  "PAH|c.208_210delTCT": {
+    "mane_accession": "NM_000277.3",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_000277.1"
+  },
+  "PAH|c.281_283TCA[1]": {
+    "mane_accession": "NM_000277.3",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000277.3"
+  },
+  "PAH|c.310_318delGCCACTGTC": {
+    "mane_accession": "NM_000277.3",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_000277.2"
+  },
+  "PAH|c.353-22C>T": {
+    "mane_accession": "NM_000277.3",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000277.3"
+  },
+  "PAH|c.399T>C": {
+    "mane_accession": "NM_000277.3",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000277.3"
+  },
+  "PAH|c.510-54G>A": {
+    "mane_accession": "NM_000277.3",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000277.3"
+  },
+  "PAH|c.60+62C>T": {
+    "mane_accession": "NM_000277.3",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000277.3"
+  },
+  "PAH|c.820A>G": {
+    "mane_accession": "NM_000277.3",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000277.3"
+  },
+  "PAH|c.837C>T": {
+    "mane_accession": "NM_000277.3",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000277.3"
+  },
+  "PAH|c.865G>A": {
+    "mane_accession": "NM_000277.3",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000277.3"
+  },
+  "PAH|c.865G>C": {
+    "mane_accession": "NM_000277.3",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000277.3"
+  },
+  "PAH|c.895_897delTTT": {
+    "mane_accession": "NM_000277.3",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_000277.2"
+  },
+  "PAH|c.963C>T": {
+    "mane_accession": "NM_000277.3",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000277.3"
+  },
+  "PAH|c.967_969delACA": {
+    "mane_accession": "NM_000277.3",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_000277.1"
+  },
+  "PALB2|c.104T>C": {
+    "mane_accession": "NM_024675.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_024675.4"
+  },
+  "PALB2|c.109C>A": {
+    "mane_accession": "NM_024675.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_024675.4"
+  },
+  "PALB2|c.1748T>G": {
+    "mane_accession": "NM_024675.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_024675.4"
+  },
+  "PALB2|c.2014G>C": {
+    "mane_accession": "NM_024675.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_024675.4"
+  },
+  "PALB2|c.2027T>C": {
+    "mane_accession": "NM_024675.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_024675.4"
+  },
+  "PALB2|c.2831T>A": {
+    "mane_accession": "NM_024675.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_024675.4"
+  },
+  "PALB2|c.3049G>A": {
+    "mane_accession": "NM_024675.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_024675.4"
+  },
+  "PALB2|c.3054G>C": {
+    "mane_accession": "NM_024675.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_024675.4"
+  },
+  "PALB2|c.3089C>T": {
+    "mane_accession": "NM_024675.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_024675.4"
+  },
+  "PALB2|c.338C>T": {
+    "mane_accession": "NM_024675.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_024675.4"
+  },
+  "PALB2|c.721A>G": {
+    "mane_accession": "NM_024675.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_024675.4"
+  },
+  "PALB2|c.82T>A": {
+    "mane_accession": "NM_024675.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_024675.4"
+  },
+  "PALB2|c.871G>A": {
+    "mane_accession": "NM_024675.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_024675.4"
+  },
+  "PDHA1|c.795A>G": {
+    "mane_accession": "NM_000284.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000284.4"
+  },
+  "PIK3CA|c.2015+9A>G": {
+    "mane_accession": "NM_006218.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_006218.4"
   },
   "PIK3CA|c.2198A>G": {
     "mane_accession": "NM_006218.4",
     "resolution_method": "exact_erepo_match",
     "transcript": "NM_006218.4"
   },
+  "PIK3CA|c.93A>G": {
+    "mane_accession": "NM_006218.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_006218.4"
+  },
+  "PIK3R2|c.322+7A>G": {
+    "mane_accession": "NM_005027.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_005027.4"
+  },
+  "PTEN|c.103A>G": {
+    "mane_accession": "NM_000314.8",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000314.8"
+  },
+  "PTEN|c.1061C>A": {
+    "mane_accession": "NM_000314.8",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000314.8"
+  },
+  "PTEN|c.1061C>T": {
+    "mane_accession": "NM_000314.8",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000314.8"
+  },
+  "PTEN|c.106G>C": {
+    "mane_accession": "NM_000314.8",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000314.8"
+  },
+  "PTEN|c.1078A>G": {
+    "mane_accession": "NM_000314.8",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000314.8"
+  },
+  "PTEN|c.10A>G": {
+    "mane_accession": "NM_000314.8",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000314.8"
+  },
+  "PTEN|c.1104T>C": {
+    "mane_accession": "NM_000314.8",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_000314.6"
+  },
+  "PTEN|c.1105G>A": {
+    "mane_accession": "NM_000314.8",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000314.8"
+  },
   "PTEN|c.112C>T": {
     "mane_accession": "NM_000314.8",
     "resolution_method": "exact_erepo_match",
     "transcript": "NM_000314.8"
+  },
+  "PTEN|c.1133_1136del": {
+    "mane_accession": "NM_000314.8",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000314.8"
+  },
+  "PTEN|c.114T>G": {
+    "mane_accession": "NM_000314.8",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000314.8"
+  },
+  "PTEN|c.1171C>T": {
+    "mane_accession": "NM_000314.8",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000314.8"
+  },
+  "PTEN|c.1212A>C": {
+    "mane_accession": "NM_000314.8",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000314.8"
+  },
+  "PTEN|c.1212A>T": {
+    "mane_accession": "NM_000314.8",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_000314.7"
+  },
+  "PTEN|c.132C>T": {
+    "mane_accession": "NM_000314.8",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_000314.6"
   },
   "PTEN|c.170T>G": {
     "mane_accession": "NM_000314.8",
     "resolution_method": "exact_erepo_match",
     "transcript": "NM_000314.8"
   },
+  "PTEN|c.198G>T": {
+    "mane_accession": "NM_000314.8",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000314.8"
+  },
+  "PTEN|c.210-39A>G": {
+    "mane_accession": "NM_000314.8",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000314.8"
+  },
+  "PTEN|c.210-7_210-3del": {
+    "mane_accession": "NM_000314.8",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000314.8"
+  },
+  "PTEN|c.235G>A": {
+    "mane_accession": "NM_000314.8",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000314.8"
+  },
+  "PTEN|c.254-39G>T": {
+    "mane_accession": "NM_000314.8",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_000314.6"
+  },
   "PTEN|c.278A>G": {
     "mane_accession": "NM_000314.8",
     "resolution_method": "erepo_other_version",
     "transcript": "NM_000314.6"
+  },
+  "PTEN|c.338G>T": {
+    "mane_accession": "NM_000314.8",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000314.8"
+  },
+  "PTEN|c.344A>G": {
+    "mane_accession": "NM_000314.8",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000314.8"
+  },
+  "PTEN|c.368A>G": {
+    "mane_accession": "NM_000314.8",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000314.8"
+  },
+  "PTEN|c.388C>G": {
+    "mane_accession": "NM_000314.8",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_000314.6"
+  },
+  "PTEN|c.389G>A": {
+    "mane_accession": "NM_000314.8",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000314.8"
+  },
+  "PTEN|c.395G>A": {
+    "mane_accession": "NM_000314.8",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000314.8"
+  },
+  "PTEN|c.407G>A": {
+    "mane_accession": "NM_000314.8",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_000314.6"
+  },
+  "PTEN|c.424C>T": {
+    "mane_accession": "NM_000314.8",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000314.8"
+  },
+  "PTEN|c.44G>A": {
+    "mane_accession": "NM_000314.8",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000314.8"
+  },
+  "PTEN|c.46T>C": {
+    "mane_accession": "NM_000314.8",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000314.8"
+  },
+  "PTEN|c.477G>T": {
+    "mane_accession": "NM_000314.8",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000314.8"
+  },
+  "PTEN|c.510T>A": {
+    "mane_accession": "NM_000314.8",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000314.8"
+  },
+  "PTEN|c.517C>T": {
+    "mane_accession": "NM_000314.8",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_000314.6"
+  },
+  "PTEN|c.520T>A": {
+    "mane_accession": "NM_000314.8",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000314.8"
+  },
+  "PTEN|c.521A>G": {
+    "mane_accession": "NM_000314.8",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000314.8"
+  },
+  "PTEN|c.538T>C": {
+    "mane_accession": "NM_000314.8",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000314.8"
+  },
+  "PTEN|c.634+5G>C": {
+    "mane_accession": "NM_000314.8",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000314.8"
+  },
+  "PTEN|c.685T>A": {
+    "mane_accession": "NM_000314.8",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000314.8"
+  },
+  "PTEN|c.698G>A": {
+    "mane_accession": "NM_000314.8",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000314.8"
+  },
+  "PTEN|c.700C>T": {
+    "mane_accession": "NM_000314.8",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000314.8"
+  },
+  "PTEN|c.720C>T": {
+    "mane_accession": "NM_000314.8",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_000314.7"
+  },
+  "PTEN|c.737C>T": {
+    "mane_accession": "NM_000314.8",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_000314.6"
+  },
+  "PTEN|c.75G>A": {
+    "mane_accession": "NM_000314.8",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000314.8"
+  },
+  "PTEN|c.79+35C>T": {
+    "mane_accession": "NM_000314.8",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_000314.6"
+  },
+  "PTEN|c.79+7A>G": {
+    "mane_accession": "NM_000314.8",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000314.8"
+  },
+  "PTEN|c.802-2del": {
+    "mane_accession": "NM_000314.8",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000314.8"
+  },
+  "PTEN|c.838A>G": {
+    "mane_accession": "NM_000314.8",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000314.8"
+  },
+  "PTEN|c.882T>G": {
+    "mane_accession": "NM_000314.8",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000314.8"
+  },
+  "PTEN|c.892C>G": {
+    "mane_accession": "NM_000314.8",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000314.8"
+  },
+  "PTEN|c.914G>A": {
+    "mane_accession": "NM_000314.8",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000314.8"
+  },
+  "PTEN|c.91A>G": {
+    "mane_accession": "NM_000314.8",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000314.8"
+  },
+  "PTPN11|c.1529A>C": {
+    "mane_accession": "NM_002834.5",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_002834.4"
+  },
+  "PTPN11|c.1530G>C": {
+    "mane_accession": "NM_002834.5",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_002834.4"
+  },
+  "PTPN11|c.155C>T": {
+    "mane_accession": "NM_002834.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_002834.5"
+  },
+  "PTPN11|c.1678C>T": {
+    "mane_accession": "NM_002834.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_002834.5"
+  },
+  "PTPN11|c.167T>C": {
+    "mane_accession": "NM_002834.5",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_002834.4"
   },
   "PTPN11|c.184T>G": {
     "mane_accession": "NM_002834.5",
     "resolution_method": "exact_erepo_match",
     "transcript": "NM_002834.5"
   },
+  "PTPN11|c.244A>G": {
+    "mane_accession": "NM_002834.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_002834.5"
+  },
+  "PTPN11|c.781C>T": {
+    "mane_accession": "NM_002834.5",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_002834.4"
+  },
+  "PTPN11|c.794G>A": {
+    "mane_accession": "NM_002834.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_002834.5"
+  },
+  "PTPN11|c.922A>G": {
+    "mane_accession": "NM_002834.5",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_002834.4"
+  },
+  "RAF1|c.-204G>C": {
+    "mane_accession": "NM_002880.4",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_002880.3"
+  },
+  "RAF1|c.-267G>A": {
+    "mane_accession": "NM_002880.4",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_002880.3"
+  },
+  "RAF1|c.-339_-338AG[1]": {
+    "mane_accession": "NM_002880.4",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_002880.3"
+  },
+  "RAF1|c.1082G>C": {
+    "mane_accession": "NM_002880.4",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_002880.3"
+  },
+  "RAF1|c.1108+9_1108+21del": {
+    "mane_accession": "NM_002880.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_002880.4"
+  },
+  "RAF1|c.119G>A": {
+    "mane_accession": "NM_002880.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_002880.4"
+  },
+  "RAF1|c.639T>C": {
+    "mane_accession": "NM_002880.4",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_002880.3"
+  },
+  "RAF1|c.66T>G": {
+    "mane_accession": "NM_002880.4",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_002880.3"
+  },
+  "RAF1|c.769T>C": {
+    "mane_accession": "NM_002880.4",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_002880.3"
+  },
+  "RAF1|c.770C>T": {
+    "mane_accession": "NM_002880.4",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_002880.3"
+  },
+  "RAF1|c.775T>A": {
+    "mane_accession": "NM_002880.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_002880.4"
+  },
+  "RAF1|c.781C>T": {
+    "mane_accession": "NM_002880.4",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_002880.3"
+  },
+  "RAF1|c.788T>G": {
+    "mane_accession": "NM_002880.4",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_002880.3"
+  },
+  "RAF1|c.94A>G": {
+    "mane_accession": "NM_002880.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_002880.4"
+  },
   "RIT1|c.268A>G": {
     "mane_accession": "NM_006912.6",
     "resolution_method": "exact_erepo_match",
     "transcript": "NM_006912.6"
+  },
+  "RPE65|c.1451G>T": {
+    "mane_accession": "NM_000329.3",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000329.3"
   },
   "RPE65|c.495+1dup": {
     "mane_accession": "NM_000329.3",
     "resolution_method": "exact_erepo_match",
     "transcript": "NM_000329.3"
   },
+  "RPE65|c.726-2A>T": {
+    "mane_accession": "NM_000329.3",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000329.3"
+  },
+  "RPE65|c.991_993dup": {
+    "mane_accession": "NM_000329.3",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000329.3"
+  },
+  "RPGR|c.154+5G>A": {
+    "mane_accession": "NM_001034853.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001034853.2"
+  },
+  "RPGR|c.1573-12A>G": {
+    "mane_accession": "NM_001034853.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001034853.2"
+  },
+  "RPGR|c.1573-8A>G": {
+    "mane_accession": "NM_001034853.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001034853.2"
+  },
+  "RPGR|c.2606_2620del": {
+    "mane_accession": "NM_001034853.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001034853.2"
+  },
+  "RPGR|c.2606_2632dup": {
+    "mane_accession": "NM_001034853.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001034853.2"
+  },
+  "RPGR|c.2667_2669del": {
+    "mane_accession": "NM_001034853.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001034853.2"
+  },
+  "RPGR|c.28+1G>C": {
+    "mane_accession": "NM_001034853.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001034853.2"
+  },
+  "RPGR|c.2820_2840del": {
+    "mane_accession": "NM_001034853.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001034853.2"
+  },
+  "RPGR|c.2820_2840dup": {
+    "mane_accession": "NM_001034853.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001034853.2"
+  },
+  "RPGR|c.2847_2852del": {
+    "mane_accession": "NM_001034853.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001034853.2"
+  },
+  "RPGR|c.2901_2903del": {
+    "mane_accession": "NM_001034853.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001034853.2"
+  },
+  "RPGR|c.2919_2939dup": {
+    "mane_accession": "NM_001034853.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001034853.2"
+  },
+  "RPGR|c.2976_2990del": {
+    "mane_accession": "NM_001034853.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001034853.2"
+  },
+  "RPGR|c.310+1G>C": {
+    "mane_accession": "NM_001034853.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001034853.2"
+  },
+  "RPGR|c.3108_3122del": {
+    "mane_accession": "NM_001034853.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001034853.2"
+  },
+  "RPGR|c.3183GGA[2]": {
+    "mane_accession": "NM_001034853.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001034853.2"
+  },
   "RPGR|c.492G>T": {
     "mane_accession": "NM_001034853.2",
     "resolution_method": "exact_erepo_match",
     "transcript": "NM_001034853.2"
+  },
+  "RPGR|c.617C>T": {
+    "mane_accession": "NM_001034853.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001034853.2"
+  },
+  "RPGR|c.934G>A": {
+    "mane_accession": "NM_001034853.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001034853.2"
+  },
+  "RPGR|c.934G>T": {
+    "mane_accession": "NM_001034853.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001034853.2"
+  },
+  "RRAS2|c.70_78dup": {
+    "mane_accession": "NM_012250.6",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_012250.6"
+  },
+  "RUNX1|c.*569T>G": {
+    "mane_accession": "NM_001754.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001754.5"
+  },
+  "RUNX1|c.1003C>T": {
+    "mane_accession": "NM_001754.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001754.5"
+  },
+  "RUNX1|c.1086G>C": {
+    "mane_accession": "NM_001754.5",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_001754.4"
+  },
+  "RUNX1|c.1086G>T": {
+    "mane_accession": "NM_001754.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001754.5"
+  },
+  "RUNX1|c.1162T>A": {
+    "mane_accession": "NM_001754.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001754.5"
+  },
+  "RUNX1|c.1257G>A": {
+    "mane_accession": "NM_001754.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001754.5"
+  },
+  "RUNX1|c.1269C>T": {
+    "mane_accession": "NM_001754.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001754.5"
+  },
+  "RUNX1|c.1338C>T": {
+    "mane_accession": "NM_001754.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001754.5"
+  },
+  "RUNX1|c.1355T>G": {
+    "mane_accession": "NM_001754.5",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_001754.4"
+  },
+  "RUNX1|c.1389C>G": {
+    "mane_accession": "NM_001754.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001754.5"
+  },
+  "RUNX1|c.144C>T": {
+    "mane_accession": "NM_001754.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001754.5"
+  },
+  "RUNX1|c.159del": {
+    "mane_accession": "NM_001754.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001754.5"
+  },
+  "RUNX1|c.167T>C": {
+    "mane_accession": "NM_001754.5",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_001754.4"
+  },
+  "RUNX1|c.179C>T": {
+    "mane_accession": "NM_001754.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001754.5"
+  },
+  "RUNX1|c.205G>C": {
+    "mane_accession": "NM_001754.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001754.5"
+  },
+  "RUNX1|c.215_216dup": {
+    "mane_accession": "NM_001754.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001754.5"
+  },
+  "RUNX1|c.240_241del": {
+    "mane_accession": "NM_001754.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001754.5"
+  },
+  "RUNX1|c.253C>A": {
+    "mane_accession": "NM_001754.5",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_001754.4"
+  },
+  "RUNX1|c.302TGC[1]": {
+    "mane_accession": "NM_001754.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001754.5"
+  },
+  "RUNX1|c.316T>C": {
+    "mane_accession": "NM_001754.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001754.5"
+  },
+  "RUNX1|c.330_331delinsTT": {
+    "mane_accession": "NM_001754.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001754.5"
+  },
+  "RUNX1|c.334del": {
+    "mane_accession": "NM_001754.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001754.5"
+  },
+  "RUNX1|c.351+15A>G": {
+    "mane_accession": "NM_001754.5",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_001754.4"
+  },
+  "RUNX1|c.367G>C": {
+    "mane_accession": "NM_001754.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001754.5"
+  },
+  "RUNX1|c.423G>A": {
+    "mane_accession": "NM_001754.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001754.5"
+  },
+  "RUNX1|c.428_439dup": {
+    "mane_accession": "NM_001754.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001754.5"
+  },
+  "RUNX1|c.442_449del": {
+    "mane_accession": "NM_001754.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001754.5"
+  },
+  "RUNX1|c.501del": {
+    "mane_accession": "NM_001754.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001754.5"
+  },
+  "RUNX1|c.508+2T>C": {
+    "mane_accession": "NM_001754.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001754.5"
+  },
+  "RUNX1|c.530_532dup": {
+    "mane_accession": "NM_001754.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001754.5"
+  },
+  "RUNX1|c.552G>T": {
+    "mane_accession": "NM_001754.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001754.5"
+  },
+  "RUNX1|c.58+265G>A": {
+    "mane_accession": "NM_001754.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001754.5"
+  },
+  "RUNX1|c.581_586del": {
+    "mane_accession": "NM_001754.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001754.5"
   },
   "RUNX1|c.601C>T": {
     "mane_accession": "NM_001754.5",
     "resolution_method": "exact_erepo_match",
     "transcript": "NM_001754.5"
   },
+  "RUNX1|c.613+8C>T": {
+    "mane_accession": "NM_001754.5",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_001754.4"
+  },
+  "RUNX1|c.648C>T": {
+    "mane_accession": "NM_001754.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001754.5"
+  },
+  "RUNX1|c.679G>T": {
+    "mane_accession": "NM_001754.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001754.5"
+  },
+  "RUNX1|c.719del": {
+    "mane_accession": "NM_001754.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001754.5"
+  },
+  "RUNX1|c.861C>A": {
+    "mane_accession": "NM_001754.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001754.5"
+  },
+  "RUNX1|c.958C>T": {
+    "mane_accession": "NM_001754.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001754.5"
+  },
+  "RYR1|c.1021G>C": {
+    "mane_accession": "NM_000540.3",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000540.3"
+  },
+  "RYR1|c.6961A>G": {
+    "mane_accession": "NM_000540.3",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000540.3"
+  },
+  "RYR1|c.742G>C": {
+    "mane_accession": "NM_000540.3",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000540.3"
+  },
+  "SCN1A|c.1170+5G>C": {
+    "mane_accession": "NM_001165963.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001165963.4"
+  },
   "SCN1A|c.2941C>A": {
     "mane_accession": "NM_001165963.4",
     "resolution_method": "exact_erepo_match",
     "transcript": "NM_001165963.4"
+  },
+  "SCN2A|c.4782G>C": {
+    "mane_accession": "NM_001040142.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001040142.2"
   },
   "SCN2A|c.5317G>A": {
     "mane_accession": "NM_001040142.2",
@@ -259,12 +3049,37 @@
     "resolution_method": "exact_erepo_match",
     "transcript": "NM_001330260.2"
   },
+  "SERPINC1|c.1154-14G>A": {
+    "mane_accession": "NM_000488.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000488.4"
+  },
+  "SERPINC1|c.1273_1275del": {
+    "mane_accession": "NM_000488.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000488.4"
+  },
+  "SERPINC1|c.1393T>C": {
+    "mane_accession": "NM_000488.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000488.4"
+  },
+  "SERPINC1|c.719A>G": {
+    "mane_accession": "NM_000488.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000488.4"
+  },
   "SGCA|c.*227G>A": {
     "mane_accession": "NM_000023.4",
     "resolution_method": "exact_erepo_match",
     "transcript": "NM_000023.4"
   },
   "SGCB|c.*3043A>G": {
+    "mane_accession": "NM_000232.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000232.5"
+  },
+  "SGCB|c.199_210del": {
     "mane_accession": "NM_000232.5",
     "resolution_method": "exact_erepo_match",
     "transcript": "NM_000232.5"
@@ -279,10 +3094,170 @@
     "resolution_method": "exact_erepo_match",
     "transcript": "NM_000231.3"
   },
+  "SHOC2|c.1302C>T": {
+    "mane_accession": "NM_007373.4",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_007373.3"
+  },
+  "SHOC2|c.4A>G": {
+    "mane_accession": "NM_007373.4",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_007373.3"
+  },
+  "SHOC2|c.610A>G": {
+    "mane_accession": "NM_007373.4",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_007373.3"
+  },
+  "SLC26A4|c.1061T>C": {
+    "mane_accession": "NM_000441.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000441.2"
+  },
+  "SLC26A4|c.147C>G": {
+    "mane_accession": "NM_000441.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000441.2"
+  },
+  "SLC26A4|c.1614C>T": {
+    "mane_accession": "NM_000441.2",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_000441.1"
+  },
+  "SLC26A4|c.1708-18T>A": {
+    "mane_accession": "NM_000441.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000441.2"
+  },
   "SLC26A4|c.2291C>T": {
     "mane_accession": "NM_000441.2",
     "resolution_method": "exact_erepo_match",
     "transcript": "NM_000441.2"
+  },
+  "SLC26A4|c.349C>T": {
+    "mane_accession": "NM_000441.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000441.2"
+  },
+  "SLC26A4|c.416-7T>C": {
+    "mane_accession": "NM_000441.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000441.2"
+  },
+  "SLC26A4|c.919-2A>G": {
+    "mane_accession": "NM_000441.2",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_000441.1"
+  },
+  "SLC6A8|c.1000_1002AAC[2]": {
+    "mane_accession": "NM_005629.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_005629.4"
+  },
+  "SLC6A8|c.1072_1095del": {
+    "mane_accession": "NM_005629.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_005629.4"
+  },
+  "SLC6A8|c.1216TTC[2]": {
+    "mane_accession": "NM_005629.4",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_005629.4"
+  },
+  "SLC6A8|c.191_193del": {
+    "mane_accession": "NM_005629.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_005629.4"
+  },
+  "SLC6A8|c.467_469del": {
+    "mane_accession": "NM_005629.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_005629.4"
+  },
+  "SLC6A8|c.912G>C": {
+    "mane_accession": "NM_005629.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_005629.4"
+  },
+  "SLC6A8|c.942_944del": {
+    "mane_accession": "NM_005629.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_005629.4"
+  },
+  "SLC9A6|c.-20G>A": {
+    "mane_accession": "NM_001379110.1",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001379110.1"
+  },
+  "SLC9A6|c.141C>T": {
+    "mane_accession": "NM_001379110.1",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_001379110.1"
+  },
+  "SOS1|c.*4C>T": {
+    "mane_accession": "NM_005633.4",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_005633.3"
+  },
+  "SOS1|c.1018C>T": {
+    "mane_accession": "NM_005633.4",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_005633.3"
+  },
+  "SOS1|c.109A>G": {
+    "mane_accession": "NM_005633.4",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_005633.3"
+  },
+  "SOS1|c.1230G>A": {
+    "mane_accession": "NM_005633.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_005633.4"
+  },
+  "SOS1|c.1642A>C": {
+    "mane_accession": "NM_005633.4",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_005633.3"
+  },
+  "SOS1|c.1654A>G": {
+    "mane_accession": "NM_005633.4",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_005633.3"
+  },
+  "SOS1|c.1656G>T": {
+    "mane_accession": "NM_005633.4",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_005633.3"
+  },
+  "SOS1|c.2536G>A": {
+    "mane_accession": "NM_005633.4",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_005633.3"
+  },
+  "SOS1|c.322G>A": {
+    "mane_accession": "NM_005633.4",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_005633.3"
+  },
+  "SOS1|c.508A>G": {
+    "mane_accession": "NM_005633.4",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_005633.3"
+  },
+  "SOS1|c.512T>C": {
+    "mane_accession": "NM_005633.4",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_005633.3"
+  },
+  "SOS1|c.806T>C": {
+    "mane_accession": "NM_005633.4",
+    "resolution_method": "erepo_other_version",
+    "transcript": "NM_005633.3"
+  },
+  "TCF4|c.687C>A": {
+    "mane_accession": "NM_001083962.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001083962.2"
   },
   "TECTA|c.3492C>T": {
     "mane_accession": "NM_005422.4",
@@ -299,7 +3274,62 @@
     "resolution_method": "exact_erepo_match",
     "transcript": "NM_001276345.2"
   },
+  "TP53|c.1093C>T": {
+    "mane_accession": "NM_000546.6",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000546.6"
+  },
+  "TP53|c.139C>T": {
+    "mane_accession": "NM_000546.6",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000546.6"
+  },
+  "TP53|c.145G>A": {
+    "mane_accession": "NM_000546.6",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000546.6"
+  },
+  "TP53|c.217G>A": {
+    "mane_accession": "NM_000546.6",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000546.6"
+  },
+  "TP53|c.21T>A": {
+    "mane_accession": "NM_000546.6",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000546.6"
+  },
+  "TP53|c.245C>T": {
+    "mane_accession": "NM_000546.6",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000546.6"
+  },
+  "TP53|c.319T>C": {
+    "mane_accession": "NM_000546.6",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000546.6"
+  },
+  "TP53|c.537T>A": {
+    "mane_accession": "NM_000546.6",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000546.6"
+  },
+  "TP53|c.704A>G": {
+    "mane_accession": "NM_000546.6",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000546.6"
+  },
+  "TP53|c.847C>T": {
+    "mane_accession": "NM_000546.6",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000546.6"
+  },
   "TP53|c.875A>G": {
+    "mane_accession": "NM_000546.6",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000546.6"
+  },
+  "TP53|c.935C>G": {
     "mane_accession": "NM_000546.6",
     "resolution_method": "exact_erepo_match",
     "transcript": "NM_000546.6"
@@ -308,6 +3338,36 @@
     "mane_accession": "NM_001018005.2",
     "resolution_method": "erepo_other_version",
     "transcript": "NM_001018005.1"
+  },
+  "TPM1|c.797A>G": {
+    "mane_accession": "NM_001018005.2",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_001018005.2"
+  },
+  "UBE3A|c.2563_2568del": {
+    "mane_accession": "NM_130839.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_130839.5"
+  },
+  "UBE3A|c.477A>T": {
+    "mane_accession": "NM_130839.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_130839.5"
+  },
+  "UBE3A|c.618A>T": {
+    "mane_accession": "NM_130839.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_130839.5"
+  },
+  "UBE3A|c.936G>A": {
+    "mane_accession": "NM_130839.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_130839.5"
+  },
+  "USH2A|c.7167C>T": {
+    "mane_accession": "NM_206933.4",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_206933.4"
   },
   "USH2A|c.8559-2A>G": {
     "mane_accession": "NM_206933.4",
@@ -318,5 +3378,20 @@
     "mane_accession": "NM_000551.4",
     "resolution_method": "exact_erepo_match",
     "transcript": "NM_000551.4"
+  },
+  "VWF|c.1213_1214insATCCCA": {
+    "mane_accession": "NM_000552.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000552.5"
+  },
+  "VWF|c.3831_3833del": {
+    "mane_accession": "NM_000552.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000552.5"
+  },
+  "VWF|c.4885G>A": {
+    "mane_accession": "NM_000552.5",
+    "resolution_method": "exact_erepo_match",
+    "transcript": "NM_000552.5"
   }
 }
