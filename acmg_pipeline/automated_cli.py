@@ -200,6 +200,15 @@ def main(argv=None):
     online.add_argument("--with-nmd-prediction", action="store_true",
                         help="Predict NMD from VEP exon numbering for PVS1's NF02 gate "
                              "(no record for the last two exons, where the rule needs a distance)")
+    online.add_argument("--with-region-assessment", action="store_true",
+                        help="Answer PM4/BP3's repeat-region question from UniProt Repeat/"
+                             "Domain feature overlap over the altered protein interval, "
+                             "flagged as an automated first pass rather than a curator's "
+                             "own review")
+    online.add_argument("--with-bp7-splice-assessment", action="store_true",
+                        help="Answer BP7 from VEP's splice_region_variant consequence plus "
+                             "the SpliceAI score already fetched for every variant (ClinGen "
+                             "SVI 2023, PMID:37352859) - no new HTTP request of its own")
     online.add_argument("--with-clinvar-spectrum", action="store_true",
                         help="Attach each gene's ClinVar missense/truncating P/LP counts, an "
                              "input to --with-gene-disease-draft's suggestion")
@@ -324,6 +333,8 @@ def main(argv=None):
                     with_clinvar_spectrum=args.with_clinvar_spectrum,
                     with_gene_disease_draft=args.with_gene_disease_draft,
                     gene_disease_draft_policy=_gene_disease_draft_policy(args),
+                    with_region_assessment=args.with_region_assessment,
+                    with_bp7_splice_assessment=args.with_bp7_splice_assessment,
                 )
                 provider = resolver.identity_provider
                 mapped = {}

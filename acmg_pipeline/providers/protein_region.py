@@ -47,28 +47,12 @@ import hashlib
 
 from acmg_pipeline.criteria.reference_links import gene_to_uniprot_accession
 from acmg_pipeline.providers.nmd import TRUNCATING, NmdPredictionProvider
+from acmg_pipeline.providers.uniprot_features import (
+    CRITICAL_FEATURE_TYPES, fetch_features, feature_interval, is_disordered, overlaps,
+)
 
 METHOD = "ensembl_translation_length_protein_loss"
 UNIPROT_METHOD = "uniprot_feature_overlap"
-
-_UNIPROT_ENTRY_URL = "https://rest.uniprot.org/uniprotkb/{accession}.json"
-# "Chain" is UniProt's whole-protein-span feature - excluded on purpose, see module docstring.
-_CRITICAL_FEATURE_TYPES = {"Domain", "Region", "Binding site", "Active site", "Motif", "Coiled coil"}
-
-
-def _is_disordered(feature: dict) -> bool:
-    return "disordered" in str(feature.get("description", "")).lower()
-
-
-def _feature_interval(feature: dict) -> tuple[int, int] | None:
-    try:
-        return feature["location"]["start"]["value"], feature["location"]["end"]["value"]
-    except (KeyError, TypeError):
-        return None
-
-
-def _overlaps(feature_start: int, feature_end: int, query_start: int, query_end: int) -> bool:
-    return feature_start <= query_end and query_start <= feature_end
 
 
 class ProteinRegionProvider:
@@ -101,25 +85,20 @@ class ProteinRegionProvider:
         accession = gene_to_uniprot_accession(gene)
         if not accession:
             return {}
-        try:
-            response = self.client.fetch(
-                _UNIPROT_ENTRY_URL.format(accession=accession), response_format="json")
-        except ValueError:
-            return {}
-        features = (response["body"] or {}).get("features")
-        if not isinstance(features, list):
+        features, response = fetch_features(self.client, accession)
+        if features is None:
             return {}
 
         critical = None
         disordered_intervals = []
         for feature in features:
-            interval = _feature_interval(feature)
-            if interval is None or not _overlaps(interval[0], interval[1], protein_start, total):
+            interval = feature_interval(feature)
+            if interval is None or not overlaps(interval[0], interval[1], protein_start, total):
                 continue
             feature_type = feature.get("type")
-            if feature_type not in _CRITICAL_FEATURE_TYPES:
+            if feature_type not in CRITICAL_FEATURE_TYPES:
                 continue
-            if feature_type == "Region" and _is_disordered(feature):
+            if feature_type == "Region" and is_disordered(feature):
                 disordered_intervals.append(interval)
                 continue
             critical = True

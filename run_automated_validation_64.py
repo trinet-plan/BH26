@@ -217,6 +217,7 @@ def main() -> None:
         variants = variants[: args.limit]
 
     work = Path(tempfile.mkdtemp(prefix="bh26_erepo64_automated_"))
+    print(f"[run_automated_validation_64] work dir: {work}")
     vcf_path = work / "erepo64_variants.vcf"
     n_included = _build_synthetic_vcf(variants, transcripts, vcf_path)
     print(f"[run_automated_validation_64] {n_included}/{len(variants)} variant(s) have a resolved "
@@ -266,6 +267,8 @@ def main() -> None:
         "--with-clingen-lumping",
         "--with-mondo-hierarchy",
         "--with-clingen-gene-validity",
+        "--with-region-assessment",
+        "--with-bp7-splice-assessment",
     ]
     if args.offline:
         _COMMON_PREPARE_ARGS.append("--offline")
