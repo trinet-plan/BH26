@@ -37,15 +37,27 @@ GENE_MISSENSE_RETMAX = 5000
 SUMMARY_BATCH = 200
 
 
-def gene_consequence_search(client, release, gene, consequence_term, retmax=GENE_MISSENSE_RETMAX):
-    """One gene-wide ClinVar search bounded by a molecular-consequence term.
+def gene_consequence_search(client, release, gene, consequence_term, retmax=GENE_MISSENSE_RETMAX,
+                            retstart=0):
+    """One gene-wide ClinVar search bounded by a molecular-consequence term - one ESearch page.
 
     `gene_missense_search()` below is this with the missense term fixed - kept as its own
-    function so PM1/PM5's existing callers and tests are untouched. providers/
-    clinvar_spectrum.py calls this directly with the truncating (nonsense/frameshift) term.
+    function so PM1/PM5's existing callers and tests are untouched (neither paginates: a
+    position-bounded search stays well under one page). `retstart` is 0 by default, so this
+    stays a single-page fetch for every existing caller; providers/clinvar_spectrum.py's
+    `gene_consequence_search_all()` below is the only caller that advances it.
     """
     term = f'{gene}[gene] AND {consequence_term}'
-    query = urlencode({"db": "clinvar", "term": term, "retmode": "json", "retmax": retmax})
+    params = {"db": "clinvar", "term": term, "retmode": "json", "retmax": retmax}
+    # retstart is omitted (not just "=0") for the default first-page call, so its URL -
+    # and cache key - is byte-identical to every call this project made before pagination
+    # existed. tests/fixtures/external-cache/ was committed under that exact URL shape for
+    # PM1/PM5's own gene_missense_search() calls (which never paginate); adding "&retstart=0"
+    # unconditionally broke offline replay for both (confirmed: test_demo_pipeline.py's
+    # committed-cache test lost ClinVar's pm5_residue_searches entirely).
+    if retstart:
+        params["retstart"] = retstart
+    query = urlencode(params)
     response = client.fetch(
         f"https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?{query}",
         dataset_version=release,
@@ -62,9 +74,52 @@ def gene_consequence_search(client, release, gene, consequence_term, retmax=GENE
         raise ValueError("Unexpected ClinVar gene search ID list")
     return {
         "term": term, "ids": [str(value) for value in ids], "count": count,
+        # A single page is "complete" only when it already held every hit - unchanged for
+        # existing (retstart=0-only) callers. gene_consequence_search_all() below judges
+        # completeness across the whole page sequence instead, not per page.
         "complete": count <= limit and len(ids) == count,
         "retrieved_at": response["retrieved_at"],
         "digest": hashlib.sha256(canonical_json(body).encode()).hexdigest(),
+    }
+
+
+def gene_consequence_search_all(client, release, gene, consequence_term, page_size=GENE_MISSENSE_RETMAX,
+                                max_pages=20):
+    """gene_consequence_search(), paged with `retstart` until every hit is collected.
+
+    No fixed ceiling on how many hits a gene can have (an earlier fixed retmax=5000, then
+    20000, both eventually needed raising again for real genes - APC/BRCA1/BRCA2 each have
+    6000-10000+ ClinVar-submitted records under a single consequence term, 2026-09-21). This
+    fetches one `page_size`-sized page at a time (same ESearch call gene_consequence_search()
+    already makes, just advancing `retstart`) until it has collected `count` ids or a page
+    comes back short/empty, stopping instead of looping forever if ClinVar's own count is
+    inconsistent with what pages actually deliver. `max_pages` is a hard backstop, not a
+    tuning knob - 20 pages at the default 5000/page is 100000 records, far past any gene this
+    project has seen; hitting it means something is wrong with the query or the response, not
+    that the gene is merely large.
+
+    Returns the same shape as one gene_consequence_search() call, `ids` concatenated across
+    pages and `complete` true only if every page was retrieved and their total matches `count`.
+    """
+    ids: list[str] = []
+    retrieved_at = None
+    digests = []
+    count = None
+    for page in range(max_pages):
+        page_result = gene_consequence_search(
+            client, release, gene, consequence_term, retmax=page_size, retstart=page * page_size,
+        )
+        count = page_result["count"]
+        retrieved_at = page_result["retrieved_at"]
+        digests.append(page_result["digest"])
+        ids.extend(page_result["ids"])
+        if not page_result["ids"] or len(ids) >= count:
+            break
+    complete = count is not None and len(ids) == count
+    return {
+        "term": page_result["term"], "ids": ids, "count": count, "complete": complete,
+        "retrieved_at": retrieved_at,
+        "digest": hashlib.sha256(canonical_json(digests).encode()).hexdigest(),
     }
 
 
