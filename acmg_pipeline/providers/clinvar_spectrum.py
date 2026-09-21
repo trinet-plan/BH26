@@ -28,7 +28,15 @@ PATHOGENIC = ("pathogenic", "likely pathogenic")
 BENIGN = ("benign", "likely benign")
 MISSENSE_TERM = '"missense variant"[molecular consequence]'
 TRUNCATING_TERM = '("nonsense"[molecular consequence] OR "frameshift variant"[molecular consequence])'
-RETMAX = 5000
+# 5000 (2026-09-19) was too low for real BP1-relevant genes: APC/BRCA1/BRCA2
+# (2026-09-21, found while fixing BP1's mechanism suggestion - see
+# gene_disease_draft.py's own module comment) each have 6000-10000+
+# ClinVar-submitted missense records alone, so their search never completed
+# and get_spectrum() always returned None for them. NCBI esearch returns up
+# to retmax hits in one response with no separate pagination call needed;
+# 20000 covers every gene seen in this project's own ground truth with
+# comfortable headroom - raise further only if a real gene still exceeds it.
+RETMAX = 20000
 SUMMARY_BATCH = 200
 
 
