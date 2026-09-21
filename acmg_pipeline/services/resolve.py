@@ -712,6 +712,32 @@ class ProviderEvidenceResolver:
             return
         if not validity:
             return
+        # A case's condition and ClinGen's own curated condition for the same gene are often
+        # written at different MONDO depths (e.g. a case recorded under "familial adenomatous
+        # polyposis 1", MONDO:0021056, against ClinGen's curated "classic or attenuated
+        # familial adenomatous polyposis", MONDO:0021057, its direct parent) - an exact-string
+        # match against `condition` below would then find nothing, the same gap
+        # _add_disease_matching() exists to close for PVS1's own mechanism gate. Reusing
+        # MondoHierarchyProvider.related() here (not duplicating the comparison) remaps
+        # `condition` to whichever curated validity row it is the same-or-related to, so
+        # GeneDiseaseDraftProvider's own exact-match selection still works unmodified.
+        if condition and self._with_disease_matching:
+            exact = any(row.get("condition") == condition for row in validity)
+            if not exact:
+                try:
+                    tree = MondoHierarchyProvider(self._external)
+                    matched = next(
+                        (row["condition"] for row in validity
+                         if row.get("condition")
+                         and tree.related(condition, row["condition"])),
+                        None,
+                    )
+                except PROVIDER_ERRORS as exc:
+                    resolved.failures.append(
+                        {"provider": MondoHierarchyProvider.name, "error": str(exc)})
+                    matched = None
+                if matched:
+                    condition = matched
         try:
             constraint = self._gnomad_constraint_provider().get_constraint(gene)
         except PROVIDER_ERRORS as exc:

@@ -73,3 +73,30 @@ class MondoHierarchyProvider:
             "assessment_method": "automated",
             "method": METHOD,
         }
+
+    def related(self, condition_a, condition_b):
+        """Whether two MONDO ids are the same term, or parent and child in either direction.
+
+        Unlike acmg_pipeline.criteria.common.ontology_related() (deliberately excludes
+        equality - its callers already handle that separately, and PVS1's mechanism gate
+        keeps the equal-vs-related distinction visible to the curator), this includes
+        equality: it is the single yes/no "does this curated condition count as a match for
+        that case condition" signal a caller with no further distinction to make needs -
+        first used by ProviderEvidenceResolver._add_gene_disease_draft() to resolve a case
+        condition against ClinGen Gene-Disease Validity's own (often more specific) MONDO
+        term for the same gene, e.g. a case recorded under "familial adenomatous polyposis 1"
+        (MONDO:0021056) against ClinGen's "classic or attenuated familial adenomatous
+        polyposis" (MONDO:0021057, its direct parent).
+
+        False (never raises) when either side is missing or its ancestry cannot be resolved -
+        a caller with real curated data to fall back on should prefer that over guessing here.
+        """
+        if not condition_a or not condition_b:
+            return False
+        if condition_a == condition_b:
+            return True
+        a = self.ancestors(condition_a)
+        b = self.ancestors(condition_b)
+        if not a or not b:
+            return False
+        return condition_b in a["ancestors"] or condition_a in b["ancestors"]
