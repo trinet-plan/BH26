@@ -327,12 +327,24 @@ class CuratedCriteriaTests(unittest.TestCase):
         value = evaluate_prepared_record(input_data, make_services([annotation, comparator]), {}, ["PM5"])[0]
         self.assertEqual(value.status, CriterionStatus.UNKNOWN)
 
+    def test_bp7_does_not_require_conservation(self):
+        """ClinGen SVI's 2023 splicing recommendations (PMID 37352859) state BP7 as position
+        + SpliceAI<0.1 only - no separate conservation gate, unlike a prior version of this
+        rule. not_conserved=False (i.e. "conserved") must not block MET."""
+        self.annotation["consequences"] = ["synonymous_variant"]
+        item = self.item("synonymous_assessment", outside_splice_critical_region=True,
+                         no_predicted_splice_impact=True, not_conserved=False,
+                         contradictory_rna_evidence=False,
+                         splice_prediction_evidence="test:splice", calibration_source="test:calibration",
+                         position_rule_version="test:1")
+        self.assertEqual(self.run_rule("BP7", item).status, CriterionStatus.MET)
+
     def test_bp7_and_rna_contradiction(self):
         self.annotation["consequences"] = ["synonymous_variant"]
         item = self.item("synonymous_assessment", outside_splice_critical_region=True,
-                         no_predicted_splice_impact=True, not_conserved=True, contradictory_rna_evidence=False,
+                         no_predicted_splice_impact=True, contradictory_rna_evidence=False,
                          splice_prediction_evidence="test:splice", calibration_source="test:calibration",
-                         conservation_evidence="test:conservation", position_rule_version="test:1")
+                         position_rule_version="test:1")
         self.assertEqual(self.run_rule("BP7", item).status, CriterionStatus.MET)
         item["contradictory_rna_evidence"] = True
         self.assertEqual(self.run_rule("BP7", item).status, CriterionStatus.UNKNOWN)
