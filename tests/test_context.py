@@ -151,6 +151,34 @@ class CuratedContextTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Unsupported"):
             load_context(document(gene_frequency_thresholds={"TEST": {"pm2": {}}}))
 
+    # --- gene_critical_domains (PM1's own VCEP-published codon ranges) --------------
+
+    DOMAIN_ENTRY = {
+        "source": "ClinGen CSpec test VCEP", "source_version": "1.0",
+        "reviewed_at": "2026-09-22",
+        "ranges": [{"start": 90, "end": 162, "label": "test domain"}],
+    }
+
+    def test_gene_critical_domains_feeds_the_record_by_gene(self):
+        context = load_context(document(gene_critical_domains={"TEST": self.DOMAIN_ENTRY}))
+        updated = apply_context({**self.record(), "gene": "TEST"}, context)
+        self.assertEqual(updated["gene_critical_domains"], self.DOMAIN_ENTRY)
+
+    def test_an_unmatched_gene_resolves_no_critical_domains(self):
+        context = load_context(document(gene_critical_domains={"TEST": self.DOMAIN_ENTRY}))
+        updated = apply_context({**self.record(), "gene": "OTHER"}, context)
+        self.assertNotIn("gene_critical_domains", updated)
+
+    def test_gene_critical_domains_requires_its_own_provenance(self):
+        incomplete = {"source": "x", "source_version": "1", "reviewed_at": "2026-09-22"}  # no ranges
+        with self.assertRaisesRegex(ValueError, "requires"):
+            load_context(document(gene_critical_domains={"TEST": incomplete}))
+
+    def test_gene_critical_domains_rejects_a_reversed_range(self):
+        bad = {**self.DOMAIN_ENTRY, "ranges": [{"start": 200, "end": 100}]}
+        with self.assertRaisesRegex(ValueError, "start<=end"):
+            load_context(document(gene_critical_domains={"TEST": bad}))
+
     def test_summary_reports_what_was_loaded(self):
         summary = context_summary(load_context(document(ba1_exceptions=EXCEPTIONS,
                                                         records={KEY: {"condition": "x"}})))

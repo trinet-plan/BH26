@@ -494,5 +494,61 @@
         "note": "Transcribed by hand from the free-text evidenceStrength description in the gene's ClinGen Criteria Specification Registry (CSpec, cspec.genome.network) document, retrieved 2026-09-22 - the registry has no structured numeric-threshold field, only markdown prose per evidence strength, so this is manual_transcription like ba1_exceptions above, not machine-parsed. Re-verify against the source document if it is revised."
       }
     }
+  },
+  "gene_critical_domains": {
+    "RYR1": {
+      "source": "ClinGen CSpec GN012: Malignant Hyperthermia VCEP RYR1",
+      "source_version": "see CSpec",
+      "reviewed_at": "2026-09-22",
+      "ranges": [
+        {
+          "start": 1,
+          "end": 552,
+          "label": "N-terminal region"
+        },
+        {
+          "start": 2101,
+          "end": 2458,
+          "label": "central region"
+        }
+      ],
+      "note": "Transcribed by hand from the free-text Moderate-tier evidenceStrength description in the gene's ClinGen Criteria Specification Registry (CSpec, cspec.genome.network) document, retrieved 2026-09-22 - manual_transcription, like gene_frequency_thresholds above (same registry, same lack of a structured field). Only Moderate-tier codon-range rules are included: this project's own PM1 implementation always reports \"moderate\" strength for a met critical-domain route regardless of source (see criteria/regions.py), so citing a real Supporting-tier rule (several other genes have one, e.g. HNF1A, RUNX1) as moderate would overstate it - excluded rather than misrepresented."
+    },
+    "MECP2": {
+      "source": "ClinGen CSpec GN036: Rett/Angelman-like VCEP MECP2",
+      "source_version": "see CSpec",
+      "reviewed_at": "2026-09-22",
+      "ranges": [
+        {
+          "start": 90,
+          "end": 162,
+          "label": "Methyl-DNA binding domain (MBD)"
+        },
+        {
+          "start": 302,
+          "end": 306,
+          "label": "Transcriptional repression domain (TRD)"
+        }
+      ],
+      "note": "Transcribed by hand from the free-text Moderate-tier evidenceStrength description in the gene's ClinGen Criteria Specification Registry (CSpec, cspec.genome.network) document, retrieved 2026-09-22 - manual_transcription, like gene_frequency_thresholds above (same registry, same lack of a structured field). Only Moderate-tier codon-range rules are included: this project's own PM1 implementation always reports \"moderate\" strength for a met critical-domain route regardless of source (see criteria/regions.py), so citing a real Supporting-tier rule (several other genes have one, e.g. HNF1A, RUNX1) as moderate would overstate it - excluded rather than misrepresented."
+    },
+    "BMPR2": {
+      "source": "ClinGen CSpec GN125: Pulmonary Hypertension VCEP BMPR2",
+      "source_version": "see CSpec",
+      "reviewed_at": "2026-09-22",
+      "ranges": [
+        {
+          "start": 33,
+          "end": 131,
+          "label": "Extracellular domain"
+        },
+        {
+          "start": 203,
+          "end": 504,
+          "label": "Kinase domain"
+        }
+      ],
+      "note": "Transcribed by hand from the free-text Moderate-tier evidenceStrength description in the gene's ClinGen Criteria Specification Registry (CSpec, cspec.genome.network) document, retrieved 2026-09-22 - manual_transcription, like gene_frequency_thresholds above (same registry, same lack of a structured field). Only Moderate-tier codon-range rules are included: this project's own PM1 implementation always reports \"moderate\" strength for a met critical-domain route regardless of source (see criteria/regions.py), so citing a real Supporting-tier rule (several other genes have one, e.g. HNF1A, RUNX1) as moderate would overstate it - excluded rather than misrepresented."
+    }
   }
 }

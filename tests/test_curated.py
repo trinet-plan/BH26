@@ -187,6 +187,41 @@ class CuratedCriteriaTests(unittest.TestCase):
         self.assertEqual(value.status, CriterionStatus.UNKNOWN)
         self.assertTrue(value.review_points)
 
+    def test_pm1_uses_a_curated_critical_domain_range_before_any_region_evidence(self):
+        """A gene_critical_domains match is checked before curated_context()'s "region"
+        lookup at all - proven by passing a region item that would itself resolve to
+        UNKNOWN (no region_type set), yet the outcome is still MET from the curated range."""
+        self.input["gene_critical_domains"] = {
+            "source": "test CSpec", "source_version": "v1", "reviewed_at": "2026-09-22",
+            "ranges": [{"start": 5, "end": 15, "label": "test domain"}],
+        }
+        value = self.run_pm1(self.region())
+        self.assertEqual(value.status, CriterionStatus.MET)
+        self.assertEqual(value.strength, "moderate")
+        self.assertEqual(value.provenance["pm1_route"], "critical_functional_domain")
+        self.assertEqual(value.provenance["assessment_method"], "curated")
+        self.assertTrue(any("benign_depletion is defaulted True" in point
+                            for point in value.review_points))
+
+    def test_pm1_curated_domain_falls_through_when_position_is_outside_every_range(self):
+        self.input["gene_critical_domains"] = {
+            "source": "test CSpec", "source_version": "v1", "reviewed_at": "2026-09-22",
+            "ranges": [{"start": 500, "end": 600, "label": "elsewhere"}],
+        }
+        value = self.run_pm1(self.region())
+        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
+        self.assertIn("region_type", value.missing_inputs)
+
+    def test_pm1_without_gene_critical_domains_is_unaffected(self):
+        """No gene_critical_domains key at all still reaches the pre-existing hotspot
+        route unchanged."""
+        item = self.hotspot(assessment_method="automated", pathogenic_count=3, benign_count=0)
+        del item["curator"]
+        del item["reviewed_at"]
+        value = self.run_pm1(item, self.HOTSPOT_POLICY)
+        self.assertEqual(value.status, CriterionStatus.MET)
+        self.assertEqual(value.provenance["pm1_route"], "mutational_hotspot")
+
     def test_pm1_protein_level_without_condition(self):
         input_data = {key: value for key, value in self.input.items() if key != "condition"}
         annotation = {key: value for key, value in self.annotation.items() if key != "condition"}

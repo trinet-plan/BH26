@@ -945,7 +945,7 @@ def _apply_curated_context(variant: VariantRecord, automated_config: dict) -> No
     # condition/condition_label entries in legacy documents are intentionally ignored. The
     # clinical-note parser is the only owner of the disease selected for this case.
     for key in ("inheritance", "disease_frequency_threshold", "ba1_exception_assessment",
-                "ba1_threshold_override"):
+                "ba1_threshold_override", "gene_critical_domains"):
         if key in updated:
             variant.info[key] = updated[key]
 

@@ -164,8 +164,16 @@ def _write_context(variants: list[tuple[str, str]], prepared: Path, out_path: Pa
     # record_contexts is keyed by record_id, not gene, so the gene-keyed table is resolved to
     # each matching record_id here instead of relying on apply_context()'s own gene lookup
     # (this script's prepared records carry no top-level "gene" field for it to read).
-    gene_thresholds = json.loads(CURATED_CONTEXT_PATH.read_text(encoding="utf-8")).get(
-        "gene_frequency_thresholds") or {}
+    curated = json.loads(CURATED_CONTEXT_PATH.read_text(encoding="utf-8"))
+    gene_thresholds = curated.get("gene_frequency_thresholds") or {}
+    # PM1's own gene-keyed table - unlike gene_frequency_thresholds (BA1/BS1), this one is
+    # not gated on a resolved disease condition at all below: PM1 evaluate_region()'s curated
+    # critical-domain check (criteria/regions.py) is disease-agnostic by design (the same
+    # `disease_required=False` the pre-existing hotspot route already uses), so a variant
+    # this script could not resolve ANY condition for (the `continue` a few lines down)
+    # would otherwise never see its gene's own critical-domain data either, despite PM1
+    # never having needed a condition for it.
+    gene_domains = curated.get("gene_critical_domains") or {}
 
     document = {
         "schema_version": "1.0",
@@ -173,7 +181,7 @@ def _write_context(variants: list[tuple[str, str]], prepared: Path, out_path: Pa
         "source": f"{CURATED_CONTEXT_PATH.name}'s ba1_exceptions + {DISEASE_CONTEXTS_PATH.name}'s "
                   "per-variant ERepo-interpreted conditions, falling back to a gene-level "
                   "ClinGen Gene-Disease Validity condition where ERepo has none",
-        "ba1_exceptions": json.loads(CURATED_CONTEXT_PATH.read_text(encoding="utf-8"))["ba1_exceptions"],
+        "ba1_exceptions": curated["ba1_exceptions"],
         "records": {}, "record_contexts": {},
     }
     resolved = 0
@@ -183,9 +191,14 @@ def _write_context(variants: list[tuple[str, str]], prepared: Path, out_path: Pa
             continue
         context = contexts.get(f"{gene}|{hgvsc}")
         condition = context["condition"] if context and context.get("condition") else gene_fallback.get(gene)
+        record_context = {}
+        if gene in gene_domains:
+            record_context["gene_critical_domains"] = gene_domains[gene]
         if not condition:
+            if record_context:
+                document["record_contexts"][record_id] = record_context
             continue
-        record_context = {"condition": condition}
+        record_context["condition"] = condition
         gene_entry = gene_thresholds.get(gene)
         if gene_entry:
             if gene_entry.get("bs1"):
