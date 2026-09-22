@@ -232,7 +232,27 @@ async def main() -> None:
             # response already names the condition each variant was curated
             # against (a MONDO term) - reuse it here instead of passing an
             # empty clinical note.
-            erepo_lookup = erepo_client.lookup(gene, hgvsc)
+            #
+            # erepo_client.lookup() is unretried and raises on any request
+            # failure (see gate.py's own ERepoClient.lookup()) - fine for a
+            # single call, but this loop can run for many hours across ~550
+            # variants, and a single transient network blip (confirmed: a
+            # 15s read timeout to erepo.clinicalgenome.org, 2026-09-22) used
+            # to take the whole run down after 13+ hours and 213 variants
+            # already processed. One retry after a short pause, then treat a
+            # still-failing lookup as "skip this variant", not "crash
+            # everything after it" - matching how a pl.evaluate_variant_
+            # evidence_lines() failure is already handled a few lines below.
+            try:
+                try:
+                    erepo_lookup = erepo_client.lookup(gene, hgvsc)
+                except Exception:
+                    await asyncio.sleep(5)
+                    erepo_lookup = erepo_client.lookup(gene, hgvsc)
+            except Exception as exc:
+                pl.show(f"  -> ERROR looking up {gene} {hgvsc} in ERepo: {exc!r}")
+                skipped.append(f"{gene} {hgvsc} (ERepo lookup error: {exc!r})")
+                continue
             if erepo_lookup.condition_id:
                 clinical_note = ClinicalNoteExtraction(
                     diagnosis=erepo_lookup.condition_label,
@@ -246,16 +266,26 @@ async def main() -> None:
                 # (2026-09-19): try a live literature search for what
                 # disease the variant is reported to cause before giving up
                 # to an empty clinical note.
-                from acmg_pipeline import condition_from_literature_search
-                lit_condition = await condition_from_literature_search.search_condition_from_literature(
-                    gene, hgvsc,
-                )
-                if lit_condition.found:
-                    from acmg_pipeline import hpo_mondo_extraction
-                    clinical_note = await hpo_mondo_extraction.resolve_diagnosis_mondo(
-                        ClinicalNoteExtraction(diagnosis=lit_condition.condition_name)
+                try:
+                    from acmg_pipeline import condition_from_literature_search
+                    lit_condition = await condition_from_literature_search.search_condition_from_literature(
+                        gene, hgvsc,
                     )
-                else:
+                    if lit_condition.found:
+                        from acmg_pipeline import hpo_mondo_extraction
+                        clinical_note = await hpo_mondo_extraction.resolve_diagnosis_mondo(
+                            ClinicalNoteExtraction(diagnosis=lit_condition.condition_name)
+                        )
+                    else:
+                        clinical_note = empty_clinical_note()
+                except Exception as exc:
+                    # Same reasoning as the ERepo lookup above: a live search/LLM call
+                    # failing transiently must not end the whole run - fall back to no
+                    # clinical note (this variant's PP1/BS4/PP4/PVS1-mechanism results
+                    # come back UNKNOWN, same as the "not found" case already handles)
+                    # rather than skipping the variant outright, since the automated and
+                    # PS3/BS3/PS4 evidence lines still do not depend on this.
+                    pl.show(f"  -> Literature condition search failed for {gene} {hgvsc}: {exc!r}")
                     clinical_note = empty_clinical_note()
 
             try:
