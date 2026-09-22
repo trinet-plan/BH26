@@ -1,10 +1,31 @@
 import pytest
 
+from acmg_pipeline.providers.gnomad import GnomadProvider
 from acmg_pipeline.providers.population_registry import (
     POPULATION_PROVIDER_FACTORIES,
     build_population_providers,
 )
 from acmg_pipeline.providers.togovar import TogoVarProvider
+
+
+def test_gnomad_is_registered_alongside_togovar():
+    """Added 2026-09-22: TogoVar's own API never reports a per-subpopulation
+    frequency (only one "global" figure per dataset - confirmed against real cached
+    responses), so a population_sources list combining "togovar" and "gnomad" is what
+    lets BA1/BS1's gene-specific VCEP thresholds (most of which are popmax-calibrated)
+    see a real popmax candidate - see population_registry._gnomad()'s own docstring."""
+    providers = build_population_providers(object(), [
+        {"provider": "togovar", "api_version": "0.9.1", "frequency_sources": ["gnomad"]},
+        {"provider": "gnomad", "release": "4.1.1"},
+    ])
+    assert [provider.name for provider in providers] == ["TogoVar", "gnomAD"]
+    assert isinstance(providers[1], GnomadProvider)
+    assert providers[1].release == "4.1.1"
+
+
+def test_gnomad_factory_rejects_an_unknown_setting():
+    with pytest.raises(ValueError, match="Unknown gnomAD provider settings"):
+        build_population_providers(object(), [{"provider": "gnomad", "bogus": True}])
 
 
 def test_default_registry_builds_togovar_with_gnomad_and_tommo_groups():

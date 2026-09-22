@@ -24,6 +24,7 @@ CONTEXT_FIELDS = (
     "inheritance",
     "disease_frequency_threshold",
     "ba1_exception_assessment",
+    "ba1_threshold_override",
 )
 
 # In the live API pipeline disease context has a different owner from the remaining

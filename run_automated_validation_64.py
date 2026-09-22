@@ -156,6 +156,16 @@ def _write_context(variants: list[tuple[str, str]], prepared: Path, out_path: Pa
     records = json.loads((prepared / "variants.json").read_text(encoding="utf-8"))["records"]
     by_variant_id = {record["source"]["variant_id"]: record["record_id"] for record in records}
     gene_fallback = _gene_level_fallback_conditions({gene for gene, _ in variants})
+    # Keyed by gene symbol - see curated-context.json's own gene_frequency_thresholds entries
+    # and criteria/ba1.py's/bs1.py's own docstrings for what "ba1"/"bs1" feed. automated_core.
+    # context.apply_context() already reads this same shape gene-keyed for the live pipeline
+    # path (pipeline.py's _apply_curated_context()); this script's own evaluate step goes
+    # through automated_output.run_internal() -> the SAME load_context()/apply_context(), but
+    # record_contexts is keyed by record_id, not gene, so the gene-keyed table is resolved to
+    # each matching record_id here instead of relying on apply_context()'s own gene lookup
+    # (this script's prepared records carry no top-level "gene" field for it to read).
+    gene_thresholds = json.loads(CURATED_CONTEXT_PATH.read_text(encoding="utf-8")).get(
+        "gene_frequency_thresholds") or {}
 
     document = {
         "schema_version": "1.0",
@@ -175,7 +185,14 @@ def _write_context(variants: list[tuple[str, str]], prepared: Path, out_path: Pa
         condition = context["condition"] if context and context.get("condition") else gene_fallback.get(gene)
         if not condition:
             continue
-        document["record_contexts"][record_id] = {"condition": condition}
+        record_context = {"condition": condition}
+        gene_entry = gene_thresholds.get(gene)
+        if gene_entry:
+            if gene_entry.get("bs1"):
+                record_context["disease_frequency_threshold"] = gene_entry["bs1"]
+            if gene_entry.get("ba1"):
+                record_context["ba1_threshold_override"] = gene_entry["ba1"]
+        document["record_contexts"][record_id] = record_context
         resolved += 1
     out_path.write_text(json.dumps(document, ensure_ascii=False, indent=2), encoding="utf-8")
     return resolved

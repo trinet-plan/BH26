@@ -285,70 +285,99 @@ async def fetch_full_text(
 
 
 async def _fetch_full_text_uncached(mcp: ClientSession, pmid: str) -> tuple[str | None, str]:
+    """
+    [Why convert_article_ids and get_article_metadata run concurrently, 2026-09-22]
+      PMC full text is only available for ~20% of PMIDs (see the abstract-fallback
+      comment below), so the abstract fetch below is needed for the other ~80%
+      regardless of what convert_article_ids reports - the two calls don't depend on
+      each other's result (get_article_metadata takes the PMID directly, not the
+      PMCID), so running them sequentially like this function used to just adds one
+      PubMed MCP round trip's worth of latency for no reason on the common (no-PMC)
+      path, and buys nothing extra on the PMC path either (the abstract is also used
+      there as the empty-full-text fallback a few lines down - see that comment).
+      Measured against a real 679-variant run (2026-09-22) where PubMed MCP round
+      trips were about half of total wall time: this halves that half for any PMID
+      not already in full_text_cache. Two concurrent calls for the SAME paper on this
+      variant's OWN session is a much smaller-scoped concurrency than the multi-
+      variant, shared-session parallelism this project's own run_integrated_
+      validation_64_parallel.py tried and found broke the MCP transport outright at
+      just 5 concurrent variants - this is 2 calls, not dozens, and was verified
+      stable before being folded in here.
+    """
     unavailable_reason = None
+    convert_task = asyncio.create_task(
+        call_tool_safe(mcp, "convert_article_ids", {"ids": [pmid], "id_type": "pmid"}))
+    # Started now, alongside convert_task, not after it - see this function's own
+    # docstring. Cancelled in `finally` below if the PMC path already answered and
+    # this turns out not to be needed.
+    abstract_task = asyncio.create_task(_fetch_abstract(mcp, pmid))
 
-    convert_result = await call_tool_safe(mcp, "convert_article_ids", {"ids": [pmid], "id_type": "pmid"})
-    convert_text = "\n".join(getattr(b, "text", str(b)) for b in convert_result.content)
     try:
-        convert_data = json.loads(convert_text)
-        pmcid = convert_data["records"][0].get("pmcid")
-    except (json.JSONDecodeError, KeyError, IndexError):
-        pmcid = None
-
-    if not pmcid:
-        unavailable_reason = f"PMID:{pmid} is not in PMC (no PMCID)."
-    else:
-        ft_result = await call_tool_safe(mcp, "get_full_text_article", {"pmc_ids": [pmcid]})
-        ft_text = "\n".join(getattr(b, "text", str(b)) for b in ft_result.content)
+        convert_result = await convert_task
+        convert_text = "\n".join(getattr(b, "text", str(b)) for b in convert_result.content)
         try:
-            ft_data = json.loads(ft_text)
-            article = ft_data["articles"][0]
-            full_text = article.get("full_text", "")
-            doi = article.get("doi", "")
-            if full_text:
-                return full_text, f"Fetched from PubMed. PMCID={pmcid}, DOI={doi}"
-            # Real bug found 2026-09-15 running the democase variants: the
-            # PubMed MCP server can return a 200-ish "articles" record for a
-            # PMCID with an empty/missing full_text field (e.g. PMID:8282798,
-            # PMID:19645038 - both have a PMCID but no body text came back).
-            # The caller only ever checked `full_text is None`, so an empty
-            # string silently passed as "fetched successfully" and got
-            # substituted into the prompt as a blank "Full text of the
-            # paper:" section - the LLM then correctly complained it had no
-            # text to work with ("Please provide the full text..."), which
-            # broke JSON parsing and looked like a flaky LLM failure rather
-            # than the real cause (no text was ever sent). Treat this the
-            # same as "not in PMC" so it falls through to the abstract
-            # fallback below instead of being prompted with blank text.
-            unavailable_reason = f"PMID:{pmid} has a PMCID ({pmcid}) but no full_text came back from PubMed MCP (empty article body)."
-        except (json.JSONDecodeError, KeyError, IndexError) as e:
-            unavailable_reason = f"Failed to parse the full-text fetch result for PMID:{pmid}: {e}"
+            convert_data = json.loads(convert_text)
+            pmcid = convert_data["records"][0].get("pmcid")
+        except (json.JSONDecodeError, KeyError, IndexError):
+            pmcid = None
 
-    # Abstract fallback, added 2026-09-16: PMC full text is only available
-    # for ~20% of PMIDs (design doc section 2-3) - before this fallback
-    # existed, the other ~80% contributed literally nothing, even when
-    # get_article_metadata's abstract directly discusses the target variant
-    # (confirmed against real data: PMID:17351073, cited for MYH7 c.1594T>C's
-    # PP1 evidence, was skipped as "not in PMC" in every run to date, but its
-    # abstract explicitly reports the S532P mutant's force-generation data -
-    # exactly the kind of PS3-relevant finding this pipeline was missing).
-    # The `[ABSTRACT ONLY ...]` marker is prepended to the text itself
-    # (rather than added as a separate return value) so every build_prompt()
-    # caller sees the caveat with no signature change anywhere downstream -
-    # a real fingerprint of what evidence quality this judgment rests on.
-    abstract, abstract_note = await _fetch_abstract(mcp, pmid)
-    if abstract:
-        marked_text = (
-            "[ABSTRACT ONLY - full text was not available for this paper; the excerpt "
-            "below is the PubMed abstract, not the full article. Numeric details, "
-            "specific experiment counts, and per-family/per-patient data that would "
-            "normally only appear in the full text may be absent. Judge accordingly - "
-            "prefer not_clear over inferring specifics the abstract doesn't state.]\n\n"
-            + abstract
-        )
-        return marked_text, f"{unavailable_reason} {abstract_note}"
+        if not pmcid:
+            unavailable_reason = f"PMID:{pmid} is not in PMC (no PMCID)."
+        else:
+            ft_result = await call_tool_safe(mcp, "get_full_text_article", {"pmc_ids": [pmcid]})
+            ft_text = "\n".join(getattr(b, "text", str(b)) for b in ft_result.content)
+            try:
+                ft_data = json.loads(ft_text)
+                article = ft_data["articles"][0]
+                full_text = article.get("full_text", "")
+                doi = article.get("doi", "")
+                if full_text:
+                    return full_text, f"Fetched from PubMed. PMCID={pmcid}, DOI={doi}"
+                # Real bug found 2026-09-15 running the democase variants: the
+                # PubMed MCP server can return a 200-ish "articles" record for a
+                # PMCID with an empty/missing full_text field (e.g. PMID:8282798,
+                # PMID:19645038 - both have a PMCID but no body text came back).
+                # The caller only ever checked `full_text is None`, so an empty
+                # string silently passed as "fetched successfully" and got
+                # substituted into the prompt as a blank "Full text of the
+                # paper:" section - the LLM then correctly complained it had no
+                # text to work with ("Please provide the full text..."), which
+                # broke JSON parsing and looked like a flaky LLM failure rather
+                # than the real cause (no text was ever sent). Treat this the
+                # same as "not in PMC" so it falls through to the abstract
+                # fallback below instead of being prompted with blank text.
+                unavailable_reason = f"PMID:{pmid} has a PMCID ({pmcid}) but no full_text came back from PubMed MCP (empty article body)."
+            except (json.JSONDecodeError, KeyError, IndexError) as e:
+                unavailable_reason = f"Failed to parse the full-text fetch result for PMID:{pmid}: {e}"
 
-    return None, f"{unavailable_reason} Abstract fallback also unavailable ({abstract_note}). Judgment marked insufficient_data."
+        # Abstract fallback, added 2026-09-16: PMC full text is only available
+        # for ~20% of PMIDs (design doc section 2-3) - before this fallback
+        # existed, the other ~80% contributed literally nothing, even when
+        # get_article_metadata's abstract directly discusses the target variant
+        # (confirmed against real data: PMID:17351073, cited for MYH7 c.1594T>C's
+        # PP1 evidence, was skipped as "not in PMC" in every run to date, but its
+        # abstract explicitly reports the S532P mutant's force-generation data -
+        # exactly the kind of PS3-relevant finding this pipeline was missing).
+        # The `[ABSTRACT ONLY ...]` marker is prepended to the text itself
+        # (rather than added as a separate return value) so every build_prompt()
+        # caller sees the caveat with no signature change anywhere downstream -
+        # a real fingerprint of what evidence quality this judgment rests on.
+        abstract, abstract_note = await abstract_task
+        if abstract:
+            marked_text = (
+                "[ABSTRACT ONLY - full text was not available for this paper; the excerpt "
+                "below is the PubMed abstract, not the full article. Numeric details, "
+                "specific experiment counts, and per-family/per-patient data that would "
+                "normally only appear in the full text may be absent. Judge accordingly - "
+                "prefer not_clear over inferring specifics the abstract doesn't state.]\n\n"
+                + abstract
+            )
+            return marked_text, f"{unavailable_reason} {abstract_note}"
+
+        return None, f"{unavailable_reason} Abstract fallback also unavailable ({abstract_note}). Judgment marked insufficient_data."
+    finally:
+        if not abstract_task.done():
+            abstract_task.cancel()
 
 
 async def _fetch_abstract(mcp: ClientSession, pmid: str) -> tuple[str | None, str]:
@@ -906,11 +935,17 @@ def _apply_curated_context(variant: VariantRecord, automated_config: dict) -> No
         "variant": {"assembly": "GRCh38", "chrom": variant.chrom, "pos": variant.pos,
                     "ref": variant.ref, "alt": variant.alt},
         "record_id": variant.id,
+        # Read directly off this VariantRecord's own INFO, not resolved - apply_context()'s
+        # gene_frequency_thresholds lookup is gene-keyed, and by the time curated context is
+        # applied (before annotation), GENE is already on INFO for every caller that
+        # constructs one (see run_automated_validation_64.py/run_integrated_validation_64.py).
+        "gene": variant.info.get("GENE"),
     }
     updated = apply_context(record, _curated_context_cache[path])
     # condition/condition_label entries in legacy documents are intentionally ignored. The
     # clinical-note parser is the only owner of the disease selected for this case.
-    for key in ("inheritance", "disease_frequency_threshold", "ba1_exception_assessment"):
+    for key in ("inheritance", "disease_frequency_threshold", "ba1_exception_assessment",
+                "ba1_threshold_override"):
         if key in updated:
             variant.info[key] = updated[key]
 

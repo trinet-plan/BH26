@@ -67,6 +67,15 @@ def faf95(ac, an):
 
 STATISTICS = {"af": "allele frequency", "faf95": "filtering allele frequency"}
 
+# Whether a specification says "above" the threshold or "at or above" it - shared by
+# criteria/ba1.py and criteria/bs1.py (originally only in bs1.py, moved here 2026-09-22 when
+# ba1.py needed the same operator support for its own gene-specific VCEP thresholds; see
+# bs1.py's comparison() docstring for why the difference is not cosmetic - real ClinGen VCEP
+# specifications for BA1/BS1 use both ">" and ">=", and evaluating a ">=" specification with
+# ">" drops exactly the variants sitting on the boundary the panel drew its line at).
+COMPARISONS = {">": lambda value, threshold: value > threshold,
+              ">=": lambda value, threshold: value >= threshold}
+
 
 def article(measure):
     return ("an " if measure[0] in "aeiou" else "a ") + measure

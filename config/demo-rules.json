@@ -17,6 +17,10 @@
     "gnomad",
     "tommo"
    ]
+  },
+  {
+   "provider": "gnomad",
+   "release": "4.1.1"
   }
  ],
  "PM2": {

@@ -105,6 +105,52 @@ class CuratedContextTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Unsupported curated record context"):
             load_context(document(record_contexts={"case1:1:1": {"unknown": True}}))
 
+    # --- gene_frequency_thresholds (BA1/BS1's own VCEP-specific numbers) --------------
+
+    GENE_ENTRY = {
+        "ba1": {"max_af": 0.001, "frequency_statistic": "faf95", "comparison": ">=",
+               "source": "ClinGen CSpec test VCEP", "source_version": "1.0",
+               "reviewed_at": "2026-09-22"},
+        "bs1": {"max_credible_af": 0.0001, "frequency_statistic": "faf95", "comparison": ">=",
+               "condition": "MONDO:0000001", "condition_scope": "gene_wide",
+               "inheritance": "autosomal_dominant", "source": "ClinGen CSpec test VCEP",
+               "source_version": "1.0", "reviewed_at": "2026-09-22"},
+    }
+
+    def test_gene_threshold_feeds_ba1_and_bs1_by_gene_not_variant_key(self):
+        context = load_context(document(gene_frequency_thresholds={"TEST": self.GENE_ENTRY}))
+        record = {**self.record(), "gene": "TEST"}
+        updated = apply_context(record, context)
+        self.assertEqual(updated["ba1_threshold_override"], self.GENE_ENTRY["ba1"])
+        self.assertEqual(updated["disease_frequency_threshold"], self.GENE_ENTRY["bs1"])
+
+    def test_an_unmatched_gene_resolves_nothing(self):
+        context = load_context(document(gene_frequency_thresholds={"TEST": self.GENE_ENTRY}))
+        updated = apply_context({**self.record(), "gene": "OTHER"}, context)
+        self.assertNotIn("ba1_threshold_override", updated)
+        self.assertNotIn("disease_frequency_threshold", updated)
+
+    def test_a_more_specific_record_context_is_not_overwritten_by_the_gene_default(self):
+        """A per-record curated disease_frequency_threshold is a more specific curation than
+        a gene-wide one, and must win - the gene-wide entry only fills a gap."""
+        context = load_context(document(
+            gene_frequency_thresholds={"TEST": self.GENE_ENTRY},
+            record_contexts={"test": {"disease_frequency_threshold": {"max_credible_af": 0.5}}},
+        ))
+        updated = apply_context({**self.record(), "gene": "TEST"}, context)
+        self.assertEqual(updated["disease_frequency_threshold"]["max_credible_af"], 0.5)
+        # ba1_threshold_override has no per-record entry here, so the gene-wide one still fills it.
+        self.assertEqual(updated["ba1_threshold_override"], self.GENE_ENTRY["ba1"])
+
+    def test_gene_frequency_thresholds_requires_its_own_provenance(self):
+        incomplete = {"ba1": {"max_af": 0.001, "frequency_statistic": "faf95"}}  # no source/etc
+        with self.assertRaisesRegex(ValueError, "requires"):
+            load_context(document(gene_frequency_thresholds={"TEST": incomplete}))
+
+    def test_gene_frequency_thresholds_rejects_an_unknown_field(self):
+        with self.assertRaisesRegex(ValueError, "Unsupported"):
+            load_context(document(gene_frequency_thresholds={"TEST": {"pm2": {}}}))
+
     def test_summary_reports_what_was_loaded(self):
         summary = context_summary(load_context(document(ba1_exceptions=EXCEPTIONS,
                                                         records={KEY: {"condition": "x"}})))

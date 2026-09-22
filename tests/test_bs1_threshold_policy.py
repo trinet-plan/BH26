@@ -124,6 +124,33 @@ class ThresholdPolicyTests(unittest.TestCase):
         self.assertEqual(value.provenance["policy_status"], "DRAFT")
         self.assertIn("draft_threshold_candidate", value.provenance)
 
+    # --- a gene-wide VCEP threshold (automated_core.context's gene_frequency_thresholds) ---
+
+    def test_gene_wide_scope_ignores_a_condition_mismatch(self):
+        """A gene-wide VCEP-published threshold is stated once for the gene's disease, not
+        per case - see criteria/bs1.py's disease_specific_threshold() docstring for why a
+        real curated case's own MONDO id (here deliberately different from the threshold's
+        own "condition") must not fall it back to the unapproved default."""
+        self.curated(condition_scope="gene_wide", condition="test:other-disease")
+        value = self.evaluate()
+        self.assertEqual(value.status, CriterionStatus.MET)
+        self.assertEqual(value.provenance["policy_status"], "APPROVED")
+        self.assertNotIn("draft_threshold_candidate", value.provenance)
+
+    def test_gene_wide_scope_ignores_an_inheritance_mismatch(self):
+        self.curated(condition_scope="gene_wide")
+        self.input["inheritance"] = None
+        value = self.evaluate()
+        self.assertEqual(value.status, CriterionStatus.MET)
+        self.assertEqual(value.provenance["policy_status"], "APPROVED")
+
+    def test_without_gene_wide_scope_a_condition_mismatch_still_falls_back(self):
+        """Confirms the exemption above is specific to condition_scope="gene_wide", not a
+        general relaxation of the match."""
+        self.curated(condition="test:other-disease")
+        value = self.evaluate()
+        self.assertEqual(value.provenance["policy_status"], "DRAFT")
+
 
 if __name__ == "__main__":
     unittest.main()
