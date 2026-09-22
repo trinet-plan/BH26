@@ -77,6 +77,19 @@ class OntologyRelatedTests(unittest.TestCase):
         self.assertFalse(ontology_related({}, "MONDO:0007268", {}, "MONDO:0005045"))
         self.assertFalse(ontology_related({}, None, {}, "MONDO:0005045"))
 
+    def test_cdh1_manually_mapped_pair_is_related_without_any_ancestry(self):
+        """MONDO:0007648 (hereditary diffuse gastric adenocarcinoma, the term CDH1's own
+        ClinGen gene-disease validity curation is filed under) and MONDO:0100488 (CDH1-
+        related diffuse gastric and lobular breast cancer syndrome, a newer, broader term
+        several real ERepo-curated CDH1 cases are filed under) carry no is_a link and no
+        shared cross-reference (verified against OLS4, 2026-09-22) - neither side has any
+        condition_ancestors here, so only the manual mapping can connect them."""
+        self.assertTrue(ontology_related({}, "MONDO:0007648", {}, "MONDO:0100488"))
+        self.assertTrue(ontology_related({}, "MONDO:0100488", {}, "MONDO:0007648"))
+
+    def test_the_manual_mapping_does_not_relate_an_unlisted_pair(self):
+        self.assertFalse(ontology_related({}, "MONDO:0007648", {}, "MONDO:0005045"))
+
 
 if __name__ == "__main__":
     unittest.main()

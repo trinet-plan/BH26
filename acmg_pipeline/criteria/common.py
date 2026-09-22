@@ -362,8 +362,39 @@ def condition_ancestors(holder):
     return set(value) if isinstance(value, (list, set, tuple)) else set()
 
 
+# MONDO condition pairs known, by manual review, to name the same real-world disease
+# concept despite carrying no formal ontology link (no is_a relationship in either
+# direction, no shared database_cross_reference) - a MONDO curation gap that no
+# ancestor-based or xref-based check can ever find on its own. Verified directly against
+# OLS4 (2026-09-22), found on the 679-variant ground truth run:
+#   MONDO:0007648 "hereditary diffuse gastric adenocarcinoma" is the term ClinGen's own
+#     CDH1 gene-disease validity curation is filed under (its "curated content resource"
+#     annotation points at ClinGen's own condition page for this exact ID).
+#   MONDO:0100488 "CDH1-related diffuse gastric and lobular breast cancer syndrome" is a
+#     newer, broader MONDO term - cross-referencing OMIM:137215, which 0007648 does not -
+#     covering the same CDH1-driven cancer predisposition, now naming the lobular breast
+#     cancer component too. Its full ancestor chain (fetched live via OLS4) does not
+#     include 0007648, and neither term's database_cross_reference list overlaps the
+#     other's, so no existing automated check can connect them.
+# Several CDH1 variants in this project's ground truth are exactly this: the gene's
+# curated LoF mechanism is filed under 0007648, the case is filed under 0100488, and
+# PVS1's mechanism gate (the only caller of ontology_related()) had no way to see they
+# are the same disease. Add a pair here only after the same manual verification (both an
+# OLS4 ancestor check and a cross-reference check showing no formal link) - this is a
+# documented, reviewed exception list, not a general substitute for the live ontology
+# data ontology_related() otherwise relies on.
+_MANUALLY_MAPPED_EQUIVALENT_CONDITIONS = frozenset({
+    frozenset({"MONDO:0007648", "MONDO:0100488"}),
+})
+
+
+def _manually_mapped_equivalent(case_condition, record_condition):
+    return frozenset({case_condition, record_condition}) in _MANUALLY_MAPPED_EQUIVALENT_CONDITIONS
+
+
 def ontology_related(case, case_condition, record, record_condition):
-    """Whether two diseases are parent and child in MONDO, in either direction.
+    """Whether two diseases are parent and child in MONDO, in either direction - or a
+    manually reviewed equivalent pair, see _MANUALLY_MAPPED_EQUIVALENT_CONDITIONS above.
 
     Deliberately not equivalence. The same gene can lose function in one subtype and gain it
     in another, and subtypes can differ in inheritance mode, so this says only that the two
@@ -372,7 +403,8 @@ def ontology_related(case, case_condition, record, record_condition):
     if not case_condition or not record_condition or case_condition == record_condition:
         return False
     return (record_condition in condition_ancestors(case)
-            or case_condition in condition_ancestors(record))
+            or case_condition in condition_ancestors(record)
+            or _manually_mapped_equivalent(case_condition, record_condition))
 
 
 def condition_scope(record, key):
