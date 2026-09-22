@@ -11,7 +11,7 @@ from acmg_pipeline.classification import (
 from acmg_pipeline.criteria.registry import is_implemented, get_criterion_evidence
 from acmg_pipeline.criteria import stubs
 from acmg_pipeline.common import MatchStatus, VariantMatchingResult, PaperContribution
-from acmg_pipeline.criteria import ps4, segregation as seg
+from acmg_pipeline.criteria import ps4, bp5, segregation as seg
 from test_harness import Harness
 
 h = Harness()
@@ -31,9 +31,13 @@ check("no overlap between pathogenic/benign lists", not (set(PATHOGENIC_CODES) &
 # real, tested code, still exercised directly in section [5] below, but no
 # longer the thing IMPLEMENTED_CODES credits for PP1/BS4 - pp1_bs4_pp4_
 # engine is) -> +PS2/PM6 (24) on 2026-09-19 once acmg_pipeline.criteria.
-# ps2_pm6 connected a rule-based de-novo evaluator.
-check("24 implemented codes", len(IMPLEMENTED_CODES) == 24)
-check("4 stub codes", len(stubs.STUB_CODES) == 4)
+# ps2_pm6 connected a rule-based de-novo evaluator -> +BP5 (25) on
+# 2026-09-22 once acmg_pipeline.criteria.bp5 joined LITERATURE_CODES,
+# reusing PS3/BS3/PS4's own PMID-fetch + LLM-judgment infrastructure
+# (PM3/BP2, the other two remaining stubs, could not follow: both need
+# case-level trans/cis phasing data no provider in this pipeline has).
+check("25 implemented codes", len(IMPLEMENTED_CODES) == 25)
+check("3 stub codes", len(stubs.STUB_CODES) == 3)
 check("implemented + stub codes cover all 28 with no overlap",
       set(stubs.STUB_CODES) | IMPLEMENTED_CODES == set(ALL_ACMG_CODES)
       and not (set(stubs.STUB_CODES) & IMPLEMENTED_CODES))
@@ -122,6 +126,52 @@ check("asking for PP1 (the direction that was actually found) -> MET",
 # not_clear -> UNKNOWN, not a crash and not silently MET
 agg_empty = ps4.aggregate_multi_paper_results([])
 check("not_clear aggregate -> UNKNOWN", from_aggregated_judgment(agg_empty, "PS4").status == CriterionStatus.UNKNOWN)
+
+j_bp5 = bp5.BP5Judgment(
+    variant_matching=VariantMatchingResult(match_status=MatchStatus.MATCHED),
+    alternate_diagnosis_data=bp5.AlternateDiagnosisData(
+        alternate_gene="MYBPC3", alternate_variant="c.1224-52G>A",
+        phenotype_explained_by_alternate=True,
+    ),
+    overall_evidence=bp5.AlternateBasisEvidence(
+        direction=bp5.AlternateBasisDirection.BP5,
+        rationale="Phenotype re-attributed to a de novo MYBPC3 variant.",
+    ),
+)
+r_bp5 = bp5.finalize(j_bp5, pmid="11112222")
+agg_bp5 = bp5.aggregate_multi_paper_results([PaperContribution("11112222", r_bp5)])
+ev_bp5 = from_aggregated_judgment(agg_bp5, "BP5")
+check("BP5 direction=BP5 -> status=MET", ev_bp5.status == CriterionStatus.MET)
+check("1 relevant paper -> strength=supporting", ev_bp5.strength == Strength.SUPPORTING)
+
+# A BP5 call with no alternate gene at all is forced to not_clear by finalize() -
+# see bp5.detect_definitive_without_alternate_gene.
+j_bp5_no_gene = bp5.BP5Judgment(
+    variant_matching=VariantMatchingResult(match_status=MatchStatus.MATCHED),
+    alternate_diagnosis_data=bp5.AlternateDiagnosisData(),
+    overall_evidence=bp5.AlternateBasisEvidence(
+        direction=bp5.AlternateBasisDirection.BP5, rationale="Vague claim, no gene named.",
+    ),
+)
+r_bp5_no_gene = bp5.finalize(j_bp5_no_gene, pmid="33334444")
+check("BP5 with no alternate gene is forced to not_clear",
+      r_bp5_no_gene.effective_direction == bp5.AlternateBasisDirection.NOT_CLEAR)
+
+# A BP5 call where the alternate finding is NOT stated to explain the phenotype
+# is also forced to not_clear - see bp5.detect_bp5_without_phenotype_explained.
+j_bp5_not_explained = bp5.BP5Judgment(
+    variant_matching=VariantMatchingResult(match_status=MatchStatus.MATCHED),
+    alternate_diagnosis_data=bp5.AlternateDiagnosisData(
+        alternate_gene="TTN", phenotype_explained_by_alternate=False,
+    ),
+    overall_evidence=bp5.AlternateBasisEvidence(
+        direction=bp5.AlternateBasisDirection.BP5,
+        rationale="An incidental TTN VUS was also seen, but not implicated.",
+    ),
+)
+r_bp5_not_explained = bp5.finalize(j_bp5_not_explained, pmid="55556666")
+check("BP5 whose alternate finding doesn't explain the phenotype is forced to not_clear",
+      r_bp5_not_explained.effective_direction == bp5.AlternateBasisDirection.NOT_CLEAR)
 
 # --- 6. registry.get_criterion_evidence(): full 28-code loop ---
 print("\n[6] registry.get_criterion_evidence() over all 28 codes")

@@ -53,6 +53,7 @@ import types
 
 from acmg_pipeline.criteria import ps3_bs3 as ps3bs3_mod
 from acmg_pipeline.criteria import ps4 as ps4_mod
+from acmg_pipeline.criteria import bp5 as bp5_mod
 from acmg_pipeline.criteria import segregation as seg_mod
 from acmg_pipeline.criteria import stubs as stubs_mod
 from acmg_pipeline.common import (
@@ -160,10 +161,20 @@ SEGREGATION_ENGINE = JudgmentEngine(
     not_clear=seg_mod.SegregationDirection.NOT_CLEAR,
 )
 
+BP5_ENGINE = JudgmentEngine(
+    name="BP5",
+    build_prompt=bp5_mod.build_prompt,
+    from_json=bp5_mod.BP5Judgment.from_json,
+    finalize=lambda judgment, gene, vcep_name, criterion, pmid: bp5_mod.finalize(judgment, pmid=pmid),
+    aggregate=bp5_mod.aggregate_multi_paper_results,
+    not_clear=bp5_mod.AlternateBasisDirection.NOT_CLEAR,
+)
+
 ENGINE_BY_CRITERION = {
     "PS3": PS3BS3_ENGINE, "BS3": PS3BS3_ENGINE,
     "PS4": PS4_ENGINE,
     "PP1": SEGREGATION_ENGINE, "BS4": SEGREGATION_ENGINE,
+    "BP5": BP5_ENGINE,
 }
 
 # ---------------------------------------------------------------------------
@@ -774,7 +785,7 @@ async def judge_variant_from_structured_input(
     case_input: ApiCaseInput,
     mcp: ClientSession,
     erepo_client: ERepoClient,
-    criteria: tuple[str, ...] = ("PS3", "BS3", "PS4"),
+    criteria: tuple[str, ...] = ("PS3", "BS3", "PS4", "BP5"),
     vcep_name: str | None = None,
     full_text_cache: dict[str, tuple[str | None, str]] | None = None,
     llm_cache=None,
@@ -820,7 +831,7 @@ async def judge_variant_from_shared_input(
     clinical_note: ClinicalNoteExtraction,
     mcp: ClientSession,
     erepo_client: ERepoClient,
-    criteria: tuple[str, ...] = ("PS3", "BS3", "PS4"),
+    criteria: tuple[str, ...] = ("PS3", "BS3", "PS4", "BP5"),
     vcep_name: str | None = None,
     full_text_cache: dict[str, tuple[str | None, str]] | None = None,
     llm_cache=None,
