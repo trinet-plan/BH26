@@ -692,7 +692,16 @@ async def search_candidate_pmids(
       - "<gene> AND <protein change>" (e.g. "MYH7 AND Arg719Trp") works
         well for missense variants - 5/5 real hits for a known MYH7
         variant, including PMIDs already in this project's own ERepo-
-        sourced ground truth.
+        sourced ground truth. Both the 3-letter (standard HGVS, "Ser532Pro")
+        and 1-letter ("S532P") amino-acid forms are tried, never just one -
+        confirmed empirically (2026-09-24) that neither convention
+        reliably wins: MYH7 Ser532Pro/S532P found 0/1 results, PTEN
+        Pro38Ser/P38S found 1/0, RUNX1 Arg201Ter/R201* found 0/1, BRCA1
+        Cys61Gly/C61G found 17/68 - real papers and PubMed's own indexing
+        are inconsistent about which convention they use, so trying only
+        the standard HGVS 3-letter form (the previous version of this
+        query) silently missed real hits for an arbitrary subset of
+        variants.
       - Exact HGVS c./p. notation (e.g. "MYBPC3 AND c.278delA",
         "MYBPC3 AND Lys93Argfs") returns ZERO results even for a variant
         whose own source paper is indexed in PubMed - confirmed
@@ -719,6 +728,12 @@ async def search_candidate_pmids(
         aa_change = hgvsp.strip().removeprefix("p.").strip("()")
         if aa_change:
             queries.append(f"{gene} AND {aa_change}")
+            one_letter = next(
+                (eq for eq in _protein_equivalents(hgvsp) if re.fullmatch(r"[A-Za-z]\d+[A-Za-z*]", eq)),
+                None,
+            )
+            if one_letter and one_letter != aa_change:
+                queries.append(f"{gene} AND {one_letter}")
     if disease:
         queries.append(f"{gene}[Title] AND {disease.replace('_', ' ')}")
     queries.append(f"{gene} AND novel variant")
@@ -1198,7 +1213,7 @@ async def evaluate_variant_evidence_lines(
                 variant=variant,
             )
 
-    phenotype_segregation_results = await pp1_bs4_pp4_engine.evaluate(variant, clinical_note, automated_config)
+    phenotype_segregation_results = await pp1_bs4_pp4_engine.evaluate(variant, clinical_note, automated_config, erepo_client)
     for code in PHENOTYPE_SEGREGATION_CODES:
         by_code[code] = pp1_bs4_pp4_engine.build_evidence_line(
             code, phenotype_segregation_results[code], variant,
@@ -1344,7 +1359,7 @@ async def evaluate_selected_criteria(
                 )
 
     if phenotype_segregation_subset:
-        phenotype_segregation_results = await pp1_bs4_pp4_engine.evaluate(variant, clinical_note, automated_config)
+        phenotype_segregation_results = await pp1_bs4_pp4_engine.evaluate(variant, clinical_note, automated_config, erepo_client)
         for code in phenotype_segregation_subset:
             by_code[code] = pp1_bs4_pp4_engine.build_evidence_line(
                 code, phenotype_segregation_results[code], variant,
