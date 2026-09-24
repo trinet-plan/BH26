@@ -10,7 +10,7 @@ import unittest
 from pathlib import Path
 
 from acmg_pipeline.providers.cspec_applicability import POLICY_VERSION
-from test_data.collect_cspec_applicability import (
+from test_data.collectors.collect_cspec_applicability import (
     ALL_CODES, applicability, collect, gene_entries,
 )
 

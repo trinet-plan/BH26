@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 class VcfAdapterTests(unittest.TestCase):
     def test_current_demo_vcfs_convert_to_shared_inputs(self):
         converted = []
-        for path in sorted((ROOT / "demo-data").glob("*.vcf")):
+        for path in sorted((ROOT / "democase").glob("*.vcf")):
             converted.extend(inputs_from_vcf(path))
 
         self.assertEqual(len(converted), 28)
@@ -33,7 +33,7 @@ class VcfAdapterTests(unittest.TestCase):
             "family": {"inheritance_pattern": "autosomal_dominant"},
         })
         converted = inputs_from_vcf(
-            ROOT / "demo-data" / "case1_variants_v2.vcf",
+            ROOT / "democase" / "case1_variants_v2.vcf",
             clinical_note=clinical_note,
         )
         self.assertTrue(all(note is clinical_note for _, note in converted))
@@ -49,7 +49,7 @@ class VcfAdapterTests(unittest.TestCase):
     def test_reference_conflict_is_rejected(self):
         with self.assertRaisesRegex(ValueError, "conflicts"):
             parse_vcf(
-                ROOT / "demo-data" / "case1_variants_v2.vcf",
+                ROOT / "democase" / "case1_variants_v2.vcf",
                 assembly="GRCh37",
             )
 

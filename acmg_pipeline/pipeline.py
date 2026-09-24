@@ -3,7 +3,7 @@ ps3_bs3_llm_pipeline.py
 Integration script that connects the PS3/BS3 judgment pipeline to a real LLM
 (gemma-4 on vLLM).
 
-Reuses the connection pattern from mcp_sample_multi.py (PubMed MCP + an
+Reuses the connection pattern from scripts/check_mcp_llm_connection.py (PubMed MCP + an
 OpenAI-compatible client) as-is, and wires together the following:
 
   Given a PMID
@@ -178,7 +178,7 @@ ENGINE_BY_CRITERION = {
 }
 
 # ---------------------------------------------------------------------------
-# Configuration (reused from mcp_sample_multi.py)
+# Configuration (reused from scripts/check_mcp_llm_connection.py)
 # ---------------------------------------------------------------------------
 ROOT_DIR = Path(__file__).resolve().parent.parent
 

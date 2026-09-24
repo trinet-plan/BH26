@@ -5,7 +5,7 @@ LLM(vLLM上のgemma-4)とPubMed MCPを組み合わせ、変異のACMG/AMP分類�
 基づく16基準を統合し、人間キュレーター向けの下書き判定を生成します。残る7基準も
 NOT_EVALUATEDとして保持し、1変異につき全28基準のVA-Spec EvidenceLineを返します。
 
-設計方針・検証結果の詳細は [`ps3_bs3_ps4_implementation_v10.md`](ps3_bs3_ps4_implementation_v10.md)
+設計方針・検証結果の詳細は [`ps3_bs3_ps4_implementation_v10.md`](doc/ps3_bs3_ps4_implementation_v10.md)
 を参照してください。
 
 外部データの現在の取得経路、未対応・review待ちの情報、TogoVarへ置換する場合の
@@ -33,6 +33,9 @@ acmg_pipeline/            判定パイプライン本体
 acmg/                     移植した自動判定器(16基準)
 config/                   自動判定の閾値・BA1例外・CLI互換用文脈
 tests/                    自動判定と統合インターフェースのpytest
+test_data/                28基準分のground truthデータ一式(判定ロジックは含まない)。
+  collectors/               ClinGen ERepo/Ensembl MANEから生データを再取得するスクリプト + データ本体(full_criteria_ground_truth.py)
+  fetched_data/             collectors/が生成する生JSONスナップショット。criterion_runner.pyがこのデータで任意の判定関数を採点する
 
 democase/                 デモ用の臨床ノート・VCF・正解データ
 doc/                       設計・参加者向け資料
@@ -41,9 +44,7 @@ va_spec_output/           パイプライン実行結果(VA-Spec JSON)
 logs/                      実行ログ(git管理対象外)
 ref_impl/                  参考実装アーカイブ
 
-test_*.py                  スタンドアロンのテストスクリプト(pytest不要)
-demo_ps3_bs3_judgment.py   LLM API接続なしのエンドツーエンドデモ
-mcp_sample_multi.py        TogoMCP + PubMed MCP 接続サンプル
+standalone_tests/         スタンドアロンのtest_*.py(pytest不要)
 ```
 
 ## セットアップ
@@ -52,7 +53,7 @@ mcp_sample_multi.py        TogoMCP + PubMed MCP 接続サンプル
 
 - Python 3.10+ 推奨(開発環境は Python 3.14.5)
 - vLLMサーバー、およびPubMed MCPサーバーへのネットワーク到達性
-  (`python -m acmg_pipeline.pipeline` / `mcp_sample_multi.py` の実行時のみ必要)
+  (`python -m acmg_pipeline.pipeline` / `scripts/check_mcp_llm_connection.py` の実行時のみ必要)
 
 ### 1. リポジトリを取得
 
@@ -87,10 +88,22 @@ cp .env.example .env
 
 `.env` を開き、`VLLM_BASE_URL` / `VLLM_API_KEY` を実際の値に書き換えてください
 (値の入手方法はプロジェクト管理者に確認してください)。`.env` が無い、または
-値が空の場合、`mcp_sample_multi.py` / `acmg_pipeline/pipeline.py` は起動時に
+値が空の場合、`scripts/check_mcp_llm_connection.py` / `acmg_pipeline/pipeline.py` は起動時に
 `RuntimeError` を送出します。
 
 ## 動作確認
+
+`evaluation/`(ground truthとの一致率測定)と`scripts/`(実行・出力確認用)。リポジトリルートから`.venv/bin/python3`で実行。
+
+```bash
+.venv/bin/python3 evaluation/run_validation_64.py              # 文献3基準(PS3/BS3/PS4)をground truthと比較
+.venv/bin/python3 evaluation/run_automated_validation_64.py    # 自動判定16基準をground truthと比較
+.venv/bin/python3 evaluation/run_integrated_validation_64.py   # 統合28基準+classify()を64件で検証
+.venv/bin/python3 evaluation/run_integrated_validation_demo.py # 同上、democase 4症例のみの高速版
+.venv/bin/python3 evaluation/run_pvs1_validation.py            # PVS1を専門家パネルと比較(--contexts erepo|curated)
+.venv/bin/python3 scripts/run_automated_api_va_spec.py         # APIパス(自動判定のみ)をin-processで実行しVA-Spec出力
+.venv/bin/python3 scripts/run_all_tests.py                     # standalone_tests/配下のtest_*.pyを一括実行
+```
 
 ## 統合インターフェース
 
@@ -116,11 +129,11 @@ lines = await evaluate_variant_evidence_lines(
 ### ネットワーク不要(ロジックのみ)
 
 ```bash
-python3 test_classification.py
-python3 test_ps3_bs3_judgment.py
-python3 test_ps3_bs3_ps4_gate.py
-python3 test_ps3_bs3_ps4_gate_full.py
-python3 demo_ps3_bs3_judgment.py
+python3 standalone_tests/test_classification.py
+python3 standalone_tests/test_ps3_bs3_judgment.py
+python3 standalone_tests/test_ps3_bs3_ps4_gate.py
+python3 standalone_tests/test_ps3_bs3_ps4_gate_full.py
+python3 scripts/demo_ps3_bs3_judgment.py
 pytest tests -q
 ```
 
@@ -129,33 +142,20 @@ pytest tests -q
 
 ### LLM/MCP経由の実行(`.env` 設定 + ネットワーク到達性が必要)
 
-```bash
-# TogoMCP + PubMed MCPに接続し、固定の質問に対してLLMがツールを呼び出しながら
-# 回答する一連の流れを実行。ログは logs/run_YYYYmmdd_HHMMSS.log に保存。
-python3 mcp_sample_multi.py
+vLLM・PubMed MCP・TogoMCPへ実際に接続して動かす手順は
+[`doc/llm_mcp_execution_ja.md`](doc/llm_mcp_execution_ja.md) を参照してください。
 
-# PS3/BS3・PS4・PP1/BS4の各判定エンジンで、コード内定義済みのテストケース
-# (MYH7・PTEN等)を対象に、PubMed MCPから論文全文取得 → LLM判定 →
-# ACMG/AMP分類までを一気通貫で実行。
-# 結果は logs/ps3bs3_run_YYYYmmdd_HHMMSS.log と va_spec_output/ 以下のJSONに出力。
-python3 -m acmg_pipeline.pipeline
-```
-
-CLI引数は用意されていません。対象の遺伝子/変異を変えたい場合は
-`acmg_pipeline/pipeline.py` の `main()` 内 `test_cases`(505行目付近)を
-直接編集してください。
-
-## 自動判定CLIの実行手順(demo-data)
+## 自動判定CLIの実行手順(democase)
 
 `acmg_pipeline.automated_cli` が16本の自動化criterionを評価します。**4ステップで、
 3番目を飛ばすとPP2/BP1がミスセンス全件で `unknown` になります。**
 
 ```bash
 # 1. 原本VCFを監査(原本は変更しない)
-python3 -m acmg_pipeline.automated_cli audit-demo   --input-dir demo-data --output-dir work/run/audit
+python3 -m acmg_pipeline.automated_cli audit-demo   --input-dir democase --output-dir work/run/audit
 
 # 2. identityを解決し、外部プロバイダから normalised evidence を集める
-python3 -m acmg_pipeline.automated_cli prepare-demo-online   --input-dir demo-data   --cache-dir tests/fixtures/ensembl-cache   --evidence-cache-dir tests/fixtures/external-cache   --output-dir work/run/prepared --ensembl-release 116   --with-gnomad --gnomad-release 4.1.1   --with-clinvar --clinvar-release 2026-09-15   --with-pm1-hotspot --with-dbnsfp   --rules config/demo-rules.json --offline
+python3 -m acmg_pipeline.automated_cli prepare-demo-online   --input-dir democase   --cache-dir tests/fixtures/ensembl-cache   --evidence-cache-dir tests/fixtures/external-cache   --output-dir work/run/prepared --ensembl-release 116   --with-gnomad --gnomad-release 4.1.1   --with-clinvar --clinvar-release 2026-09-15   --with-pm1-hotspot --with-dbnsfp   --rules config/demo-rules.json --offline
 
 # 3. 遺伝子--疾患の機序assessmentを展開して evidence に足す(PP2/BP1に必須)
 python3 -m acmg_pipeline.automated_cli build-gene-disease-evidence   --input config/gene-disease-review-decisions.json   --base-evidence work/run/prepared/evidence.json   --output work/run/evidence.json
@@ -178,7 +178,7 @@ python3 -m acmg_pipeline.automated_cli evaluate   --input work/run/prepared/vari
 (`gene_disease_draft`)へフォールバックします。
 
 reviewされた決定が無い遺伝子の変異には assessment が付きません(他遺伝子の判断を一般化
-しないため)。demo-dataでは7グループが28件中15件をカバーします。
+しないため)。democaseでは7グループが28件中15件をカバーします。
 
 `--offline` はキャッシュ済みレスポンスのみを使い、ネットワークへ出ません。実行可能な形の
 同じ手順が `tests/test_demo_pipeline.py` にあります。
@@ -297,7 +297,7 @@ consumer 側で追加のフィールドを確認する必要はありません�
 どこにも保存されない。`ACMG_API_OUTPUT_DIR` にディレクトリを指定すると、
 完了した判定が1件1ファイルのJSONとして書き出される。未指定なら何も書かない。
 
-````bash
+```bash
 docker run -d --name acmg-api -p 8000:8000 \
   -e ACMG_API_OUTPUT_DIR=/data/results \
   -v "$PWD/api_results:/data/results" \

@@ -106,7 +106,7 @@ class EnsemblIdentityTests(unittest.TestCase):
 
     def test_demo_cache_resolves_all_records_offline(self):
         root = Path(__file__).resolve().parents[1]
-        records = audit_demo(root / "demo-data")
+        records = audit_demo(root / "democase")
         client = CachedHttpClient(root / "tests" / "fixtures" / "ensembl-cache", offline=True)
         provider = EnsemblIdentityProvider(client, "116")
         resolved = [reconcile(record, [provider.map_record(record)], provider.reference)
