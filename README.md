@@ -44,7 +44,7 @@ va_spec_output/           パイプライン実行結果(VA-Spec JSON)
 logs/                      実行ログ(git管理対象外)
 ref_impl/                  参考実装アーカイブ
 
-test_*.py                  スタンドアロンのテストスクリプト(pytest不要)
+standalone_tests/         スタンドアロンのtest_*.py(pytest不要)
 ```
 
 ## セットアップ
@@ -102,7 +102,7 @@ cp .env.example .env
 .venv/bin/python3 evaluation/run_integrated_validation_demo.py # 同上、democase 4症例のみの高速版
 .venv/bin/python3 evaluation/run_pvs1_validation.py            # PVS1を専門家パネルと比較(--contexts erepo|curated)
 .venv/bin/python3 scripts/run_automated_api_va_spec.py         # APIパス(自動判定のみ)をin-processで実行しVA-Spec出力
-.venv/bin/python3 scripts/run_all_tests.py                     # ルート直下のtest_*.pyを一括実行
+.venv/bin/python3 scripts/run_all_tests.py                     # standalone_tests/配下のtest_*.pyを一括実行
 ```
 
 ## 統合インターフェース
@@ -129,10 +129,10 @@ lines = await evaluate_variant_evidence_lines(
 ### ネットワーク不要(ロジックのみ)
 
 ```bash
-python3 test_classification.py
-python3 test_ps3_bs3_judgment.py
-python3 test_ps3_bs3_ps4_gate.py
-python3 test_ps3_bs3_ps4_gate_full.py
+python3 standalone_tests/test_classification.py
+python3 standalone_tests/test_ps3_bs3_judgment.py
+python3 standalone_tests/test_ps3_bs3_ps4_gate.py
+python3 standalone_tests/test_ps3_bs3_ps4_gate_full.py
 python3 scripts/demo_ps3_bs3_judgment.py
 pytest tests -q
 ```

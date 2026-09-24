@@ -20,7 +20,7 @@ import csv
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from acmg_pipeline.gate import (
     match_variant_in_text, MatchStatus,
@@ -30,8 +30,8 @@ from acmg_pipeline.gate import (
 )
 from test_harness import Harness
 
-# References the CSV placed alongside this test file (no absolute-path dependency)
-CORRECTED_CSV = str(Path(__file__).resolve().parent / "clingen_vci_pubmed_fulltext_dedup_pmid_CORRECTED.csv")
+# References the CSV at the repo root (kept there rather than moved alongside this file)
+CORRECTED_CSV = str(Path(__file__).resolve().parent.parent / "clingen_vci_pubmed_fulltext_dedup_pmid_CORRECTED.csv")
 
 # verbose=False: with 151 checks here, printing "OK" for every pass is too
 # noisy to be useful - only FAILs print inline, with the full list repeated

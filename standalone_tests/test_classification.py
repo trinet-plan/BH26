@@ -1,7 +1,7 @@
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from acmg_pipeline.classification import (
     ALL_ACMG_CODES, IMPLEMENTED_CODES, PATHOGENIC_CODES, BENIGN_CODES,

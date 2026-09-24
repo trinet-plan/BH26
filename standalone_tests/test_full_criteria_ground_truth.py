@@ -37,7 +37,7 @@ import sys
 from pathlib import Path
 from collections import Counter
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from acmg_pipeline.classification import (
     ALL_ACMG_CODES, AUTOMATED_CODES, IMPLEMENTED_CODES, LITERATURE_CODES,

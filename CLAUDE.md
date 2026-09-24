@@ -22,7 +22,7 @@
 - `evaluation/run_integrated_validation_demo.py` — 同上、democase 4症例のみの高速版
 - `evaluation/run_pvs1_validation.py` — PVS1を専門家パネルと比較(`--contexts erepo|curated`)
 - `scripts/run_automated_api_va_spec.py` — APIパス(自動判定のみ)をin-processで実行しVA-Spec出力
-- `scripts/run_all_tests.py` — ルート直下の`test_*.py`を一括実行
+- `scripts/run_all_tests.py` — `standalone_tests/`配下の`test_*.py`を一括実行
 
 ## APIのテスト方法
 

@@ -66,13 +66,13 @@ import sys
 import tempfile
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from acmg_pipeline.automated_cli import main as automated_main
 from acmg_pipeline.classification import AUTOMATED_CODES
 from test_harness import Harness
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parent.parent
 DEMO_VCFS = sorted(ROOT.glob("democase/case*_variants_v2.vcf"))
 
 h = Harness()

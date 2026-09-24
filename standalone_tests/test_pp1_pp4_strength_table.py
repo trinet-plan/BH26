@@ -10,7 +10,7 @@ exercised through the full engine.
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from acmg_pipeline.classification import Strength
 from acmg_pipeline.criteria.pp1_pp4_strength_table import combined_pp1_pp4_strength

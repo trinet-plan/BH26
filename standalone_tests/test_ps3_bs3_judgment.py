@@ -1,7 +1,7 @@
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from acmg_pipeline.criteria.ps3_bs3 import (
     PS3BS3Judgment, finalize, MatchStatus, OverallDirection,

@@ -15,7 +15,7 @@ import asyncio
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import acmg_pipeline.hpo_mondo_extraction as hpo_mondo_extraction
 import acmg_pipeline.pp1_segregation_search as pp1_segregation_search

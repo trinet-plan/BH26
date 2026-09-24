@@ -1,5 +1,10 @@
 """Regression checks for the shared criterion input interface."""
 
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
 from acmg_pipeline.clinical_note import ClinicalNoteExtraction
 from acmg_pipeline.common import AggregatedJudgment
 from acmg_pipeline.constants import STUB_CODES

@@ -1,6 +1,9 @@
 from dataclasses import asdict
 from pathlib import Path
 import json
+import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from acmg_pipeline.clinical_extraction import extract_clinical_note
 
