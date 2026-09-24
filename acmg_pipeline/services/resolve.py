@@ -79,7 +79,9 @@ from acmg_pipeline.providers.initiation import InitiationProvider
 from acmg_pipeline.providers.mane import ManeTranscriptProvider
 from acmg_pipeline.providers.nmd import TRUNCATING as NMD_TRUNCATING, NmdPredictionProvider
 from acmg_pipeline.providers.protein_region import ProteinRegionProvider
+from acmg_pipeline.providers.region_repeat import RegionRepeatProvider
 from acmg_pipeline.providers.splice_default import SpliceDefaultProvider
+from acmg_pipeline.providers.synonymous_assessment import get_synonymous_assessment
 from acmg_pipeline.providers.upstream_pathogenic import UpstreamPathogenicProvider
 from acmg_pipeline.providers.dbnsfp import DbnsfpProvider
 from acmg_pipeline.providers.ensembl import EnsemblIdentityProvider
@@ -312,6 +314,8 @@ class ProviderEvidenceResolver:
         cspec_applicability_path=None,
         with_disease_matching: bool = False,
         with_gene_disease_associations: bool = False,
+        with_region_assessment: bool = False,
+        with_bp7_splice_assessment: bool = False,
     ):
         self._client = CachedHttpClient(cache_dir, offline=offline)
         self._external = (
@@ -343,6 +347,8 @@ class ProviderEvidenceResolver:
         # OMIM/Orphanet to MONDO, MONDO ancestry, and ClinGen's lumping decisions. They
         # answer one question between them and are useless apart, so they are asked for once.
         self._with_disease_matching = with_disease_matching
+        self._with_region_assessment = with_region_assessment
+        self._with_bp7_splice_assessment = with_bp7_splice_assessment
         self._mondo = None
         self._mane = None
         self._clingen_gene_validity = None
@@ -401,6 +407,7 @@ class ProviderEvidenceResolver:
         if annotation is not None:
             resolved.records.append(annotation)
             resolved.records.extend(predictions)
+        self._add_synonymous_assessment(annotation, predictions, variant, resolved)
         self._add_population(variant, resolved)
         self._add_lof_mechanism(annotation, variant, resolved)
         self._add_gene2phenotype_mechanism(annotation, variant, resolved)
@@ -411,6 +418,7 @@ class ProviderEvidenceResolver:
         self._add_splice_default(annotation, variant, resolved)
         self._add_initiation_assessment(annotation, variant, identity, resolved)
         self._add_pvs1_transcript_gates(annotation, variant, resolved)
+        self._add_region_assessment(annotation, variant, resolved)
 
         try:
             suite = self._suite()
@@ -892,6 +900,56 @@ class ProviderEvidenceResolver:
                                                         annotation.get("protein_start")))
         except PROVIDER_ERRORS as exc:
             resolved.failures.append({"provider": ProteinRegionProvider.name, "error": str(exc)})
+
+    # PM4/BP3's own gate in acmg_pipeline.criteria.regions.evaluate_region() already rejects
+    # any other consequence, so a record for one of these is never even looked at otherwise -
+    # querying only for these three keeps this from running (and costing a UniProt fetch) on
+    # every other variant.
+    _REGION_REPEAT_CONSEQUENCES = {"inframe_insertion", "inframe_deletion", "stop_lost"}
+
+    def _add_region_assessment(self, annotation, variant, resolved):
+        """PM4/BP3's `region` evidence: a UniProt Repeat-feature first pass over the altered
+        protein interval - see providers/region_repeat.py's own module docstring.
+
+        Off unless asked for, same convention as the other optional steps above. Gated to
+        in-frame insertion/deletion and stop-loss consequences, the only ones PM4/BP3 ever
+        evaluate - ClinVarHotspotProvider's own `region` record is gated the mirror way, to
+        missense_variant only (see the hotspot call above), so the two producers never both
+        answer for the same variant and curated_context() never sees more than one `region`
+        record to choose between.
+        """
+        if not self._with_region_assessment or annotation is None:
+            return
+        consequences = set(annotation.get("consequences") or [])
+        if not (consequences & self._REGION_REPEAT_CONSEQUENCES):
+            return
+        gene, transcript = annotation.get("gene"), annotation.get("transcript")
+        start = annotation.get("protein_start")
+        if not (gene and transcript and isinstance(start, int)):
+            return
+        end = annotation.get("protein_end", start)
+        release = self._ensembl_release or self._ensembl_provider().release
+        try:
+            resolved.records.extend(RegionRepeatProvider(self._external, release)
+                                    .get_region(variant, gene, transcript,
+                                                annotation.get("protein_id"), start, end))
+        except PROVIDER_ERRORS as exc:
+            resolved.failures.append({"provider": RegionRepeatProvider.name, "error": str(exc)})
+
+    def _add_synonymous_assessment(self, annotation, predictions, variant, resolved):
+        """BP7's `synonymous_assessment` evidence - purely derived from the annotation and
+        predictions _annotate() already resolved, so unlike every other optional step above
+        it costs no HTTP request of its own to turn on. See providers/
+        synonymous_assessment.py's own module docstring for what it reads and why.
+        """
+        if not self._with_bp7_splice_assessment or annotation is None:
+            return
+        release = self._ensembl_release or self._ensembl_provider().release
+        try:
+            resolved.records.extend(
+                get_synonymous_assessment(variant, annotation, predictions, release))
+        except PROVIDER_ERRORS as exc:
+            resolved.failures.append({"provider": "BH26 BP7 synonymous assessment", "error": str(exc)})
 
     def _annotate(self, identity, variant, resolved):
         record = {"identity": identity}

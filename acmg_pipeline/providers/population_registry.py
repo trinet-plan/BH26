@@ -1,5 +1,6 @@
 """Configuration-driven registry for independent population-frequency databases."""
 
+from acmg_pipeline.providers.gnomad import GnomadProvider
 from acmg_pipeline.providers.togovar import API_VERSION, TogoVarProvider
 
 
@@ -22,8 +23,34 @@ def _togovar(client, definition):
     )
 
 
+def _gnomad(client, definition):
+    """The only source in this registry that reports per-subpopulation observations
+    (GnomadProvider.PRIMARY_POPULATIONS), not just one "global" figure per dataset -
+    TogoVar's own API has no subpopulation breakdown at all (confirmed against real cached
+    responses, 2026-09-22: every TogoVar frequency entry is tagged "<dataset>:global").
+    Most real ClinGen VCEP BA1/BS1 specifications are calibrated against gnomAD's popmax
+    (the highest observed subpopulation frequency), which TogoVar-only sourcing can never
+    supply - see criteria/ba1.py's/bs1.py's own gene-specific thresholds. observed_
+    frequencies()'s own max() over every resolved observation already does the "popmax"
+    selection once gnomAD's per-population observations are in the pool; no criterion-side
+    change is needed, only this registry entry and a population_sources list that includes
+    both "togovar" and "gnomad".
+    """
+    allowed = {"provider", "dataset", "release"}
+    unknown = set(definition) - allowed
+    if unknown:
+        raise ValueError(f"Unknown gnomAD provider settings: {sorted(unknown)}")
+    kwargs = {}
+    if "dataset" in definition:
+        kwargs["dataset"] = definition["dataset"]
+    if "release" in definition:
+        kwargs["release"] = definition["release"]
+    return GnomadProvider(client, **kwargs)
+
+
 POPULATION_PROVIDER_FACTORIES = {
     "togovar": _togovar,
+    "gnomad": _gnomad,
 }
 
 

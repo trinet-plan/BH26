@@ -173,6 +173,13 @@ async def main() -> None:
     # validation_demo.py already uses for its own cache.
     automated_config["offline"] = False
     automated_config["ensembl_release"] = "116"
+    # PM4/BP3 (UniProt Repeat/Compositional-bias + SEG complexity) and BP7 (VEP
+    # splice_region_variant + SpliceAI) - see providers/region_repeat.py and
+    # providers/synonymous_assessment.py. Off by default in ProviderEvidenceResolver
+    # and, until now, never turned on by this script - pipeline.py's own resolver
+    # construction only just started reading these two keys (2026-09-22).
+    automated_config["with_region_assessment"] = True
+    automated_config["with_bp7_splice_assessment"] = True
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     full_text_cache = DiskBackedFullTextCache("cache/pubmed_fulltext")
@@ -182,63 +189,37 @@ async def main() -> None:
     compared_n = 0
     skipped = []
 
-    async with AsyncExitStack() as stack:
-        mcp = await pl.connect_pubmed(stack)
-        pl.show("[MCP] Connected to PubMed")
-        erepo_client = ERepoClient()
+    erepo_client = ERepoClient()
 
-        k = 0
-        for i, (gene, hgvsc) in enumerate(variants, 1):
-            if only_set is not None and (gene, hgvsc) not in only_set:
-                continue
-            k += 1
-            # _resolve_coordinates()'s synthetic VCF has 3 header/meta lines
-            # (##fileformat, ##reference, #CHROM...) before the first data
-            # row, and audit_vcf() builds record_id from the real file LINE
-            # NUMBER (not this loop's 1-based variant index) - so variant i
-            # is always at line i+3.
-            record_id = f"erepo64:{i + 3}:1"
-            coord = coords.get(record_id)
-            entry = transcripts.get(f"{gene}|{hgvsc}")
-            if not coord or not entry or not entry.get("transcript"):
-                skipped.append(f"{gene} {hgvsc} (no resolved coordinates)")
-                continue
+    async def process_one(gene, hgvsc, record_id, coord, entry):
+        """One variant's full evaluation, on its OWN fresh MCP connection (see the
+        `for attempt` loop below for why this is a whole fresh AsyncExitStack per
+        attempt, not a connection shared across the run or reused across retries).
+        Returns (clinical_note_used, lines) - lines is None on unrecoverable failure.
+        """
+        try:
+            try:
+                erepo_lookup = erepo_client.lookup(gene, hgvsc)
+            except Exception:
+                await asyncio.sleep(5)
+                erepo_lookup = erepo_client.lookup(gene, hgvsc)
+        except Exception as exc:
+            pl.show(f"  -> ERROR looking up {gene} {hgvsc} in ERepo: {exc!r}")
+            return None, None, f"{gene} {hgvsc} (ERepo lookup error: {exc!r})"
 
-            pl.show(f"\n{'#'*70}\n# [{k}/{total_to_process}] {gene} {hgvsc}\n{'#'*70}")
-            gt_entries = entries_for(gene, hgvsc)
-            outcomes = {e.variant_outcome for e in gt_entries if e.variant_outcome}
-            if len(outcomes) != 1:
-                skipped.append(f"{gene} {hgvsc} (no single known ground-truth classification)")
-                continue
-            real_outcome = outcomes.pop()
-
-            variant = VariantRecord(
-                chrom=coord["chrom"], pos=coord["pos"], id=record_id,
-                ref=coord["ref"], alt=coord["alt"], qual="", filter="",
-                info={"GENE": gene, "TRANSCRIPT": entry["transcript"], "HGVSC": hgvsc},
+        if erepo_lookup.condition_id:
+            clinical_note = ClinicalNoteExtraction(
+                diagnosis=erepo_lookup.condition_label,
+                condition_id=erepo_lookup.condition_id,
             )
-
-            # This 64-variant ERepo dataset has no free-text clinical note to
-            # extract a diagnosis from, so PP1/BS4/PP4 (and PVS1's mechanism
-            # gate) would otherwise always see condition_id=None and come
-            # back unknown regardless of the variant. ERepo's own API
-            # response already names the condition each variant was curated
-            # against (a MONDO term) - reuse it here instead of passing an
-            # empty clinical note.
-            erepo_lookup = erepo_client.lookup(gene, hgvsc)
-            if erepo_lookup.condition_id:
-                clinical_note = ClinicalNoteExtraction(
-                    diagnosis=erepo_lookup.condition_label,
-                    condition_id=erepo_lookup.condition_id,
-                )
-            else:
-                # ERepo has nothing at all for some of this dataset's variants
-                # (the democase-sourced entries, e.g. MYBPC3 c.278delA/
-                # c.2905+1G>A/c.836del - real HCM variants ERepo simply has
-                # never curated). Per the user's explicit direction
-                # (2026-09-19): try a live literature search for what
-                # disease the variant is reported to cause before giving up
-                # to an empty clinical note.
+        else:
+            # ERepo has nothing at all for some of this dataset's variants (the
+            # democase-sourced entries, e.g. MYBPC3 c.278delA/c.2905+1G>A/c.836del -
+            # real HCM variants ERepo simply has never curated). Per the user's
+            # explicit direction (2026-09-19): try a live literature search for what
+            # disease the variant is reported to cause before giving up to an empty
+            # clinical note.
+            try:
                 from acmg_pipeline import condition_from_literature_search
                 lit_condition = await condition_from_literature_search.search_condition_from_literature(
                     gene, hgvsc,
@@ -250,40 +231,110 @@ async def main() -> None:
                     )
                 else:
                     clinical_note = empty_clinical_note()
+            except (KeyboardInterrupt, SystemExit):
+                raise
+            except BaseException as exc:
+                # BaseException, not Exception: this opens its OWN separate MCP
+                # connection (search_condition_from_literature() -> pipeline.
+                # connect_pubmed()) and can hit the same BaseExceptionGroup-not-
+                # Exception failure mode the evaluate_variant_evidence_lines() call
+                # below does - see that call's own comment. A live search/LLM call
+                # failing transiently must not end the whole run - fall back to no
+                # clinical note (this variant's PP1/BS4/PP4/PVS1-mechanism results
+                # come back UNKNOWN, same as the "not found" case already handles)
+                # rather than failing the variant outright, since the automated and
+                # PS3/BS3/PS4 evidence lines still do not depend on this.
+                pl.show(f"  -> Literature condition search failed for {gene} {hgvsc}: {exc!r}")
+                clinical_note = empty_clinical_note()
 
+        # A fresh MCP connection for THIS variant alone, not the one shared across the
+        # whole run the first two versions of this fix used. Confirmed necessary,
+        # not just cautious, 2026-09-22: reconnecting on the SAME outer AsyncExitStack
+        # after a failure stopped working part-way through a run (every subsequent
+        # variant failed identically with CancelledError('Cancelled via cancel scope
+        # <same id>') - once anyio cancels a scope, everything nested under it stays
+        # cancelled, and connect_pubmed() called again on that same stack inherits the
+        # poisoned scope instead of getting a clean one). A wholly separate
+        # AsyncExitStack per variant can never inherit another variant's cancellation.
+        for attempt in (1, 2):
             try:
-                lines = await pl.evaluate_variant_evidence_lines(
-                    variant, clinical_note,
-                    automated_config=automated_config,
-                    mcp=mcp, erepo_client=erepo_client,
-                    full_text_cache=full_text_cache, llm_cache=llm_cache,
-                )
-            except Exception as exc:
-                pl.show(f"  -> ERROR evaluating {gene} {hgvsc}: {exc!r}")
-                skipped.append(f"{gene} {hgvsc} (error: {exc!r})")
-                continue
+                async with AsyncExitStack() as variant_stack:
+                    mcp = await pl.connect_pubmed(variant_stack)
+                    lines = await pl.evaluate_variant_evidence_lines(
+                        variant_from(gene, hgvsc, record_id, coord, entry), clinical_note,
+                        automated_config=automated_config,
+                        mcp=mcp, erepo_client=erepo_client,
+                        full_text_cache=full_text_cache, llm_cache=llm_cache,
+                    )
+                return clinical_note, lines, None
+            except (KeyboardInterrupt, SystemExit):
+                raise
+            except BaseException as exc:
+                if attempt == 1:
+                    pl.show(f"  -> ERROR evaluating {gene} {hgvsc}: {exc!r} - "
+                           f"retrying once on a fresh connection")
+                    continue
+                pl.show(f"  -> ERROR evaluating {gene} {hgvsc} (after retry): {exc!r}")
+                return clinical_note, None, f"{gene} {hgvsc} (error: {exc!r})"
 
-            evidence_lines = dict(zip(ALL_ACMG_CODES, lines))
-            evidence = [_evidence_from_line(code, evidence_lines[code]) for code in ALL_ACMG_CODES]
-            result = classify(evidence)
+    def variant_from(gene, hgvsc, record_id, coord, entry):
+        return VariantRecord(
+            chrom=coord["chrom"], pos=coord["pos"], id=record_id,
+            ref=coord["ref"], alt=coord["alt"], qual="", filter="",
+            info={"GENE": gene, "TRANSCRIPT": entry["transcript"], "HGVSC": hgvsc},
+        )
 
-            safe = _safe_hgvsc(hgvsc)
-            (OUTPUT_DIR / f"{run_ts}_{gene}_{safe}.json").write_text(
-                json.dumps(
-                    {"classification": classification_to_dict(result), "evidence_lines": lines},
-                    indent=2, ensure_ascii=False,
-                ),
-                encoding="utf-8",
-            )
+    k = 0
+    for i, (gene, hgvsc) in enumerate(variants, 1):
+        if only_set is not None and (gene, hgvsc) not in only_set:
+            continue
+        k += 1
+        # _resolve_coordinates()'s synthetic VCF has 3 header/meta lines
+        # (##fileformat, ##reference, #CHROM...) before the first data
+        # row, and audit_vcf() builds record_id from the real file LINE
+        # NUMBER (not this loop's 1-based variant index) - so variant i
+        # is always at line i+3.
+        record_id = f"erepo64:{i + 3}:1"
+        coord = coords.get(record_id)
+        entry = transcripts.get(f"{gene}|{hgvsc}")
+        if not coord or not entry or not entry.get("transcript"):
+            skipped.append(f"{gene} {hgvsc} (no resolved coordinates)")
+            continue
 
-            compared_n += 1
-            is_match = result.category.value == real_outcome
-            match_n += is_match
-            met_str = ", ".join(f"{e.code}({e.strength.value})" for e in result.met) or "(none)"
-            pl.show(f"\n[Integrated classify()] {gene} {hgvsc}: category={result.category.value} "
-                    f"(score={result.score}) vs. real={real_outcome} "
-                    f"-> {'MATCH' if is_match else 'DIFFERS'}")
-            pl.show(f"  met: {met_str}")
+        pl.show(f"\n{'#'*70}\n# [{k}/{total_to_process}] {gene} {hgvsc}\n{'#'*70}")
+        gt_entries = entries_for(gene, hgvsc)
+        outcomes = {e.variant_outcome for e in gt_entries if e.variant_outcome}
+        if len(outcomes) != 1:
+            skipped.append(f"{gene} {hgvsc} (no single known ground-truth classification)")
+            continue
+        real_outcome = outcomes.pop()
+
+        clinical_note, lines, failure = await process_one(gene, hgvsc, record_id, coord, entry)
+        if failure:
+            skipped.append(failure)
+            continue
+
+        evidence_lines = dict(zip(ALL_ACMG_CODES, lines))
+        evidence = [_evidence_from_line(code, evidence_lines[code]) for code in ALL_ACMG_CODES]
+        result = classify(evidence)
+
+        safe = _safe_hgvsc(hgvsc)
+        (OUTPUT_DIR / f"{run_ts}_{gene}_{safe}.json").write_text(
+            json.dumps(
+                {"classification": classification_to_dict(result), "evidence_lines": lines},
+                indent=2, ensure_ascii=False,
+            ),
+            encoding="utf-8",
+        )
+
+        compared_n += 1
+        is_match = result.category.value == real_outcome
+        match_n += is_match
+        met_str = ", ".join(f"{e.code}({e.strength.value})" for e in result.met) or "(none)"
+        pl.show(f"\n[Integrated classify()] {gene} {hgvsc}: category={result.category.value} "
+                f"(score={result.score}) vs. real={real_outcome} "
+                f"-> {'MATCH' if is_match else 'DIFFERS'}")
+        pl.show(f"  met: {met_str}")
 
     pl.show(f"\n{'='*70}\n[run_integrated_validation_64] Summary\n{'='*70}")
     pl.show(f"{compared_n} variant(s) compared; {match_n}/{compared_n} matched "

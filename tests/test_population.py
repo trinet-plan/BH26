@@ -169,6 +169,49 @@ class PopulationTests(unittest.TestCase):
         validate_1_0_1(line, "BA1")
         self.assertEqual(line["directionOfEvidenceProvided"], "disputes")
 
+    def test_ba1_gene_specific_override_replaces_the_configured_default(self):
+        """automated_core.context's gene_frequency_thresholds feeds
+        input_data["ba1_threshold_override"], which criteria/ba1.py's threshold_policy()
+        checks before config["BA1"] - a real ClinGen RAF1 RASopathy VCEP-style number
+        (0.05%) replaces the configured 5% default entirely, not just when it is stricter."""
+        self.input["ba1_threshold_override"] = {
+            "max_af": 0.0005, "frequency_statistic": "faf95", "comparison": ">=",
+            "source": "ClinGen RASopathy VCEP RAF1", "source_version": "2.3",
+            "reviewed_at": "2026-09-22"}
+        self.input["ba1_exception_assessment"] = {
+            "source": "test", "source_version": "1", "reviewed_at": "2026-09-14",
+            "is_exception": False}
+        value = self.evaluate(ba1, self.services([self.observation(60, an=10000)]))  # AF 0.6%
+        self.assertEqual(value.status, CriterionStatus.MET)
+        self.assertEqual(value.provenance["threshold_scope"], "gene_specific")
+        self.assertEqual(value.provenance["stand_alone_threshold"], "0.0005")
+        self.assertEqual(value.provenance["comparison"], ">=")
+
+    def test_ba1_honours_the_gene_specific_comparison_operator(self):
+        """">" and ">=" are both real ClinGen VCEP wordings (see services/population.py's own
+        COMPARISONS docstring) - a variant sitting exactly on the boundary must be MET under
+        ">=" and NOT_MET under strict ">"."""
+        self.input["ba1_exception_assessment"] = {
+            "source": "test", "source_version": "1", "reviewed_at": "2026-09-14",
+            "is_exception": False}
+        for symbol, expected in ((">=", CriterionStatus.MET), (">", CriterionStatus.NOT_MET)):
+            with self.subTest(symbol=symbol):
+                self.input["ba1_threshold_override"] = {
+                    "max_af": 0.001, "frequency_statistic": "af", "comparison": symbol,
+                    "source": "test", "source_version": "1", "reviewed_at": "2026-09-22"}
+                value = self.evaluate(ba1, self.services([self.observation(10, an=10000)]))  # AF exactly 0.001
+                self.assertEqual(value.status, expected)
+
+    def test_an_incomplete_gene_specific_override_falls_back_to_the_default(self):
+        """A partial override (missing provenance) is not applied - config["BA1"]'s own
+        complete default is used instead, same as if no override existed at all."""
+        self.input["ba1_threshold_override"] = {"max_af": 0.0005, "frequency_statistic": "faf95"}
+        self.input["ba1_exception_assessment"] = {
+            "source": "test", "source_version": "1", "reviewed_at": "2026-09-14",
+            "is_exception": False}
+        value = self.evaluate(ba1, self.services([self.observation(600)]))
+        self.assertEqual(value.provenance["threshold_scope"], "default")
+
     def test_bs1_requires_matching_disease(self):
         """A matching threshold is used as itself, and is reported as disease-specific."""
         self.input.update({"condition": "test:disease", "inheritance": "autosomal_dominant",

@@ -95,6 +95,7 @@ a later VCF INFO field addition needs no signature change here.
 from __future__ import annotations
 
 import re
+from functools import lru_cache
 from urllib.parse import quote
 
 import requests
@@ -172,10 +173,23 @@ def positional_allele(variant: VariantRecord) -> tuple[str, int, str, str] | Non
     return chrom, int(variant.pos), str(ref).upper(), str(alt).upper()
 
 
+@lru_cache(maxsize=None)
 def gene_to_uniprot_accession(gene_symbol: str) -> str | None:
     """
     Helper for uniprot_page_url() (PM1/PM5) below - not itself tied to a
     specific ACMG code.
+
+    [Why cached]
+      A live, uncached call per invocation - one gene resolves to the same accession
+      every time, but 679-variant validation runs and prepare-demo-online's two-pass
+      architecture (see run_automated_validation_64.py) call this once per variant, not
+      once per gene, and the same gene appears on many variants. protein_region.py
+      (PVS1's NF04/NF06) and region_repeat.py (PM4/BP3) both call this on every
+      matching variant; memoizing by gene_symbol for the life of the process turns a
+      679-call TogoID round trip into (at most) one-per-distinct-gene, which is what
+      made a validation run that used to take ~15 minutes take over an hour once
+      region_repeat.py added a second unrelated call site for the same lookup
+      (2026-09-21).
 
     Site: TogoID's public REST API (api.togoid.dbcls.jp/convert) - the
       same ID-conversion service the TogoMCP connector's togoid_convertId

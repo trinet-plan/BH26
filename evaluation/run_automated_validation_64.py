@@ -154,6 +154,24 @@ def _write_context(variants: list[tuple[str, str]], prepared: Path, out_path: Pa
     records = json.loads((prepared / "variants.json").read_text(encoding="utf-8"))["records"]
     by_variant_id = {record["source"]["variant_id"]: record["record_id"] for record in records}
     gene_fallback = _gene_level_fallback_conditions({gene for gene, _ in variants})
+    # Keyed by gene symbol - see curated-context.json's own gene_frequency_thresholds entries
+    # and criteria/ba1.py's/bs1.py's own docstrings for what "ba1"/"bs1" feed. automated_core.
+    # context.apply_context() already reads this same shape gene-keyed for the live pipeline
+    # path (pipeline.py's _apply_curated_context()); this script's own evaluate step goes
+    # through automated_output.run_internal() -> the SAME load_context()/apply_context(), but
+    # record_contexts is keyed by record_id, not gene, so the gene-keyed table is resolved to
+    # each matching record_id here instead of relying on apply_context()'s own gene lookup
+    # (this script's prepared records carry no top-level "gene" field for it to read).
+    curated = json.loads(CURATED_CONTEXT_PATH.read_text(encoding="utf-8"))
+    gene_thresholds = curated.get("gene_frequency_thresholds") or {}
+    # PM1's own gene-keyed table - unlike gene_frequency_thresholds (BA1/BS1), this one is
+    # not gated on a resolved disease condition at all below: PM1 evaluate_region()'s curated
+    # critical-domain check (criteria/regions.py) is disease-agnostic by design (the same
+    # `disease_required=False` the pre-existing hotspot route already uses), so a variant
+    # this script could not resolve ANY condition for (the `continue` a few lines down)
+    # would otherwise never see its gene's own critical-domain data either, despite PM1
+    # never having needed a condition for it.
+    gene_domains = curated.get("gene_critical_domains") or {}
 
     document = {
         "schema_version": "1.0",
@@ -161,7 +179,7 @@ def _write_context(variants: list[tuple[str, str]], prepared: Path, out_path: Pa
         "source": f"{CURATED_CONTEXT_PATH.name}'s ba1_exceptions + {DISEASE_CONTEXTS_PATH.name}'s "
                   "per-variant ERepo-interpreted conditions, falling back to a gene-level "
                   "ClinGen Gene-Disease Validity condition where ERepo has none",
-        "ba1_exceptions": json.loads(CURATED_CONTEXT_PATH.read_text(encoding="utf-8"))["ba1_exceptions"],
+        "ba1_exceptions": curated["ba1_exceptions"],
         "records": {}, "record_contexts": {},
     }
     resolved = 0
@@ -171,9 +189,21 @@ def _write_context(variants: list[tuple[str, str]], prepared: Path, out_path: Pa
             continue
         context = contexts.get(f"{gene}|{hgvsc}")
         condition = context["condition"] if context and context.get("condition") else gene_fallback.get(gene)
+        record_context = {}
+        if gene in gene_domains:
+            record_context["gene_critical_domains"] = gene_domains[gene]
         if not condition:
+            if record_context:
+                document["record_contexts"][record_id] = record_context
             continue
-        document["record_contexts"][record_id] = {"condition": condition}
+        record_context["condition"] = condition
+        gene_entry = gene_thresholds.get(gene)
+        if gene_entry:
+            if gene_entry.get("bs1"):
+                record_context["disease_frequency_threshold"] = gene_entry["bs1"]
+            if gene_entry.get("ba1"):
+                record_context["ba1_threshold_override"] = gene_entry["ba1"]
+        document["record_contexts"][record_id] = record_context
         resolved += 1
     out_path.write_text(json.dumps(document, ensure_ascii=False, indent=2), encoding="utf-8")
     return resolved
@@ -215,6 +245,7 @@ def main() -> None:
         variants = variants[: args.limit]
 
     work = Path(tempfile.mkdtemp(prefix="bh26_erepo64_automated_"))
+    print(f"[run_automated_validation_64] work dir: {work}")
     vcf_path = work / "erepo64_variants.vcf"
     n_included = _build_synthetic_vcf(variants, transcripts, vcf_path)
     print(f"[run_automated_validation_64] {n_included}/{len(variants)} variant(s) have a resolved "
@@ -264,6 +295,8 @@ def main() -> None:
         "--with-clingen-lumping",
         "--with-mondo-hierarchy",
         "--with-clingen-gene-validity",
+        "--with-region-assessment",
+        "--with-bp7-splice-assessment",
     ]
     if args.offline:
         _COMMON_PREPARE_ARGS.append("--offline")

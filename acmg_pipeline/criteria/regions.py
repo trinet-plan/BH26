@@ -1,6 +1,9 @@
+from dataclasses import replace
+
 from acmg_pipeline.constants import CriterionStatus
 """Protein length / repeat / critical-region assessments with explicit missingness."""
 
+from acmg_pipeline.automated_core.models import Variant
 from acmg_pipeline.criteria.common import (
     NOT_APPLICABLE, annotation_context, curated_context, require_boolean_fields, result,
 )
@@ -33,6 +36,10 @@ def evaluate_region(code, input_data, services, config):
                       f"or deletion, which BP3 requires before repeat-region assessment "
                       f"(annotated: {', '.join(sorted(consequences))}).",
                       evidence=[annotation], provenance=NOT_APPLICABLE)
+    if code == "PM1":
+        curated = _pm1_curated_critical_domain(input_data, annotation, config)
+        if curated is not None:
+            return curated
     # PM1 is a protein-level statement about the region itself, so a condition-agnostic
     # reviewed assessment is usable; the disease relevance is reported separately.
     early, region = curated_context(code, "region", input_data, services, annotation,
@@ -93,6 +100,80 @@ def evaluate_region(code, input_data, services, config):
     return result(code, input_data, CriterionStatus.MET if met else CriterionStatus.NOT_MET,
                   "Altered protein interval and reviewed region evidence evaluated",
                   strength=strength if met else None, evidence=evidence)
+
+
+def _pm1_curated_critical_domain(input_data, annotation, config):
+    """A gene's real, VCEP-published critical-domain codon range, hand-transcribed into
+    curated-context.json's gene_critical_domains (see automated_core/context.py) - None
+    when this gene has no such table, or the altered interval falls outside every listed
+    range, so evaluate_region() falls through to the density-based hotspot route unchanged.
+
+    [Why this bypasses curated_context()'s "region" category entirely, 2026-09-22]
+      pm1_critical_domain() below has always refused assessment_method="automated" region
+      evidence for this exact route ("Automated evidence cannot establish functional
+      criticality") - a deliberate protection against inferring domain importance from
+      variant density, which this data is not: it is transcribed directly from a gene's own
+      published ClinGen VCEP specification (e.g. MECP2's real spec names "Methyl-DNA binding
+      (MBD): aa 90-162" verbatim), the same manual_transcription-with-citation convention
+      already used for curated-context.json's ba1_exceptions and gene_frequency_thresholds.
+      Routing it through the shared "region" evidence category instead would collide with
+      ClinVarHotspotProvider's own hotspot search for the same missense variant (both would
+      answer curated_context()'s single-record lookup, tripping "Multiple region
+      assessments") - a synthesized region dict, evaluated directly, avoids that collision
+      and the automated-only gate is simply not reached for genes covered here.
+
+    [benign_depletion defaulted True - a documented assumption, not a citation]
+      Real VCEP specifications name the critical residues/ranges but do not always restate
+      "and no benign variation exists there" in the same sentence - that is the premise a
+      VCEP publishing the rule as Moderate/Strong is understood to have already weighed, not
+      a separate number this project's own tooling can re-derive. Flagged in review_points,
+      same as every other flagged default in this project (splice_default.py's
+      alternative_rescue, region_repeat.py's repetitive=False).
+    """
+    domains = input_data.get("gene_critical_domains")
+    if not domains or not domains.get("ranges"):
+        return None
+    protein = annotation.get("protein_id")
+    position = annotation.get("protein_start")
+    end = annotation.get("protein_end", position)
+    if not protein or type(position) is not int or position <= 0 or type(end) is not int or end < position:
+        return None
+    matched = next(
+        (item for item in domains["ranges"] if item["start"] <= position <= end <= item["end"]),
+        None,
+    )
+    if matched is None:
+        return None
+    region = {
+        "category": "region", "variant_key": Variant(**input_data["variant"]).key,
+        "evidence_id": (f"urn:bh26:pm1-critical-domain:{domains.get('source_version', 'v1')}:"
+                        f"{protein}:{matched['start']}-{matched['end']}"),
+        "source": domains["source"], "source_version": domains["source_version"],
+        "retrieved_at": domains["reviewed_at"], "quality_status": "PASS",
+        "curator": "BH26 project (manual transcription from ClinGen CSpec)",
+        "reviewed_at": domains["reviewed_at"],
+        "protein_id": protein, "start": matched["start"], "end": matched["end"],
+        "region_type": "critical_functional_domain",
+        "critical_functional_region": True,
+        "benign_depletion": True,
+        "label": matched.get("label"),
+        "policy_note": (
+            "Codon range transcribed from a real ClinGen VCEP CSpec specification "
+            f"({domains['source']}), not inferred from variant density - see this "
+            "function's own docstring for why benign_depletion is a flagged default "
+            "rather than a value the specification itself states."
+        ),
+    }
+    evidence = [annotation, region]
+    outcome = evaluate_pm1(input_data, region, evidence, config)
+    if outcome.status == CriterionStatus.MET:
+        outcome = replace(outcome, review_points=[
+            *outcome.review_points,
+            "benign_depletion is defaulted True for this gene's curated critical domain, "
+            "not itself stated by the VCEP specification - confirm no benign variation is "
+            "reported in this interval before relying on it",
+        ])
+    return outcome
 
 
 def evaluate_pm1(input_data, region, evidence, config):

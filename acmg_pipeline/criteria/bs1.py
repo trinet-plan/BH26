@@ -2,7 +2,7 @@ from acmg_pipeline.constants import CriterionStatus
 from acmg_pipeline.automated_core.interface import criterion_input
 from acmg_pipeline.criteria.common import citable, population_context, result as _base_result
 from acmg_pipeline.services.population import (
-    FAF_METHOD, STATISTICS, article, number, observed_frequencies,
+    COMPARISONS, FAF_METHOD, STATISTICS, article, number, observed_frequencies,
 )
 from acmg_pipeline.clinical_note import ClinicalNoteExtraction
 from acmg_pipeline.vcf_record import VariantRecord
@@ -27,6 +27,20 @@ def disease_specific_threshold(input_data):
     is not a disease-specific threshold for THIS record, so all four route to the configured
     default rather than each stopping the criterion. A value outside (0, 1) is different: the
     threshold is present and wrong, so it is reported instead of being papered over.
+
+    condition_scope="gene_wide" (only set by automated_core/context.py's
+    gene_frequency_thresholds - never by a real per-variant curated record) skips the exact
+    condition/inheritance match below: a VCEP's published BS1 rule for a gene is stated once
+    for however that gene's disease is named in their specification, and real ERepo curation
+    for the SAME gene in this project's own ground truth is seen filed under multiple MONDO
+    IDs at different granularity (e.g. BRCA2: both MONDO:0700269 and MONDO:0012933, both
+    labelled "BRCA2-related cancer predisposition"; RAF1: both MONDO:0021060 "RASopathy" and
+    MONDO:0018997 "Noonan syndrome" - the same real gap ontology_related() met on CDH1 in
+    PVS1's mechanism gate, see criteria/common.py) - and inheritance is not resolved at all
+    for most of this project's ERepo-sourced cases (no clinical note to extract it from), so
+    requiring an exact match on either would make a real, gene-wide VCEP number apply to
+    almost nothing. A gene-wide threshold still requires a disease context to exist at all
+    (this record is a real case, not requiring the exact wording of it to match).
     """
     condition = input_data.get("condition")
     assessment = input_data.get("disease_frequency_threshold", {})
@@ -34,14 +48,15 @@ def disease_specific_threshold(input_data):
         return None, assessment, "no disease context was supplied"
     if not assessment:
         return None, assessment, f"no curated maximum credible allele frequency was supplied for {condition}"
-    if assessment.get("condition") != condition:
+    gene_wide = assessment.get("condition_scope") == "gene_wide"
+    if not gene_wide and assessment.get("condition") != condition:
         return None, assessment, (f"the curated threshold is defined for "
                                   f"{assessment.get('condition')!r}, not the requested {condition!r}")
     absent = [key for key in ("source", "source_version", "reviewed_at", "inheritance")
               if not assessment.get(key)]
     if absent:
         return None, assessment, f"the curated threshold does not record {', '.join(absent)}"
-    if input_data.get("inheritance") != assessment["inheritance"]:
+    if not gene_wide and input_data.get("inheritance") != assessment["inheritance"]:
         return None, assessment, (f"the curated threshold was derived for "
                                   f"{assessment['inheritance']!r} inheritance, but this variant is "
                                   f"assessed as {input_data.get('inheritance')!r}")
@@ -74,10 +89,6 @@ def frequency_statistic(input_data, applied, scope):
                       f"against; BS1 supports {' and '.join(sorted(STATISTICS))}",
                       missing=[key]), None, False
     return None, declared, False
-
-
-COMPARISONS = {">": lambda value, threshold: value > threshold,
-               ">=": lambda value, threshold: value >= threshold}
 
 
 def comparison(input_data, applied, scope):

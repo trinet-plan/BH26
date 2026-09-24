@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "context_version": "2026-09-15",
+  "context_version": "2026-09-22",
   "source": "BH26 project curated context. Human decisions only; retrieved evidence never goes here.",
   "ba1_exceptions": {
     "source": "ClinGen SVI BA1 exception list (Ghosh et al. 2018, Hum Mutat 39:1525-1530)",
@@ -140,33 +140,415 @@
   },
   "records": {},
   "record_contexts": {
-    "case1:25:1": {"condition": "MONDO:0005045", "condition_label": "hypertrophic cardiomyopathy"},
-    "case1:26:1": {"condition": "MONDO:0005045", "condition_label": "hypertrophic cardiomyopathy"},
-    "case1:27:1": {"condition": "MONDO:0005045", "condition_label": "hypertrophic cardiomyopathy"},
-    "case1:28:1": {"condition": "MONDO:0005045", "condition_label": "hypertrophic cardiomyopathy"},
-    "case1:29:1": {"condition": "MONDO:0005045", "condition_label": "hypertrophic cardiomyopathy"},
-    "case1:30:1": {"condition": "MONDO:0005045", "condition_label": "hypertrophic cardiomyopathy"},
-    "case1:31:1": {"condition": "MONDO:0005045", "condition_label": "hypertrophic cardiomyopathy"},
-    "case2:24:1": {"condition": "MONDO:0005045", "condition_label": "hypertrophic cardiomyopathy"},
-    "case2:25:1": {"condition": "MONDO:0005045", "condition_label": "hypertrophic cardiomyopathy"},
-    "case2:26:1": {"condition": "MONDO:0005045", "condition_label": "hypertrophic cardiomyopathy"},
-    "case2:27:1": {"condition": "MONDO:0005045", "condition_label": "hypertrophic cardiomyopathy"},
-    "case2:28:1": {"condition": "MONDO:0005045", "condition_label": "hypertrophic cardiomyopathy"},
-    "case2:29:1": {"condition": "MONDO:0005045", "condition_label": "hypertrophic cardiomyopathy"},
-    "case2:30:1": {"condition": "MONDO:0005045", "condition_label": "hypertrophic cardiomyopathy"},
-    "case3:24:1": {"condition": "MONDO:0005045", "condition_label": "hypertrophic cardiomyopathy"},
-    "case3:25:1": {"condition": "MONDO:0005045", "condition_label": "hypertrophic cardiomyopathy"},
-    "case3:26:1": {"condition": "MONDO:0005045", "condition_label": "hypertrophic cardiomyopathy"},
-    "case3:27:1": {"condition": "MONDO:0005045", "condition_label": "hypertrophic cardiomyopathy"},
-    "case3:28:1": {"condition": "MONDO:0005045", "condition_label": "hypertrophic cardiomyopathy"},
-    "case3:29:1": {"condition": "MONDO:0005045", "condition_label": "hypertrophic cardiomyopathy"},
-    "case3:30:1": {"condition": "MONDO:0005045", "condition_label": "hypertrophic cardiomyopathy"},
-    "case3:31:1": {"condition": "MONDO:0005045", "condition_label": "hypertrophic cardiomyopathy"},
-    "case4:26:1": {"condition": "MONDO:0016587", "condition_label": "arrhythmogenic right ventricular cardiomyopathy"},
-    "case4:27:1": {"condition": "MONDO:0016587", "condition_label": "arrhythmogenic right ventricular cardiomyopathy"},
-    "case4:28:1": {"condition": "MONDO:0016587", "condition_label": "arrhythmogenic right ventricular cardiomyopathy"},
-    "case4:29:1": {"condition": "MONDO:0016587", "condition_label": "arrhythmogenic right ventricular cardiomyopathy"},
-    "case4:30:1": {"condition": "MONDO:0016587", "condition_label": "arrhythmogenic right ventricular cardiomyopathy"},
-    "case4:31:1": {"condition": "MONDO:0016587", "condition_label": "arrhythmogenic right ventricular cardiomyopathy"}
+    "case1:25:1": {
+      "condition": "MONDO:0005045",
+      "condition_label": "hypertrophic cardiomyopathy"
+    },
+    "case1:26:1": {
+      "condition": "MONDO:0005045",
+      "condition_label": "hypertrophic cardiomyopathy"
+    },
+    "case1:27:1": {
+      "condition": "MONDO:0005045",
+      "condition_label": "hypertrophic cardiomyopathy"
+    },
+    "case1:28:1": {
+      "condition": "MONDO:0005045",
+      "condition_label": "hypertrophic cardiomyopathy"
+    },
+    "case1:29:1": {
+      "condition": "MONDO:0005045",
+      "condition_label": "hypertrophic cardiomyopathy"
+    },
+    "case1:30:1": {
+      "condition": "MONDO:0005045",
+      "condition_label": "hypertrophic cardiomyopathy"
+    },
+    "case1:31:1": {
+      "condition": "MONDO:0005045",
+      "condition_label": "hypertrophic cardiomyopathy"
+    },
+    "case2:24:1": {
+      "condition": "MONDO:0005045",
+      "condition_label": "hypertrophic cardiomyopathy"
+    },
+    "case2:25:1": {
+      "condition": "MONDO:0005045",
+      "condition_label": "hypertrophic cardiomyopathy"
+    },
+    "case2:26:1": {
+      "condition": "MONDO:0005045",
+      "condition_label": "hypertrophic cardiomyopathy"
+    },
+    "case2:27:1": {
+      "condition": "MONDO:0005045",
+      "condition_label": "hypertrophic cardiomyopathy"
+    },
+    "case2:28:1": {
+      "condition": "MONDO:0005045",
+      "condition_label": "hypertrophic cardiomyopathy"
+    },
+    "case2:29:1": {
+      "condition": "MONDO:0005045",
+      "condition_label": "hypertrophic cardiomyopathy"
+    },
+    "case2:30:1": {
+      "condition": "MONDO:0005045",
+      "condition_label": "hypertrophic cardiomyopathy"
+    },
+    "case3:24:1": {
+      "condition": "MONDO:0005045",
+      "condition_label": "hypertrophic cardiomyopathy"
+    },
+    "case3:25:1": {
+      "condition": "MONDO:0005045",
+      "condition_label": "hypertrophic cardiomyopathy"
+    },
+    "case3:26:1": {
+      "condition": "MONDO:0005045",
+      "condition_label": "hypertrophic cardiomyopathy"
+    },
+    "case3:27:1": {
+      "condition": "MONDO:0005045",
+      "condition_label": "hypertrophic cardiomyopathy"
+    },
+    "case3:28:1": {
+      "condition": "MONDO:0005045",
+      "condition_label": "hypertrophic cardiomyopathy"
+    },
+    "case3:29:1": {
+      "condition": "MONDO:0005045",
+      "condition_label": "hypertrophic cardiomyopathy"
+    },
+    "case3:30:1": {
+      "condition": "MONDO:0005045",
+      "condition_label": "hypertrophic cardiomyopathy"
+    },
+    "case3:31:1": {
+      "condition": "MONDO:0005045",
+      "condition_label": "hypertrophic cardiomyopathy"
+    },
+    "case4:26:1": {
+      "condition": "MONDO:0016587",
+      "condition_label": "arrhythmogenic right ventricular cardiomyopathy"
+    },
+    "case4:27:1": {
+      "condition": "MONDO:0016587",
+      "condition_label": "arrhythmogenic right ventricular cardiomyopathy"
+    },
+    "case4:28:1": {
+      "condition": "MONDO:0016587",
+      "condition_label": "arrhythmogenic right ventricular cardiomyopathy"
+    },
+    "case4:29:1": {
+      "condition": "MONDO:0016587",
+      "condition_label": "arrhythmogenic right ventricular cardiomyopathy"
+    },
+    "case4:30:1": {
+      "condition": "MONDO:0016587",
+      "condition_label": "arrhythmogenic right ventricular cardiomyopathy"
+    },
+    "case4:31:1": {
+      "condition": "MONDO:0016587",
+      "condition_label": "arrhythmogenic right ventricular cardiomyopathy"
+    }
+  },
+  "gene_frequency_thresholds": {
+    "MYH7": {
+      "ba1": {
+        "max_af": 0.001,
+        "frequency_statistic": "faf95",
+        "comparison": ">=",
+        "source": "ClinGen CSpec GN002: Cardiomyopathy VCEP MYH7 v2.0",
+        "source_version": "2.0",
+        "reviewed_at": "2026-09-22",
+        "note": "Transcribed by hand from the free-text evidenceStrength description in the gene's ClinGen Criteria Specification Registry (CSpec, cspec.genome.network) document, retrieved 2026-09-22 - the registry has no structured numeric-threshold field, only markdown prose per evidence strength, so this is manual_transcription like ba1_exceptions above, not machine-parsed. Re-verify against the source document if it is revised."
+      },
+      "bs1": {
+        "max_credible_af": 0.0001,
+        "frequency_statistic": "faf95",
+        "comparison": ">=",
+        "condition": "MONDO:0005045",
+        "condition_label": "hypertrophic cardiomyopathy",
+        "condition_scope": "gene_wide",
+        "inheritance": "autosomal_dominant",
+        "source": "ClinGen CSpec GN002: Cardiomyopathy VCEP MYH7 v2.0",
+        "source_version": "2.0",
+        "reviewed_at": "2026-09-22",
+        "note": "Transcribed by hand from the free-text evidenceStrength description in the gene's ClinGen Criteria Specification Registry (CSpec, cspec.genome.network) document, retrieved 2026-09-22 - the registry has no structured numeric-threshold field, only markdown prose per evidence strength, so this is manual_transcription like ba1_exceptions above, not machine-parsed. Re-verify against the source document if it is revised."
+      }
+    },
+    "RPGR": {
+      "ba1": {
+        "max_af": 0.05,
+        "frequency_statistic": "af",
+        "comparison": ">",
+        "source": "ClinGen CSpec GN106: X-linked Inherited Retinal Disease VCEP RPGR v1.0",
+        "source_version": "1.0",
+        "reviewed_at": "2026-09-22",
+        "note": "Transcribed by hand from the free-text evidenceStrength description in the gene's ClinGen Criteria Specification Registry (CSpec, cspec.genome.network) document, retrieved 2026-09-22 - the registry has no structured numeric-threshold field, only markdown prose per evidence strength, so this is manual_transcription like ba1_exceptions above, not machine-parsed. Re-verify against the source document if it is revised."
+      },
+      "bs1": {
+        "max_credible_af": 8.3e-05,
+        "frequency_statistic": "af",
+        "comparison": ">=",
+        "condition": "MONDO:0100437",
+        "condition_label": "RPGR-related retinopathy",
+        "condition_scope": "gene_wide",
+        "inheritance": "x_linked",
+        "source": "ClinGen CSpec GN106: X-linked Inherited Retinal Disease VCEP RPGR v1.0",
+        "source_version": "1.0",
+        "reviewed_at": "2026-09-22",
+        "note": "Transcribed by hand from the free-text evidenceStrength description in the gene's ClinGen Criteria Specification Registry (CSpec, cspec.genome.network) document, retrieved 2026-09-22 - the registry has no structured numeric-threshold field, only markdown prose per evidence strength, so this is manual_transcription like ba1_exceptions above, not machine-parsed. Re-verify against the source document if it is revised."
+      }
+    },
+    "RUNX1": {
+      "ba1": {
+        "max_af": 0.0015,
+        "frequency_statistic": "af",
+        "comparison": ">=",
+        "source": "ClinGen CSpec GN008: Myeloid Malignancy VCEP RUNX1 v3.1",
+        "source_version": "3.1",
+        "reviewed_at": "2026-09-22",
+        "note": "Transcribed by hand from the free-text evidenceStrength description in the gene's ClinGen Criteria Specification Registry (CSpec, cspec.genome.network) document, retrieved 2026-09-22 - the registry has no structured numeric-threshold field, only markdown prose per evidence strength, so this is manual_transcription like ba1_exceptions above, not machine-parsed. Re-verify against the source document if it is revised."
+      },
+      "bs1": {
+        "max_credible_af": 0.00015,
+        "frequency_statistic": "af",
+        "comparison": ">=",
+        "condition": "MONDO:0011071",
+        "condition_label": "hereditary thrombocytopenia and hematologic cancer predisposition syndrome",
+        "condition_scope": "gene_wide",
+        "inheritance": "autosomal_dominant",
+        "source": "ClinGen CSpec GN008: Myeloid Malignancy VCEP RUNX1 v3.1",
+        "source_version": "3.1",
+        "reviewed_at": "2026-09-22",
+        "note": "Transcribed by hand from the free-text evidenceStrength description in the gene's ClinGen Criteria Specification Registry (CSpec, cspec.genome.network) document, retrieved 2026-09-22 - the registry has no structured numeric-threshold field, only markdown prose per evidence strength, so this is manual_transcription like ba1_exceptions above, not machine-parsed. Re-verify against the source document if it is revised."
+      }
+    },
+    "MYOC": {
+      "ba1": {
+        "max_af": 0.01,
+        "frequency_statistic": "af",
+        "comparison": ">=",
+        "source": "ClinGen CSpec GN019: Glaucoma VCEP MYOC v2.1",
+        "source_version": "2.1",
+        "reviewed_at": "2026-09-22",
+        "note": "Transcribed by hand from the free-text evidenceStrength description in the gene's ClinGen Criteria Specification Registry (CSpec, cspec.genome.network) document, retrieved 2026-09-22 - the registry has no structured numeric-threshold field, only markdown prose per evidence strength, so this is manual_transcription like ba1_exceptions above, not machine-parsed. Re-verify against the source document if it is revised."
+      },
+      "bs1": {
+        "max_credible_af": 0.001,
+        "frequency_statistic": "af",
+        "comparison": ">=",
+        "condition": "MONDO:0005338",
+        "condition_label": "open-angle glaucoma",
+        "condition_scope": "gene_wide",
+        "inheritance": "autosomal_dominant",
+        "source": "ClinGen CSpec GN019: Glaucoma VCEP MYOC v2.1",
+        "source_version": "2.1",
+        "reviewed_at": "2026-09-22",
+        "note": "Transcribed by hand from the free-text evidenceStrength description in the gene's ClinGen Criteria Specification Registry (CSpec, cspec.genome.network) document, retrieved 2026-09-22 - the registry has no structured numeric-threshold field, only markdown prose per evidence strength, so this is manual_transcription like ba1_exceptions above, not machine-parsed. Re-verify against the source document if it is revised."
+      }
+    },
+    "RAF1": {
+      "ba1": {
+        "max_af": 0.0005,
+        "frequency_statistic": "faf95",
+        "comparison": ">=",
+        "source": "ClinGen CSpec GN040: RASopathy VCEP RAF1 v2.3",
+        "source_version": "2.3",
+        "reviewed_at": "2026-09-22",
+        "note": "Transcribed by hand from the free-text evidenceStrength description in the gene's ClinGen Criteria Specification Registry (CSpec, cspec.genome.network) document, retrieved 2026-09-22 - the registry has no structured numeric-threshold field, only markdown prose per evidence strength, so this is manual_transcription like ba1_exceptions above, not machine-parsed. Re-verify against the source document if it is revised."
+      },
+      "bs1": {
+        "max_credible_af": 0.00025,
+        "frequency_statistic": "faf95",
+        "comparison": ">=",
+        "condition": "MONDO:0021060",
+        "condition_label": "RASopathy",
+        "condition_scope": "gene_wide",
+        "inheritance": "autosomal_dominant",
+        "source": "ClinGen CSpec GN040: RASopathy VCEP RAF1 v2.3",
+        "source_version": "2.3",
+        "reviewed_at": "2026-09-22",
+        "note": "Transcribed by hand from the free-text evidenceStrength description in the gene's ClinGen Criteria Specification Registry (CSpec, cspec.genome.network) document, retrieved 2026-09-22 - the registry has no structured numeric-threshold field, only markdown prose per evidence strength, so this is manual_transcription like ba1_exceptions above, not machine-parsed. Re-verify against the source document if it is revised."
+      }
+    },
+    "APC": {
+      "ba1": {
+        "max_af": 0.001,
+        "frequency_statistic": "faf95",
+        "comparison": ">=",
+        "source": "ClinGen CSpec GN089: InSiGHT Hereditary Colorectal Cancer/Polyposis VCEP APC v2.1",
+        "source_version": "2.1",
+        "reviewed_at": "2026-09-22",
+        "note": "Transcribed by hand from the free-text evidenceStrength description in the gene's ClinGen Criteria Specification Registry (CSpec, cspec.genome.network) document, retrieved 2026-09-22 - the registry has no structured numeric-threshold field, only markdown prose per evidence strength, so this is manual_transcription like ba1_exceptions above, not machine-parsed. Re-verify against the source document if it is revised."
+      },
+      "bs1": {
+        "max_credible_af": 1e-05,
+        "frequency_statistic": "faf95",
+        "comparison": ">=",
+        "condition": "MONDO:0021056",
+        "condition_label": "familial adenomatous polyposis 1",
+        "condition_scope": "gene_wide",
+        "inheritance": "autosomal_dominant",
+        "source": "ClinGen CSpec GN089: InSiGHT Hereditary Colorectal Cancer/Polyposis VCEP APC v2.1",
+        "source_version": "2.1",
+        "reviewed_at": "2026-09-22",
+        "note": "Transcribed by hand from the free-text evidenceStrength description in the gene's ClinGen Criteria Specification Registry (CSpec, cspec.genome.network) document, retrieved 2026-09-22 - the registry has no structured numeric-threshold field, only markdown prose per evidence strength, so this is manual_transcription like ba1_exceptions above, not machine-parsed. Re-verify against the source document if it is revised."
+      }
+    },
+    "PAH": {
+      "ba1": {
+        "max_af": 0.015,
+        "frequency_statistic": "af",
+        "comparison": ">=",
+        "source": "ClinGen CSpec GN006: Phenylketonuria VCEP PAH v2.0",
+        "source_version": "2.0",
+        "reviewed_at": "2026-09-22",
+        "note": "Transcribed by hand from the free-text evidenceStrength description in the gene's ClinGen Criteria Specification Registry (CSpec, cspec.genome.network) document, retrieved 2026-09-22 - the registry has no structured numeric-threshold field, only markdown prose per evidence strength, so this is manual_transcription like ba1_exceptions above, not machine-parsed. Re-verify against the source document if it is revised."
+      },
+      "bs1": {
+        "max_credible_af": 0.002,
+        "frequency_statistic": "af",
+        "comparison": ">=",
+        "condition": "MONDO:0009861",
+        "condition_label": "phenylketonuria",
+        "condition_scope": "gene_wide",
+        "inheritance": "autosomal_recessive",
+        "source": "ClinGen CSpec GN006: Phenylketonuria VCEP PAH v2.0",
+        "source_version": "2.0",
+        "reviewed_at": "2026-09-22",
+        "note": "Transcribed by hand from the free-text evidenceStrength description in the gene's ClinGen Criteria Specification Registry (CSpec, cspec.genome.network) document, retrieved 2026-09-22 - the registry has no structured numeric-threshold field, only markdown prose per evidence strength, so this is manual_transcription like ba1_exceptions above, not machine-parsed. Re-verify against the source document if it is revised."
+      }
+    },
+    "PTEN": {
+      "ba1": {
+        "max_af": 0.00056,
+        "frequency_statistic": "faf95",
+        "comparison": ">",
+        "source": "ClinGen CSpec GN003: PTEN VCEP PTEN v3.2",
+        "source_version": "3.2",
+        "reviewed_at": "2026-09-22",
+        "note": "Transcribed by hand from the free-text evidenceStrength description in the gene's ClinGen Criteria Specification Registry (CSpec, cspec.genome.network) document, retrieved 2026-09-22 - the registry has no structured numeric-threshold field, only markdown prose per evidence strength, so this is manual_transcription like ba1_exceptions above, not machine-parsed. Re-verify against the source document if it is revised."
+      },
+      "bs1": {
+        "max_credible_af": 4.3e-05,
+        "frequency_statistic": "faf95",
+        "comparison": ">=",
+        "condition": "MONDO:0017623",
+        "condition_label": "PTEN hamartoma tumor syndrome",
+        "condition_scope": "gene_wide",
+        "inheritance": "autosomal_dominant",
+        "source": "ClinGen CSpec GN003: PTEN VCEP PTEN v3.2",
+        "source_version": "3.2",
+        "reviewed_at": "2026-09-22",
+        "note": "Transcribed by hand from the free-text evidenceStrength description in the gene's ClinGen Criteria Specification Registry (CSpec, cspec.genome.network) document, retrieved 2026-09-22 - the registry has no structured numeric-threshold field, only markdown prose per evidence strength, so this is manual_transcription like ba1_exceptions above, not machine-parsed. Re-verify against the source document if it is revised."
+      }
+    },
+    "BRCA2": {
+      "ba1": {
+        "max_af": 0.001,
+        "frequency_statistic": "faf95",
+        "comparison": ">",
+        "source": "ClinGen CSpec GN097: ENIGMA BRCA1 and BRCA2 VCEP BRCA2 v1.2",
+        "source_version": "1.2",
+        "reviewed_at": "2026-09-22",
+        "note": "Transcribed by hand from the free-text evidenceStrength description in the gene's ClinGen Criteria Specification Registry (CSpec, cspec.genome.network) document, retrieved 2026-09-22 - the registry has no structured numeric-threshold field, only markdown prose per evidence strength, so this is manual_transcription like ba1_exceptions above, not machine-parsed. Re-verify against the source document if it is revised."
+      },
+      "bs1": {
+        "max_credible_af": 0.0001,
+        "frequency_statistic": "faf95",
+        "comparison": ">",
+        "condition": "MONDO:0012933",
+        "condition_label": "BRCA2-related cancer predisposition",
+        "condition_scope": "gene_wide",
+        "inheritance": "autosomal_dominant",
+        "source": "ClinGen CSpec GN097: ENIGMA BRCA1 and BRCA2 VCEP BRCA2 v1.2",
+        "source_version": "1.2",
+        "reviewed_at": "2026-09-22",
+        "note": "Transcribed by hand from the free-text evidenceStrength description in the gene's ClinGen Criteria Specification Registry (CSpec, cspec.genome.network) document, retrieved 2026-09-22 - the registry has no structured numeric-threshold field, only markdown prose per evidence strength, so this is manual_transcription like ba1_exceptions above, not machine-parsed. Re-verify against the source document if it is revised."
+      }
+    },
+    "LDLR": {
+      "ba1": {
+        "max_af": 0.005,
+        "frequency_statistic": "faf95",
+        "comparison": ">=",
+        "source": "ClinGen CSpec GN013: Familial Hypercholesterolemia VCEP LDLR v1.2",
+        "source_version": "1.2",
+        "reviewed_at": "2026-09-22",
+        "note": "Transcribed by hand from the free-text evidenceStrength description in the gene's ClinGen Criteria Specification Registry (CSpec, cspec.genome.network) document, retrieved 2026-09-22 - the registry has no structured numeric-threshold field, only markdown prose per evidence strength, so this is manual_transcription like ba1_exceptions above, not machine-parsed. Re-verify against the source document if it is revised."
+      },
+      "bs1": {
+        "max_credible_af": 0.002,
+        "frequency_statistic": "faf95",
+        "comparison": ">=",
+        "condition": "MONDO:0007750",
+        "condition_label": "hypercholesterolemia, familial",
+        "condition_scope": "gene_wide",
+        "inheritance": "autosomal_dominant",
+        "source": "ClinGen CSpec GN013: Familial Hypercholesterolemia VCEP LDLR v1.2",
+        "source_version": "1.2",
+        "reviewed_at": "2026-09-22",
+        "note": "Transcribed by hand from the free-text evidenceStrength description in the gene's ClinGen Criteria Specification Registry (CSpec, cspec.genome.network) document, retrieved 2026-09-22 - the registry has no structured numeric-threshold field, only markdown prose per evidence strength, so this is manual_transcription like ba1_exceptions above, not machine-parsed. Re-verify against the source document if it is revised."
+      }
+    }
+  },
+  "gene_critical_domains": {
+    "RYR1": {
+      "source": "ClinGen CSpec GN012: Malignant Hyperthermia VCEP RYR1",
+      "source_version": "see CSpec",
+      "reviewed_at": "2026-09-22",
+      "ranges": [
+        {
+          "start": 1,
+          "end": 552,
+          "label": "N-terminal region"
+        },
+        {
+          "start": 2101,
+          "end": 2458,
+          "label": "central region"
+        }
+      ],
+      "note": "Transcribed by hand from the free-text Moderate-tier evidenceStrength description in the gene's ClinGen Criteria Specification Registry (CSpec, cspec.genome.network) document, retrieved 2026-09-22 - manual_transcription, like gene_frequency_thresholds above (same registry, same lack of a structured field). Only Moderate-tier codon-range rules are included: this project's own PM1 implementation always reports \"moderate\" strength for a met critical-domain route regardless of source (see criteria/regions.py), so citing a real Supporting-tier rule (several other genes have one, e.g. HNF1A, RUNX1) as moderate would overstate it - excluded rather than misrepresented."
+    },
+    "MECP2": {
+      "source": "ClinGen CSpec GN036: Rett/Angelman-like VCEP MECP2",
+      "source_version": "see CSpec",
+      "reviewed_at": "2026-09-22",
+      "ranges": [
+        {
+          "start": 90,
+          "end": 162,
+          "label": "Methyl-DNA binding domain (MBD)"
+        },
+        {
+          "start": 302,
+          "end": 306,
+          "label": "Transcriptional repression domain (TRD)"
+        }
+      ],
+      "note": "Transcribed by hand from the free-text Moderate-tier evidenceStrength description in the gene's ClinGen Criteria Specification Registry (CSpec, cspec.genome.network) document, retrieved 2026-09-22 - manual_transcription, like gene_frequency_thresholds above (same registry, same lack of a structured field). Only Moderate-tier codon-range rules are included: this project's own PM1 implementation always reports \"moderate\" strength for a met critical-domain route regardless of source (see criteria/regions.py), so citing a real Supporting-tier rule (several other genes have one, e.g. HNF1A, RUNX1) as moderate would overstate it - excluded rather than misrepresented."
+    },
+    "BMPR2": {
+      "source": "ClinGen CSpec GN125: Pulmonary Hypertension VCEP BMPR2",
+      "source_version": "see CSpec",
+      "reviewed_at": "2026-09-22",
+      "ranges": [
+        {
+          "start": 33,
+          "end": 131,
+          "label": "Extracellular domain"
+        },
+        {
+          "start": 203,
+          "end": 504,
+          "label": "Kinase domain"
+        }
+      ],
+      "note": "Transcribed by hand from the free-text Moderate-tier evidenceStrength description in the gene's ClinGen Criteria Specification Registry (CSpec, cspec.genome.network) document, retrieved 2026-09-22 - manual_transcription, like gene_frequency_thresholds above (same registry, same lack of a structured field). Only Moderate-tier codon-range rules are included: this project's own PM1 implementation always reports \"moderate\" strength for a met critical-domain route regardless of source (see criteria/regions.py), so citing a real Supporting-tier rule (several other genes have one, e.g. HNF1A, RUNX1) as moderate would overstate it - excluded rather than misrepresented."
+    }
   }
 }

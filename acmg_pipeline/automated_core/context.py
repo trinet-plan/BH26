@@ -9,7 +9,13 @@ so, and an incomplete list resolves nothing rather than asserting absence.
 from acmg_pipeline.automated_core.models import Variant
 
 
-CONTEXT_FIELDS = ("condition", "condition_label", "inheritance", "disease_frequency_threshold")
+CONTEXT_FIELDS = ("condition", "condition_label", "inheritance", "disease_frequency_threshold",
+                  "ba1_threshold_override", "gene_critical_domains")
+# The two fields a gene_frequency_thresholds entry may name - each mirrors one criterion's
+# own threshold shape (BA1's is checked by criteria/ba1.py's threshold_policy(), BS1's IS
+# disease_frequency_threshold, the same field a per-variant/per-record curated context
+# already supplies - see apply_context()'s GENE_THRESHOLD_FIELDS mapping below).
+_GENE_THRESHOLD_KEYS = ("ba1", "bs1")
 
 
 def _require(condition, message):
@@ -44,6 +50,39 @@ def load_context(document):
         _require(not unknown,
                  f"Unsupported curated record context fields for {record_id}: {sorted(unknown)}")
         parsed_record_contexts[record_id] = dict(value)
+    gene_thresholds = document.get("gene_frequency_thresholds")
+    if gene_thresholds is not None:
+        _require(isinstance(gene_thresholds, dict), "gene_frequency_thresholds must be an object")
+        for gene, entry in gene_thresholds.items():
+            _require(isinstance(gene, str) and gene, "gene_frequency_thresholds key must be a gene symbol")
+            _require(isinstance(entry, dict), f"gene_frequency_thresholds[{gene!r}] must be an object")
+            unknown = set(entry) - set(_GENE_THRESHOLD_KEYS)
+            _require(not unknown,
+                     f"Unsupported gene_frequency_thresholds fields for {gene!r}: {sorted(unknown)}")
+            for criterion_key, threshold in entry.items():
+                _require(isinstance(threshold, dict),
+                         f"gene_frequency_thresholds[{gene!r}][{criterion_key!r}] must be an object")
+                required = ("source", "source_version", "reviewed_at", "frequency_statistic")
+                _require(all(threshold.get(field) for field in required),
+                         f"gene_frequency_thresholds[{gene!r}][{criterion_key!r}] requires "
+                         f"{', '.join(required)}")
+    critical_domains = document.get("gene_critical_domains")
+    if critical_domains is not None:
+        _require(isinstance(critical_domains, dict), "gene_critical_domains must be an object")
+        for gene, entry in critical_domains.items():
+            _require(isinstance(gene, str) and gene, "gene_critical_domains key must be a gene symbol")
+            _require(isinstance(entry, dict), f"gene_critical_domains[{gene!r}] must be an object")
+            required = ("source", "source_version", "reviewed_at", "ranges")
+            _require(all(entry.get(field) for field in required),
+                     f"gene_critical_domains[{gene!r}] requires {', '.join(required)}")
+            _require(isinstance(entry["ranges"], list) and entry["ranges"],
+                     f"gene_critical_domains[{gene!r}].ranges must be a nonempty list")
+            for item in entry["ranges"]:
+                _require(isinstance(item, dict), f"gene_critical_domains[{gene!r}] range must be an object")
+                _require(
+                    isinstance(item.get("start"), int) and isinstance(item.get("end"), int)
+                    and 0 < item["start"] <= item["end"],
+                    f"gene_critical_domains[{gene!r}] range requires integer start<=end: {item}")
     exceptions = document.get("ba1_exceptions")
     if exceptions is not None:
         _require(isinstance(exceptions, dict), "ba1_exceptions must be an object")
@@ -68,7 +107,17 @@ def load_context(document):
                      f"BA1 exception {key} requires gene, hgvs_c, caid and resolved_by")
     return {"context_version": version, "records": parsed,
             "record_contexts": parsed_record_contexts, "ba1_exceptions": exceptions,
+            "gene_frequency_thresholds": gene_thresholds, "gene_critical_domains": critical_domains,
             "source": document.get("source")}
+
+
+# Which context field each gene_frequency_thresholds sub-entry feeds - "bs1" feeds the same
+# disease_frequency_threshold field a per-variant/per-record curated context already supplies
+# (criteria/bs1.py's own disease_specific_threshold() reads it, condition-matching included -
+# a gene_frequency_thresholds entry names its own real curated condition, same as a per-
+# variant one would), "ba1" feeds a new field criteria/ba1.py's threshold_policy() checks
+# before falling back to config["BA1"]'s global default.
+GENE_THRESHOLD_TARGET_FIELD = {"bs1": "disease_frequency_threshold", "ba1": "ba1_threshold_override"}
 
 
 def apply_context(record, context):
@@ -81,6 +130,16 @@ def apply_context(record, context):
         **context["records"].get(key, {}),
         **context.get("record_contexts", {}).get(record.get("record_id"), {}),
     }
+    gene_entry = (context.get("gene_frequency_thresholds") or {}).get(record.get("gene"))
+    if gene_entry:
+        # Lowest priority: a per-variant or per-record entry above already named the same
+        # field is a more specific curation and is never overwritten by a gene-wide default.
+        for source_key, target_field in GENE_THRESHOLD_TARGET_FIELD.items():
+            if target_field not in updated and gene_entry.get(source_key):
+                updated[target_field] = gene_entry[source_key]
+    domains_entry = (context.get("gene_critical_domains") or {}).get(record.get("gene"))
+    if domains_entry and "gene_critical_domains" not in updated:
+        updated["gene_critical_domains"] = domains_entry
     exceptions = context.get("ba1_exceptions")
     # An incomplete list cannot say a variant is absent from it, so it resolves nothing.
     if exceptions and exceptions["complete"]:
@@ -99,7 +158,9 @@ def context_summary(context):
     exceptions = context.get("ba1_exceptions")
     summary = {"context_version": context["context_version"], "source": context.get("source"),
                "records": len(context["records"]),
-               "record_contexts": len(context.get("record_contexts", {}))}
+               "record_contexts": len(context.get("record_contexts", {})),
+               "gene_frequency_thresholds": len(context.get("gene_frequency_thresholds") or {}),
+               "gene_critical_domains": len(context.get("gene_critical_domains") or {})}
     if exceptions:
         summary["ba1_exceptions"] = {
             "source": exceptions["source"], "source_version": exceptions["source_version"],
