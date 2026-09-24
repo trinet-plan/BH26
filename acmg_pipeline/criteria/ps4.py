@@ -436,14 +436,98 @@ def finalize(judgment: PS4Judgment, pmid: Optional[str] = None) -> FinalResult:
 
 
 # ============================================================================
-# 4. Multi-paper aggregation - thin wrapper, see evidence_common.py
+# 4. Multi-paper aggregation - thin wrapper, see evidence_common.py, plus a
+#    pooled-case-series fallback specific to PS4 (see
+#    _pooled_case_series_aggregate() below)
 # ============================================================================
+
+# A single small case series alone is exactly what the per-paper prompt
+# already refuses to call PS4 on its own (no defined control/background
+# comparison) - see PROMPT_TEMPLATE step 5. Requiring at least this many
+# INDEPENDENT papers, each with its own stated affected-carrier count,
+# before pooling is a conservative floor against one paper's case series
+# masquerading as corroborated evidence; POOLED_MIN_PAPERS papers times a
+# typical single-digit case series each is what actually produces a
+# ClinGen-style "9+ affected reported across N papers" determination (see
+# this module's own docstring, design doc section 4/3-3).
+POOLED_MIN_PAPERS = 2
+# ClinGen VCEPs commonly treat a handful of independently reported affected
+# carriers, pooled across sources, as PS4_Supporting-level evidence (see
+# ps3_bs3_ps4_gate's own note on RUNX1 c.601C>T: a real ERepo PS4 basis
+# pooled 9+ papers into "20+ affected reported"). 3 is a deliberately
+# conservative floor for this project's own pooling (not a VCEP-published
+# number), disclosed as such in the caution hint below.
+POOLED_MIN_AFFECTED = 3
+
+
+def _pooled_case_series_aggregate(contributions: list[PaperContribution]) -> Optional[AggregatedJudgment]:
+    """
+    Real PS4 determinations are very often built by pooling several case
+    reports/series across papers, none of which alone is a formal
+    case-control study with a defined denominator (see this module's own
+    docstring, design doc section 4/3-3: a real ERepo PS4 basis pooled 9+
+    papers into "20+ affected reported"). The per-paper prompt correctly
+    refuses to call a single case series PS4 on its own - it has no
+    control/background comparison - so the standard aggregation above
+    (which only counts papers whose OWN direction was already PS4) finds
+    nothing to aggregate and returns not_clear, even when several papers
+    each independently reported real affected carriers for this variant.
+
+    This pools `case_control_data.affected_carriers` across every paper
+    whose variant match succeeded, regardless of that paper's own
+    study_design or direction, and returns a PS4 call only when: at least
+    POOLED_MIN_PAPERS distinct papers each report a positive
+    affected_carriers count, none of the pooled papers reports any
+    unaffected/control carriers (a paper with both affected AND control
+    counts already had every chance to be scored as a real case-control
+    study through the normal path above - pooling it here too would double
+    count evidence the primary path already had and rejected), and the sum
+    reaches POOLED_MIN_AFFECTED. Returns None (caller keeps the original
+    not_clear) when these conditions are not met, so this only ever adds a
+    signal the standard aggregation missed - it never overrides one the
+    standard path already reached.
+    """
+    pooled = [
+        c for c in contributions
+        if c.result.judgment.variant_matching.match_status != MatchStatus.UNSUCCESSFUL
+        and (c.result.judgment.case_control_data.affected_carriers or 0) > 0
+        and not c.result.judgment.case_control_data.unaffected_carriers
+    ]
+    if len(pooled) < POOLED_MIN_PAPERS:
+        return None
+    total_affected = sum(c.result.judgment.case_control_data.affected_carriers for c in pooled)
+    if total_affected < POOLED_MIN_AFFECTED:
+        return None
+    per_paper = ", ".join(
+        f"PMID:{c.pmid}={c.result.judgment.case_control_data.affected_carriers}" for c in pooled
+    )
+    hints = [CuratorHint(
+        "caution",
+        f"No single paper reached a formal case-control PS4 conclusion on "
+        f"its own, but {len(pooled)} independent papers each reported real "
+        f"affected carriers with no contradicting control-side count "
+        f"({per_paper}), pooling to {total_affected} affected individuals "
+        "total. This is this project's OWN pooling heuristic (a threshold "
+        f"of {POOLED_MIN_AFFECTED}, not a VCEP-published number), not a "
+        "verified ClinGen aggregate determination - confirm this pooling "
+        "is appropriate (e.g. the papers are not reporting overlapping "
+        "cohorts/families) before relying on it.",
+    )]
+    return AggregatedJudgment(contributions, CaseControlDirection.PS4, hints)
+
 
 def aggregate_multi_paper_results(contributions: list[PaperContribution]) -> AggregatedJudgment:
     """
     Same generic aggregation as ps3_bs3_judgment.py's wrapper, but this is
     the criterion this design-doc lesson was actually about (section 4/3-3:
     a real PS4 determination pooled 9+ papers) - see evidence_common.
-    aggregate_multi_paper_results for the logic itself.
+    aggregate_multi_paper_results for the logic itself. When that generic
+    pass finds no single paper confidently reaching PS4 on its own, tries
+    _pooled_case_series_aggregate() as a fallback before giving up to
+    not_clear - see that function's own docstring for why and how.
     """
-    return _generic_aggregate_multi_paper_results(contributions, not_clear=CaseControlDirection.NOT_CLEAR)
+    result = _generic_aggregate_multi_paper_results(contributions, not_clear=CaseControlDirection.NOT_CLEAR)
+    if result.aggregated_direction != CaseControlDirection.NOT_CLEAR:
+        return result
+    pooled = _pooled_case_series_aggregate(contributions)
+    return pooled if pooled is not None else result
