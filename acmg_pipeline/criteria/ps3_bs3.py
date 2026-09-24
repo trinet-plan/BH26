@@ -551,19 +551,59 @@ def detect_experiment_conflict(judgment: PS3BS3Judgment) -> bool:
     present among the experiment results (i.e., assays within the same paper
     disagree on direction).
 
-    Real-world instance (2026-09-14, gemma-4 run): for PTEN c.112C>T
-    (p.Pro38Ser), VAMP-seq (protein abundance, functionally_normal) and the
-    Akt-activation assay (functionally_abnormal) were in conflict, but the
-    LLM adopted only the latter and confidently called PS3, which was wrong
-    (ground truth was not_met). This function mechanically detects that
-    class of error and is used inside finalize() to force an override to
-    not_clear.
+    Originally written (2026-09-14) against a PTEN c.112C>T (p.Pro38Ser)
+    gemma-4 run where VAMP-seq (protein abundance, functionally_normal) and
+    the Akt-activation assay (functionally_abnormal) disagreed. The ground
+    truth for PS3 on this exact variant is actually MET (moderate) - see
+    test_data.full_criteria_ground_truth - not not_met as this function's
+    own history originally assumed, so the case this was built around is
+    itself a real, correct MET that a blanket override would suppress. See
+    _conflict_reasoned_in_rationale() for the distinction this now draws
+    between a paper the LLM read carefully (and reasoned through the
+    disagreement) and one it skimmed past.
     """
     directions = {e.result_direction for e in judgment.experiments}
     return (
         ResultDirection.FUNCTIONALLY_ABNORMAL in directions
         and ResultDirection.FUNCTIONALLY_NORMAL in directions
     )
+
+
+_CONTRASTIVE_MARKERS = (
+    "although", "despite", "even though", "whereas", "in contrast",
+    "however", "nonetheless", "nevertheless", "but the", "while the",
+)
+
+
+def _conflict_reasoned_in_rationale(judgment: PS3BS3Judgment) -> bool:
+    """
+    Whether the free-text rationale shows the LLM actually engaged with the
+    disagreeing experiments, rather than silently picking one and ignoring
+    the other - the real failure mode detect_experiment_conflict was built
+    to catch (2026-09-14: the LLM "adopted only" the abnormal result with no
+    acknowledgement of the normal one at all).
+
+    A rationale that names a contrastive marker (a paper's own text
+    weighing one finding against another - "although VAMP-seq showed
+    WT-like abundance... the Akt-activation assay... supports PS3") is
+    reasoning through the conflict, not ignoring it. Confirmed against the
+    real PTEN c.112C>T case (ground truth PS3=MET) this function was named
+    for: its rationale opens with exactly this pattern ("Although VAMP-seq
+    showed p.Pro38Ser has WT-like/enhanced protein abundance ... a direct
+    functional assay demonstrated ... even though the abundance assay
+    alone would suggest a benign/normal result").
+
+    This is a coarse text heuristic, same style/limitations as
+    detect_no_quantitative_evidence's pattern matching - it cannot verify
+    the reasoning is actually sound, only that the model did not silently
+    drop the discordant experiment. detect_experiment_conflict still fires
+    and still produces the same warning hint either way; this only decides
+    whether the direction is additionally forced to not_clear.
+    """
+    text = (judgment.overall_evidence.rationale or "").lower()
+    if not text:
+        return False
+    return any(marker in text for marker in _CONTRASTIVE_MARKERS)
 
 
 # Added 2026-09-15: detect_experiment_conflict above turned out to be
@@ -683,17 +723,28 @@ def finalize(
         conflicting = "; ".join(
             f"{e.assay_type} = {e.result_direction.value}" for e in judgment.experiments
         )
-        hints.append(CuratorHint(
-            "warning",
-            f"The experiments in this paper{paper_ref} disagree on "
-            f"direction ({conflicting}), yet the LLM confidently concluded "
-            f"{effective_direction.value}. This conflict was detected "
-            "automatically and the judgment has been forced to not_clear "
-            "(real-world instance: PTEN c.112C>T, where VAMP-seq showed "
-            "functionally_normal but the Akt-activation assay showed "
-            "functionally_abnormal, and the LLM adopted only the latter).",
-        ))
-        effective_direction = OverallDirection.NOT_CLEAR
+        reasoned = _conflict_reasoned_in_rationale(judgment)
+        if reasoned:
+            hints.append(CuratorHint(
+                "caution",
+                f"The experiments in this paper{paper_ref} disagree on "
+                f"direction ({conflicting}). The rationale shows the LLM "
+                f"weighed the disagreement rather than ignoring it, so the "
+                f"judgment ({effective_direction.value}) was kept, but a "
+                "human curator should still confirm which assay is "
+                "genuinely the most direct evidence.",
+            ))
+        else:
+            hints.append(CuratorHint(
+                "warning",
+                f"The experiments in this paper{paper_ref} disagree on "
+                f"direction ({conflicting}), yet the LLM confidently concluded "
+                f"{effective_direction.value} without acknowledging the "
+                "disagreement in its own rationale. This conflict was "
+                "detected automatically and the judgment has been forced "
+                "to not_clear.",
+            ))
+            effective_direction = OverallDirection.NOT_CLEAR
     elif detect_narrative_categorical_mismatch(judgment) and effective_direction != OverallDirection.NOT_CLEAR:
         hints.append(CuratorHint(
             "warning",
