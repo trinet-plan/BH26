@@ -5,7 +5,7 @@ LLM(vLLM上のgemma-4)とPubMed MCPを組み合わせ、変異のACMG/AMP分類�
 基づく16基準を統合し、人間キュレーター向けの下書き判定を生成します。残る7基準も
 NOT_EVALUATEDとして保持し、1変異につき全28基準のVA-Spec EvidenceLineを返します。
 
-設計方針・検証結果の詳細は [`ps3_bs3_ps4_implementation_v10.md`](ps3_bs3_ps4_implementation_v10.md)
+設計方針・検証結果の詳細は [`ps3_bs3_ps4_implementation_v10.md`](doc/ps3_bs3_ps4_implementation_v10.md)
 を参照してください。
 
 外部データの現在の取得経路、未対応・review待ちの情報、TogoVarへ置換する場合の

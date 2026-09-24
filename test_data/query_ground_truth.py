@@ -25,7 +25,7 @@ import json
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from acmg_pipeline.classification import ALL_ACMG_CODES
 from test_data.collectors.full_criteria_ground_truth import GROUND_TRUTH, GroundTruthEntry

@@ -1,6 +1,6 @@
 # AGENTS.md
 
-このファイルはAIコーディングエージェント向けの作業ガイドです。人間向けのセットアップ手順・アーキテクチャ概要は [`README.md`](README.md) を、設計判断の経緯は [`ps3_bs3_ps4_implementation_v10.md`](ps3_bs3_ps4_implementation_v10.md) を参照してください。
+このファイルはAIコーディングエージェント向けの作業ガイドです。人間向けのセットアップ手順・アーキテクチャ概要は [`README.md`](README.md) を、設計判断の経緯は [`ps3_bs3_ps4_implementation_v10.md`](doc/ps3_bs3_ps4_implementation_v10.md) を参照してください。
 
 ## プロジェクト概要
 
