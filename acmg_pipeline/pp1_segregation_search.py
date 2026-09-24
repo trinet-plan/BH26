@@ -143,7 +143,8 @@ def _parse_relatives(raw_relatives: list) -> list[SegregationRelative]:
 
 
 async def search_family_segregation(
-    gene: str, hgvsc: str, *, max_candidates: int = 5,
+    gene: str, hgvsc: str, hgvsp: Optional[str] = None, *,
+    preferred_pmids: tuple[str, ...] = (), max_candidates: int = 5,
 ) -> LiteratureSegregationResult:
     """Search PubMed for a family/pedigree study of this variant and ask
     the project's own LLM to extract per-relative segregation data.
@@ -152,6 +153,29 @@ async def search_family_segregation(
     one relative with both affected_status and variant_status stated;
     LiteratureSegregationResult.found=False (with `reason`) if nothing
     usable turned up.
+
+    Query construction deliberately never embeds the raw HGVS c. notation
+    (e.g. "c.1594T>C") into a PubMed query string - confirmed empirically
+    in acmg_pipeline.pipeline.search_candidate_pmids's own docstring
+    (2026-09-16) that exact c./p. notation returns ZERO results even for a
+    variant whose own source paper is indexed in PubMed, which is exactly
+    what the previous version of this query did. `hgvsp`, when available,
+    lets search_candidate_pmids build its own protein-notation query
+    ("{gene} AND {aa_change}", validated 5/5 on real cases) as the first
+    candidate query instead.
+
+    `preferred_pmids`, when given (this variant's own ERepo evidenceLinks -
+    real VCEP-curated citations for its overall classification, not search
+    results), are tried BEFORE any live search query. Confirmed empirically
+    (2026-09-24) that a live search here, regardless of query wording,
+    returns recent/generic gene papers with zero overlap against real
+    ERepo citations for the same variant (checked directly: MYH7
+    c.1594T>C, MSH2 c.1012G>A, RUNX1 c.601C>T all had 0/N overlap) - a
+    family/pedigree paper is rare enough that when a VCEP already cited
+    something for this variant, checking those first is far more likely
+    to surface the real family study than a fresh keyword search, the same
+    "curated citations first, live search only as fallback" pattern
+    resolve_pmids_for_variant() already uses for PS3/BS3/PS4/BP5.
     """
     if not gene or not hgvsc:
         return LiteratureSegregationResult(found=False, reason="no_gene_or_hgvsc_available")
@@ -160,14 +184,17 @@ async def search_family_segregation(
 
     async with AsyncExitStack() as stack:
         mcp = await pipeline.connect_pubmed(stack)
-        pmids = await pipeline.search_candidate_pmids(
-            mcp, gene, disease=f"{hgvsc} family segregation pedigree", max_results=max_candidates,
-        )
+        pmids = list(dict.fromkeys(preferred_pmids))
+        if len(pmids) < max_candidates:
+            searched = await pipeline.search_candidate_pmids(
+                mcp, gene, hgvsp=hgvsp, disease="family segregation pedigree", max_results=max_candidates,
+            )
+            pmids = list(dict.fromkeys([*pmids, *searched]))
         if len(pmids) < 3:
             more = await pipeline.search_candidate_pmids(
-                mcp, gene, disease=f"{hgvsc} family pedigree", max_results=max_candidates,
+                mcp, gene, disease="family pedigree", max_results=max_candidates,
             )
-            pmids = list(dict.fromkeys(pmids + more))[:max_candidates]
+            pmids = list(dict.fromkeys(pmids + more))[:max(max_candidates, len(preferred_pmids))]
 
         for pmid in pmids:
             text, _note = await pipeline.fetch_full_text(mcp, pmid)

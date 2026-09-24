@@ -340,6 +340,7 @@ async def evaluate(
     variant: VariantRecord,
     clinical_note: ClinicalNoteExtraction,
     config: dict,
+    erepo_client=None,
 ) -> dict[str, CriterionEvidence]:
     """Return {code: CriterionEvidence} for PP1, BS4, PP4 - the entry point
     acmg_pipeline.pipeline.evaluate_variant_evidence_lines() calls.
@@ -348,6 +349,12 @@ async def evaluate(
     `automated_config` convention but currently unused - PP4's diagnostic-
     yield input always comes from a live literature search now (see this
     module's own docstring), not from a caller-supplied path/override.
+
+    `erepo_client`, when given, lets the PP1/BS4 family-segregation search
+    try this variant's own ERepo evidence_pmids before falling back to a
+    fresh keyword search - see pp1_segregation_search.search_family_
+    segregation()'s own docstring for why this matters. Optional (defaults
+    to None, same behavior as before) so existing callers are unaffected.
 
     PP1/BS4 (family co-segregation) never need the literature search at
     all - they are scored from clinical_note.family.relatives alone, per
@@ -415,8 +422,16 @@ async def evaluate(
         from acmg_pipeline.clinical_note import Relative
         from acmg_pipeline.inputs import variant_identity
 
-        _, hgvsc, _, _ = variant_identity(variant)
-        segregation = await pp1_segregation_search.search_family_segregation(gene, hgvsc)
+        _, hgvsc, hgvsp, _ = variant_identity(variant)
+        preferred_pmids = ()
+        if erepo_client is not None:
+            try:
+                preferred_pmids = tuple(erepo_client.lookup(gene, hgvsc).evidence_pmids)
+            except Exception:
+                preferred_pmids = ()
+        segregation = await pp1_segregation_search.search_family_segregation(
+            gene, hgvsc, hgvsp=hgvsp if hgvsp != "N/A" else None,
+            preferred_pmids=preferred_pmids)
         if segregation.found:
             ar_case_mode = segregation.ar_case_mode
             clinical_note = _replace(
