@@ -37,6 +37,13 @@ METHOD_TYPES = {
     "PP5": "Reputable Source Assessment",
     "BA1": "Population Data Assessment",
     "BS1": "Population Data Assessment",
+    # Not "Population Data Assessment" despite both being population-derived: the installed
+    # ga4gh.va_spec.acmg_2015 reference model's own ALLOWED_CRITERIA_BY_METHOD_TYPE reserves
+    # that category for BA1/BS1/PM2 (allele frequency) and puts BS2 under "Case-Control
+    # Enrichment Assessment" instead (alongside PM4) - the VA-Spec standard's own
+    # categorization, confirmed by running this project's own VA-Spec validation test suite
+    # against it, not a choice made here.
+    "BS2": "Case-Control Enrichment Assessment",
     "BP1": "Variant spectrum assessment",
     "BP3": "Protein length change assessment",
     "BP4": "In silico functional impact assessment",

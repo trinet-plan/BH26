@@ -25,6 +25,7 @@ CONTEXT_FIELDS = (
     "disease_frequency_threshold",
     "ba1_exception_assessment",
     "ba1_threshold_override",
+    "bs2_threshold_override",
     "gene_critical_domains",
 )
 

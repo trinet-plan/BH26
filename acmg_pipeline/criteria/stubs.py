@@ -13,18 +13,30 @@ rule added 2026-09-19).
   which overstates this project's actual coverage. stub_evidence() returns
   an honest NOT_EVALUATED placeholder instead.
 
-[Why these four share one file instead of four near-empty modules]
-  PM3, BS2, BP2, BP5 are literature-adjacent Layer-3 codes, but the
-  evidence for them lives in the PATIENT's own clinical/genetic-testing
-  records (phasing, a healthy-carrier record, segregation contradictions)
-  - not in papers. Out of scope for a literature-reading LLM pipeline by
-  design, not by omission. None needs its own bespoke prompt/schema/
-  finalize() the way ps4.py or segregation.py do - they need exactly one
-  thing, a NOT_EVALUATED marker - so one shared function serves all four,
-  rather than four copies of the same four-line stub. Whichever team/
-  person implements a real one later has one obvious interface to match:
-  build a module shaped like ps4.py or segregation.py, then register it in
-  registry.py in place of the stub.
+[Why the remaining stub codes share one file instead of one near-empty module each]
+  PM3 and BP2 are literature-adjacent Layer-3 codes, but the evidence for
+  them lives in the PATIENT's own clinical/genetic-testing records (trans/
+  cis phasing against another variant) - not in papers, and not in any
+  population database either. Out of scope for this project's provider
+  pipeline by design, not by omission: no provider here has access to a
+  second variant's phase relative to this one. Neither needs its own
+  bespoke prompt/schema/finalize() the way ps4.py or segregation.py do -
+  they need exactly one thing, a NOT_EVALUATED marker - so one shared
+  function serves both, rather than two copies of the same four-line stub.
+  Whichever team/person implements a real one later has one obvious
+  interface to match: build a module shaped like ps4.py or segregation.py,
+  then register it in registry.py in place of the stub.
+
+[BS2 and BP5 are no longer here]
+  BS2 moved to acmg_pipeline.constants.AUTOMATED_CODES / IMPLEMENTED_CODES
+  on 2026-09-25, once acmg_pipeline.criteria.bs2 connected gnomAD's own
+  homozygote_count/hemizygote_count fields as the project's explicit,
+  documented reinterpretation of "observed in a healthy adult" (see
+  bs2.py's own module docstring for why this is a deliberate scope choice,
+  not a reversal of the reasoning below - and why it only covers
+  autosomal-recessive/X-linked inheritance, not autosomal-dominant). BP5
+  moved to acmg_pipeline.constants.LITERATURE_CODES on 2026-09-22 (see
+  acmg_pipeline.criteria.bp5's own module docstring).
 
 [PP1/BS4/PP4 and PS2/PM6 are no longer here]
   PP1/BS4/PP4 moved to acmg_pipeline.constants.PHENOTYPE_SEGREGATION_CODES /
@@ -45,9 +57,9 @@ from __future__ import annotations
 from acmg_pipeline.classification import CriterionEvidence
 from acmg_pipeline.constants import IMPLEMENTED_CODES, STUB_CODES, CriterionStatus
 
-# These four criteria depend primarily on patient/family records, not
-# literature or automated rule/lookup evidence.
-LITERATURE_ADJACENT_BUT_CLINICAL_RECORD = {"PM3", "BS2", "BP2", "BP5"}
+# These two criteria depend on a second variant's trans/cis phase relative
+# to this one - data no provider in this project's pipeline has access to.
+LITERATURE_ADJACENT_BUT_CLINICAL_RECORD = {"PM3", "BP2"}
 
 
 # CriterionEvidence's `status` field is acmg_pipeline.gate.CriterionStatus,

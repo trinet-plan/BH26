@@ -6,8 +6,8 @@ from acmg_pipeline.services.population import number, usable_observations
 DEFAULT_STRENGTH = {
     "PVS1": "very_strong", "PS1": "strong", "PM1": "moderate", "PM2": "moderate",
     "PM4": "moderate", "PM5": "moderate", "PP2": "supporting", "PP3": "supporting",
-    "BA1": "stand_alone", "BS1": "strong", "BP1": "supporting", "BP3": "supporting",
-    "BP4": "supporting", "BP7": "supporting",
+    "BA1": "stand_alone", "BS1": "strong", "BS2": "strong", "BP1": "supporting",
+    "BP3": "supporting", "BP4": "supporting", "BP7": "supporting",
 }
 
 
@@ -314,6 +314,11 @@ INHERITANCE_MODES = {
     "x_linked_recessive": ("xlr", "x linked recessive", "x linked recessive inheritance"),
     "x_linked": ("xl", "x linked", "x linked inheritance"),
     "mitochondrial": ("mt", "mitochondrial", "mitochondrial inheritance"),
+    # ClinGen Gene-Disease Validity's own MOI vocabulary (e.g. LDLR/familial
+    # hypercholesterolemia): heterozygotes have a milder/later-onset phenotype,
+    # homozygotes a severe/early-onset one - added 2026-09-25 for bs2.py, which reads it
+    # the same way as autosomal_recessive (see bs2.py's own RECESSIVE_MODES comment).
+    "semidominant": ("sd", "semidominant", "semi dominant", "semidominant inheritance"),
 }
 
 _INHERITANCE_ALIASES = {alias: canonical

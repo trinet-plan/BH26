@@ -10,12 +10,13 @@ from acmg_pipeline.automated_core.models import Variant
 
 
 CONTEXT_FIELDS = ("condition", "condition_label", "inheritance", "disease_frequency_threshold",
-                  "ba1_threshold_override", "gene_critical_domains")
-# The two fields a gene_frequency_thresholds entry may name - each mirrors one criterion's
-# own threshold shape (BA1's is checked by criteria/ba1.py's threshold_policy(), BS1's IS
-# disease_frequency_threshold, the same field a per-variant/per-record curated context
-# already supplies - see apply_context()'s GENE_THRESHOLD_FIELDS mapping below).
-_GENE_THRESHOLD_KEYS = ("ba1", "bs1")
+                  "ba1_threshold_override", "bs2_threshold_override", "gene_critical_domains")
+# The three fields a gene_frequency_thresholds entry may name - each mirrors one criterion's
+# own threshold shape (BA1's and BS2's are checked by criteria/ba1.py's and criteria/bs2.py's
+# own threshold_policy(), BS1's IS disease_frequency_threshold, the same field a per-variant/
+# per-record curated context already supplies - see apply_context()'s GENE_THRESHOLD_FIELDS
+# mapping below).
+_GENE_THRESHOLD_KEYS = ("ba1", "bs1", "bs2")
 
 
 def _require(condition, message):
@@ -62,10 +63,18 @@ def load_context(document):
             for criterion_key, threshold in entry.items():
                 _require(isinstance(threshold, dict),
                          f"gene_frequency_thresholds[{gene!r}][{criterion_key!r}] must be an object")
-                required = ("source", "source_version", "reviewed_at", "frequency_statistic")
+                required = ("source", "source_version", "reviewed_at")
                 _require(all(threshold.get(field) for field in required),
                          f"gene_frequency_thresholds[{gene!r}][{criterion_key!r}] requires "
                          f"{', '.join(required)}")
+                # ba1/bs1 are allele-frequency thresholds and need to name the statistic they
+                # were calibrated against (see bs1.py's frequency_statistic() docstring for
+                # why); bs2 is a genotype-count threshold (max_count, checked for real by
+                # bs2.py's own threshold_policy()) and has no such statistic to name.
+                if criterion_key in ("ba1", "bs1"):
+                    _require(threshold.get("frequency_statistic"),
+                             f"gene_frequency_thresholds[{gene!r}][{criterion_key!r}] requires "
+                             f"frequency_statistic")
     critical_domains = document.get("gene_critical_domains")
     if critical_domains is not None:
         _require(isinstance(critical_domains, dict), "gene_critical_domains must be an object")
@@ -115,9 +124,13 @@ def load_context(document):
 # disease_frequency_threshold field a per-variant/per-record curated context already supplies
 # (criteria/bs1.py's own disease_specific_threshold() reads it, condition-matching included -
 # a gene_frequency_thresholds entry names its own real curated condition, same as a per-
-# variant one would), "ba1" feeds a new field criteria/ba1.py's threshold_policy() checks
-# before falling back to config["BA1"]'s global default.
-GENE_THRESHOLD_TARGET_FIELD = {"bs1": "disease_frequency_threshold", "ba1": "ba1_threshold_override"}
+# variant one would), "ba1"/"bs2" each feed their own field criteria/ba1.py's/criteria/
+# bs2.py's own threshold_policy() checks before falling back to config["BA1"]/config["BS2"]'s
+# global default.
+GENE_THRESHOLD_TARGET_FIELD = {
+    "bs1": "disease_frequency_threshold", "ba1": "ba1_threshold_override",
+    "bs2": "bs2_threshold_override",
+}
 
 
 def apply_context(record, context):

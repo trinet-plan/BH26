@@ -7,8 +7,8 @@ QUERY = """
 query VariantFrequency($variantId: String!, $dataset: DatasetId!) {
   variant(variantId: $variantId, dataset: $dataset) {
     variant_id reference_genome chrom pos ref alt flags
-    exome { ac an af filters populations { id ac an } }
-    genome { ac an af filters populations { id ac an } }
+    exome { ac an af homozygote_count hemizygote_count filters populations { id ac an homozygote_count hemizygote_count } }
+    genome { ac an af homozygote_count hemizygote_count filters populations { id ac an homozygote_count hemizygote_count } }
   }
 }
 """.strip()
@@ -132,6 +132,15 @@ class GnomadProvider:
             raise ValueError("Inconsistent gnomAD AC/AN/AF")
         quality = "PASS" if not filters and not flags else "FILTERED"
         variant_id = f"{variant.chrom}-{variant.pos}-{variant.ref}-{variant.alt}"
+        # homozygote_count/hemizygote_count (BS2's own signal - added 2026-09-25, unused by
+        # BA1/BS1/PM2) are read the same way AC/AN are: an int when gnomAD reports one, and
+        # left absent (None) rather than coerced to 0 when the field is missing, so BS2 can
+        # tell "this source has no genotype-count data" from "this source counted zero".
+        homozygote_count = values.get("homozygote_count")
+        hemizygote_count = values.get("hemizygote_count")
+        for label, value in (("homozygote_count", homozygote_count), ("hemizygote_count", hemizygote_count)):
+            if value is not None and (not isinstance(value, int) or isinstance(value, bool) or value < 0):
+                raise ValueError(f"Invalid gnomAD {label}")
         return {
             "category": "population", "variant_key": variant.key,
             "evidence_id": (f"https://gnomad.broadinstitute.org/variant/{variant_id}"
@@ -140,4 +149,5 @@ class GnomadProvider:
             "retrieved_at": retrieved_at, "population": f"{callset}:{population}",
             "AC": ac, "AN": an, "AF": str(computed_af), "callable": True,
             "quality_status": quality, "filters": filters, "variant_flags": flags,
+            "homozygote_count": homozygote_count, "hemizygote_count": hemizygote_count,
         }

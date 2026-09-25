@@ -65,7 +65,7 @@ class DomainTests(unittest.TestCase):
                 Variant("GRCh38", "1", 1, "A", alt)
 
     def test_deprecated_cannot_fire_and_pvs1_requires_strength(self):
-        self.assertEqual(len(CRITERIA), 16)
+        self.assertEqual(len(CRITERIA), 17)
         for code in ("PP5", "BP6"):
             with self.assertRaises(ValueError):
                 CriterionResult(code, CriterionStatus.MET, {}, "invalid")

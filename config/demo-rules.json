@@ -61,6 +61,15 @@
   },
   "default_derivation_note": "The nulls are not blanks to be filled in by the pipeline. Each is an input only a curator can supply for a particular disease, and the criterion reports them as derivation_inputs_missing so the gap is visible in the result rather than assumed away. Until they are supplied and the threshold is reviewed, default_policy_status stays DRAFT and BS1 cannot reach MET on this threshold - see doc/external_data_coverage_ja.md, 2026-09-17."
  },
+ "BS2": {
+  "minimum_an": 2000,
+  "policy_source": "BH26 demo population evidence QC policy",
+  "policy_version": "2026-09-15",
+  "max_count": 0,
+  "source": "BH26 provisional default BS2 threshold (PLACEHOLDER - not a reviewed clinical value; treats ANY resolved gnomAD homozygote/hemizygote observation as inconsistent with a fully penetrant, early-onset disorder - the most readily-triggered placeholder, always reported as a flagged draft prediction, never a final call, until real per-gene VCEP numbers are curated)",
+  "source_version": "2026-09-25-provisional",
+  "threshold_source": "Unlike BA1/BS1, ACMG/AMP 2015 and ClinGen SVI publish no general-purpose numeric BS2 threshold - individual VCEP specifications set their own per-gene homozygote/hemizygote-count thresholds (none yet transcribed into this project). See acmg_pipeline/criteria/bs2.py's own module docstring for the automated-scope decision this default supports: autosomal-recessive homozygotes and X-linked hemizygotes only, via gnomAD's homozygote_count/hemizygote_count fields (added 2026-09-25)."
+ },
  "PVS1": {
   "ruleset": {
    "name": "clingen_general_pvs1",

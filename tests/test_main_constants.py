@@ -10,10 +10,11 @@ def test_main_constants_cover_acmg_codes_once():
     # pp1_bs4_pp4_engine connected the ClinGen 2024 PP4+PP1/BS4 evaluator,
     # +2 (PS2/PM6) on 2026-09-19 once acmg_pipeline.criteria.ps2_pm6
     # connected a rule-based de-novo evaluator, +1 (BP5) on 2026-09-22 once
-    # acmg_pipeline.criteria.bp5 joined LITERATURE_CODES - see each
-    # module's own docstring.
-    assert len(IMPLEMENTED_CODES) == 25
-    assert len(STUB_CODES) == 3
+    # acmg_pipeline.criteria.bp5 joined LITERATURE_CODES, +1 (BS2) on
+    # 2026-09-25 once acmg_pipeline.criteria.bs2 joined AUTOMATED_CODES -
+    # see each module's own docstring.
+    assert len(IMPLEMENTED_CODES) == 26
+    assert len(STUB_CODES) == 2
     assert IMPLEMENTED_CODES == (
         LITERATURE_CODES | AUTOMATED_CODES | PHENOTYPE_SEGREGATION_CODES | DE_NOVO_CODES
     )

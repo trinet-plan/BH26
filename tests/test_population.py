@@ -4,8 +4,9 @@ from types import SimpleNamespace
 
 from acmg_pipeline.automated_core.interface import inputs_from_prepared_record
 from acmg_pipeline.automated_core.models import Variant
-from acmg_pipeline.criteria import ba1, bs1, pm2
+from acmg_pipeline.criteria import ba1, bs1, bs2, pm2
 from acmg_pipeline.providers.local import LocalPopulationProvider
+from acmg_pipeline.services.evidence import EvidenceService
 from acmg_pipeline.services.population import PopulationService
 from acmg_pipeline.automated_va_spec import to_evidence_line, validate_1_0_1
 
@@ -15,7 +16,7 @@ class PopulationTests(unittest.TestCase):
         self.variant = Variant("GRCh38", "1", 2, "C", "T")
         self.input = {"variant": self.variant.to_dict()}
         self.config = {code: {"minimum_an": 2000, "policy_source": "synthetic-test-policy",
-                              "policy_version": "1"} for code in ("PM2", "BA1", "BS1")}
+                              "policy_version": "1"} for code in ("PM2", "BA1", "BS1", "BS2")}
         # "Absent from controls" is stated, not defaulted: pm2.evaluate() reports an unset
         # max_af as an unconfigured policy rather than running as the strictest threshold.
         self.config["PM2"]["max_af"] = 0
@@ -29,16 +30,23 @@ class PopulationTests(unittest.TestCase):
                                    "default_source_version": "1",
                                    "default_frequency_statistic": "faf95",
                                    "default_comparison": ">"})
+        # BS2's configured default max_count, the same "used unless a gene-specific
+        # override replaces it entirely" shape as BA1's max_af.
+        self.config["BS2"]["max_count"] = 0
 
     def observation(self, ac=0, an=10000, **extra):
         return {"variant_key": self.variant.key, "evidence_id": "test:frequency",
                 "source": "synthetic", "source_version": "1", "population": "TEST",
                 "retrieved_at": "2026-09-14T00:00:00Z", "AC": ac, "AN": an,
-                "AF": ac / an, "quality_status": "PASS", "callable": True, **extra}
+                "AF": ac / an, "quality_status": "PASS", "callable": True,
+                "homozygote_count": None, "hemizygote_count": None, **extra}
 
-    def services(self, *batches):
-        return SimpleNamespace(population=PopulationService([
-            LocalPopulationProvider(f"test-{i}", batch) for i, batch in enumerate(batches)]))
+    def services(self, *batches, evidence_records=()):
+        return SimpleNamespace(
+            population=PopulationService([
+                LocalPopulationProvider(f"test-{i}", batch) for i, batch in enumerate(batches)]),
+            evidence=EvidenceService(list(evidence_records)),
+        )
 
     def evaluate(self, module, services):
         variant, clinical_note = inputs_from_prepared_record(self.input)
@@ -403,6 +411,196 @@ class PopulationTests(unittest.TestCase):
         line = to_evidence_line(value)
         validate_1_0_1(line, "BS1")
         self.assertEqual(line["evidenceOutcome"]["primaryCoding"]["code"], "BS1")
+        self.assertEqual(line["directionOfEvidenceProvided"], "disputes")
+
+    def test_bs2_unsupported_inheritance_is_unknown(self):
+        """AD/XLD/mitochondrial are a deliberate scope boundary (see bs2.py's own module
+        docstring): a heterozygous observation would double-count BA1/BS1's own signal."""
+        self.input["inheritance"] = "autosomal_dominant"
+        value = self.evaluate(bs2, self.services([self.observation(homozygote_count=5)]))
+        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
+        self.assertIn("autosomal_dominant", value.summary)
+
+    def test_bs2_no_inheritance_is_unknown(self):
+        value = self.evaluate(bs2, self.services([self.observation(homozygote_count=5)]))
+        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
+        self.assertEqual(value.missing_inputs, ["inheritance"])
+
+    def test_bs2_semidominant_uses_homozygote_count(self):
+        """Real ClinGen Gene-Disease Validity data (2026-09-25): LDLR/familial
+        hypercholesterolemia is curated as "SD" (semidominant), not AD or AR - heterozygotes
+        have a milder/later-onset phenotype, homozygotes the severe early-onset one BS2's own
+        question is actually about, so this reads the same field as autosomal_recessive."""
+        self.input["inheritance"] = "semidominant"
+        value = self.evaluate(bs2, self.services([self.observation(homozygote_count=1)]))
+        self.assertEqual(value.status, CriterionStatus.MET)
+        self.assertEqual(value.provenance["zygosity_field"], "homozygote_count")
+
+    def test_bs2_semidominant_abbreviation_normalizes(self):
+        """"SD", ClinGen Gene-Disease Validity's own real MOI abbreviation, must resolve the
+        same way as the spelled-out form."""
+        self.input["inheritance"] = "SD"
+        value = self.evaluate(bs2, self.services([self.observation(homozygote_count=1)]))
+        self.assertEqual(value.status, CriterionStatus.MET)
+        self.assertEqual(value.provenance["inheritance"], "semidominant")
+
+    def gene_disease(self, inheritance=None, moi=None, condition=None):
+        """One Gene2Phenotype ("gene_disease") record and one ClinGen Gene-Disease Validity
+        ("gene_disease_validity") record for self.variant, each carrying its own inheritance
+        field under its own real name (inheritance vs moi) - the two categories bs2.py's
+        _resolve_inheritance() reads, mirroring the shape pvs1.py's own _candidate_
+        conditions() already consumes from these same two categories."""
+        records = []
+        if inheritance is not None:
+            records.append({
+                "category": "gene_disease", "variant_key": self.variant.key,
+                "evidence_id": "test:gene-disease", "source": "test", "source_version": "1",
+                "retrieved_at": "2026-09-25T00:00:00Z", "quality_status": "PASS",
+                "assessment_method": "automated", "method": "test", "policy_version": "1",
+                "inheritance": inheritance, "condition": condition,
+            })
+        if moi is not None:
+            records.append({
+                "category": "gene_disease_validity", "variant_key": self.variant.key,
+                "evidence_id": "test:gene-disease-validity", "source": "test",
+                "source_version": "1", "retrieved_at": "2026-09-25T00:00:00Z",
+                "quality_status": "PASS", "moi": moi, "condition": condition,
+            })
+        return records
+
+    def test_bs2_resolves_inheritance_from_agreeing_gene_disease_evidence(self):
+        """No input_data["inheritance"] at all (the real ERepo-sourced-record gap this was
+        added for, 2026-09-25) - both curated sources agree, so BS2 can still run."""
+        value = self.evaluate(bs2, self.services(
+            [self.observation(homozygote_count=1)],
+            evidence_records=self.gene_disease(inheritance="AR", moi="Autosomal recessive")))
+        self.assertEqual(value.status, CriterionStatus.MET)
+        self.assertEqual(value.provenance["inheritance"], "autosomal_recessive")
+        self.assertEqual(value.provenance["inheritance_source"],
+                         "resolved_from_gene_disease_evidence")
+
+    def test_bs2_does_not_guess_when_gene_disease_sources_disagree(self):
+        """A RYR1-style gene curated for more than one disease with different inheritance
+        modes must not have one auto-picked for it - see _resolve_inheritance()'s own
+        docstring for why this mirrors pvs1.py's "offered, never guessed" caution."""
+        value = self.evaluate(bs2, self.services(
+            [self.observation(homozygote_count=5)],
+            evidence_records=self.gene_disease(inheritance="AD", moi="Autosomal recessive")))
+        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
+        self.assertEqual(value.missing_inputs, ["inheritance"])
+
+    def test_bs2_a_supplied_inheritance_is_not_overridden_by_resolution(self):
+        """input_data["inheritance"], when present, is used as-is - _resolve_inheritance()
+        is only a fallback, never a second opinion overriding a value already supplied."""
+        self.input["inheritance"] = "autosomal_recessive"
+        value = self.evaluate(bs2, self.services(
+            [self.observation(homozygote_count=1)],
+            evidence_records=self.gene_disease(inheritance="AD", moi="AD")))
+        self.assertEqual(value.status, CriterionStatus.MET)
+        self.assertEqual(value.provenance["inheritance_source"], "supplied")
+
+    def test_bs2_agreement_across_different_mondo_ids_for_the_same_gene_still_resolves(self):
+        """Real ERepo data (2026-09-25): PDHA1 carries 6 real curated records unanimously
+        naming x_linked inheritance, spanning 4 DIFFERENT MONDO IDs for what every source
+        agrees is the same underlying disease at different granularity - exact condition
+        matching used to throw this unanimous agreement away entirely (see
+        _resolve_inheritance()'s own docstring for the reverted approach and why). Uses
+        autosomal_recessive/homozygote_count here (not PDHA1's own x_linked) only to reuse
+        this class's default autosomal test variant/observation."""
+        self.input["condition"] = "MONDO:0000009"
+        value = self.evaluate(bs2, self.services(
+            [self.observation(homozygote_count=1)],
+            evidence_records=(
+                self.gene_disease(inheritance="AR", moi="Autosomal recessive",
+                                  condition="MONDO:0000001")
+                + self.gene_disease(inheritance="AR", moi="Autosomal recessive",
+                                    condition="MONDO:0000002"))))
+        self.assertEqual(value.status, CriterionStatus.MET)
+        self.assertEqual(value.provenance["inheritance"], "autosomal_recessive")
+
+    def test_bs2_recessive_homozygote_above_default_threshold_is_a_draft_met(self):
+        """The only threshold this project has today is config["BS2"]'s configured default
+        (no curated bs2_threshold_override entries exist yet), so every MET is currently a
+        flagged draft prediction, mirroring bs1.py's own default-scope MET-while-DRAFT
+        pattern."""
+        self.input["inheritance"] = "autosomal_recessive"
+        value = self.evaluate(bs2, self.services([self.observation(homozygote_count=1)]))
+        self.assertEqual(value.status, CriterionStatus.MET)
+        self.assertEqual(value.strength, "strong")
+        self.assertEqual(value.provenance["policy_status"], "DRAFT")
+        self.assertEqual(value.provenance["zygosity_field"], "homozygote_count")
+        self.assertIn("prediction pending curator sign-off", value.summary)
+        self.assertIn("Approve or replace the draft BS2 genotype-count threshold before "
+                      "BS2 is used in a classification", value.review_points)
+
+    def test_bs2_recessive_at_or_below_threshold_is_not_met(self):
+        self.input["inheritance"] = "autosomal_recessive"
+        value = self.evaluate(bs2, self.services([self.observation(homozygote_count=0)]))
+        self.assertEqual(value.status, CriterionStatus.NOT_MET)
+
+    def test_bs2_x_linked_uses_hemizygote_count_on_chrx(self):
+        variant = Variant("GRCh38", "X", 2, "C", "T")
+        self.input = {"variant": variant.to_dict(), "inheritance": "x_linked_recessive"}
+
+        def observation(ac=0, an=10000, **extra):
+            return {"variant_key": variant.key, "evidence_id": "test:frequency",
+                    "source": "synthetic", "source_version": "1", "population": "TEST",
+                    "retrieved_at": "2026-09-14T00:00:00Z", "AC": ac, "AN": an,
+                    "AF": ac / an, "quality_status": "PASS", "callable": True,
+                    "homozygote_count": None, "hemizygote_count": None, **extra}
+
+        value = self.evaluate(bs2, self.services([observation(hemizygote_count=1)]))
+        self.assertEqual(value.status, CriterionStatus.MET)
+        self.assertEqual(value.provenance["zygosity_field"], "hemizygote_count")
+
+    def test_bs2_x_linked_off_chrx_is_unknown(self):
+        """A hemizygote count on an autosome would not be biologically meaningful."""
+        self.input["inheritance"] = "x_linked_recessive"
+        value = self.evaluate(bs2, self.services([self.observation(hemizygote_count=5)]))
+        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
+
+    def test_bs2_no_genotype_count_data_is_unknown_not_not_met(self):
+        """Every observation lacking the field is a search gap, not a negative result."""
+        self.input["inheritance"] = "autosomal_recessive"
+        value = self.evaluate(bs2, self.services([self.observation()]))
+        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
+        self.assertEqual(value.missing_inputs, ["homozygote_count"])
+
+    def test_bs2_incomplete_search_stays_unknown(self):
+        self.input["inheritance"] = "autosomal_recessive"
+        value = self.evaluate(
+            bs2, self.services([self.observation(homozygote_count=0)], []))
+        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
+        self.assertIn("complete_population_evidence", value.missing_inputs)
+
+    def test_bs2_reports_an_unconfigured_default_instead_of_inventing_one(self):
+        del self.config["BS2"]["max_count"]
+        self.input["inheritance"] = "autosomal_recessive"
+        value = self.evaluate(bs2, self.services([self.observation(homozygote_count=1)]))
+        self.assertEqual(value.status, CriterionStatus.UNKNOWN)
+        self.assertEqual(value.missing_inputs, ["BS2.max_count"])
+
+    def test_bs2_gene_specific_override_replaces_the_configured_default(self):
+        """automated_core.context's gene_frequency_thresholds feeds
+        input_data["bs2_threshold_override"], which criteria/bs2.py's threshold_policy()
+        checks before config["BS2"] - a real curated, reviewed number is treated as
+        APPROVED, not a draft prediction."""
+        self.input["inheritance"] = "autosomal_recessive"
+        self.input["bs2_threshold_override"] = {
+            "max_count": 1, "source": "ClinGen test VCEP", "source_version": "1",
+            "reviewed_at": "2026-09-25"}
+        value = self.evaluate(bs2, self.services([self.observation(homozygote_count=2)]))
+        self.assertEqual(value.status, CriterionStatus.MET)
+        self.assertEqual(value.provenance["threshold_scope"], "gene_specific")
+        self.assertEqual(value.provenance["policy_status"], "APPROVED")
+        self.assertNotIn("prediction pending curator sign-off", value.summary)
+        self.assertEqual(value.review_points, [])
+
+    def test_bs2_evidence_line_round_trips_through_va_spec(self):
+        self.input["inheritance"] = "autosomal_recessive"
+        value = self.evaluate(bs2, self.services([self.observation(homozygote_count=1)]))
+        line = to_evidence_line(value)
+        validate_1_0_1(line, "BS2")
         self.assertEqual(line["directionOfEvidenceProvided"], "disputes")
 
 

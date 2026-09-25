@@ -36,7 +36,7 @@ class OutputTests(unittest.TestCase):
         self.assertEqual(payload["schema_version"], "1.1")
         results = payload["records"][0]["results"]
         self.assertEqual([item["criterion"] for item in results], list(CRITERIA))
-        self.assertEqual(len((output / "summary.tsv").read_text().splitlines()), 17)
+        self.assertEqual(len((output / "summary.tsv").read_text().splitlines()), 18)
         pm2 = next(item for item in results if item["criterion"] == "PM2")
         self.assertEqual(pm2["evidence_outcome"], "PM2_supporting")
         for code in ("PP5", "BP6"):
