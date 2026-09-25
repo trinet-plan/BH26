@@ -105,7 +105,9 @@ from acmg_pipeline.criteria.pp4_pp1_bs4 import (
 )
 from acmg_pipeline.vcf_record import VariantRecord
 
-async def _build_reference_from_literature(gene: str, diagnosis: str) -> Optional[PP4ReferenceRecord]:
+async def _build_reference_from_literature(
+    gene: str, diagnosis: str, *, preferred_pmids: tuple[str, ...] = (),
+) -> Optional[PP4ReferenceRecord]:
     """Ask acmg_pipeline.pp4_literature_search for a confirmed overall
     diagnostic-yield statistic and, if found, wrap it as a PP4ReferenceRecord.
 
@@ -144,7 +146,8 @@ async def _build_reference_from_literature(gene: str, diagnosis: str) -> Optiona
     """
     from acmg_pipeline import pp4_literature_search
 
-    result = await pp4_literature_search.search_diagnostic_yield(gene, diagnosis)
+    result = await pp4_literature_search.search_diagnostic_yield(
+        gene, diagnosis, preferred_pmids=preferred_pmids)
     if not result.found or result.yield_fraction is None:
         return None
 
@@ -152,6 +155,12 @@ async def _build_reference_from_literature(gene: str, diagnosis: str) -> Optiona
         f" [CAUTION: small sample size n={result.sample_size} - interpret with caution]"
         if result.sample_size is not None and result.sample_size < 20 else ""
     )
+    if result.cohort_ascertainment == "broad_panel":
+        caution += (
+            " [CAUTION: cohort ascertained via a broad multigene/NGS panel, not a "
+            "phenotype-specific referral - this yield is likely diluted by every other "
+            "gene the panel could have found instead; no gene-specific paper was found]"
+        )
     return PP4ReferenceRecord(
         reference_id=f"pubmed:{result.pmid}",
         gene=gene,
@@ -350,11 +359,17 @@ async def evaluate(
     yield input always comes from a live literature search now (see this
     module's own docstring), not from a caller-supplied path/override.
 
-    `erepo_client`, when given, lets the PP1/BS4 family-segregation search
-    try this variant's own ERepo evidence_pmids before falling back to a
-    fresh keyword search - see pp1_segregation_search.search_family_
-    segregation()'s own docstring for why this matters. Optional (defaults
-    to None, same behavior as before) so existing callers are unaffected.
+    `erepo_client`, when given, lets both the PP4 diagnostic-yield search
+    and the PP1/BS4 family-segregation search try this variant's own ERepo
+    evidence_pmids before falling back to a fresh keyword search - see
+    pp4_literature_search.search_diagnostic_yield()'s and
+    pp1_segregation_search.search_family_segregation()'s own docstrings for
+    why this matters (2026-09-25: added to PP4 too, after confirming via
+    live search that BRCA1/MSH2/RPGR's "found a yield but it's below the
+    PP4 lower bound" misses were the search surfacing a broad multi-gene-
+    panel cohort's yield instead of the narrower phenotype-matched paper a
+    real curator would cite). Optional (defaults to None, same behavior as
+    before) so existing callers are unaffected.
 
     PP1/BS4 (family co-segregation) never need the literature search at
     all - they are scored from clinical_note.family.relatives alone, per
@@ -378,10 +393,23 @@ async def evaluate(
     lazily imports clinical_extraction.py instead of importing it at
     module load).
     """
+    from acmg_pipeline.inputs import variant_identity
+
     gene = str(variant.info.get("GENE", ""))
     diagnosis = (clinical_note.diagnosis or "").strip()
+    _, hgvsc, hgvsp, _ = variant_identity(variant)
 
-    reference = await _build_reference_from_literature(gene, diagnosis) if diagnosis else None
+    pp4_preferred_pmids: tuple[str, ...] = ()
+    if erepo_client is not None:
+        try:
+            pp4_preferred_pmids = tuple(erepo_client.lookup(gene, hgvsc).evidence_pmids)
+        except Exception:
+            pp4_preferred_pmids = ()
+
+    reference = (
+        await _build_reference_from_literature(gene, diagnosis, preferred_pmids=pp4_preferred_pmids)
+        if diagnosis else None
+    )
 
     if reference is not None:
         phenotype_match_override = PhenotypeMatchResult(
@@ -420,18 +448,10 @@ async def evaluate(
 
         from acmg_pipeline import pp1_segregation_search
         from acmg_pipeline.clinical_note import Relative
-        from acmg_pipeline.inputs import variant_identity
 
-        _, hgvsc, hgvsp, _ = variant_identity(variant)
-        preferred_pmids = ()
-        if erepo_client is not None:
-            try:
-                preferred_pmids = tuple(erepo_client.lookup(gene, hgvsc).evidence_pmids)
-            except Exception:
-                preferred_pmids = ()
         segregation = await pp1_segregation_search.search_family_segregation(
             gene, hgvsc, hgvsp=hgvsp if hgvsp != "N/A" else None,
-            preferred_pmids=preferred_pmids)
+            preferred_pmids=pp4_preferred_pmids)
         if segregation.found:
             ar_case_mode = segregation.ar_case_mode
             clinical_note = _replace(

@@ -75,6 +75,19 @@ Rules:
   variant found at all); "36.4% of the 225 patients tested had a
   pathogenic MYH7 variant" IS an overall yield. When genuinely unsure,
   set is_overall_yield=false rather than guessing true.
+- Decide how the tested cohort was ASCERTAINED (cohort_ascertainment):
+  "gene_specific" when patients were selected because of a phenotype
+  characteristic OF THIS GENE'S OWN DISEASE specifically (e.g. "suspected
+  Lynch syndrome", "clinically diagnosed X-linked retinitis pigmentosa",
+  "hereditary breast and ovarian cancer referral criteria") - the
+  denominator is a population where this gene is already a strong
+  candidate cause; "broad_panel" when patients were selected via a large
+  multigene/NGS panel covering many DIFFERENT, genetically heterogeneous
+  conditions (e.g. "266-gene inherited retinal dystrophy panel", "hereditary
+  cancer multigene panel", "all patients referred for genetic testing") and
+  this gene is only one of many possible findings - this yield is diluted
+  by every other gene the panel could have found instead; "unclear" if the
+  text does not describe the ascertainment clearly enough to tell.
 - If the paper does not report this kind of statistic (e.g. it is a
   single case report with no cohort denominator), say so explicitly - do
   not invent one.
@@ -82,6 +95,7 @@ Rules:
 {
   "yield_percent_stated": <number 0-100, or null>,
   "is_overall_yield": <true/false>,
+  "cohort_ascertainment": "<gene_specific, broad_panel, or unclear>",
   "denominator_description": "<what population this percentage is over, or null>",
   "sample_size": <integer, or null>,
   "quote": "<the exact sentence(s) the number/statement came from, or null>",
@@ -98,6 +112,7 @@ class LiteratureYieldResult:
     denominator_description: Optional[str] = None
     quote: Optional[str] = None
     pmid: Optional[str] = None
+    cohort_ascertainment: Optional[str] = None
     reason: str = ""
 
 
@@ -120,7 +135,8 @@ async def _judge_paper_for_yield(pipeline, gene: str, phenotype_description: str
 
 
 async def search_diagnostic_yield(
-    gene: str, phenotype_description: str, *, max_candidates: int = 5,
+    gene: str, phenotype_description: str, *,
+    preferred_pmids: tuple[str, ...] = (), max_candidates: int = 5,
 ) -> LiteratureYieldResult:
     """Search PubMed for gene/phenotype and ask the project's own LLM to
     extract a confirmed OVERALL diagnostic-yield statistic.
@@ -129,6 +145,36 @@ async def search_diagnostic_yield(
     is_overall_yield=true with a numeric percentage; LiteratureYieldResult.
     found=False (with `reason`) if nothing usable turned up, including
     when `phenotype_description` is empty (nothing to search for).
+
+    `preferred_pmids`, when given (this variant's own ERepo evidenceLinks),
+    are tried BEFORE any live search query - the same "curated citations
+    first, live search only as fallback" pattern already used by
+    resolve_pmids_for_variant() (PS3/BS3/PS4/BP5) and
+    acmg_pipeline.pp1_segregation_search.search_family_segregation(). Even
+    when a preferred paper turns out not to carry a diagnostic-yield
+    statistic (ERepo's citations are usually the variant's own
+    classification evidence, not a cohort-yield paper), trying it first is
+    free - it just falls through to the live search below.
+
+    [Broad-panel dilution - confirmed empirically (2026-09-25)]
+      Real ground-truth PP4-MET misses (BRCA1 c.191G>A, MSH2 c.1012G>A,
+      RPGR c.492G>T) all landed below PP4_MIN_POSTERIOR not because the
+      search failed, but because it correctly found a genuine, correctly-
+      extracted gene-specific overall-yield statistic - just diluted by a
+      broad multigene/NGS panel denominator (e.g. RPGR's yield among ALL
+      5201 patients on a 266-gene retinal-dystrophy panel: 4.5%, versus
+      the much higher yield expected among patients whose phenotype is
+      specifically suggestive of RPGR-related (X-linked) retinopathy). Two
+      changes address this: (1) the query itself now tries a
+      panel-excluding phrasing first ('NOT "multigene panel" NOT "gene
+      panel" NOT "NGS panel"'), before falling back to the original,
+      panel-inclusive phrasing; (2) the extraction prompt now also
+      classifies each candidate's `cohort_ascertainment` as gene_specific
+      vs broad_panel, and the loop below prefers a gene_specific hit,
+      continuing to scan further candidates rather than stopping at the
+      first broad_panel one - only falling back to a broad_panel result
+      (disclosed as such via `cohort_ascertainment`) if no gene_specific
+      candidate exists among all `max_candidates` tried.
     """
     if not phenotype_description.strip():
         return LiteratureYieldResult(found=False, reason="no_phenotype_description_available")
@@ -137,14 +183,36 @@ async def search_diagnostic_yield(
 
     async with AsyncExitStack() as stack:
         mcp = await pipeline.connect_pubmed(stack)
-        pmids = await pipeline.search_candidate_pmids(
+        pmids = list(dict.fromkeys(preferred_pmids))
+        narrow = await pipeline.search_candidate_pmids(
+            mcp, gene,
+            disease=(
+                f'{phenotype_description} diagnostic yield '
+                'NOT "multigene panel" NOT "gene panel" NOT "NGS panel"'
+            ),
+            max_results=max_candidates,
+        )
+        pmids = list(dict.fromkeys([*pmids, *narrow]))
+        # Always run the panel-inclusive query too, even when the narrow query
+        # above already filled max_candidates on its own - confirmed (2026-09-25)
+        # that skipping it whenever the narrow query alone reaches max_candidates
+        # can silently crowd out a real, previously-found hit (BRCA1 c.191G>A:
+        # the narrow query's own 5 candidates didn't include PMID:42738331,
+        # which only the panel-inclusive query below ever found).
+        searched = await pipeline.search_candidate_pmids(
             mcp, gene, disease=f"{phenotype_description} diagnostic yield genetic testing",
             max_results=max_candidates,
         )
+        pmids = list(dict.fromkeys([*pmids, *searched]))
         if len(pmids) < 3:
             more = await pipeline.search_candidate_pmids(mcp, gene, disease=phenotype_description, max_results=max_candidates)
-            pmids = list(dict.fromkeys(pmids + more))[:max_candidates]
+            pmids = list(dict.fromkeys([*pmids, *more]))
+        # Judge more candidates than a single query's max_results, now that two
+        # independent queries (narrow-first, then panel-inclusive) are merged -
+        # otherwise the panel-inclusive query's own hits would never get a turn.
+        pmids = pmids[:max(2 * max_candidates, len(preferred_pmids))]
 
+        broad_panel_fallback: Optional[LiteratureYieldResult] = None
         for pmid in pmids:
             text, _note = await pipeline.fetch_full_text(mcp, pmid)
             if not text:
@@ -155,15 +223,24 @@ async def search_diagnostic_yield(
             percent = data.get("yield_percent_stated")
             if not isinstance(percent, (int, float)) or not 0 <= percent <= 100:
                 continue
-            return LiteratureYieldResult(
+            ascertainment = data.get("cohort_ascertainment")
+            result = LiteratureYieldResult(
                 found=True,
                 yield_fraction=float(percent) / 100.0,
                 sample_size=data.get("sample_size"),
                 denominator_description=data.get("denominator_description"),
                 quote=data.get("quote"),
                 pmid=pmid,
+                cohort_ascertainment=ascertainment,
                 reason="confirmed_overall_yield_statistic_found",
             )
+            if ascertainment == "gene_specific":
+                return result
+            if broad_panel_fallback is None:
+                broad_panel_fallback = result
+
+        if broad_panel_fallback is not None:
+            return broad_panel_fallback
 
     return LiteratureYieldResult(
         found=False,
