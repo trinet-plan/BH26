@@ -2,7 +2,7 @@
 
 本ドキュメントは、このパイプラインが**現時点で**各ACMG/AMP 2015基準をどう評価しているかを、コードの実装に基づいてまとめたものである。変更履歴や過去のバージョンとの比較は含まない。
 
-対象は28基準すべて:自動化16基準(PVS1, PS1, PM1, PM2, PM4, PM5, PP2, PP3, PP5, BA1, BS1, BP1, BP3, BP4, BP6, BP7)、文献LLM判定4基準(PS3, BS3, PS4, BP5)、表現型・家系分離3基準(PP1, BS4, PP4)、デノボ2基準(PS2, PM6)、未実装3基準(PM3, BS2, BP2)、および最終分類ロジック(`classify()`)。
+対象は28基準すべて:自動化17基準(PVS1, PS1, PM1, PM2, PM4, PM5, PP2, PP3, PP5, BA1, BS1, BS2, BP1, BP3, BP4, BP6, BP7)、文献LLM判定4基準(PS3, BS3, PS4, BP5)、表現型・家系分離3基準(PP1, BS4, PP4)、デノボ2基準(PS2, PM6)、未実装2基準(PM3, BP2)、および最終分類ロジック(`classify()`)。
 
 ---
 
@@ -12,9 +12,9 @@
 
 対象は予測LoF(loss-of-function)バリアントのみ:ストップ獲得・フレームシフト・正準スプライスドナー/アクセプター・開始コドン損失、またはRNAアッセイでLoF効果が確認されたスプライス変異。疾患条件(condition)が未指定の場合はPVS1自体を評価せず、代わりに「疾患条件さえ分かればPVS1がどう判定するか」という予備評価(preliminary_assessment)を内部的に計算してキュレーター向けに保持する(これは最終的なMET/strengthには反映されない)。
 
-- **必須ゲート**: 遺伝子・疾患・遺伝形式の組み合わせについて「LoFが確立した疾患機序である」ことをキュレーション済みレコード(ClinGen Dosage/Gene2Phenotype等)から確認する。完全一致がなくても、MONDO上の親子疾患関係で関連レコードが全て機序確立に同意していれば適用(キュレーターへの確認フラグ付き)。遺伝形式が未記載でキュレーション側が単一モードのみを持ち機序確立に同意していれば、そのモードを仮定して適用(こちらも確認フラグ付き)。遺伝子不一致・疾患除外・別疾患のみキュレーション済み・モード矛盾などは全てUNKNOWNで停止。
+- **必須ゲート**: 遺伝子・疾患・遺伝形式の組み合わせについて「LoFが確立した疾患機序である」ことをキュレーション済みレコード(ClinGen Dosage/Gene2Phenotype/ClinGen CSpec由来の適用性データ)から確認する。CSpecの適用性スナップショット(`config/cspec_applicability.json`)はGene2Phenotypeと同じ`gene_disease`カテゴリで供給されるため、PVS1自身のコード側に専用分岐は不要。完全一致がなくても、MONDO上の親子疾患関係で関連レコードが全て機序確立に同意していれば適用(キュレーターへの確認フラグ付き)。遺伝形式が未記載でキュレーション側が単一モードのみを持ち機序確立に同意していれば、そのモードを仮定して適用(こちらも確認フラグ付き)。遺伝子不一致・疾患除外・別疾患のみキュレーション済み・モード矛盾などは全てUNKNOWNで停止。Gene2Phenotypeの`mechanism_support`が`"evidence"`でない(=`"inferred"`など、バリアント種別からの循環推論)場合はその機序を「未解決」に格下げし、以前は黙って捨てられていた"undetermined"レコードも必ずレコードとして出力するため、弱い推論のみの機序主張が対抗する新しいレコードなしに一人歩きすることを防ぐ(2026-09-25修正)。
 - **バリアント種別ごとの判定木**:
-  - 切断型(stop_gained/frameshift): 転写産物の生物学的関連性→NMD予測。NMDが予測されるなら、影響エクソンの関連性も確認して**MET(very_strong)**。NMDが予測されないなら、重要機能領域の破壊で**MET(strong)**、それもなければLoFバリアントの集団頻度(高頻度ならUNKNOWN=LoFが疾患原因という前提と矛盾)・領域の生物学的関連性・蛋白質喪失割合(閾値超えで**MET(strong)**、以下で**MET(moderate)**)を順に評価。
+  - 切断型(stop_gained/frameshift): 転写産物の生物学的関連性→NMD予測。NMDが予測されるなら、影響エクソンの関連性も確認して**MET(very_strong)**。NMDが予測されないなら、重要機能領域の破壊で**MET(strong)**、それもなければLoFバリアントの集団頻度(高頻度ならUNKNOWN=LoFが疾患原因という前提と矛盾)・領域の生物学的関連性・蛋白質喪失割合(閾値超えで**MET(strong)**、以下で**MET(moderate)**)を順に評価。「重要機能領域」はUniProtの`Domain`/`Active site`/`Coiled coil`/非disordered`Region`の重なりのみを指し、`Binding site`(単一残基の接触点)と`Motif`(短い輸送シグナル等)は2026-09-25以降対象外(MYOC/PTENの実偽陽性5件で、切断点近傍にほぼ必ず存在するこれらの小さな特徴量が誤検出の原因だったため)。
   - 正準スプライス/RNA確認済みスプライスLoF: 選択的スプライシングによるレスキューの有無、リーディングフレーム破壊の有無を確認。破壊されていれば切断型と同じ経路へ、されていなければ非NMD切断型と同じ領域評価経路へ。
   - 開始コドン損失: 別の翻訳開始点を持つ健全な代替転写産物があればUNKNOWN(レスキューされる)。なければ下流インフレーム開始点の有無と上流の病的証拠有無を見て**MET(moderate/supporting)**。
 - **NOT_MET**: このロジック上、明示的なNOT_METは発生しない(適用外・情報欠損・要確認は全てUNKNOWN)。
@@ -70,10 +70,10 @@
 
 `mechanism.py`の共通ミスセンス機序ロジックをBP1と共有。ミスセンスバリアントのみ対象。
 
-- **MET**: 遺伝子-疾患のキュレーション済みレコードで、`missense_mechanism_established`・`spectrum_review_complete`・`low_benign_missense_variation`が全てTrue。strengthはsupporting。統計的示唆(ClinGen Gene-Disease Validity + gnomAD constraint)による`CANDIDATE`判定でも弱いMETとして採用可(フラグ付き)。
+- **MET**: 遺伝子-疾患のキュレーション済みレコードで、`missense_mechanism_established`・`spectrum_review_complete`・`low_benign_missense_variation`が全てTrue。strengthはsupporting。統計的示唆(ClinGen Gene-Disease Validity + gnomAD missense制約Z-score)による`CANDIDATE`判定でも弱いMETとして採用可(フラグ付き)。この統計示唆は2026-09-25(policy v3)以降、misZが閾値を超えるだけでなく、ClinVarキュレーション済みのミスセンス系統(benign missense fraction)も低い(デフォルト10%以下)ことを両方満たす必要がある(BMPR2の実偽陽性: misZ=3.15は閾値をわずかに超えるが、実際のClinVar病的/良性ミスセンス比では36.8%が良性で「低頻度」とは言えなかった)。
 - **NOT_MET**: `missense_mechanism_established`または`low_benign_missense_variation`がFalse、または統計示唆が`NOT_SUGGESTED`。
-- **UNKNOWN**: 非ミスセンス、レコード未取得かつ示唆も不十分/否定的、専門家パネルが明示的に適用外と判定。
-- **特徴**: 専門家パネルの「適用外」判定は機序フィールドなしでもレコードとして採用される。統計的示唆はINSUFFICIENT/CURATED_NEGATIVEのときは何も生成せず、不確実なシグナルから結果を捏造しない。
+- **UNKNOWN**: 非ミスセンス、レコード未取得かつ示唆も不十分/否定的、専門家パネルが明示的に適用外と判定、ClinGen CSpecの適用性スナップショットが当該遺伝子でPP2を「Not applicable」と明記(2026-09-25追加。実VCEP仕様が明示的にPP2を使わないと決めている遺伝子、例: SCN2A/SCN1Aのてんかんナトリウムチャネルパネル)。
+- **特徴**: 専門家パネルの「適用外」判定は機序フィールドなしでもレコードとして採用される。統計的示唆はINSUFFICIENT/CURATED_NEGATIVEのときは何も生成せず、不確実なシグナルから結果を捏造しない。CSpecの「Not applicable」ゲートは統計的フォールバックより先に評価され、実VCEPの明示的判断を優先する。
 
 ### PP3
 
@@ -106,13 +106,25 @@
 - **UNKNOWN**: 疾患特異的・デフォルトいずれの閾値も未設定/不正、`population_context`未解決。
 - **特徴**: 「閾値超えの証拠があるか」と「その閾値自体が承認済みか」を分離して扱う。閾値の由来根拠(prevalence, inheritance, penetrance等)をすべて記録し、欠落があれば名指しする。
 
+### BS2(2026-09-25実装)
+
+長らく「患者本人の臨床記録が必要で文献パイプラインの対象外」として未実装だったが、gnomADの遺伝子型カウント(ホモ接合体数/ヘミ接合体数)を「健常成人での観察」の代理指標として使う、実務でよく使われる別解釈で自動化。**常染色体劣性(AR)・半優性(semidominant)・X連鎖のみが対象**で、常染色体優性(AD)・X連鎖優性・ミトコンドリアは意図的にスコープ外(ヘテロ接合体1件の観察はBA1/BS1の頻度シグナルと本質的に同じもので、二重計上になるため)。
+
+- **遺伝形式の決定**: `input_data["inheritance"]`(臨床ノート由来、ほとんどのERepo由来レコードでは未設定)を最優先。未設定ならGene2Phenotype("gene_disease")とClinGen Gene-Disease Validity("gene_disease_validity")のキュレーション済みレコードから、**全ソースが一致した場合のみ**自動解決を試みる(PVS1の機序候補提示と同じ「一致した場合のみ採用、不一致なら諦める」慎重さ。MONDO条件IDの完全一致は要求しない — 同一疾患が粒度違いの複数MONDO IDで登録されているケースが実際に多いため)。
+- **チェックするフィールド**: AR/semidominantは`homozygote_count`、X連鎖は`hemizygote_count`(対象バリアントの染色体がXでない場合はUNKNOWN)。semidominant(ClinGen Gene-Disease Validityの実MOI表記"SD"、例: LDLR/家族性高コレステロール血症)はARと同じ扱い — ヘテロ接合体は軽症・遅発、ホモ接合体が重症・完全浸透・早発という定義そのものが、BS2の問う「完全浸透・早期発症」に対応するホモ接合体側のシグナルであるため。
+- **閾値**: BA1と同じ「遺伝子特異的override→configured default」の2段構成(`bs2_threshold_override`優先)。現時点で遺伝子特異的な閾値は一件もキュレーションされておらず、常にconfigured default(暫定値: ホモ/ヘミ接合体1件でもMET)を使う。
+- **MET**: 遺伝子型カウントが閾値を超える。strengthはstrong。採用閾値がDRAFT(未承認)扱いの場合(=現状は常に)、METは返すが承認待ちの予測である旨を明記する(BS1と同じ設計)。
+- **NOT_MET**: 全観測が閾値以下。
+- **UNKNOWN**: 遺伝形式がAR/semidominant/X連鎖のいずれでもない・未解決、X連鎖なのに染色体がXでない、閾値未設定、`population_context`未解決、遺伝子型カウントフィールド自体が取得できない。
+- **特徴**: gnomADプロバイダは2026-09-25以降`homozygote_count`/`hemizygote_count`を取得する(以前はAC/AN/AFのみ)。VA-Specの`methodType`は"Population Data Assessment"ではなく"Case-Control Enrichment Assessment"(GA4GHの公式リファレンスモデルの分類に準拠)。
+
 ### BP1
 
 `mechanism.py`の共通ロジックをPP2と共有。ミスセンスバリアントのみ対象。
 
 - **MET**: `spectrum_review_complete=True`かつ`predominantly_truncating=True`かつ`missense_mechanism_established=False`。strengthはsupporting。
 - **NOT_MET**: 上記フィールドが揃うが条件を満たさない。
-- **UNKNOWN**: 非ミスセンス、レコード未取得、専門家パネルが明示的に適用外と判定、レビュー未完了。
+- **UNKNOWN**: 非ミスセンス、レコード未取得、専門家パネルが明示的に適用外と判定、ClinGen CSpecの適用性スナップショットがBP1を「Not applicable」と明記(PP2と同じ2026-09-25の修正)、レビュー未完了。
 
 ### BP3
 
@@ -153,11 +165,11 @@
 
 ### PS3/BS3
 
-対象論文が実際に対象バリアントを検証しているかをまず判定し(大規模飽和変異スキャン等で対象バリアント固有の値が本文にない場合は不成立扱い)、実験ごとに機能的異常/正常/中間/混合を独立に判定させる。安全弁として、同一論文内で異常/正常所見が混在するのに確信的な方向が出た場合、自由文の記述と分類が矛盾する場合、実験0件なのに確定方向が出た場合、定量的な数値裏付けが一切ない場合は、いずれも強制的に`not_clear`へ上書きする。
+対象論文が実際に対象バリアントを検証しているかをまず判定し(大規模飽和変異スキャン等で対象バリアント固有の値が本文にない場合は不成立扱い)、実験ごとに機能的異常/正常/中間/混合を独立に判定させる。安全弁として、自由文の記述と分類が矛盾する場合、実験0件なのに確定方向が出た場合、定量的な数値裏付けが一切ない場合は、いずれも強制的に`not_clear`へ上書きする。同一論文内で異常/正常所見が混在するのに確信的な方向が出た場合は、LLM自身のrationaleに矛盾する所見への言及・対比的な言い回し("although"/"despite"等)があるかを確認し、あれば「実際に矛盾を検討した上での結論」とみなして元の方向をcautionフラグ付きで維持、無ければ`not_clear`へ上書きする(2026-09-25修正。以前は矛盾所見があれば無条件に上書きしていたが、実データのPTEN c.112C>Tケース — 正解はPS3=MET(moderate) — がこの安全弁自体の誤った前提で不当に上書きされていたことが判明したため)。
 
 ### PS4
 
-症例対照(ケース・コントロール)データの抽出に特化。研究デザイン(case_control/family_cohort/case_series/not_case_control)を判定させ、罹患者・非罹患者の保因者数やオッズ比・p値を抽出する。研究デザインが`not_case_control`なのにPS4と結論した場合、定量的裏付け(件数もオッズ比もp値も)が皆無なのに確定方向が出た場合は`not_clear`へ強制上書きする。
+症例対照(ケース・コントロール)データの抽出に特化。研究デザイン(case_control/family_cohort/case_series/not_case_control)を判定させ、罹患者・非罹患者の保因者数やオッズ比・p値を抽出する。研究デザインが`not_case_control`なのにPS4と結論した場合、定量的裏付け(件数もオッズ比もp値も)が皆無なのに確定方向が出た場合は`not_clear`へ強制上書きする。単一論文がcase-controlデザインの基準を満たさなくても、2件以上の独立した症例シリーズ論文(いずれも反証となる非罹患保因者数を含まない)を積み上げて罹患保因者数の合計が3件以上に達する場合、標準集約が`not_clear`のときに限りこの積み上げ集計をフォールバックとして採用する(2026-09-25追加。実際のClinGen PS4判定は単一のcase-controlデザイン論文ではなく複数の症例シリーズの積み上げで下されることが多いため)。
 
 ### BP5
 
@@ -171,8 +183,8 @@
 
 `pp1_bs4_pp4_engine.py`が、ClinGen 2024のBayesianポイント評価ロジック(`pp4_pp1_bs4.evaluate_locus_evidence`)を接続する形で実装されている。
 
-- **PP4**: 患者の診断名をクエリにライブ文献検索(`pp4_literature_search`)を実行し、確認された診断的浸透率(diagnostic yield)が見つかった場合のみ評価する。見つからなければUNKNOWN。
-- **PP1**: 患者自身の臨床ノートの家族ステータス(`family.relatives`)があればそれを直接使い、なければライブ文献検索でペディグリーデータを補う。
+- **PP4**: 対象バリアントのERepo引用論文(`evidence_pmids`)を先に判定し、なければ患者の診断名をクエリにライブ文献検索(`pp4_literature_search`)を実行、確認された診断的浸透率(diagnostic yield)が見つかった場合のみ評価する(2026-09-25、ERepo優先化)。検索クエリは`"NOT multigene panel NOT gene panel NOT NGS panel"`で絞り込んだものと従来の汎用クエリの両方を常に試し、抽出時にLLMへ「解決済みコホートの母集団が遺伝子特異的(gene_specific)か広範なマルチ遺伝子パネル(broad_panel)か」も判定させ、gene_specificな論文が見つかるまで探索を続ける(broad_panelはyield値が他の遺伝子で希釈されている可能性が高いため、最終手段のフォールバックとしてのみ採用し、その旨をCAUTIONとして開示する)。いずれも見つからなければUNKNOWN。
+- **PP1**: 患者自身の臨床ノートの家族ステータス(`family.relatives`)があればそれを直接使い、なければライブ文献検索でペディグリーデータを補う。検索は対象バリアントのERepo引用論文を先に判定し、それでも見つからなければ蛋白質表記(1文字/3文字両方)を使ったクエリで補う(生のHGVS c.表記は検索クエリに一切含めない — 実在論文でも0件になることが実測で確認されているため)。
 - **PP1とPP4のポイントは独立にフロアリングせず**、両方に証拠がある場合はBiesecker et al. 2024のTable 4(合算+5.0ポイント上限)に従い、大きい生ポイントを持つ側に高いstrengthを按分する決定的ルールで変換する。
 - **BS4**: 別モジュール`segregation.py`の`bs4_met`ブール値のみで判定され、MET時はSTRONG固定。
 
@@ -186,9 +198,9 @@
 
 ---
 
-## 5. 未実装コード(PM3・BS2・BP2)
+## 5. 未実装コード(PM3・BP2)
 
-`stubs.py`が、患者自身の臨床・遺伝学的検査記録(位相情報、健常キャリア記録など)に依存し文献からは判定できないため、常に固定でUNKNOWN(`stub_evidence()`)を返す。NOT_MET(否定的判定)とは明確に区別される。
+`stubs.py`が、別バリアントとのtrans/cis位相情報に依存し、文献からもいかなるプロバイダからも判定できないため、常に固定でUNKNOWN(`stub_evidence()`)を返す。NOT_MET(否定的判定)とは明確に区別される。BS2は2026-09-25にこの分類から外れ、gnomADの遺伝子型カウントを代理指標とする自動化コードとして実装された(§1参照)。
 
 ---
 
