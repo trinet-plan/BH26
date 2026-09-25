@@ -87,12 +87,47 @@ class ProviderTests(unittest.TestCase):
 
     # --- what it refuses to answer --------------------------------------
 
-    def test_only_pvs1_is_read_even_though_the_snapshot_carries_all_28(self):
-        """PP2/BP1 applicability is a different axis - see the provider's module docstring."""
+    def test_only_pvs1_pp2_and_bp1_are_read_even_though_the_snapshot_carries_all_28(self):
+        """Every other column (PM3 here) is reference for a curator only - see the
+        provider's module docstring."""
         record, = self.records(snapshot({"DYSF": entry(
             "Applicable", PP2="Not applicable", BP1="Applicable", PM3="Applicable")}))
-        for field in ("pp2_applicable", "bp1_applicable", "missense_mechanism_established"):
-            self.assertNotIn(field, record)
+        self.assertNotIn("missense_mechanism_established", record)
+        self.assertNotIn("spectrum_review_complete", record)
+        self.assertNotIn("predominantly_truncating", record)
+
+    def test_pp2_not_applicable_becomes_false_rather_than_a_missing_value(self):
+        """Real false-positive source (2026-09-24, PP2 validation against the 679-variant
+        ground truth): SCN2A/SCN1A (Epilepsy Sodium Channel VCEP) both mark PP2 "Not
+        applicable" for every evidence strength, but mechanism.py's statistical fallback
+        (gnomAD missense constraint) had no way to see that."""
+        record, = self.records(snapshot({"DYSF": entry("Applicable", PP2="Not applicable")}))
+        self.assertIs(record["pp2_applicable"], False)
+        self.assertEqual(record["cspec_pp2_applicability"], "Not applicable")
+
+    def test_bp1_not_applicable_becomes_false_rather_than_a_missing_value(self):
+        record, = self.records(snapshot({"DYSF": entry("Applicable", BP1="Not applicable")}))
+        self.assertIs(record["bp1_applicable"], False)
+        self.assertEqual(record["cspec_bp1_applicability"], "Not applicable")
+
+    def test_pp2_applicable_never_becomes_a_positive_claim(self):
+        """A VCEP marking PP2 "Applicable" is not the same statement as a curator having
+        reviewed missense_mechanism_established/spectrum_review_complete/
+        low_benign_missense_variation for this gene - "Applicable" leaves the field unset
+        rather than fabricating a True."""
+        record, = self.records(snapshot({"DYSF": entry("Applicable", PP2="Applicable")}))
+        self.assertNotIn("pp2_applicable", record)
+
+    def test_bp1_applicable_never_becomes_a_positive_claim(self):
+        record, = self.records(snapshot({"DYSF": entry("Applicable", BP1="Applicable")}))
+        self.assertNotIn("bp1_applicable", record)
+
+    def test_pp2_not_applicable_alone_is_enough_to_produce_a_record(self):
+        """Even when PVS1 itself is never stated for this gene, a decided PP2/BP1 column
+        must not be silently dropped."""
+        record, = self.records(snapshot({"DYSF": entry(pvs1=None, PP2="Not applicable")}))
+        self.assertNotIn("lof_mechanism_established", record)
+        self.assertIs(record["pp2_applicable"], False)
 
     def test_a_gene_the_registry_does_not_cover_produces_nothing(self):
         self.assertEqual(self.records(snapshot({"DYSF": entry()}), gene="SCN5A"), [])

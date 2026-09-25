@@ -30,12 +30,25 @@
   own specification has ruled on the premise, which is the MYH7 case - and reporting that as
   "unknown" would send a curator looking for a mechanism the panel already declined.
 
-[What is deliberately NOT read]
-  Only PVS1. The snapshot carries all 28 criteria, but `pp2_applicable` and `bp1_applicable`
-  in a reviewed assessment mean the criterion is in scope and leave met/not-met to the
-  mechanism fields beside them, while CSpec's "Not applicable" means the VCEP struck the
-  criterion out. They are different axes, so carrying those two over would change what the
-  fields say. PP2/BP1 keep reporting their inputs as missing.
+[PP2/BP1 are also read now, as an applicability-only gate]
+  A VCEP's "Not applicable" for PP2/BP1 means the same thing it means for PVS1: the panel
+  struck the criterion out of its own specification, not merely "in scope, decided by the
+  mechanism fields beside it" (that reading belongs to a reviewed assessment's own
+  `pp2_applicable`/`bp1_applicable`, which is a different axis - see mechanism.py's
+  `evaluate_mechanism()`, which treats `{code.lower()}_applicable is False` as an
+  unconditional "not applicable" regardless of which source set it, and a genuinely reviewed
+  record still outranks this automated one for the same gene). Confirmed as a real
+  false-positive source (2026-09-24, PP2 validation against the 679-variant ground truth):
+  SCN2A and SCN1A (Epilepsy Sodium Channel VCEP) both mark PP2 "Not applicable" for every
+  evidence strength, in this exact snapshot, yet mechanism.py's gene_disease_draft fallback
+  (gnomAD missense constraint, a statistical proxy) had no way to see that and kept
+  suggesting PP2=CANDIDATE from misZ alone. Only PVS1's mapping decision (Applicable=True/
+  Not applicable=False for `lof_mechanism_established`) was reused as-is; PP2/BP1 read the
+  same "Not applicable" column but ONLY ever produce `False` (never `True`) - a VCEP marking
+  PP2/BP1 "Applicable" is not the same statement as a curator having reviewed
+  missense_mechanism_established/spectrum_review_complete/low_benign_missense_variation for
+  this specific gene, so "Applicable" here still leaves those fields unresolved rather than
+  fabricating them.
 
 [Why these records do not outrank a reviewed one]
   They are `assessment_method: "automated"`. The snapshot is machine-collected and no
@@ -103,23 +116,31 @@ class CSpecApplicabilityProvider:
         return self._document
 
     def get_mechanism(self, variant, gene):
-        """Every gene-disease pair this gene's specification settles a PVS1 premise for."""
+        """Every gene-disease pair this gene's specification settles a PVS1, PP2 or BP1
+        premise for - see this module's own docstring for the PP2/BP1 addition."""
         if not gene:
             return []
         document = self._load()
         entry = document["entries"].get(gene)
         if not entry:
             return []
-        stated = (entry.get("criteria") or {}).get("PVS1")
+        criteria = entry.get("criteria") or {}
+        stated = criteria.get("PVS1")
         established = APPLICABILITY_MEANING.get(stated)
-        if established is None:
+        pp2_stated = criteria.get("PP2")
+        bp1_stated = criteria.get("BP1")
+        # PP2/BP1 only ever contribute a `False` here - see the module docstring for why
+        # "Applicable" is not read as a positive answer for either.
+        pp2_not_applicable = pp2_stated == "Not applicable"
+        bp1_not_applicable = bp1_stated == "Not applicable"
+        if established is None and not pp2_not_applicable and not bp1_not_applicable:
             return []
 
         source_version = document.get("source_version") or document["retrieved_at"]
         inheritance = _inheritance(entry.get("inheritance") or [])
         records = []
         for condition in entry.get("mondo") or []:
-            records.append({
+            record = {
                 "category": "gene_disease",
                 "variant_key": variant.key,
                 "evidence_id": (
@@ -132,7 +153,6 @@ class CSpecApplicabilityProvider:
                 "quality_status": "PASS",
                 "gene": gene,
                 "condition": condition,
-                "lof_mechanism_established": established,
                 "inheritance": inheritance,
                 # Curated by a panel, but read here without a human confirming that this
                 # record is the right one for this case, so it says so.
@@ -140,12 +160,22 @@ class CSpecApplicabilityProvider:
                 "method": METHOD,
                 "policy_version": POLICY_VERSION,
                 "cspec_pvs1_applicability": stated,
+                "cspec_pp2_applicability": pp2_stated,
+                "cspec_bp1_applicability": bp1_stated,
                 "cspec_svis": sorted(entry.get("svis") or []),
                 "registry_status": document["registry_status"],
                 "policy_note": POLICY_NOTE,
                 "response_sha256": hashlib.sha256(
-                    f"{gene}|{condition}|{stated}|{source_version}".encode()).hexdigest(),
-            })
+                    f"{gene}|{condition}|{stated}|{pp2_stated}|{bp1_stated}|{source_version}"
+                    .encode()).hexdigest(),
+            }
+            if established is not None:
+                record["lof_mechanism_established"] = established
+            if pp2_not_applicable:
+                record["pp2_applicable"] = False
+            if bp1_not_applicable:
+                record["bp1_applicable"] = False
+            records.append(record)
         return records
 
 
