@@ -99,6 +99,55 @@ class ProteinRegionTests(unittest.TestCase):
         )[0][0]
         self.assertIsNone(record["critical_region_disrupted"])
 
+    def test_a_domain_spanning_most_of_the_protein_still_counts(self):
+        """A real Domain feature counts regardless of how much of the protein it
+        spans - MYOC's real "Olfactomedin-like" Domain (residues 244-503 of 504)
+        is exactly this shape and is a real, legitimate functional domain; the
+        actual MYOC false positive (2026-09-24) turned out to be driven by
+        separate single-residue Binding site features, not this Domain - see
+        test_a_single_residue_binding_site_does_not_count_as_critical."""
+        record = self.region(
+            protein_start=368, length=504, accession="Q99972",
+            uniprot_features=[uniprot_feature("Domain", 244, 503, "Olfactomedin-like")],
+        )[0][0]
+        self.assertTrue(record["critical_region_disrupted"])
+
+    def test_a_single_residue_binding_site_does_not_count_as_critical(self):
+        """Real MYOC false positive (2026-09-24): 5 separate single-residue Ca2+
+        binding sites (residues 380/428/429/477/478 of a 504-residue protein,
+        PDB-backed) are scattered across nearly the whole back half of the
+        protein, so almost any sufficiently-upstream truncation's lost interval
+        overlaps at least one - not what PVS1's "critical functional domain"
+        concept means (see uniprot_features.CRITICAL_FEATURE_TYPES's own
+        comment)."""
+        record = self.region(
+            protein_start=300, length=504, accession="Q99972",
+            uniprot_features=[uniprot_feature("Binding site", 380, 380, "")],
+        )[0][0]
+        self.assertIsNone(record["critical_region_disrupted"])
+
+    def test_a_short_motif_does_not_count_as_critical(self):
+        """Real PTEN false positive (2026-09-24): the "PDZ domain-binding" Motif
+        (residues 401-403 of 403) sits at the very C-terminal tail; a "Motif" is
+        UniProt's category for short linear sequence signals, not an identifiable
+        functional domain in the ACMG PVS1 sense."""
+        record = self.region(
+            protein_start=378, length=403, accession="P60484",
+            uniprot_features=[uniprot_feature("Motif", 401, 403, "PDZ domain-binding")],
+        )[0][0]
+        self.assertIsNone(record["critical_region_disrupted"])
+
+    def test_an_active_site_still_counts_even_as_a_single_residue(self):
+        """Unlike "Binding site"/"Motif", "Active site" marks the literal catalytic
+        residue - exactly the kind of position PVS1's NF04 gate is asking about,
+        so it is kept even though it is typically a single residue too (PTEN's
+        own Active site 124: "Phosphocysteine intermediate")."""
+        record = self.region(
+            protein_start=124, length=403, accession="P60484",
+            uniprot_features=[uniprot_feature("Active site", 124, 124, "Phosphocysteine intermediate")],
+        )[0][0]
+        self.assertTrue(record["critical_region_disrupted"])
+
     def test_vhl_c610gt_real_case_no_domain_but_still_relevant(self):
         """VHL c.610G>T ground truth (ClinGen: PVS1_Moderate): real UniProt data for
         P40337 has no Domain/Region over residues 204-213 (its domains stop at 192)

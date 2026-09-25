@@ -16,10 +16,14 @@ since 2026-09-17, a UniProt-derived first-pass answer for NF04/NF06.
   criterion result), never presented as a curator's own reviewed judgment:
 
   - critical_region_disrupted = True only when the lost interval overlaps a UniProt Domain/
-    Binding site/Active site/Motif/Coiled coil feature, or a Region feature NOT described as
-    "Disordered". "Chain" (UniProt's whole-protein-length feature) is deliberately excluded -
-    it always overlaps any interval and would make this check meaningless. Left unset (not
-    False) otherwise: no named domain there is not proof nothing important is there.
+    Active site/Coiled coil feature, or a Region feature NOT described as "Disordered" - see
+    uniprot_features.CRITICAL_FEATURE_TYPES's own comment for why "Binding site" and "Motif"
+    are excluded (single-residue biochemical contacts and short linear motifs are not what
+    ACMG PVS1's "critical functional domain" means, and both were confirmed real false-
+    positive sources: MYOC/PTEN, 2026-09-24). "Chain" (UniProt's whole-protein-length
+    feature) is deliberately excluded too - it always overlaps any interval and would make
+    this check meaningless. Left unset (not False) otherwise: no named domain there is not
+    proof nothing important is there.
   - region_biologically_relevant defaults to True whenever UniProt features were fetched
     successfully, and only False when the ENTIRE lost interval is covered by "Disordered"-
     described Region feature(s). This default direction (relevant unless proven otherwise)

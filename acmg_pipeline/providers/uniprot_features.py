@@ -21,7 +21,27 @@ from collections import Counter
 _UNIPROT_ENTRY_URL = "https://rest.uniprot.org/uniprotkb/{accession}.json"
 # "Chain" is UniProt's whole-protein-span feature - callers exclude it on purpose,
 # since it always overlaps any interval and would make an overlap check meaningless.
-CRITICAL_FEATURE_TYPES = {"Domain", "Region", "Binding site", "Active site", "Motif", "Coiled coil"}
+#
+# "Binding site" and "Motif" are excluded for the same reason, just less extreme:
+# confirmed as a real false-positive source (2026-09-24, PVS1-only validation
+# against the 679-variant ground truth). A "Binding site" is a single residue
+# (start==end) marking one biochemical contact point in a structure - e.g. MYOC
+# has 5 separate single-residue Ca2+-binding sites (residues 380/428/429/477/478
+# of a 504-residue protein, PDB-backed, genuinely real) scattered across nearly
+# the whole back half of the protein, so almost any sufficiently-upstream
+# truncating variant's lost interval [protein_start, total] overlaps at least
+# one. A "Motif" is UniProt's category for short (2-10 residue) linear sequence
+# signals - PTEN's "PDZ domain-binding" motif (401-403 of 403) and MYOC's
+# "Microbody targeting signal" (502-504 of 504) both sit right at the C-terminal
+# tail and, again, are overlapped by almost every upstream truncation. Neither
+# category is what ACMG PVS1's "critical functional domain" concept means
+# (Tayoun et al. 2018's own examples: a DNA-binding domain, an activation
+# domain, a catalytic domain - an identifiable functional REGION, not a single
+# biochemical contact residue or a short trafficking/interaction signal).
+# "Domain"/"Active site"/"Coiled coil"/non-disordered "Region" are kept: a
+# whole domain or a genuine catalytic residue is exactly the kind of thing
+# PVS1's NF04 gate is asking about.
+CRITICAL_FEATURE_TYPES = {"Domain", "Region", "Active site", "Coiled coil"}
 
 
 def is_disordered(feature: dict) -> bool:
