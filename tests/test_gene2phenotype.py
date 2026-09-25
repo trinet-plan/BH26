@@ -20,11 +20,11 @@ def entry(stable_id="G2P0001", mechanism="loss of function", confidence="definit
 
 
 def detail(stable_id="G2P0001", accessions=("MONDO:0007268",), last_updated="2025-09-05",
-           mechanism="loss of function"):
+           mechanism="loss of function", mechanism_support="evidence"):
     return {
         "stable_id": stable_id,
         "last_updated": last_updated,
-        "molecular_mechanism": {"mechanism": mechanism, "mechanism_support": "inferred"},
+        "molecular_mechanism": {"mechanism": mechanism, "mechanism_support": mechanism_support},
         "disease": {"name": "TEST-related disease", "ontology_terms": [
             {"accession": item, "source": "Mondo" if item.startswith("MONDO") else "OMIM"}
             for item in accessions]},
@@ -67,7 +67,7 @@ class Gene2PhenotypeTests(unittest.TestCase):
         self.assertEqual(record["method"], METHOD)
         self.assertEqual(record["assessment_method"], "automated")
         self.assertEqual(record["source_version"], "2025-09-05")
-        self.assertEqual(record["g2p_mechanism_support"], "inferred")
+        self.assertEqual(record["g2p_mechanism_support"], "evidence")
         self.assertNotIn("curator", record)
 
     def test_a_non_loss_of_function_mechanism_is_read_as_a_denial(self):
@@ -78,12 +78,37 @@ class Gene2PhenotypeTests(unittest.TestCase):
                     [entry(mechanism=mechanism)], {"G2P0001": detail(mechanism=mechanism)})
                 self.assertIs(records[0]["lof_mechanism_established"], False)
 
-    def test_an_undetermined_mechanism_emits_nothing_rather_than_a_denial(self):
+    def test_an_undetermined_mechanism_is_still_emitted_as_unresolved(self):
         """G2P has not settled it, which is not a statement that loss of function is ruled
-        out - the same reading the dosage provider gives a score of 30."""
-        records, client = self.mechanism([entry(mechanism="undetermined")])
-        self.assertEqual(records, [])
-        self.assertEqual(len(client.urls), 1)  # the record detail was never requested
+        out - the same reading the dosage provider gives a score of 30. Unlike before,
+        this is no longer dropped: it is emitted with lof_mechanism_established=None so
+        pvs1.py's own mechanism-conflict detection can still see it (see the module
+        docstring for the real MYOC case this was found from)."""
+        records, client = self.mechanism(
+            [entry(mechanism="undetermined")], {"G2P0001": detail(mechanism="undetermined")})
+        self.assertEqual(len(records), 1)
+        self.assertIsNone(records[0]["lof_mechanism_established"])
+        self.assertEqual(len(client.urls), 2)  # the record detail IS now requested
+
+    def test_a_loss_of_function_call_without_evidence_support_is_unresolved(self):
+        """Real MYOC false positive (2026-09-24): an older G2P record claimed "loss of
+        function" for one glaucoma subtype with mechanism_support="inferred" (inferred
+        from the variant types curated, not a functional study) - not what ACMG PVS1
+        means by an ESTABLISHED mechanism, so it is downgraded to unresolved rather than
+        trusted at face value."""
+        records, _ = self.mechanism(
+            [entry()], {"G2P0001": detail(mechanism_support="inferred")})
+        self.assertIsNone(records[0]["lof_mechanism_established"])
+        self.assertEqual(records[0]["g2p_mechanism_support"], "inferred")
+
+    def test_a_denial_without_evidence_support_is_also_unresolved(self):
+        """The same downgrade applies symmetrically to a "gain of function"/"dominant
+        negative" denial - an inferred denial should not out-rank a differently-resolved
+        record for a related condition any more than an inferred affirmation should."""
+        records, _ = self.mechanism(
+            [entry(mechanism="gain of function")],
+            {"G2P0001": detail(mechanism="gain of function", mechanism_support="inferred")})
+        self.assertIsNone(records[0]["lof_mechanism_established"])
 
     def test_validity_below_moderate_emits_nothing_and_never_a_denial(self):
         """Confidence is a gene-disease validity statement; reading it as a mechanism would
