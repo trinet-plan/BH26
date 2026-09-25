@@ -13,6 +13,7 @@ POLICY = {
     "policy_version": "test-v2",
     "policy_source": "Synthetic fastVEP-style triage policy",
     "pp2_min_mis_z": 3.09,
+    "pp2_max_benign_missense_fraction": 0.10,
     "bp1_max_missense_fraction": 0.10,
     "bp1_min_truncating_count": 10,
     "pvs1_min_p_li": 0.9,
@@ -101,6 +102,54 @@ class GeneDiseaseDraftProviderTests(unittest.TestCase):
         self.assertEqual(value.strength, "supporting")
         self.assertEqual(value.provenance["assessment_method"], "gene_disease_draft")
         self.assertTrue(value.review_points)
+
+    def test_high_benign_missense_fraction_overrides_a_high_misz(self):
+        """Real BMPR2 false positive (2026-09-25, 679-variant ground truth): misZ=3.15
+        (just over the 3.09 floor) alone suggested PP2=CANDIDATE, but BMPR2's own
+        ClinVar-curated missense spectrum is 49 benign vs 84 pathogenic (36.8% benign) -
+        exactly what "low benign missense variation" is meant to rule out."""
+        draft = self.build(
+            constraint=source(gene="TEST", mis_z=3.15, p_li=0.98, loeuf=0.2),
+            clinvar_spectrum=source(
+                gene="TEST", complete=True,
+                pathogenic_missense_count=84, pathogenic_truncating_count=327,
+                benign_missense_count=49,
+            ),
+        )
+        self.assertEqual(draft["suggestions"]["PP2"]["status"], "NOT_SUGGESTED")
+        reasons = " ".join(draft["suggestions"]["PP2"]["reasons"])
+        self.assertIn("benign missense fraction", reasons)
+
+    def test_a_low_benign_missense_fraction_keeps_a_high_misz_as_candidate(self):
+        draft = self.build(
+            constraint=source(gene="TEST", mis_z=10.0, p_li=0.98, loeuf=0.2),
+            clinvar_spectrum=source(
+                gene="TEST", complete=True,
+                pathogenic_missense_count=372, pathogenic_truncating_count=206,
+                benign_missense_count=5,
+            ),
+        )
+        self.assertEqual(draft["suggestions"]["PP2"]["status"], "CANDIDATE")
+
+    def test_a_low_misz_is_not_rescued_by_a_low_benign_missense_fraction(self):
+        """Both signals must agree - a low benign fraction alone must not override misZ
+        the other direction either."""
+        draft = self.build(
+            constraint=source(gene="TEST", mis_z=1.0, p_li=0.98, loeuf=0.2),
+            clinvar_spectrum=source(
+                gene="TEST", complete=True,
+                pathogenic_missense_count=100, pathogenic_truncating_count=10,
+                benign_missense_count=1,
+            ),
+        )
+        self.assertEqual(draft["suggestions"]["PP2"]["status"], "NOT_SUGGESTED")
+
+    def test_a_high_misz_without_any_spectrum_falls_back_to_misz_alone(self):
+        """When the spectrum is unavailable, the older (weaker) misZ-only signal is used
+        rather than blocking the suggestion outright."""
+        draft = self.build(clinvar_spectrum=None,
+                            constraint=source(gene="TEST", mis_z=3.15, p_li=0.98, loeuf=0.2))
+        self.assertEqual(draft["suggestions"]["PP2"]["status"], "CANDIDATE")
 
     def test_incomplete_spectrum_is_not_read_as_absence(self):
         draft = self.build(clinvar_spectrum=source(

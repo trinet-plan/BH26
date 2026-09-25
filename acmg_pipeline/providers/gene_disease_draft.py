@@ -55,6 +55,7 @@ class GeneDiseaseDraftProvider:
             "policy_version",
             "policy_source",
             "pp2_min_mis_z",
+            "pp2_max_benign_missense_fraction",
             "bp1_max_missense_fraction",
             "bp1_min_truncating_count",
             "pvs1_min_p_li",
@@ -64,7 +65,7 @@ class GeneDiseaseDraftProvider:
             raise ValueError("Draft policy is incomplete")
         self.policy = dict(policy)
         for key in (
-            "pp2_min_mis_z", "bp1_max_missense_fraction",
+            "pp2_min_mis_z", "pp2_max_benign_missense_fraction", "bp1_max_missense_fraction",
             "pvs1_min_p_li", "pvs1_max_loeuf",
         ):
             self.policy[key] = _number(self.policy[key], key)
@@ -168,10 +169,35 @@ class GeneDiseaseDraftProvider:
                 ["missense mechanism", "benign missense spectrum"],
             )
         else:
-            candidate = mis_z >= self.policy["pp2_min_mis_z"]
+            mis_z_candidate = mis_z >= self.policy["pp2_min_mis_z"]
+            reasons = [f"misZ={mis_z:g} compared with {self.policy['pp2_min_mis_z']:g}"]
+            # misZ is a whole-gene population-constraint statistic; it says nothing
+            # directly about PP2's own "low benign missense variation" requirement,
+            # which is a statement about the CURATED missense spectrum specifically.
+            # Real false positive (2026-09-24, 679-variant ground truth): BMPR2
+            # misZ=3.15 (just over the 3.09 floor) suggested PP2=CANDIDATE, but its
+            # own ClinVar-curated missense spectrum is 49 benign vs 84 pathogenic
+            # (36.8% benign) - a gene with that much tolerated missense variation is
+            # exactly what "low benign missense variation" is meant to rule out, and
+            # misZ alone had no way to see it. When the spectrum is available, both
+            # signals must agree before suggesting CANDIDATE; misZ alone (spectrum
+            # unavailable) still falls back to the old, weaker signal rather than
+            # blocking the suggestion outright.
+            benign_fraction = None
+            if spectrum is not None and spectrum["complete"]:
+                missense_total = spectrum["pathogenic_missense_count"] + spectrum["benign_missense_count"]
+                if missense_total > 0:
+                    benign_fraction = spectrum["benign_missense_count"] / missense_total
+                    reasons.append(
+                        f"benign missense fraction={benign_fraction:.1%} "
+                        f"({spectrum['benign_missense_count']}/{missense_total}) compared with "
+                        f"{self.policy['pp2_max_benign_missense_fraction']:.1%}")
+            if benign_fraction is None:
+                candidate = mis_z_candidate
+            else:
+                candidate = mis_z_candidate and benign_fraction <= self.policy["pp2_max_benign_missense_fraction"]
             pp2 = self._suggestion(
-                "CANDIDATE" if candidate else "NOT_SUGGESTED",
-                [f"misZ={mis_z:g} compared with {self.policy['pp2_min_mis_z']:g}"],
+                "CANDIDATE" if candidate else "NOT_SUGGESTED", reasons,
                 ["missense mechanism", "low benign missense variation", "spectrum completeness"],
             )
 
