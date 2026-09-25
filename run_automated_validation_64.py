@@ -290,6 +290,11 @@ def main() -> None:
         # used most of these correctly for its narrower PVS1-only check.
         "--with-clingen-dosage",
         "--with-gene2phenotype",
+        # Also missing until now (2026-09-25, found via a PP2 false-positive check): without
+        # this, PVS1's own cspec_applicability.py mechanism gate never ran either, and (since
+        # 2026-09-25) neither did its PP2/BP1 "Not applicable" gate - see that module's own
+        # docstring for the real SCN2A/SCN1A false positives this fixes.
+        "--cspec-applicability", str(ROOT / "config" / "cspec_applicability.json"),
         "--with-mane-transcript",
         "--with-nmd-prediction",
         "--with-splice-default",
