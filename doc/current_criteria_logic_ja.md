@@ -241,3 +241,9 @@ BA1がMETであれば、他の証拠やスコアに関わらず即座にBenign�
 ### from_aggregated_judgment
 
 文献LLMパイプラインの`AggregatedJudgment`を`CriterionEvidence`に変換するアダプタ。判定方向が`not_clear`ならUNKNOWN、評価対象のコードと異なる方向ならNOT_MET(例:BS4を評価中にPS3方向の証拠が見つかった場合、BS4がMETと誤認されない)、一致すればMETとし、採用論文数からstrengthを決定する。
+
+### VA-Spec出力における「UNKNOWN→not_met」変換(精度集計時の注意)
+
+`acmg_pipeline/export.py`の`build_evidence_line()`/`build_automated_evidence_line()`は、実装済みの評価ロジックが実際に動いたが判定に至らなかった(UNKNOWN)場合、machine-readableな`status`拡張フィールドを`not_met`として書き出す(未実装のスタブコードは対象外、`build_stub_evidence_line()`が別途正直に`unknown`のまま出力する)。これは`classify()`のBayesianスコアリング上「未成立」も「判定不能」も同じ0点で扱われるべきという理由による意図的な設計(2026-09-18)で、人間向けの`description`文と`curatorHints`(`category: "unevaluated"`)には実際の理由(判定不能でnot_metとして報告している旨)が明記される。
+
+**この設計は`classify()`自体にとっては正しいが、エクスポート済みJSONから`status`拡張フィールドだけを素朴に読んで基準ごとのrecall/specificityを集計すると、「判定不能だった」ケースが「正しくnot_metと判定した」と誤ってカウントされ、not_met側の精度が水増しされる**(2026-09-26、BS2/PP4の精度再検証で発見。詳細はdoc/criteria_accuracy_2026-09-22_ja.mdの「重要な発見」参照)。基準ごとの精度を正しく集計するには、`curatorHints`の`unevaluated`フラグを見て除外するか、`CriterionResult.status`を直接参照する必要がある。
