@@ -3,7 +3,7 @@
 **version: v1**
 
 作成:2026-09-15、2026-09-16更新
-位置づけ:`ps3_bs3_ps4_implementation_v10.md`(PS3/BS3/PS4/PP1/BS4の実装設計そのもの)から切り出した別文書。こちらは**判定ロジックの実装ではなく、28基準全部を横断するground truthテストケースデータの収集経緯**を記録する。PP4とLayer1の16基準(`acmg_pipeline/criteria/stubs.py`の`AUTOMATED_RULE_BASED_OTHER_TEAM`からPP4を除いたもの)の判定ロジック自体は別メンバーの担当であり、本プロジェクト側の役割は(a)そのメンバーが実装を検証するためのフィクスチャ、(b)`classification.classify()`を将来フル28基準で試す際のテストデータ、としてground truthを整備することに限定している(実装設計との切り分けの経緯は`ps3_bs3_ps4_implementation_v10.md`セクション15-13を参照)。
+位置づけ:`doc/ps3_bs3_ps4_implementation_v10.md`(PS3/BS3/PS4/PP1/BS4の実装設計そのもの)から切り出した別文書。こちらは**判定ロジックの実装ではなく、28基準全部を横断するground truthテストケースデータの収集経緯**を記録する。PP4とLayer1の16基準(`acmg_pipeline/criteria/stubs.py`の`AUTOMATED_RULE_BASED_OTHER_TEAM`からPP4を除いたもの)の判定ロジック自体は別メンバーの担当であり、本プロジェクト側の役割は(a)そのメンバーが実装を検証するためのフィクスチャ、(b)`classification.classify()`を将来フル28基準で試す際のテストデータ、としてground truthを整備することに限定している(実装設計との切り分けの経緯は`doc/ps3_bs3_ps4_implementation_v10.md`セクション15-13を参照)。
 
 成果物:`test_data/full_criteria_ground_truth.py`(データ本体)、`test_data/erepo_full_requery_2026-09-15.json`(ERepo生スナップショット)、`test_full_criteria_ground_truth.py`(健全性チェック+classify()比較レポート)。
 
@@ -22,7 +22,7 @@
 democaseのKCNJ5の一例(ERepoに載らない人間キュレーションのみの例)だけに頼るのではなく、**ERepo APIに`hgvs`を指定せず`gene`のみで問い合わせると、その遺伝子の全curated変異体が返る**ことを確認し、これを使ってPP4を実際に使っている変異体を広く探索した。候補26遺伝子(既存22変異体の遺伝子 + ATM, VHL, ERCC6, ERCC8, HNF1A)をスキャンした結果:
 
 - **PP4は想定より広く使われていた**:HNF1A(24件)・RUNX1(21件)・TP53(24件)・CDH1(25件)・LDLR(25件)・DYSF(23件)・USH2A(21件)・GJB2(11件)等、多くのVCEPで採用例あり(gene単位のヒット数、strength内訳はPP4/PP4_Moderate/PP4_Strongが混在)
-- 特に**HNF1A**はPP4使用例が最多——ClinGen SVI 2023年ガイダンス論文(`ps3_bs3_ps4_implementation_v10.md`セクション15-13-2で言及)がPP4の具体例として挙げているMODY確率計算機ベースの仕様を持つVCEPで、想定通りの結果
+- 特に**HNF1A**はPP4使用例が最多——ClinGen SVI 2023年ガイダンス論文(`doc/ps3_bs3_ps4_implementation_v10.md`セクション15-13-2で言及)がPP4の具体例として挙げているMODY確率計算機ベースの仕様を持つVCEPで、想定通りの結果
 - ここから遺伝子多様性のため追加で**HNF1A×3・ATM×1**を新規変異体としてフル再照会し、データセットに加えた(既存22変異体の中にもPTEN・TP53・MTOR・CDH1・DYSF・GUCY2D・LDLR・MSH2・RUNX1・SCN2A・USH2Aが元々PP4を含んでおり、既存変異体の再照会だけでも自然にPP4データの大半が集まった)
 
 ### 1-3. データソースC:democase 4変異体+関連変異(手動転記)
